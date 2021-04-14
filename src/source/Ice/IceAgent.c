@@ -99,9 +99,12 @@ VOID iceAgentLogNewCandidate(PIceCandidate pIceCandidate)
 
     if (pIceCandidate != NULL) {
         getIpAddrStr(&pIceCandidate->ipAddress, ipAddr, ARRAY_SIZE(ipAddr));
-        if (pIceCandidate->iceCandidateType == ICE_CANDIDATE_TYPE_RELAYED && pIceCandidate->pTurnConnection != NULL &&
-            pIceCandidate->pTurnConnection->protocol == KVS_SOCKET_PROTOCOL_TCP) {
-            protocol = "TCP";
+        if (pIceCandidate->iceCandidateType == ICE_CANDIDATE_TYPE_RELAYED) {
+            if (pIceCandidate->pTurnConnection == NULL) {
+                protocol = "NA";
+            } else if (pIceCandidate->pTurnConnection->protocol == KVS_SOCKET_PROTOCOL_TCP) {
+                protocol = "TCP";
+            }
         }
         DLOGD("New %s ice candidate discovered. Id: %s. Ip: %s:%u. Type: %s. Protocol: %s. priority: %u",
               pIceCandidate->isRemote ? "remote" : "local", pIceCandidate->id, ipAddr, (UINT16) getInt16(pIceCandidate->ipAddress.port),
