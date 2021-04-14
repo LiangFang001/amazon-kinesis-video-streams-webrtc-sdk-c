@@ -4,6 +4,7 @@
 #define LOG_CLASS "IceUtils"
 #include "../Include_i.h"
 
+
 STATUS createTransactionIdStore(UINT32 maxIdCount, PTransactionIdStore* ppTransactionIdStore)
 {
     ENTERS();
@@ -33,6 +34,7 @@ CleanUp:
     LEAVES();
     return retStatus;
 }
+
 STATUS freeTransactionIdStore(PTransactionIdStore* ppTransactionIdStore)
 {
     ENTERS();
@@ -59,12 +61,13 @@ VOID transactionIdStoreInsert(PTransactionIdStore pTransactionIdStore, PBYTE tra
 
     CHECK(pTransactionIdStore != NULL);
 
+    // get the available buffer.
     storeLocation = pTransactionIdStore->transactionIds +
         ((pTransactionIdStore->nextTransactionIdIndex % pTransactionIdStore->maxTransactionIdsCount) * STUN_TRANSACTION_ID_LEN);
     MEMCPY(storeLocation, transactionId, STUN_TRANSACTION_ID_LEN);
-
+    // move the next index.
     pTransactionIdStore->nextTransactionIdIndex = (pTransactionIdStore->nextTransactionIdIndex + 1) % pTransactionIdStore->maxTransactionIdsCount;
-
+    // #TBD, need to enhance.  Based on the current coding, no need to code it.
     if (pTransactionIdStore->nextTransactionIdIndex == pTransactionIdStore->earliestTransactionIdIndex) {
         pTransactionIdStore->earliestTransactionIdIndex =
             (pTransactionIdStore->earliestTransactionIdIndex + 1) % pTransactionIdStore->maxTransactionIdsCount;
@@ -91,7 +94,7 @@ BOOL transactionIdStoreHasId(PTransactionIdStore pTransactionIdStore, PBYTE tran
     return idFound;
 }
 
-VOID transactionIdStoreClear(PTransactionIdStore pTransactionIdStore)
+VOID transactionIdStoreReset(PTransactionIdStore pTransactionIdStore)
 {
     CHECK(pTransactionIdStore != NULL);
 
@@ -148,9 +151,8 @@ STATUS iceUtilsSendStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 pa
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 stunPacketSize = STUN_PACKET_ALLOCATION_SIZE;
     PBYTE stunPacketBuffer = NULL;
-
+    // #memory, #heap. #TBD.
     CHK(NULL != (stunPacketBuffer = (PBYTE) MEMALLOC(STUN_PACKET_ALLOCATION_SIZE)), STATUS_NOT_ENOUGH_MEMORY);
-
     CHK_STATUS(iceUtilsPackageStunPacket(pStunPacket, password, passwordLen, stunPacketBuffer, &stunPacketSize));
     CHK_STATUS(iceUtilsSendData(stunPacketBuffer, stunPacketSize, pDest, pSocketConnection, pTurnConnection, useTurn));
 
@@ -167,7 +169,7 @@ STATUS iceUtilsSendData(PBYTE buffer, UINT32 size, PKvsIpAddress pDest, PSocketC
     STATUS retStatus = STATUS_SUCCESS;
 
     CHK((pSocketConnection != NULL && !useTurn) || (pTurnConnection != NULL && useTurn), STATUS_INVALID_ARG);
-
+    // if you are using turn connection, you need to transfer the ip of this destination.
     if (useTurn) {
         retStatus = turnConnectionSendData(pTurnConnection, buffer, size, pDest);
     } else {

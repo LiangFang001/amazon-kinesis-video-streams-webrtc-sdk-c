@@ -55,6 +55,15 @@ extern "C" {
 #define OPUS_CLOCKRATE  (UINT64) 48000
 #define PCM_CLOCKRATE   (UINT64) 8000
 
+/**
+ * @brief latch the value of rtp codec.
+ *
+ * @param[in] codecTable the codec table of transimission.
+ * @param[in] rtxTable the codec table of retransmission.
+ * @param[in] pSessionDescription the sdp of the offer.
+ *
+ * @return STATUS_SUCCESS
+ */
 STATUS setPayloadTypesFromOffer(PHashTable, PHashTable, PSessionDescription);
 STATUS setPayloadTypesForOffer(PHashTable);
 

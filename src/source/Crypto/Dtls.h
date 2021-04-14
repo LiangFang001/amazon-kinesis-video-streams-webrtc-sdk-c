@@ -50,7 +50,7 @@ typedef VOID (*DtlsSessionOnStateChange)(UINT64, RTC_DTLS_TRANSPORT_STATE);
 
 typedef struct {
     UINT64 outBoundPacketFnCustomData;
-    DtlsSessionOutboundPacketFunc outboundPacketFn;
+    DtlsSessionOutboundPacketFunc outboundPacketFn; //!< outBoundPacketFn is a required callback to tell DtlsSession how to send outbound packets
     UINT64 stateChangeFnCustomData;
     DtlsSessionOnStateChange stateChangeFn;
 } DtlsSessionCallbacks, *PDtlsSessionCallbacks;
@@ -161,6 +161,15 @@ STATUS dtlsSessionIsInitFinished(PDtlsSession, PBOOL);
 STATUS dtlsSessionPopulateKeyingMaterial(PDtlsSession, PDtlsKeyingMaterial);
 STATUS dtlsSessionGetLocalCertificateFingerprint(PDtlsSession, PCHAR, UINT32);
 STATUS dtlsSessionVerifyRemoteCertificateFingerprint(PDtlsSession, PCHAR);
+/**
+ * @brief  it is used for the outbound packet of sctp session.
+ *
+ * @param[in] pDtlsSession the handler of the dtls session
+ * @param[in] pData the buffer
+ * @param[in] dataLen the length of the buffer
+ *
+ * @return STATUS_SUCCESS
+ */
 STATUS dtlsSessionPutApplicationData(PDtlsSession, PBYTE, INT32);
 STATUS dtlsSessionShutdown(PDtlsSession);
 
@@ -188,6 +197,15 @@ STATUS freeCertificateAndKey(mbedtls_x509_crt*, mbedtls_pk_context*);
 // following are required callbacks for mbedtls
 // NOTE: const is not a pure C qualifier, they're here because there's no way to type cast
 //       a callback signature.
+/**
+ * @brief   the callback of outboud for ssl library.
+ *
+ * @param[in] customData the custom data
+ * @param[in] pBuf the buffer to be sent
+ * @param[in] len the length of the buffer
+ *
+ * @return error code. 0: success.
+ */
 INT32 dtlsSessionSendCallback(PVOID, const unsigned char*, ULONG);
 INT32 dtlsSessionReceiveCallback(PVOID, unsigned char*, ULONG);
 VOID dtlsSessionSetTimerCallback(PVOID, UINT32, UINT32);

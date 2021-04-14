@@ -54,6 +54,15 @@ CleanUp:
     return retStatus;
 }
 
+/**
+ * @brief Parses a JSON string and returns an allocated PSessionDescriptionInit
+ *
+ * @param[in] PCHAR JSON String of a RtcSessionDescriptionInit
+ * @param[in] UINT32 Length of JSON String
+ * @param[out] PRtcSessionDescriptionInit RtcSessionDescriptionInit populated from JSON String
+ *
+ * @return STATUS code of the execution. STATUS_SUCCESS on success
+ */
 STATUS deserializeSessionDescriptionInit(PCHAR sessionDescriptionJSON, UINT32 sessionDescriptionJSONLen,
                                          PRtcSessionDescriptionInit pSessionDescriptionInit)
 {
@@ -148,9 +157,6 @@ CleanUp:
     return retStatus;
 }
 
-/*
- * Populate map with PayloadTypes for codecs a KvsPeerConnection has enabled.
- */
 STATUS setPayloadTypesFromOffer(PHashTable codecTable, PHashTable rtxTable, PSessionDescription pSessionDescription)
 {
     ENTERS();
@@ -166,13 +172,15 @@ STATUS setPayloadTypesFromOffer(PHashTable codecTable, PHashTable rtxTable, PSes
         pMediaDescription = &(pSessionDescription->mediaDescriptions[currentMedia]);
 
         attributeValue = pMediaDescription->mediaName;
+
         do {
             if ((end = STRCHR(attributeValue, ' ')) != NULL) {
                 tokenLen = (end - attributeValue);
             } else {
                 tokenLen = STRLEN(attributeValue);
             }
-
+            // #TBD, this should be reviewed.
+            // update the aduio.
             if (STRNCMP(DEFAULT_PAYLOAD_MULAW_STR, attributeValue, tokenLen) == 0) {
                 CHK_STATUS(hashTableUpsert(codecTable, RTC_CODEC_MULAW, DEFAULT_PAYLOAD_MULAW));
             } else if (STRNCMP(DEFAULT_PAYLOAD_ALAW_STR, attributeValue, tokenLen) == 0) {
@@ -183,40 +191,40 @@ STATUS setPayloadTypesFromOffer(PHashTable codecTable, PHashTable rtxTable, PSes
                 attributeValue = end + 1;
             }
         } while (end != NULL);
-
+        // should split this into different media, no need to process all the media type at the same time.
         for (currentAttribute = 0; currentAttribute < pMediaDescription->mediaAttributesCount; currentAttribute++) {
             attributeValue = pMediaDescription->sdpAttributes[currentAttribute].attributeValue;
-
+            // #video.
             CHK_STATUS(hashTableContains(codecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, &supportCodec));
             if (supportCodec && (end = STRSTR(attributeValue, H264_VALUE)) != NULL) {
                 CHK_STATUS(STRTOUI64(attributeValue, end - 1, 10, &parsedPayloadType));
                 CHK_STATUS(hashTableUpsert(codecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, parsedPayloadType));
             }
-
+            // #audio.
             CHK_STATUS(hashTableContains(codecTable, RTC_CODEC_OPUS, &supportCodec));
             if (supportCodec && (end = STRSTR(attributeValue, OPUS_VALUE)) != NULL) {
                 CHK_STATUS(STRTOUI64(attributeValue, end - 1, 10, &parsedPayloadType));
                 CHK_STATUS(hashTableUpsert(codecTable, RTC_CODEC_OPUS, parsedPayloadType));
             }
-
+            // #video.
             CHK_STATUS(hashTableContains(codecTable, RTC_CODEC_VP8, &supportCodec));
             if (supportCodec && (end = STRSTR(attributeValue, VP8_VALUE)) != NULL) {
                 CHK_STATUS(STRTOUI64(attributeValue, end - 1, 10, &parsedPayloadType));
                 CHK_STATUS(hashTableUpsert(codecTable, RTC_CODEC_VP8, parsedPayloadType));
             }
-
+            // #audio
             CHK_STATUS(hashTableContains(codecTable, RTC_CODEC_MULAW, &supportCodec));
             if (supportCodec && (end = STRSTR(attributeValue, MULAW_VALUE)) != NULL) {
                 CHK_STATUS(STRTOUI64(attributeValue, end - 1, 10, &parsedPayloadType));
                 CHK_STATUS(hashTableUpsert(codecTable, RTC_CODEC_MULAW, parsedPayloadType));
             }
-
+            // #audio
             CHK_STATUS(hashTableContains(codecTable, RTC_CODEC_ALAW, &supportCodec));
             if (supportCodec && (end = STRSTR(attributeValue, ALAW_VALUE)) != NULL) {
                 CHK_STATUS(STRTOUI64(attributeValue, end - 1, 10, &parsedPayloadType));
                 CHK_STATUS(hashTableUpsert(codecTable, RTC_CODEC_ALAW, parsedPayloadType));
             }
-
+            // #rtx
             if ((end = STRSTR(attributeValue, RTX_VALUE)) != NULL) {
                 CHK_STATUS(STRTOUI64(attributeValue, end - 1, 10, &rtxPayloadType));
                 attributeValue = pMediaDescription->sdpAttributes[++currentAttribute].attributeValue;

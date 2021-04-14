@@ -9,7 +9,7 @@ Ice Utils internal include file
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+// #TBD, need to review this design.
 #define DEFAULT_MAX_STORED_TRANSACTION_ID_COUNT 20
 #define MAX_STORED_TRANSACTION_ID_COUNT         100
 
@@ -25,24 +25,47 @@ extern "C" {
  * Ring buffer storing transactionIds
  */
 typedef struct {
-    UINT32 maxTransactionIdsCount;
-    UINT32 nextTransactionIdIndex;
+    UINT32 maxTransactionIdsCount; //!< the capacity of this transaction id buffer.
+    UINT32 nextTransactionIdIndex; //!< the index of the next available buffer.
     UINT32 earliestTransactionIdIndex;
     UINT32 transactionIdCount;
-    PBYTE transactionIds;
+    PBYTE transactionIds; //!< the buffer of transaction.
 } TransactionIdStore, *PTransactionIdStore;
-
+/**
+ * @brief create the buffer recording the transaction id.
+ *          For current design, ice agent, ice candidate pair, and turn will create one transaction id buffer.
+ *
+ * @param[in] maxIdCount the maximum number of transaction id.
+ * @param[out] ppTransactionIdStore the pointer of buffer.
+ * @return STATUS status of execution
+ */
 STATUS createTransactionIdStore(UINT32, PTransactionIdStore*);
 STATUS freeTransactionIdStore(PTransactionIdStore*);
 VOID transactionIdStoreInsert(PTransactionIdStore, PBYTE);
 BOOL transactionIdStoreHasId(PTransactionIdStore, PBYTE);
-VOID transactionIdStoreClear(PTransactionIdStore);
-
+/**
+ * @brief reset the buffer of transaction id.
+ *
+ * @param[in] pTransactionIdStore the transaction object.
+ * @return STATUS status of execution
+ */
+VOID transactionIdStoreReset(PTransactionIdStore);
+/**
+ * @brief generate the transaction id.
+ *
+ * #TBD, this should be take care. According to rfc5389,
+ * As such, the transaction ID MUST be uniformlyand randomly chosen from the interval 0 .. 2**96-1,
+ * and SHOULD be cryptographically random.
+ *
+ */
 STATUS iceUtilsGenerateTransactionId(PBYTE, UINT32);
 
 // Stun packaging and sending functions
 STATUS iceUtilsPackageStunPacket(PStunPacket, PBYTE, UINT32, PBYTE, PUINT32);
 STATUS iceUtilsSendStunPacket(PStunPacket, PBYTE, UINT32, PKvsIpAddress, PSocketConnection, struct __TurnConnection*, BOOL);
+/**
+ * @brief   send the packet via the socket of the selected ice candidate.
+ */
 STATUS iceUtilsSendData(PBYTE, UINT32, PKvsIpAddress, PSocketConnection, struct __TurnConnection*, BOOL);
 
 typedef struct {
@@ -54,7 +77,9 @@ typedef struct {
     CHAR credential[MAX_ICE_CONFIG_CREDENTIAL_LEN + 1];
     KVS_SOCKET_PROTOCOL transport;
 } IceServer, *PIceServer;
-
+/**
+ * @brief #TBD, consider to change this api, but it is not a bottleneck.
+ */
 STATUS parseIceServer(PIceServer, PCHAR, PCHAR, PCHAR);
 
 #ifdef __cplusplus

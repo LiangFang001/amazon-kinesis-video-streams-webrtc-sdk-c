@@ -16,9 +16,12 @@ extern "C" {
 #define KVS_ICE_GATHER_REFLEXIVE_AND_RELAYED_CANDIDATE_TIMEOUT 10 * HUNDREDS_OF_NANOS_IN_A_SECOND
 #define KVS_ICE_CONNECTIVITY_CHECK_TIMEOUT                     10 * HUNDREDS_OF_NANOS_IN_A_SECOND
 #define KVS_ICE_CANDIDATE_NOMINATION_TIMEOUT                   10 * HUNDREDS_OF_NANOS_IN_A_SECOND
-#define KVS_ICE_SEND_KEEP_ALIVE_INTERVAL                       15 * HUNDREDS_OF_NANOS_IN_A_SECOND
-#define KVS_ICE_TURN_CONNECTION_SHUTDOWN_TIMEOUT               1 * HUNDREDS_OF_NANOS_IN_A_SECOND
-#define KVS_ICE_DEFAULT_TIMER_START_DELAY                      3 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND
+// https://tools.ietf.org/html/rfc5245#section-10
+#define KVS_ICE_SEND_KEEP_ALIVE_INTERVAL         15 * HUNDREDS_OF_NANOS_IN_A_SECOND
+#define KVS_ICE_TURN_CONNECTION_SHUTDOWN_TIMEOUT 1 * HUNDREDS_OF_NANOS_IN_A_SECOND
+#define KVS_ICE_DEFAULT_TIMER_START_DELAY        3 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND
+#define KVS_ICE_FSM_TIMER_START_DELAY            3 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND
+#define KVS_ICE_GATHERING_TIMER_START_DELAY      3 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND
 
 // Ta in https://tools.ietf.org/html/rfc8445
 #define KVS_ICE_CONNECTION_CHECK_POLLING_INTERVAL  50 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND
@@ -112,7 +115,7 @@ typedef struct {
     UINT64 firstRequestTimestamp;    //!< Represents the timestamp at which the first STUN request was sent on this particular candidate pair.
     UINT64 lastRequestTimestamp;     //!< Represents the timestamp at which the last STUN request was sent on this particular candidate pair.
                                      //!< The average interval between two consecutive connectivity checks sent can be calculated:
-                                     //! (lastRequestTimestamp - firstRequestTimestamp) / requestsSent.
+                                     //! (lastRequestTimestamp firstRequestTimestamp) / requestsSent.
     UINT64 lastResponseTimestamp;    //!< Represents the timestamp at which the last STUN response was received on this particular candidate pair.
     DOUBLE totalRoundTripTime;       //!< The sum of all round trip time (seconds) since the beginning of the session, based
                                      //!< on STUN connectivity check responses (responsesReceived), including those that reply to requests
@@ -133,17 +136,20 @@ typedef struct {
 typedef struct {
     UINT64 customData;
     IceInboundPacketFunc inboundPacketFn;
-    IceConnectionStateChangedFunc connectionStateChangedFn;
-    IceNewLocalCandidateFunc newLocalCandidateFn;
+    IceConnectionStateChangedFunc connectionStateChangedFn; //!< the callback for the state of ice agent is changed.
+    IceNewLocalCandidateFunc newLocalCandidateFn;           //!< the callback of new local candidate for the peer connection layer.
 } IceAgentCallbacks, *PIceAgentCallbacks;
 
+// https://developer.mozilla.org/en-US/docs/Web/API/RTCIceCandidate/candidate
+// https://tools.ietf.org/html/rfc5245#section-15.1
+// a=candidate:4234997325 1 udp 2043278322 192.168.0.56 44323 typ host
 typedef struct {
     ICE_CANDIDATE_TYPE iceCandidateType;
-    BOOL isRemote;
+    BOOL isRemote; //!< remote or local.
     KvsIpAddress ipAddress;
-    PSocketConnection pSocketConnection;
+    PSocketConnection pSocketConnection; //!< the socket handler of this ice candidate.
     ICE_CANDIDATE_STATE state;
-    UINT32 priority;
+    UINT32 priority; //!< the priority of ice candidate.
     UINT32 iceServerIndex;
     UINT32 foundation;
     /* If candidate is local and relay, then store the
@@ -161,16 +167,19 @@ typedef struct {
     CHAR id[ICE_CANDIDATE_ID_LEN + 1];
 } IceCandidate, *PIceCandidate;
 
+/**
+ * @brief the information of ice candidate pair.
+ */
 typedef struct {
     PIceCandidate local;
     PIceCandidate remote;
     BOOL nominated;
-    BOOL firstStunRequest;
+    BOOL firstStunRequest; //!< is the first stun req or not.
     UINT64 priority;
     ICE_CANDIDATE_PAIR_STATE state;
     PTransactionIdStore pTransactionIdStore;
-    UINT64 lastDataSentTime;
-    PHashTable requestSentTime;
+    UINT64 lastDataSentTime;    //!< the time of the latest sending packet.
+    PHashTable requestSentTime; //!< for the stat
     UINT64 roundTripTime;
     UINT64 responsesReceived;
     RtcIceCandidatePairDiagnostics rtcIceCandidatePairDiagnostics;
@@ -199,11 +208,16 @@ struct __IceAgent {
     PDoubleList localCandidates;
     PDoubleList remoteCandidates;
     // store PIceCandidatePair which will be immediately checked for connectivity when the timer is fired.
+    // #TBD, receive the stun request, and store the corresponding candidate pair into this queue.
+    // will check this connection.
     PStackQueue triggeredCheckQueue;
     PDoubleList iceCandidatePairs;
 
     PConnectionListener pConnectionListener;
-    BOOL isControlling;
+
+    BOOL isControlling; //!< https://tools.ietf.org/html/rfc5245#section-5.2
+                        //!< if we are the controlling ice agent, we need to nominate the ice candidate.
+                        //!< basically, if you create the offer, you are the controlling ice agent.
     UINT64 tieBreaker;
 
     MUTEX lock;
@@ -219,14 +233,14 @@ struct __IceAgent {
     PStateMachine pStateMachine;
     STATUS iceAgentStatus;
     UINT64 stateEndTime;
-    UINT64 candidateGatheringEndTime;
+    UINT64 candidateGatheringEndTime; //!< the end time of gathering ice candidates.
     PIceCandidatePair pDataSendingIceCandidatePair;
 
     IceAgentCallbacks iceAgentCallbacks;
-
+    // #TBD, #heap, #memory.
     IceServer iceServers[MAX_ICE_SERVERS_COUNT];
     UINT32 iceServersCount;
-
+    // #TBD, #heap #memory
     KvsIpAddress localNetworkInterfaces[MAX_LOCAL_NETWORK_INTERFACE_COUNT];
     UINT32 localNetworkInterfaceCount;
 
@@ -237,7 +251,7 @@ struct __IceAgent {
     TIMER_QUEUE_HANDLE timerQueueHandle;
     UINT64 lastDataReceivedTime;
     BOOL detectedDisconnection;
-    UINT64 disconnectionGracePeriodEndTime;
+    UINT64 disconnectionGracePeriodEndTime; //!< if ice agent enters the disconnected state, it will have grace period to recover.
 
     ICE_TRANSPORT_POLICY iceTransportPolicy;
     KvsRtcConfiguration kvsRtcConfiguration;
@@ -255,176 +269,271 @@ struct __IceAgent {
 //////////////////////////////////////////////
 
 /**
- * allocate the IceAgent struct and store username and password
+ * @brief allocate the IceAgent struct and store username and password
  *
- * @param - PCHAR - IN - username
- * @param - PCHAR - IN - password
- * @param - PIceAgentCallbacks - IN - callback for inbound packets
- * @param - PRtcConfiguration - IN - RtcConfig
- * @param - PIceAgent* - OUT - the created IceAgent struct
+ * @param[in] PCHAR username
+ * @param[in] PCHAR password
+ * @param[in] PIceAgentCallbacks callback for inbound packets
+ * @param[in] PRtcConfiguration RtcConfig
+ * @param[in][out] PIceAgent* the created IceAgent struct
  *
- * @return - STATUS - status of execution
+ * @return STATUS status of execution
  */
 STATUS createIceAgent(PCHAR, PCHAR, PIceAgentCallbacks, PRtcConfiguration, TIMER_QUEUE_HANDLE, PConnectionListener, PIceAgent*);
 
 /**
- * deallocate the PIceAgent object and all its resources.
- *
- * @return - STATUS - status of execution
+ * @brief deallocate the PIceAgent object and all its resources.
+ * @param[in] ppIceAgent
+ * @return STATUS status of execution
  */
 STATUS freeIceAgent(PIceAgent*);
 
 /**
- * if PIceCandidate doesnt exist already in remoteCandidates, create a copy and add to remoteCandidates
+ * @brief if PIceCandidate doesnt exist already in remoteCandidates, create a copy and add to remoteCandidates
  *
- * @param - PIceAgent - IN - IceAgent object
- * @param - PIceCandidate - IN - new remote candidate to add
+ * @param[in] PIceAgent IceAgent object
+ * @param[in] PIceCandidate new remote candidate to add
  *
- * @return - STATUS - status of execution
+ * @return STATUS status of execution
  */
 STATUS iceAgentAddRemoteCandidate(PIceAgent, PCHAR);
 
 /**
- * Initiates stun communication with remote candidates.
+ * @brief Initiates stun communication with remote candidates.
  *
- * @param - PIceAgent - IN - IceAgent object
- * @param - PCHAR - IN - remote username
- * @param - PCHAR - IN - remote password
- * @param - BOOL - IN - is controlling agent
+ * @param[in] PIceAgent IceAgent object
+ * @param[in] PCHAR remote username
+ * @param[in] PCHAR remote password
+ * @param[in] BOOL is controlling agent
  *
- * @return - STATUS - status of execution
+ * @return STATUS status of execution
  */
 STATUS iceAgentStartAgent(PIceAgent, PCHAR, PCHAR, BOOL);
 
+
 /**
- * Initiates candidate gathering
+ * @brief Initiates candidate gathering.
+ * #TBD, original sdk starts gathering ice candidate after setting local description, or receiving remote description.
  *
- * @param - PIceAgent - IN - IceAgent object
+ * @param[in] PIceAgent IceAgent object
  *
- * @return - STATUS - status of execution
+ * @return STATUS status of execution
  */
 STATUS iceAgentStartGathering(PIceAgent);
 
 /**
- * Serialize a candidate for Trickle ICE or exchange via SDP
+ * @brief Serialize a candidate for Trickle ICE or exchange via SDP
  *
- * @param - PIceAgent - IN - IceAgent object
- * @param - PCHAR - OUT - Destination buffer
- * @param - UINT32 - OUT - Size of destination buffer
+ * @param[in] PIceAgent IceAgent object
+ * @param[in] PCHAR OUT Destination buffer
+ * @param[in] UINT32 OUT Size of destination buffer
  *
- * @return - STATUS - status of execution
+ * @return STATUS status of execution
  */
 STATUS iceCandidateSerialize(PIceCandidate, PCHAR, PUINT32);
 
 /**
- * Send data through selected connection. PIceAgent has to be in ICE_AGENT_CONNECTION_STATE_CONNECTED state.
+ * @brief Send data through selected connection. PIceAgent has to be in ICE_AGENT_CONNECTION_STATE_CONNECTED state.
  *
- * @param - PIceAgent - IN - IceAgent object
- * @param - PBYTE - IN - buffer storing the data to be sent
- * @param - UINT32 - IN - length of data
+ * @param[in] PIceAgent IceAgent object
+ * @param[in] PBYTE buffer storing the data to be sent
+ * @param[in] UINT32 length of data
  *
- * @return - STATUS - status of execution
+ * @return STATUS status of execution
  */
 STATUS iceAgentSendPacket(PIceAgent, PBYTE, UINT32);
 
 /**
- * gather local ip addresses and create a udp port. If port creation succeeded then create a new candidate
- * and store it in localCandidates. Ips that are already a local candidate will not be added again.
+ * @brief Starting from given index, fillout PSdpMediaDescription->sdpAttributes with serialize local candidate strings.
  *
- * @param - PIceAgent - IN - IceAgent object
+ * @param[in] PIceAgent IceAgent object
+ * @param[in] PSdpMediaDescription PSdpMediaDescription object whose sdpAttributes will be filled with local candidate strings
+ * @param[in] UINT32 buffer length of pSdpMediaDescription->sdpAttributes[index].attributeValue
+ * @param[in] PUINT32 starting index in sdpAttributes
  *
- * @return - STATUS - status of execution
- */
-STATUS iceAgentInitHostCandidate(PIceAgent);
-
-/**
- * Starting from given index, fillout PSdpMediaDescription->sdpAttributes with serialize local candidate strings.
- *
- * @param - PIceAgent - IN - IceAgent object
- * @param - PSdpMediaDescription - IN - PSdpMediaDescription object whose sdpAttributes will be filled with local candidate strings
- * @param - UINT32 - IN - buffer length of pSdpMediaDescription->sdpAttributes[index].attributeValue
- * @param - PUINT32 - IN - starting index in sdpAttributes
- *
- * @return - STATUS - status of execution
+ * @return STATUS status of execution
  */
 STATUS iceAgentPopulateSdpMediaDescriptionCandidates(PIceAgent, PSdpMediaDescription, UINT32, PUINT32);
 
 /**
- * Start shutdown sequence for IceAgent. Once the function returns Ice will not deliver anymore data and
+ * @brief Start shutdown sequence for IceAgent. Once the function returns Ice will not deliver anymore data and
  * IceAgent is ready to be freed. User should stop calling iceAgentSendPacket after iceAgentShutdown returns.
  * iceAgentShutdown is idempotent.
  *
- * @param - PIceAgent - IN - IceAgent object
+ * @param[in] PIceAgent IceAgent object
  *
- * @return - STATUS - status of execution
+ * @return STATUS status of execution
  */
 STATUS iceAgentShutdown(PIceAgent);
 
 /**
- * Restart IceAgent. IceAgent is reset back to the same state when it was first created. Once iceAgentRestart() return,
+ * @brief Restart IceAgent. IceAgent is reset back to the same state when it was first created. Once iceAgentRestart() return,
  * call iceAgentStartGathering() to start gathering and call iceAgentStartAgent() to give iceAgent the new remote uFrag
  * and uPwd. While Ice is restarting, iceAgentSendPacket can still be called to send data if a connected pair exists.
  *
- * @param - PIceAgent - IN - IceAgent object
- * @param - PCHAR - IN - new local uFrag
- * @param - PCHAR - IN - new local uPwd
+ * @param[in] PIceAgent IceAgent object
+ * @param[in] PCHAR new local uFrag
+ * @param[in] PCHAR new local uPwd
  *
- * @return - STATUS - status of execution
+ * @return STATUS status of execution
  */
 STATUS iceAgentRestart(PIceAgent, PCHAR, PCHAR);
-
+/**
+ * @brief   report the new local candidate to upper layer.
+ *
+ * @param[in] pIceAgent the context of ice agent.
+ * @param[in] pIceCandidate the new local candidate.
+ *
+ * @return STATUS status of execution
+ */
 STATUS iceAgentReportNewLocalCandidate(PIceAgent, PIceCandidate);
 STATUS iceAgentValidateKvsRtcConfig(PKvsRtcConfiguration);
 
 // Incoming data handling functions
+
+/**
+ * @brief handle the incoming packets from the sockete of ice candidate.
+ */
 STATUS incomingDataHandler(UINT64, PSocketConnection, PBYTE, UINT32, PKvsIpAddress, PKvsIpAddress);
+/**
+ * @brief the callback of the socket connection of relay candidates.
+ */
 STATUS incomingRelayedDataHandler(UINT64, PSocketConnection, PBYTE, UINT32, PKvsIpAddress, PKvsIpAddress);
+
+/**
+ * @brief handle the incoming stun packets.
+ */
 STATUS handleStunPacket(PIceAgent, PBYTE, UINT32, PSocketConnection, PKvsIpAddress, PKvsIpAddress);
 
 // IceCandidate functions
+/**
+ * @brief   update the ip address of ice candidate and set the state of the ice candidate as valid.
+ *
+ * @param[in] pIceCandidate
+ * @param[in] pIpAddr
+ *
+ * @return STATUS status of execution
+ */
 STATUS updateCandidateAddress(PIceCandidate, PKvsIpAddress);
 STATUS findCandidateWithIp(PKvsIpAddress, PDoubleList, PIceCandidate*);
 STATUS findCandidateWithSocketConnection(PSocketConnection, PDoubleList, PIceCandidate*);
 
 // IceCandidatePair functions
+/**
+ * @brief Need to acquire pIceAgent->lock first
+ *          createt the ice candidate pair.
+ */
 STATUS createIceCandidatePairs(PIceAgent, PIceCandidate, BOOL);
 STATUS freeIceCandidatePair(PIceCandidatePair*);
+/**
+ * @brief insert the ice candidate pair according to the priority of ice candidate pair.
+ */
 STATUS insertIceCandidatePair(PDoubleList, PIceCandidatePair);
 STATUS findIceCandidatePairWithLocalSocketConnectionAndRemoteAddr(PIceAgent, PSocketConnection, PKvsIpAddress, BOOL, PIceCandidatePair*);
 STATUS pruneUnconnectedIceCandidatePair(PIceAgent);
+/**
+ * @brief there are two state in the state machine, one is check-connection and another is nomination, sending the stun packet to
+ *          confirm the connection between remote ice candidate and local ice candidate.
+ */
 STATUS iceCandidatePairCheckConnection(PStunPacket, PIceAgent, PIceCandidatePair);
 
+/**
+ * @brief send the request of server reflex.
+ */
 STATUS iceAgentSendSrflxCandidateRequest(PIceAgent);
+/**
+ * @brief fsm::check-connection and fsm::nominating will use this api to check the connection of  the ice candidate pair.
+ */
 STATUS iceAgentCheckCandidatePairConnection(PIceAgent);
+/**
+ * @brief controlling ice agent sends the use-candidate stun packet out.
+ */
 STATUS iceAgentSendCandidateNomination(PIceAgent);
 STATUS iceAgentSendStunPacket(PStunPacket, PBYTE, UINT32, PIceAgent, PIceCandidate, PKvsIpAddress);
 
+/**
+ * @brief gather local ip addresses and create a udp port. If port creation succeeded then create a new candidate
+ * and store it in localCandidates. Ips that are already a local candidate will not be added again.
+ *
+ * @param[in] PIceAgent IceAgent object
+ *
+ * @return STATUS status of execution
+ */
 STATUS iceAgentInitHostCandidate(PIceAgent);
 STATUS iceAgentInitSrflxCandidate(PIceAgent);
 STATUS iceAgentInitRelayCandidates(PIceAgent);
 STATUS iceAgentInitRelayCandidate(PIceAgent, UINT32, KVS_SOCKET_PROTOCOL);
 
-STATUS iceAgentCheckConnectionStateSetup(PIceAgent);
-STATUS iceAgentConnectedStateSetup(PIceAgent);
-STATUS iceAgentNominatingStateSetup(PIceAgent);
-STATUS iceAgentReadyStateSetup(PIceAgent);
+STATUS iceAgentSetupFsmCheckConnection(PIceAgent);
+/**
+ * @brief   the handler of state machine when it is at connnected state..
+ *          select the pDataSendingIceCandidatePair according to sequence of ice candidate pair,
+ *          and start the timer of keeping alive.
+ *
+ * @param[in] PIceAgent IceAgent object
+ * 
+ * @return STATUS status of execution
+ */
+STATUS iceAgentSetupFsmConnected(PIceAgent);
+/**
+ * @brief nominating one ice candidate if we are a controlling ice agent.
+ * 
+ * @param[in] PIceAgent IceAgent object
+ *
+ * @return STATUS status of execution
+ */
+STATUS iceAgentSetupFsmNominating(PIceAgent);
+STATUS iceAgentSetupFsmReady(PIceAgent);
 
 // timer callbacks. timer callbacks are interlocked by time queue lock.
-STATUS iceAgentStateTransitionTimerCallback(UINT32, UINT64, UINT64);
-STATUS iceAgentSendKeepAliveTimerCallback(UINT32, UINT64, UINT64);
-STATUS iceAgentGatherCandidateTimerCallback(UINT32, UINT64, UINT64);
+/**
+ * @brief timer queue callbacks are interlocked by time queue lock.
+ *
+ * #static
+ *
+ * @param timerId - timer queue task id
+ * @param currentTime
+ * @param customData - custom data passed to timer queue when task was added
+ * @return STATUS status of execution
+ */
+STATUS iceAgentFsmTimerCallback(UINT32, UINT64, UINT64);
+/**
+ * @brief This is one callback which is used by timer. After ice agent enters the connected state, we need to send keep alive packet.
+ * And we set the interval of keeping alive as 15 seconds.
+ *
+ * #TBD, need to change this behavior. #fsm.
+ *
+ * @return STATUS status of execution
+ */
+STATUS iceAgentKeepAliveTimerCallback(UINT32, UINT64, UINT64);
+STATUS iceAgentGatheringTimerCallback(UINT32, UINT64, UINT64);
 
 // Default time callback for the state machine
 UINT64 iceAgentGetCurrentTime(UINT64);
 
+/**
+ * @brief   nominating one first connected candidate pair and move other candidate pair to frozen state.
+ *          only controlling ice agent can nominate the ice candidate.
+ */
 STATUS iceAgentNominateCandidatePair(PIceAgent);
 STATUS iceAgentInvalidateCandidatePair(PIceAgent);
+
+/**
+ * @brief receive one stun packet can not match the ip and port of local/remote, so it may be one reflexive candidate.
+ */
 STATUS iceAgentCheckPeerReflexiveCandidate(PIceAgent, PKvsIpAddress, UINT32, BOOL, PSocketConnection);
 STATUS iceAgentFatalError(PIceAgent, STATUS);
 VOID iceAgentLogNewCandidate(PIceCandidate);
 
 UINT32 computeCandidatePriority(PIceCandidate);
 UINT64 computeCandidatePairPriority(PIceCandidatePair, BOOL);
+/**
+ * @brief   get the corrsponding string of ice candidate type.
+ *
+ * @param[in] candidateType
+ *
+ * @return the string of the ice candidate type.
+ */
 PCHAR iceAgentGetCandidateTypeStr(ICE_CANDIDATE_TYPE);
 STATUS updateSelectedLocalRemoteCandidateStats(PIceAgent);
 

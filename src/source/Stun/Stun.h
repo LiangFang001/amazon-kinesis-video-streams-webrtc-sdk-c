@@ -134,7 +134,8 @@ extern "C" {
     putInt16((PINT16)((pBuf) + STUN_ATTRIBUTE_HEADER_TYPE_LEN), (UINT16)(dataLen));
 
 /**
- * STUN packet types
+ * @brief   STUN packet types
+ *          https://tools.ietf.org/html/rfc5389#appendix-A
  */
 typedef enum {
     STUN_PACKET_TYPE_BINDING_REQUEST = (UINT16) 0x0001,

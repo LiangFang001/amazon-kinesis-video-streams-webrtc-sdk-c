@@ -19,68 +19,69 @@ typedef struct {
     volatile ATOMIC_BOOL terminate;
     volatile ATOMIC_BOOL listenerRoutineStarted;
     volatile ATOMIC_BOOL connectionListChanged;
-    PDoubleList connectionList;
-    MUTEX lock;
-    TID receiveDataRoutine;
-    PBYTE pBuffer;
+    PDoubleList connectionList; //!< the connection list stores every socket connection.
+    MUTEX lock;                 //!< protect the data of connection listener.
+    TID receiveDataRoutine;     //!< the thread id of this connnection listener.
+    PBYTE pBuffer;              //!< the buffer to receive the tcp/udp packets.
     UINT64 bufferLen;
     CVAR removeConnectionComplete;
 } ConnectionListener, *PConnectionListener;
 
 /**
- * allocate the ConnectionListener struct
+ * @brief allocate the ConnectionListener struct
+ *        Must create connection listener before creating the ice agent.
  *
- * @param - PConnectionListener* - IN/OUT - pointer to PConnectionListener being allocated
+ * @param[in, out] PConnectionListener* pointer to PConnectionListener being allocated
  *
- * @return - STATUS status of execution
+ * @return STATUS status of execution
  */
 STATUS createConnectionListener(PConnectionListener*);
 
 /**
- * free the ConnectionListener struct and all its resources
+ * @brief free the ConnectionListener struct and all its resources
  *
- * @param - PConnectionListener* - IN/OUT - pointer to PConnectionListener being freed
+ * @param[in, out] PConnectionListener* pointer to PConnectionListener being freed
  *
- * @return - STATUS status of execution
+ * @return STATUS status of execution
  */
 STATUS freeConnectionListener(PConnectionListener*);
 
 /**
- * add a new PSocketConnection to listen for incoming data
+ * @brief add a new PSocketConnection to listen for incoming data
  *
- * @param - PConnectionListener      - IN - the ConnectionListener struct to use
- * @param - PSocketConnection   - IN - new PSocketConnection to listen for incoming data
+ * @param[in] PConnectionListener the ConnectionListener struct to use
+ * @param[in] PSocketConnection new PSocketConnection to listen for incoming data
  *
- * @return - STATUS status of execution
+ * @return STATUS status of execution
  */
 STATUS connectionListenerAddConnection(PConnectionListener, PSocketConnection);
 
 /**
- * remove PSocketConnection from the list to listen for incoming data
+ * @brief remove PSocketConnection from the list to listen for incoming data
  *
- * @param - PConnectionListener      - IN - the ConnectionListener struct to use
- * @param - PSocketConnection   - IN - PSocketConnection to be removed
+ * @param[in] PConnectionListener the ConnectionListener struct to use
+ * @param[in] PSocketConnection PSocketConnection to be removed
  *
- * @return - STATUS status of execution
+ * @return STATUS status of execution
  */
 STATUS connectionListenerRemoveConnection(PConnectionListener, PSocketConnection);
 
 /**
- * remove all listening PSocketConnection
+ * @brief remove all listening PSocketConnection
  *
- * @param - PConnectionListener      - IN - the ConnectionListener struct to use
+ * @param[in] PConnectionListener the ConnectionListener struct to use
  *
- * @return - STATUS status of execution
+ * @return STATUS status of execution
  */
 STATUS connectionListenerRemoveAllConnection(PConnectionListener);
 
 /**
- * Spin off a listener thread that listen for incoming traffic for all PSocketConnection stored in connectionList.
+ * @brief Spin off a listener thread that listen for incoming traffic for all PSocketConnection stored in connectionList.
  * Whenever a PSocketConnection receives data, invoke ConnectionDataAvailableFunc passed in.
  *
- * @param - PConnectionListener      - IN - the ConnectionListener struct to use
+ * @param[in] PConnectionListener the ConnectionListener struct to use
  *
- * @return - STATUS status of execution
+ * @return STATUS status of execution
  */
 STATUS connectionListenerStart(PConnectionListener);
 

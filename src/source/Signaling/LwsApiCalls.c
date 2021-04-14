@@ -143,6 +143,7 @@ INT32 lwsHttpCallbackRoutine(struct lws* wsi, enum lws_callback_reasons reason, 
             pEndPtr = *ppStartPtr + dataSize - 1;
 
             // Iterate through the headers
+            // send the request header to lws.
             while (headerCount != 0) {
                 CHK_STATUS(singleListGetHeadNode(pRequestInfo->pRequestHeaders, &pCurNode));
                 CHK_STATUS(singleListGetNodeData(pCurNode, &item));
@@ -535,7 +536,9 @@ STATUS lwsCompleteSync(PLwsCallInfo pCallInfo)
 
     MUTEX_LOCK(pCallInfo->pSignalingClient->lwsServiceLock);
     locked = TRUE;
+
     CHK(NULL != lws_client_connect_via_info(&connectInfo), STATUS_SIGNALING_LWS_CLIENT_CONNECT_FAILED);
+
     MUTEX_UNLOCK(pCallInfo->pSignalingClient->lwsServiceLock);
     locked = FALSE;
 
@@ -591,6 +594,7 @@ STATUS describeChannelLws(PSignalingClient pSignalingClient, UINT64 time)
     STRCAT(pUrl, DESCRIBE_SIGNALING_CHANNEL_API_POSTFIX);
 
     // Prepare the json params for the call
+    // #TBD, #memory.
     SNPRINTF(pParamsJson, MAX_JSON_PARAMETER_STRING_LEN, DESCRIBE_CHANNEL_PARAM_JSON_TEMPLATE, pSignalingClient->pChannelInfo->pChannelName);
 
     // Create the request info with the body
@@ -603,7 +607,6 @@ STATUS describeChannelLws(PSignalingClient pSignalingClient, UINT64 time)
 
     // Make a blocking call
     CHK_STATUS(lwsCompleteSync(pLwsCallInfo));
-
     // Set the service call result
     ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) pLwsCallInfo->callInfo.callResult);
     pResponseStr = pLwsCallInfo->callInfo.responseData;
@@ -924,7 +927,7 @@ CleanUp:
     LEAVES();
     return retStatus;
 }
-// https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_AWSAcuitySignalingService_GetIceServerConfig.html
+
 STATUS getIceConfigLws(PSignalingClient pSignalingClient, UINT64 time)
 {
     ENTERS();
@@ -1450,7 +1453,7 @@ STATUS writeLwsData(PSignalingClient pSignalingClient, BOOL awaitForResponse)
     // See if anything needs to be done
     CHK(pSignalingClient->pOngoingCallInfo->sendBufferSize != pSignalingClient->pOngoingCallInfo->sendOffset, retStatus);
 
-    DLOGD("Sending data over web socket: %s", pSignalingClient->pOngoingCallInfo->sendBuffer + LWS_PRE);
+    // DLOGD("Sending data over web socket: %s", pSignalingClient->pOngoingCallInfo->sendBuffer + LWS_PRE);
 
     // Initialize the send result to none
     ATOMIC_STORE(&pSignalingClient->messageResult, (SIZE_T) SERVICE_CALL_RESULT_NOT_SET);
@@ -1862,7 +1865,7 @@ CleanUp:
 }
 
 #ifdef KVS_PLAT_ESP_FREERTOS
-/** #YC_TBD, need to add the code of initialization. */
+/** #TBD, need to add the code of initialization. */
 TID receivedTid = INVALID_TID_VALUE;
 QueueHandle_t lwsMsgQ = NULL;
 #define KVSWEBRTC_LWS_MSGQ_LENGTH 32
