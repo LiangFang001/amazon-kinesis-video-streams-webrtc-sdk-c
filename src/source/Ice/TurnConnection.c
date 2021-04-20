@@ -709,7 +709,15 @@ STATUS turnConnectionSendData(PTurnConnection pTurnConnection, PBYTE pBuf, UINT3
     sendLocked = TRUE;
 
     CHK(pTurnConnection->dataBufferSize - TURN_DATA_CHANNEL_SEND_OVERHEAD >= bufLen, STATUS_BUFFER_TOO_SMALL);
-
+    /**
+     * Over TCP and TLS-over-TCP, the ChannelData message MUST be padded to
+     * a multiple of four bytes in order to ensure the alignment of
+     * subsequent messages. The padding is not reflected in the length
+     * field of the ChannelData message, so the actual size of a ChannelData
+     * message (including padding) is (4 + Length) rounded up to the nearest
+     * multiple of 4
+     * https://tools.ietf.org/html/rfc5766#section-11.5
+     */
     paddedDataLen = (UINT32) ROUND_UP(TURN_DATA_CHANNEL_SEND_OVERHEAD + bufLen, 4);
 
     /* generate data channel TURN message */

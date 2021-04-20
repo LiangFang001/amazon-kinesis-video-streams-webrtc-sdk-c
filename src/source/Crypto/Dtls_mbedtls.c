@@ -427,6 +427,7 @@ STATUS dtlsSessionGetLocalCertificateFingerprint(PDtlsSession pDtlsSession, PCHA
     locked = TRUE;
 
     // TODO: Use the 0th certificate for now
+    // #TBD. need to check the relationship of certificate.
     MEMCPY(pBuff, pDtlsSession->certificates[0].fingerprint, buffLen);
 
 CleanUp:

@@ -131,12 +131,12 @@ struct __DtlsSession {
 
 /**
  * Create DTLS session. Not thread safe.
- * @param PDtlsSessionCallbacks - callbacks
- * @param TIMER_QUEUE_HANDLE - timer handle to schedule timer task with
- * @param INT32 - size of generated certificate
- * @param BOOL - whether to generate certificate or not
- * @param PRtcCertificate - user provided certificate
- * @param PDtlsSession* - pointer to created DtlsSession object
+ * @param[in] PDtlsSessionCallbacks - callbacks
+ * @param[in] TIMER_QUEUE_HANDLE - timer handle to schedule timer task with
+ * @param[in] INT32 - size of generated certificate
+ * @param[in] BOOL - whether to generate certificate or not
+ * @param[in] PRtcCertificate - user provided certificate
+ * @param[in] PDtlsSession* - pointer to created DtlsSession object
  *
  * @return STATUS - status of operation
  */
