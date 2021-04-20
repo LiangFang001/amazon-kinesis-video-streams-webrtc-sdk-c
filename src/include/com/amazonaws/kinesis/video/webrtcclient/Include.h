@@ -816,8 +816,8 @@ typedef enum {
                                             //!< we get to this state after ICE refresh
     SIGNALING_CLIENT_STATE_CONNECTED,       //!< On transitioning to this state, the timeout on the state machine is reset
     SIGNALING_CLIENT_STATE_DISCONNECTED,    //!< This state transition happens either from connect or connected state
-    SIGNALING_CLIENT_STATE_DELETE,          //!< This state transition happens when the application calls signalingClientDeleteSync API.
-    SIGNALING_CLIENT_STATE_DELETED, //!< This state transition happens after the channel gets deleted as a result of a signalingClientDeleteSync API.
+    SIGNALING_CLIENT_STATE_DELETE,          //!< This state transition happens when the application calls signalingClientDelete API.
+    SIGNALING_CLIENT_STATE_DELETED, //!< This state transition happens after the channel gets deleted as a result of a signalingClientDelete API.
                                     //!< This is a terminal state.
     SIGNALING_CLIENT_STATE_MAX_VALUE, //!< This state indicates maximum number of signaling client states
 } SIGNALING_CLIENT_STATE,
@@ -1844,7 +1844,7 @@ PUBLIC_API PCHAR getNatBehaviorStr(NAT_BEHAVIOR natBehavior);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS createSignalingClientSync(PSignalingClientInfo, PChannelInfo, PSignalingClientCallbacks, PAwsCredentialProvider,
+PUBLIC_API STATUS signalingClientCreate(PSignalingClientInfo, PChannelInfo, PSignalingClientCallbacks, PAwsCredentialProvider,
                                             PSIGNALING_CLIENT_HANDLE);
 
 /**
@@ -1856,7 +1856,7 @@ PUBLIC_API STATUS createSignalingClientSync(PSignalingClientInfo, PChannelInfo, 
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS freeSignalingClient(PSIGNALING_CLIENT_HANDLE);
+PUBLIC_API STATUS signalingClientFree(PSIGNALING_CLIENT_HANDLE);
 
 /**
  * @brief Send a message through a Signaling client.
@@ -1869,7 +1869,7 @@ PUBLIC_API STATUS freeSignalingClient(PSIGNALING_CLIENT_HANDLE);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientSendMessageSync(SIGNALING_CLIENT_HANDLE, PSignalingMessage);
+PUBLIC_API STATUS signalingClientSendMessage(SIGNALING_CLIENT_HANDLE, PSignalingMessage);
 
 /**
  * @brief Gets the retrieved ICE configuration information object count
@@ -1907,7 +1907,7 @@ PUBLIC_API STATUS signalingClientGetIceConfigInfo(SIGNALING_CLIENT_HANDLE, UINT3
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientConnectSync(SIGNALING_CLIENT_HANDLE);
+PUBLIC_API STATUS signalingClientConnect(SIGNALING_CLIENT_HANDLE);
 
 /**
  * @brief Disconnects the signaling client.
@@ -1916,7 +1916,7 @@ PUBLIC_API STATUS signalingClientConnectSync(SIGNALING_CLIENT_HANDLE);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientDisconnectSync(SIGNALING_CLIENT_HANDLE);
+PUBLIC_API STATUS signalingClientDisconnect(SIGNALING_CLIENT_HANDLE);
 
 /**
  * @brief Gets the Signaling client current state.
@@ -1954,7 +1954,7 @@ PUBLIC_API STATUS signalingClientGetStateString(SIGNALING_CLIENT_STATE, PCHAR*);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientDeleteSync(SIGNALING_CLIENT_HANDLE);
+PUBLIC_API STATUS signalingClientDelete(SIGNALING_CLIENT_HANDLE);
 
 /**
  * @brief Get signaling related metrics

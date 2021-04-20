@@ -286,40 +286,40 @@ typedef struct {
 #define TO_SIGNALING_CLIENT_HANDLE(p)   ((SIGNALING_CLIENT_HANDLE)(p))
 #define FROM_SIGNALING_CLIENT_HANDLE(h) (IS_VALID_SIGNALING_CLIENT_HANDLE(h) ? (PSignalingClient)(h) : NULL)
 
-STATUS createSignalingSync(PSignalingClientInfoInternal, PChannelInfo, PSignalingClientCallbacks, PAwsCredentialProvider, PSignalingClient*);
-STATUS freeSignaling(PSignalingClient*);
+STATUS signalingCreate(PSignalingClientInfoInternal, PChannelInfo, PSignalingClientCallbacks, PAwsCredentialProvider, PSignalingClient*);
+STATUS signalingFree(PSignalingClient*);
 
-STATUS signalingSendMessageSync(PSignalingClient, PSignalingMessage);
+STATUS signalingSendMessage(PSignalingClient, PSignalingMessage);
 STATUS signalingGetIceConfigInfoCout(PSignalingClient, PUINT32);
 STATUS signalingGetIceConfigInfo(PSignalingClient, UINT32, PIceConfigInfo*);
-STATUS signalingConnectSync(PSignalingClient);
-STATUS signalingDisconnectSync(PSignalingClient);
-STATUS signalingDeleteSync(PSignalingClient);
+STATUS signalingConnect(PSignalingClient);
+STATUS signalingDisconnect(PSignalingClient);
+STATUS signalingDelete(PSignalingClient);
 
-STATUS validateSignalingCallbacks(PSignalingClient, PSignalingClientCallbacks);
-STATUS validateSignalingClientInfo(PSignalingClient, PSignalingClientInfoInternal);
-STATUS validateIceConfiguration(PSignalingClient);
+STATUS signalingValidateCallbacks(PSignalingClient, PSignalingClientCallbacks);
+STATUS signalingValidateClientInfo(PSignalingClient, PSignalingClientInfoInternal);
+STATUS signalingValidateIceConfiguration(PSignalingClient);
 
 STATUS signalingStoreOngoingMessage(PSignalingClient, PSignalingMessage);
 STATUS signalingRemoveOngoingMessage(PSignalingClient, PCHAR);
 STATUS signalingGetOngoingMessage(PSignalingClient, PCHAR, PCHAR, PSignalingMessage*);
 
-STATUS refreshIceConfigurationCallback(UINT32, UINT64, UINT64);
+STATUS signalingRefreshIceConfigurationCallback(UINT32, UINT64, UINT64);
 
 UINT64 signalingGetCurrentTime(UINT64);
 
-STATUS awaitForThreadTermination(PThreadTracker, UINT64);
-STATUS initializeThreadTracker(PThreadTracker);
-STATUS uninitializeThreadTracker(PThreadTracker);
+STATUS signalingAwaitForThreadTermination(PThreadTracker, UINT64);
+STATUS signalingInitThreadTracker(PThreadTracker);
+STATUS signalingUninitThreadTracker(PThreadTracker);
 
-STATUS terminateOngoingOperations(PSignalingClient, BOOL);
+STATUS signalingTerminateOngoingOperations(PSignalingClient, BOOL);
 
-STATUS describeChannel(PSignalingClient, UINT64);
-STATUS createChannel(PSignalingClient, UINT64);
-STATUS getChannelEndpoint(PSignalingClient, UINT64);
-STATUS getIceConfig(PSignalingClient, UINT64);
-STATUS connectSignalingChannel(PSignalingClient, UINT64);
-STATUS deleteChannel(PSignalingClient, UINT64);
+STATUS signalingDescribeChannel(PSignalingClient, UINT64);
+STATUS signalingCreateChannel(PSignalingClient, UINT64);
+STATUS signalingGetChannelEndpoint(PSignalingClient, UINT64);
+STATUS signalingGetIceConfig(PSignalingClient, UINT64);
+STATUS signalingConnectChannel(PSignalingClient, UINT64);
+STATUS signalingDeleteChannel(PSignalingClient, UINT64);
 STATUS signalingGetMetrics(PSignalingClient, PSignalingClientMetrics);
 
 #ifdef __cplusplus

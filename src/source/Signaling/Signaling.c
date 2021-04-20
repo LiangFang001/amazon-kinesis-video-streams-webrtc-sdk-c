@@ -4,7 +4,7 @@
 extern StateMachineState SIGNALING_STATE_MACHINE_STATES[];
 extern UINT32 SIGNALING_STATE_MACHINE_STATE_COUNT;
 
-STATUS createSignalingSync(PSignalingClientInfoInternal pClientInfo, PChannelInfo pChannelInfo, PSignalingClientCallbacks pCallbacks,
+STATUS signalingCreate(PSignalingClientInfoInternal pClientInfo, PChannelInfo pChannelInfo, PSignalingClientCallbacks pCallbacks,
                            PAwsCredentialProvider pCredentialProvider, PSignalingClient* ppSignalingClient)
 {
     ENTERS();
@@ -26,15 +26,15 @@ STATUS createSignalingSync(PSignalingClientInfoInternal pClientInfo, PChannelInf
     CHK(NULL != (pSignalingClient = (PSignalingClient) MEMCALLOC(1, SIZEOF(SignalingClient))), STATUS_NOT_ENOUGH_MEMORY);
 
     // Initialize the listener and restarter thread trackers
-    CHK_STATUS(initializeThreadTracker(&pSignalingClient->listenerTracker));
-    CHK_STATUS(initializeThreadTracker(&pSignalingClient->reconnecterTracker));
+    CHK_STATUS(signalingInitThreadTracker(&pSignalingClient->listenerTracker));
+    CHK_STATUS(signalingInitThreadTracker(&pSignalingClient->reconnecterTracker));
 
     // Validate and store the input
 
     CHK_STATUS(createValidateChannelInfo(pChannelInfo, &pSignalingClient->pChannelInfo));
 
-    CHK_STATUS(validateSignalingCallbacks(pSignalingClient, pCallbacks));
-    CHK_STATUS(validateSignalingClientInfo(pSignalingClient, pClientInfo));
+    CHK_STATUS(signalingValidateCallbacks(pSignalingClient, pCallbacks));
+    CHK_STATUS(signalingValidateClientInfo(pSignalingClient, pClientInfo));
 
     // Set invalid call times
     pSignalingClient->describeTime = INVALID_TIMESTAMP_VALUE;
@@ -159,7 +159,7 @@ STATUS createSignalingSync(PSignalingClientInfoInternal pClientInfo, PChannelInf
     if (pSignalingClient->signalingClientCallbacks.stateChangeFn != NULL) {
         CHK_STATUS(getStateMachineCurrentState(pSignalingClient->pStateMachine, &pStateMachineState));
         CHK_STATUS(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
-                                                                            getSignalingStateFromStateMachineState(pStateMachineState->state)));
+                                                                            signalingFsmGetState(pStateMachineState->state)));
     }
 
     // Set the async processing based on the channel info
@@ -169,14 +169,14 @@ STATUS createSignalingSync(PSignalingClientInfoInternal pClientInfo, PChannelInf
     ATOMIC_STORE_BOOL(&pSignalingClient->refreshIceConfig, FALSE);
 
     // Prime the state machine
-    CHK_STATUS(stepSignalingStateMachine(pSignalingClient, STATUS_SUCCESS));
+    CHK_STATUS(signalingFsmStep(pSignalingClient, STATUS_SUCCESS));
 
 CleanUp:
 
     CHK_LOG_ERR(retStatus);
 
     if (STATUS_FAILED(retStatus)) {
-        freeSignaling(&pSignalingClient);
+        signalingFree(&pSignalingClient);
     }
 
     if (ppSignalingClient != NULL) {
@@ -187,7 +187,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeSignaling(PSignalingClient* ppSignalingClient)
+STATUS signalingFree(PSignalingClient* ppSignalingClient)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -200,7 +200,7 @@ STATUS freeSignaling(PSignalingClient* ppSignalingClient)
 
     ATOMIC_STORE_BOOL(&pSignalingClient->shutdown, TRUE);
 
-    terminateOngoingOperations(pSignalingClient, TRUE);
+    signalingTerminateOngoingOperations(pSignalingClient, TRUE);
 
     if (pSignalingClient->pLwsContext != NULL) {
         MUTEX_LOCK(pSignalingClient->lwsSerializerLock);
@@ -259,8 +259,8 @@ STATUS freeSignaling(PSignalingClient* ppSignalingClient)
         MUTEX_FREE(pSignalingClient->diagnosticsLock);
     }
 
-    uninitializeThreadTracker(&pSignalingClient->reconnecterTracker);
-    uninitializeThreadTracker(&pSignalingClient->listenerTracker);
+    signalingUninitThreadTracker(&pSignalingClient->reconnecterTracker);
+    signalingUninitThreadTracker(&pSignalingClient->listenerTracker);
 
     MEMFREE(pSignalingClient);
 
@@ -272,7 +272,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS terminateOngoingOperations(PSignalingClient pSignalingClient, BOOL freeTimerQueue)
+STATUS signalingTerminateOngoingOperations(PSignalingClient pSignalingClient, BOOL freeTimerQueue)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -284,10 +284,10 @@ STATUS terminateOngoingOperations(PSignalingClient pSignalingClient, BOOL freeTi
     }
 
     // Terminate the listener thread if alive
-    terminateLwsListenerLoop(pSignalingClient);
+    lwsTerminateListenerLoop(pSignalingClient);
 
     // Await for the reconnect thread to exit
-    awaitForThreadTermination(&pSignalingClient->reconnecterTracker, SIGNALING_CLIENT_SHUTDOWN_TIMEOUT);
+    signalingAwaitForThreadTermination(&pSignalingClient->reconnecterTracker, SIGNALING_CLIENT_SHUTDOWN_TIMEOUT);
 
 CleanUp:
 
@@ -297,7 +297,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingSendMessageSync(PSignalingClient pSignalingClient, PSignalingMessage pSignalingMessage)
+STATUS signalingSendMessage(PSignalingClient pSignalingClient, PSignalingMessage pSignalingMessage)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -328,7 +328,7 @@ STATUS signalingSendMessageSync(PSignalingClient pSignalingClient, PSignalingMes
     removeFromList = TRUE;
 
     // Perform the call
-    CHK_STATUS(sendLwsMessage(pSignalingClient, pOfferType, pSignalingMessage->peerClientId, pSignalingMessage->payload,
+    CHK_STATUS(lwsSendMessage(pSignalingClient, pOfferType, pSignalingMessage->peerClientId, pSignalingMessage->payload,
                               pSignalingMessage->payloadLen, pSignalingMessage->correlationId, 0));
 
     // Update the internal diagnostics only after successfully sending
@@ -398,7 +398,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingConnectSync(PSignalingClient pSignalingClient)
+STATUS signalingConnect(PSignalingClient pSignalingClient)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -422,7 +422,7 @@ STATUS signalingConnectSync(PSignalingClient pSignalingClient)
     // Set the time out before execution
     pSignalingClient->stepUntil = GETTIME() + SIGNALING_CONNECT_STATE_TIMEOUT;
 
-    CHK_STATUS(stepSignalingStateMachine(pSignalingClient, retStatus));
+    CHK_STATUS(signalingFsmStep(pSignalingClient, retStatus));
 
 CleanUp:
 
@@ -438,7 +438,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingDisconnectSync(PSignalingClient pSignalingClient)
+STATUS signalingDisconnect(PSignalingClient pSignalingClient)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -451,11 +451,11 @@ STATUS signalingDisconnectSync(PSignalingClient pSignalingClient)
     // Check if we are already not connected
     CHK(ATOMIC_LOAD_BOOL(&pSignalingClient->connected), retStatus);
 
-    CHK_STATUS(terminateOngoingOperations(pSignalingClient, FALSE));
+    CHK_STATUS(signalingTerminateOngoingOperations(pSignalingClient, FALSE));
 
     ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) SERVICE_CALL_RESULT_OK);
 
-    CHK_STATUS(stepSignalingStateMachine(pSignalingClient, retStatus));
+    CHK_STATUS(signalingFsmStep(pSignalingClient, retStatus));
 
 CleanUp:
 
@@ -465,7 +465,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingDeleteSync(PSignalingClient pSignalingClient)
+STATUS signalingDelete(PSignalingClient pSignalingClient)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -478,7 +478,7 @@ STATUS signalingDeleteSync(PSignalingClient pSignalingClient)
     // Mark as being deleted
     ATOMIC_STORE_BOOL(&pSignalingClient->deleting, TRUE);
 
-    CHK_STATUS(terminateOngoingOperations(pSignalingClient, TRUE));
+    CHK_STATUS(signalingTerminateOngoingOperations(pSignalingClient, TRUE));
 
     // Set the state directly
     setStateMachineCurrentState(pSignalingClient->pStateMachine, SIGNALING_STATE_DELETE);
@@ -486,7 +486,7 @@ STATUS signalingDeleteSync(PSignalingClient pSignalingClient)
     // Set the time out before execution
     pSignalingClient->stepUntil = GETTIME() + SIGNALING_DELETE_TIMEOUT;
 
-    CHK_STATUS(stepSignalingStateMachine(pSignalingClient, retStatus));
+    CHK_STATUS(signalingFsmStep(pSignalingClient, retStatus));
 
 CleanUp:
 
@@ -496,7 +496,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS validateSignalingCallbacks(PSignalingClient pSignalingClient, PSignalingClientCallbacks pCallbacks)
+STATUS signalingValidateCallbacks(PSignalingClient pSignalingClient, PSignalingClientCallbacks pCallbacks)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -515,7 +515,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS validateSignalingClientInfo(PSignalingClient pSignalingClient, PSignalingClientInfoInternal pClientInfo)
+STATUS signalingValidateClientInfo(PSignalingClient pSignalingClient, PSignalingClientInfoInternal pClientInfo)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -534,7 +534,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS validateIceConfiguration(PSignalingClient pSignalingClient)
+STATUS signalingValidateIceConfiguration(PSignalingClient pSignalingClient)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -574,7 +574,7 @@ STATUS validateIceConfiguration(PSignalingClient pSignalingClient)
 
     // Schedule the refresh on the timer queue
     CHK_STATUS(timerQueueAddTimer(pSignalingClient->timerQueueHandle, refreshPeriod, TIMER_QUEUE_SINGLE_INVOCATION_PERIOD,
-                                  refreshIceConfigurationCallback, (UINT64) pSignalingClient, &timer));
+                                  signalingRefreshIceConfigurationCallback, (UINT64) pSignalingClient, &timer));
 
 CleanUp:
 
@@ -582,7 +582,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS refreshIceConfigurationCallback(UINT32 timerId, UINT64 scheduledTime, UINT64 customData)
+STATUS signalingRefreshIceConfigurationCallback(UINT32 timerId, UINT64 scheduledTime, UINT64 customData)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -602,7 +602,7 @@ STATUS refreshIceConfigurationCallback(UINT32 timerId, UINT64 scheduledTime, UIN
     if (ATOMIC_LOAD_BOOL(&pSignalingClient->asyncGetIceConfig)) {
         // Re-schedule in a while
         CHK_STATUS(timerQueueAddTimer(pSignalingClient->timerQueueHandle, SIGNALING_ASYNC_ICE_CONFIG_REFRESH_DELAY,
-                                      TIMER_QUEUE_SINGLE_INVOCATION_PERIOD, refreshIceConfigurationCallback, (UINT64) pSignalingClient, &newTimerId));
+                                      TIMER_QUEUE_SINGLE_INVOCATION_PERIOD, signalingRefreshIceConfigurationCallback, (UINT64) pSignalingClient, &newTimerId));
         CHK(FALSE, retStatus);
     }
 
@@ -622,7 +622,7 @@ STATUS refreshIceConfigurationCallback(UINT32 timerId, UINT64 scheduledTime, UIN
         // Set the time out before execution
         pSignalingClient->stepUntil = GETTIME() + SIGNALING_REFRESH_ICE_CONFIG_STATE_TIMEOUT;
 
-        CHK_STATUS(stepSignalingStateMachine(pSignalingClient, retStatus));
+        CHK_STATUS(signalingFsmStep(pSignalingClient, retStatus));
     }
 
 CleanUp:
@@ -770,7 +770,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS initializeThreadTracker(PThreadTracker pThreadTracker)
+STATUS signalingInitThreadTracker(PThreadTracker pThreadTracker)
 {
     STATUS retStatus = STATUS_SUCCESS;
     CHK(pThreadTracker != NULL, STATUS_NULL_ARG);
@@ -789,7 +789,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS uninitializeThreadTracker(PThreadTracker pThreadTracker)
+STATUS signalingUninitThreadTracker(PThreadTracker pThreadTracker)
 {
     STATUS retStatus = STATUS_SUCCESS;
     CHK(pThreadTracker != NULL, STATUS_NULL_ARG);
@@ -808,7 +808,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS awaitForThreadTermination(PThreadTracker pThreadTracker, UINT64 timeout)
+STATUS signalingAwaitForThreadTermination(PThreadTracker pThreadTracker, UINT64 timeout)
 {
     STATUS retStatus = STATUS_SUCCESS;
     BOOL locked = FALSE;
@@ -834,7 +834,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS describeChannel(PSignalingClient pSignalingClient, UINT64 time)
+STATUS signalingDescribeChannel(PSignalingClient pSignalingClient, UINT64 time)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -873,7 +873,7 @@ STATUS describeChannel(PSignalingClient pSignalingClient, UINT64 time)
             }
 
             if (STATUS_SUCCEEDED(retStatus)) {
-                retStatus = describeChannelLws(pSignalingClient, time);
+                retStatus = lwsDescribeChannel(pSignalingClient, time);
 
                 // Store the last call time on success
                 if (STATUS_SUCCEEDED(retStatus)) {
@@ -903,7 +903,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS createChannel(PSignalingClient pSignalingClient, UINT64 time)
+STATUS signalingCreateChannel(PSignalingClient pSignalingClient, UINT64 time)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -924,7 +924,7 @@ STATUS createChannel(PSignalingClient pSignalingClient, UINT64 time)
     }
 
     if (STATUS_SUCCEEDED(retStatus)) {
-        retStatus = createChannelLws(pSignalingClient, time);
+        retStatus = lwsCreateChannel(pSignalingClient, time);
 
         // Store the time of the call on success
         if (STATUS_SUCCEEDED(retStatus)) {
@@ -949,7 +949,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS getChannelEndpoint(PSignalingClient pSignalingClient, UINT64 time)
+STATUS signalingGetChannelEndpoint(PSignalingClient pSignalingClient, UINT64 time)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -987,7 +987,7 @@ STATUS getChannelEndpoint(PSignalingClient pSignalingClient, UINT64 time)
             }
 
             if (STATUS_SUCCEEDED(retStatus)) {
-                retStatus = getChannelEndpointLws(pSignalingClient, time);
+                retStatus = lwsGetChannelEndpoint(pSignalingClient, time);
 
                 if (STATUS_SUCCEEDED(retStatus)) {
                     pSignalingClient->getEndpointTime = time;
@@ -1032,7 +1032,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS getIceConfig(PSignalingClient pSignalingClient, UINT64 time)
+STATUS signalingGetIceConfig(PSignalingClient pSignalingClient, UINT64 time)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -1044,7 +1044,7 @@ STATUS getIceConfig(PSignalingClient pSignalingClient, UINT64 time)
     if (ATOMIC_LOAD_BOOL(&pSignalingClient->asyncGetIceConfig)) {
         // We will emulate the call and kick off the ice refresh routine
         CHK_STATUS(timerQueueAddTimer(pSignalingClient->timerQueueHandle, SIGNALING_ASYNC_ICE_CONFIG_REFRESH_DELAY,
-                                      TIMER_QUEUE_SINGLE_INVOCATION_PERIOD, refreshIceConfigurationCallback, (UINT64) pSignalingClient, &timerId));
+                                      TIMER_QUEUE_SINGLE_INVOCATION_PERIOD, signalingRefreshIceConfigurationCallback, (UINT64) pSignalingClient, &timerId));
 
         // Success early return to prime the state machine to the next state which is Ready
         ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) SERVICE_CALL_RESULT_OK);
@@ -1065,7 +1065,7 @@ STATUS getIceConfig(PSignalingClient pSignalingClient, UINT64 time)
     }
 
     if (STATUS_SUCCEEDED(retStatus)) {
-        retStatus = getIceConfigLws(pSignalingClient, time);
+        retStatus = lwsGetIceConfig(pSignalingClient, time);
 
         if (STATUS_SUCCEEDED(retStatus)) {
             pSignalingClient->getIceConfigTime = time;
@@ -1089,7 +1089,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS deleteChannel(PSignalingClient pSignalingClient, UINT64 time)
+STATUS signalingDeleteChannel(PSignalingClient pSignalingClient, UINT64 time)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -1110,7 +1110,7 @@ STATUS deleteChannel(PSignalingClient pSignalingClient, UINT64 time)
     }
 
     if (STATUS_SUCCEEDED(retStatus)) {
-        retStatus = deleteChannelLws(pSignalingClient, time);
+        retStatus = lwsDeleteChannel(pSignalingClient, time);
 
         // Store the time of the call on success
         if (STATUS_SUCCEEDED(retStatus)) {
@@ -1135,7 +1135,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS connectSignalingChannel(PSignalingClient pSignalingClient, UINT64 time)
+STATUS signalingConnectChannel(PSignalingClient pSignalingClient, UINT64 time)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -1159,7 +1159,7 @@ STATUS connectSignalingChannel(PSignalingClient pSignalingClient, UINT64 time)
         // No need to reconnect again if already connected. This can happen if we get to this state after ice refresh
         if (!ATOMIC_LOAD_BOOL(&pSignalingClient->connected)) {
             ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) SERVICE_CALL_RESULT_NOT_SET);
-            retStatus = connectSignalingChannelLws(pSignalingClient, time);
+            retStatus = lwsConnectSignalingChannel(pSignalingClient, time);
 
             // Store the time of the call on success
             if (STATUS_SUCCEEDED(retStatus)) {
