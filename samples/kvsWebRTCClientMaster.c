@@ -37,9 +37,11 @@ INT32 main(INT32 argc, CHAR* argv[])
     }
 
     // Set the audio and video handlers
+#ifdef ENABLE_STREAMING
     pSampleConfiguration->audioSource = sendAudioPackets;
     pSampleConfiguration->videoSource = sendVideoPackets;
     pSampleConfiguration->receiveAudioVideoSource = sampleReceiveVideoFrame;
+#endif
 #ifdef ENABLE_DATA_CHANNEL
     pSampleConfiguration->onDataChannel = onDataChannel;
 #endif
@@ -47,7 +49,7 @@ INT32 main(INT32 argc, CHAR* argv[])
     printf("[KVS Master] Finished setting audio and video handlers\n");
 
     // Check if the samples are present
-
+#ifdef ENABLE_STREAMING
     retStatus = readFrameFromDisk(NULL, &frameSize, "./h264SampleFrames/frame-0001.h264");
     if (retStatus != STATUS_SUCCESS) {
         printf("[KVS Master] readFrameFromDisk(): operation returned status code: 0x%08x \n", retStatus);
@@ -61,7 +63,7 @@ INT32 main(INT32 argc, CHAR* argv[])
         goto CleanUp;
     }
     printf("[KVS Master] Checked sample audio frame availability....available\n");
-
+#endif
     // Initialize KVS WebRTC. This must be done before anything else, and must only be done once.
     retStatus = initKvsWebRtc();
     if (retStatus != STATUS_SUCCESS) {
@@ -74,9 +76,9 @@ INT32 main(INT32 argc, CHAR* argv[])
 
     strcpy(pSampleConfiguration->clientInfo.clientId, SAMPLE_MASTER_CLIENT_ID);
 
-    retStatus = signalingClientCreate(&pSampleConfiguration->clientInfo, &pSampleConfiguration->channelInfo,
-                                          &pSampleConfiguration->signalingClientCallbacks, pSampleConfiguration->pCredentialProvider,
-                                          &pSampleConfiguration->signalingClientHandle);
+    retStatus =
+        signalingClientCreate(&pSampleConfiguration->clientInfo, &pSampleConfiguration->channelInfo, &pSampleConfiguration->signalingClientCallbacks,
+                              pSampleConfiguration->pCredentialProvider, &pSampleConfiguration->signalingClientHandle);
     if (retStatus != STATUS_SUCCESS) {
         printf("[KVS Master] signalingClientCreate(): operation returned status code: 0x%08x \n", retStatus);
         goto CleanUp;
@@ -154,7 +156,7 @@ CleanUp:
     // EXIT_FAILURE and EXIT_SUCCESS macros for portability.
     return STATUS_FAILED(retStatus) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
-
+#ifdef ENABLE_STREAMING
 STATUS readFrameFromDisk(PBYTE pFrame, PUINT32 pSize, PCHAR frameFilePath)
 {
     STATUS retStatus = STATUS_SUCCESS;
@@ -358,3 +360,4 @@ CleanUp:
 
     return (PVOID)(ULONG_PTR) retStatus;
 }
+#endif

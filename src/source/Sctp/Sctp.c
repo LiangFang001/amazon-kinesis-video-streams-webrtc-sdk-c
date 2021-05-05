@@ -3,7 +3,52 @@
 #define LOG_CLASS "SCTP"
 #include "../Include_i.h"
 
-STATUS initSctpAddrConn(PSctpSession pSctpSession, struct sockaddr_conn* sconn)
+/***************************************************
+ *
+ * Internal functionality
+ *
+ ****************************************************/
+static STATUS initSctpAddrConn(PSctpSession pSctpSession, struct sockaddr_conn* sconn);
+static STATUS configureSctpSocket(struct socket* socket);
+/**
+ * @brief the outbound callback for the socket layer of usrsctp.
+ *
+ * @param[in] addr the user context.
+ * @param[in] data the address of packet.
+ * @param[in] length the length of packet.
+ * @param[in] tos unused.
+ * @param[in] set_df unused.
+ *
+ * @return STATUS status of execution
+ */
+static INT32 onSctpOutboundPacket(PVOID, PVOID, ULONG, UINT8, UINT8);
+/**
+ * @brief handle the packets of Data Channel Establishment Protocol(DCEP).
+ *
+ * @param[in] pSctpSession
+ * @param[in] streamId
+ * @param[in] data
+ * @param[in] length
+ *
+ * @return STATUS status of execution
+ */
+static STATUS handleDcepPacket(PSctpSession pSctpSession, UINT32 streamId, PBYTE data, SIZE_T length);
+/**
+ * @brief the inbound callback for the socket layer of usrsctp.
+ *
+ * @param[in] sock unused.
+ * @param[in] addr unused.
+ * @param[in] data the address of packet.
+ * @param[in] length the length of packet.
+ * @param[in] rcv the information of scto reception.
+ * @param[in] flags unused.
+ * @param[in] ulp_info the user context.
+ *
+ * @return STATUS status of execution
+ */
+static INT32 onSctpInboundPacket(struct socket*, union sctp_sockstore, PVOID, ULONG, struct sctp_rcvinfo, INT32, PVOID);
+
+static STATUS initSctpAddrConn(PSctpSession pSctpSession, struct sockaddr_conn* sconn)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -16,7 +61,7 @@ STATUS initSctpAddrConn(PSctpSession pSctpSession, struct sockaddr_conn* sconn)
     return retStatus;
 }
 
-STATUS configureSctpSocket(struct socket* socket)
+static STATUS configureSctpSocket(struct socket* socket)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -60,7 +105,7 @@ CleanUp:
 STATUS initSctpSession()
 {
     STATUS retStatus = STATUS_SUCCESS;
-
+    // default port is 9899
     usrsctp_init(0, &onSctpOutboundPacket, NULL);
 
     // Disable Explicit Congestion Notification
@@ -100,14 +145,14 @@ STATUS createSctpSession(PSctpSessionCallbacks pSctpSessionCallbacks, PSctpSessi
 
     CHK_STATUS(initSctpAddrConn(pSctpSession, &localConn));
     CHK_STATUS(initSctpAddrConn(pSctpSession, &remoteConn));
-
+    // create the sctp socket.
     CHK((pSctpSession->socket = usrsctp_socket(AF_CONN, SOCK_STREAM, IPPROTO_SCTP, onSctpInboundPacket, NULL, 0, pSctpSession)) != NULL,
         STATUS_SCTP_SO_CREATE_FAILED);
     usrsctp_register_address(pSctpSession);
     CHK_STATUS(configureSctpSocket(pSctpSession->socket));
-
+    // bind the remote sctp socket.
     CHK(usrsctp_bind(pSctpSession->socket, (struct sockaddr*) &localConn, SIZEOF(localConn)) == 0, STATUS_SCTP_SO_BIND_FAILED);
-
+    // bind the sctp socket
     connectStatus = usrsctp_connect(pSctpSession->socket, (struct sockaddr*) &remoteConn, SIZEOF(remoteConn));
     CHK(connectStatus >= 0 || errno == EINPROGRESS, STATUS_SCTP_SO_CONNECT_FAILED);
 
@@ -200,24 +245,6 @@ CleanUp:
     return retStatus;
 }
 
-// https://tools.ietf.org/html/draft-ietf-rtcweb-data-protocol-09#section-5.1
-//      0                   1                   2                   3
-//      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//     |  Message Type |  Channel Type |            Priority           |
-//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//     |                    Reliability Parameter                      |
-//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//     |         Label Length          |       Protocol Length         |
-//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//     |                                                               |
-//     |                             Label                             |
-//     |                                                               |
-//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//     |                                                               |
-//     |                            Protocol                           |
-//     |                                                               |
-//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 STATUS sctpSessionWriteDcep(PSctpSession pSctpSession, UINT32 streamId, PCHAR pChannelName, UINT32 pChannelNameLen,
                             PRtcDataChannelInit pRtcDataChannelInit)
 {
@@ -271,7 +298,7 @@ CleanUp:
     return retStatus;
 }
 
-INT32 onSctpOutboundPacket(PVOID addr, PVOID data, ULONG length, UINT8 tos, UINT8 set_df)
+static INT32 onSctpOutboundPacket(PVOID addr, PVOID data, ULONG length, UINT8 tos, UINT8 set_df)
 {
     UNUSED_PARAM(tos);
     UNUSED_PARAM(set_df);
@@ -302,7 +329,7 @@ STATUS putSctpPacket(PSctpSession pSctpSession, PBYTE buf, UINT32 bufLen)
     return retStatus;
 }
 
-STATUS handleDcepPacket(PSctpSession pSctpSession, UINT32 streamId, PBYTE data, SIZE_T length)
+static STATUS handleDcepPacket(PSctpSession pSctpSession, UINT32 streamId, PBYTE data, SIZE_T length)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -324,8 +351,8 @@ CleanUp:
     return retStatus;
 }
 
-INT32 onSctpInboundPacket(struct socket* sock, union sctp_sockstore addr, PVOID data, ULONG length, struct sctp_rcvinfo rcv, INT32 flags,
-                          PVOID ulp_info)
+static INT32 onSctpInboundPacket(struct socket* sock, union sctp_sockstore addr, PVOID data, ULONG length, struct sctp_rcvinfo rcv, INT32 flags,
+                                 PVOID ulp_info)
 {
     UNUSED_PARAM(sock);
     UNUSED_PARAM(addr);

@@ -3,7 +3,10 @@
 #define LOG_CLASS "DataChannel"
 
 #include "../Include_i.h"
-
+#define DATA_ENTER()  // ENTER()
+#define DATA_LEAVE()  // LEAVE()
+#define DATA_ENTERS() // ENTERS()
+#define DATA_LEAVES() // LEAVES()
 STATUS connectLocalDataChannel()
 {
     return STATUS_SUCCESS;
@@ -12,7 +15,7 @@ STATUS connectLocalDataChannel()
 STATUS createDataChannel(PRtcPeerConnection pPeerConnection, PCHAR pDataChannelName, PRtcDataChannelInit pRtcDataChannelInit,
                          PRtcDataChannel* ppRtcDataChannel)
 {
-    ENTERS();
+    DATA_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     PKvsPeerConnection pKvsPeerConnection = (PKvsPeerConnection) pPeerConnection;
     UINT32 channelId = 0;
@@ -21,11 +24,12 @@ STATUS createDataChannel(PRtcPeerConnection pPeerConnection, PCHAR pDataChannelN
     CHK(pKvsPeerConnection != NULL && pDataChannelName != NULL && ppRtcDataChannel != NULL, STATUS_NULL_ARG);
 
     // Only support creating DataChannels before signaling for now
-    CHK(pKvsPeerConnection->pSctpSession == NULL, STATUS_INTERNAL_ERROR);
-
+    CHK(pKvsPeerConnection->pSctpSession == NULL, STATUS_PEERCONNECTION_NO_SCTP_SESSION);
     CHK((pKvsDataChannel = (PKvsDataChannel) MEMCALLOC(1, SIZEOF(KvsDataChannel))) != NULL, STATUS_NOT_ENOUGH_MEMORY);
+
     STRNCPY(pKvsDataChannel->dataChannel.name, pDataChannelName, MAX_DATA_CHANNEL_NAME_LEN);
     pKvsDataChannel->pRtcPeerConnection = (PRtcPeerConnection) pKvsPeerConnection;
+
     if (pRtcDataChannelInit != NULL) {
         // Setting negotiated to false. Not supporting at the moment
         pRtcDataChannelInit->negotiated = FALSE;
@@ -36,13 +40,18 @@ STATUS createDataChannel(PRtcPeerConnection pPeerConnection, PCHAR pDataChannelN
         NULLABLE_SET_EMPTY(pKvsDataChannel->rtcDataChannelInit.maxPacketLifeTime);
         NULLABLE_SET_EMPTY(pKvsDataChannel->rtcDataChannelInit.maxRetransmits);
     }
+
     STRNCPY(pKvsDataChannel->rtcDataChannelDiagnostics.label, pKvsDataChannel->dataChannel.name, STRLEN(pKvsDataChannel->dataChannel.name));
     pKvsDataChannel->rtcDataChannelDiagnostics.state = RTC_DATA_CHANNEL_STATE_CONNECTING;
+
     CHK_STATUS(hashTableGetCount(pKvsPeerConnection->pDataChannels, &channelId));
+
     pKvsDataChannel->rtcDataChannelDiagnostics.dataChannelIdentifier = channelId;
     pKvsDataChannel->dataChannel.id = channelId;
+
     STRNCPY(pKvsDataChannel->rtcDataChannelDiagnostics.protocol, DATA_CHANNEL_PROTOCOL_STR,
             ARRAY_SIZE(pKvsDataChannel->rtcDataChannelDiagnostics.protocol));
+
     CHK_STATUS(hashTablePut(pKvsPeerConnection->pDataChannels, channelId, (UINT64) pKvsDataChannel));
 
 CleanUp:
@@ -52,7 +61,7 @@ CleanUp:
         SAFE_MEMFREE(pKvsDataChannel);
     }
 
-    LEAVES();
+    DATA_LEAVES();
     return retStatus;
 }
 
@@ -67,6 +76,7 @@ STATUS dataChannelSend(PRtcDataChannel pRtcDataChannel, BOOL isBinary, PBYTE pMe
     pSctpSession = ((PKvsPeerConnection) pKvsDataChannel->pRtcPeerConnection)->pSctpSession;
 
     CHK_STATUS(sctpSessionWriteMessage(pSctpSession, pKvsDataChannel->channelId, isBinary, pMessage, pMessageLen));
+
     pKvsDataChannel->rtcDataChannelDiagnostics.messagesSent++;
     pKvsDataChannel->rtcDataChannelDiagnostics.bytesSent += pMessageLen;
 CleanUp:
@@ -76,7 +86,7 @@ CleanUp:
 
 STATUS dataChannelOnMessage(PRtcDataChannel pRtcDataChannel, UINT64 customData, RtcOnMessage rtcOnMessage)
 {
-    ENTERS();
+    DATA_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     PKvsDataChannel pKvsDataChannel = (PKvsDataChannel) pRtcDataChannel;
 
@@ -87,13 +97,13 @@ STATUS dataChannelOnMessage(PRtcDataChannel pRtcDataChannel, UINT64 customData, 
 
 CleanUp:
 
-    LEAVES();
+    DATA_LEAVES();
     return retStatus;
 }
 
 STATUS dataChannelOnOpen(PRtcDataChannel pRtcDataChannel, UINT64 customData, RtcOnOpen rtcOnOpen)
 {
-    ENTERS();
+    DATA_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     PKvsDataChannel pKvsDataChannel = (PKvsDataChannel) pRtcDataChannel;
 
@@ -104,7 +114,7 @@ STATUS dataChannelOnOpen(PRtcDataChannel pRtcDataChannel, UINT64 customData, Rtc
 
 CleanUp:
 
-    LEAVES();
+    DATA_LEAVES();
     return retStatus;
 }
 #endif

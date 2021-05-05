@@ -115,6 +115,7 @@ STATUS getRtpRemoteInboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTr
                                 PRtcRemoteInboundRtpStreamStats pRtcRemoteInboundRtpStreamStats)
 {
     STATUS retStatus = STATUS_SUCCESS;
+#ifdef ENABLE_STREAMING
     PDoubleListNode node = NULL;
     UINT64 hashValue = 0;
     PKvsPeerConnection pKvsPeerConnection = (PKvsPeerConnection) pRtcPeerConnection;
@@ -132,6 +133,7 @@ STATUS getRtpRemoteInboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTr
     *pRtcRemoteInboundRtpStreamStats = pKvsRtpTransceiver->remoteInboundStats;
     MUTEX_UNLOCK(pKvsRtpTransceiver->statsLock);
 CleanUp:
+#endif
     return retStatus;
 }
 
@@ -139,6 +141,7 @@ STATUS getRtpOutboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTransce
                            PRtcOutboundRtpStreamStats pRtcOutboundRtpStreamStats)
 {
     STATUS retStatus = STATUS_SUCCESS;
+#ifdef ENABLE_STREAMING
     PDoubleListNode node = NULL;
     UINT64 hashValue = 0;
     PKvsPeerConnection pKvsPeerConnection = (PKvsPeerConnection) pRtcPeerConnection;
@@ -156,12 +159,14 @@ STATUS getRtpOutboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTransce
     *pRtcOutboundRtpStreamStats = pKvsRtpTransceiver->outboundStats;
     MUTEX_UNLOCK(pKvsRtpTransceiver->statsLock);
 CleanUp:
+#endif
     return retStatus;
 }
 
 STATUS getRtpInboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTransceiver pTransceiver, PRtcInboundRtpStreamStats pRtcInboundRtpStreamStats)
 {
     STATUS retStatus = STATUS_SUCCESS;
+#ifdef ENABLE_STREAMING
     PDoubleListNode node = NULL;
     UINT64 hashValue;
     PKvsPeerConnection pKvsPeerConnection = (PKvsPeerConnection) pRtcPeerConnection;
@@ -179,6 +184,7 @@ STATUS getRtpInboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTranscei
     *pRtcInboundRtpStreamStats = pKvsRtpTransceiver->inboundStats;
     MUTEX_UNLOCK(pKvsRtpTransceiver->statsLock);
 CleanUp:
+#endif
     return retStatus;
 }
 

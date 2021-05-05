@@ -50,9 +50,10 @@ typedef struct {
     PIceAgent pIceAgent;
     PDtlsSession pDtlsSession;
     BOOL dtlsIsServer; //!< indicate the role of dtls session.
-
+#ifdef ENABLE_STREAMING
     MUTEX pSrtpSessionLock; //!< the lock for srtp session.
     PSrtpSession pSrtpSession;
+#endif
 #ifdef ENABLE_DATA_CHANNEL
     PSctpSession pSctpSession;
 #endif
@@ -113,6 +114,15 @@ typedef struct {
 #endif
 STATUS onFrameReadyFunc(UINT64, UINT16, UINT16, UINT32);
 STATUS onFrameDroppedFunc(UINT64, UINT16, UINT16, UINT32);
+/**
+ * @brief the callback for dtls socket layer.
+ *
+ * @param[in] customData the user context.
+ * @param[in] pPacket the address of packet.
+ * @param[in] packetLen the length of packet.
+ *
+ * @return STATUS status of execution
+ */
 VOID onSctpSessionOutboundPacket(UINT64, PBYTE, UINT32);
 VOID onSctpSessionDataChannelMessage(UINT64, UINT32, BOOL, PBYTE, UINT32);
 VOID onSctpSessionDataChannelOpen(UINT64, UINT32, PBYTE, UINT32);

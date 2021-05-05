@@ -11,6 +11,7 @@
 extern "C" {
 #endif
 
+#if defined(ENABLE_STREAMING)
 typedef struct __SrtpSession SrtpSession;
 struct __SrtpSession {
     // holds the srtp context for transmit  operations
@@ -29,6 +30,7 @@ STATUS encryptRtpPacket(PSrtpSession pSrtpSession, PVOID message, PINT32 len);
 STATUS encryptRtcpPacket(PSrtpSession pSrtpSession, PVOID message, PINT32 len);
 
 STATUS freeSrtpSession(PSrtpSession* ppSrtpSession);
+#endif
 
 #ifdef __cplusplus
 }

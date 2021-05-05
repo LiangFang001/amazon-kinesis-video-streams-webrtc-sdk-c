@@ -184,10 +184,12 @@ endif()
 
 if(ENABLE_DATA_CHANNEL)
   # usrsctp dont support pkgconfig yet
-  find_library(
-    Usrsctp
-    NAMES ${USRSCTP_LIBNAME} usrsctp REQUIRED
-    PATHS ${OPEN_SRC_INSTALL_PREFIX}/lib)
+  if(NOT KVS_PLAT_ESP_FREERTOS)
+    find_library(
+      Usrsctp
+      NAMES ${USRSCTP_LIBNAME} usrsctp REQUIRED
+      PATHS ${OPEN_SRC_INSTALL_PREFIX}/lib)
+    endif()
 endif()
 
 set(OPEN_SRC_INCLUDE_DIRS ${OPEN_SRC_INCLUDE_DIRS} ${LIBSRTP_INCLUDE_DIRS}
@@ -393,7 +395,7 @@ if (BUILD_SAMPLE)
           ${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/samples/discoverNatBehavior.c)
   target_link_libraries(discoverNatBehavior kvsWebrtcClient)
 
-  if(GST_FOUND)
+  if(GST_FOUND AND ENABLE_STREAMING)
     add_executable(
       kvsWebrtcClientMasterGstSample
       ${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/samples/Common.c

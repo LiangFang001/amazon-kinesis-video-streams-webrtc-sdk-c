@@ -216,7 +216,8 @@ STATUS connectionListenerStart(PConnectionListener pConnectionListener)
     CHK(!ATOMIC_LOAD_BOOL(&pConnectionListener->terminate), retStatus);
     listenerRoutineStarted = ATOMIC_EXCHANGE_BOOL(&pConnectionListener->listenerRoutineStarted, TRUE);
     CHK(!listenerRoutineStarted, retStatus);
-    CHK_STATUS(THREAD_CREATE(&pConnectionListener->receiveDataRoutine, connectionListenerReceiveDataRoutine, (PVOID) pConnectionListener));
+    CHK_STATUS(THREAD_CREATE_EX(&pConnectionListener->receiveDataRoutine, CONN_LISTENER_THERAD_NAME, CONN_LISTENER_THERAD_SIZE,
+                                connectionListenerReceiveDataRoutine, (PVOID) pConnectionListener));
 
 CleanUp:
 
@@ -333,9 +334,8 @@ PVOID connectionListenerReceiveDataRoutine(PVOID arg)
                 /* update the connection list to remove the closed sockets */
                 updateSocketList = TRUE;
             } else if (FD_ISSET(pSocketConnection->localSocket, &rfds)) {
-
                 readLen = recvfrom(pSocketConnection->localSocket, pConnectionListener->pBuffer, pConnectionListener->bufferLen, 0,
-                                    (struct sockaddr*) &srcAddrBuff, &srcAddrBuffLen);
+                                   (struct sockaddr*) &srcAddrBuff, &srcAddrBuffLen);
                 if (readLen < 0) {
                     switch (getErrorCode()) {
                         case EWOULDBLOCK:
@@ -343,19 +343,18 @@ PVOID connectionListenerReceiveDataRoutine(PVOID arg)
                         default:
                             /* on any other error, close connection */
                             CHK_STATUS(socketConnectionClosed(pSocketConnection));
-                            DLOGD("recvfrom() failed with errno %s for socket %d", getErrorString(getErrorCode()),
-                                    pSocketConnection->localSocket);
+                            DLOGD("recvfrom() failed with errno %s for socket %d", getErrorString(getErrorCode()), pSocketConnection->localSocket);
                             break;
                     }
 
                 } else if (readLen == 0) {
                     CHK_STATUS(socketConnectionClosed(pSocketConnection));
                 } else if (/* readLen > 0 */
-                            ATOMIC_LOAD_BOOL(&pSocketConnection->receiveData) && pSocketConnection->dataAvailableCallbackFn != NULL &&
-                            /* data could be encrypted so they need to be decrypted through socketConnectionReadData
+                           ATOMIC_LOAD_BOOL(&pSocketConnection->receiveData) && pSocketConnection->dataAvailableCallbackFn != NULL &&
+                           /* data could be encrypted so they need to be decrypted through socketConnectionReadData
                             * and get the decrypted data length. */
-                            STATUS_SUCCEEDED(socketConnectionReadData(pSocketConnection, pConnectionListener->pBuffer,
-                                                                        pConnectionListener->bufferLen, (PUINT32) &readLen))) {
+                           STATUS_SUCCEEDED(socketConnectionReadData(pSocketConnection, pConnectionListener->pBuffer, pConnectionListener->bufferLen,
+                                                                     (PUINT32) &readLen))) {
                     if (pSocketConnection->protocol == KVS_SOCKET_PROTOCOL_UDP) {
                         if (srcAddrBuff.ss_family == AF_INET) {
                             srcAddr.family = KVS_IP_FAMILY_TYPE_IPV4;
@@ -378,8 +377,8 @@ PVOID connectionListenerReceiveDataRoutine(PVOID arg)
                     // in that case, no need to call dataAvailable callback
                     if (readLen > 0) {
                         pSocketConnection->dataAvailableCallbackFn(pSocketConnection->dataAvailableCallbackCustomData, pSocketConnection,
-                                                                    pConnectionListener->pBuffer, (UINT32) readLen, pSrcAddr,
-                                                                    NULL); // no dest information available right now.
+                                                                   pConnectionListener->pBuffer, (UINT32) readLen, pSrcAddr,
+                                                                   NULL); // no dest information available right now.
                     }
                 }
 

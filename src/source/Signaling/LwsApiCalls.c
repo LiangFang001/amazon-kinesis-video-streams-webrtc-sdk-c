@@ -1221,7 +1221,8 @@ STATUS lwsConnectSignalingChannel(PSignalingClient pSignalingClient, UINT64 time
 
     // The actual connection will be handled in a separate thread
     // Start the request/response thread
-    CHK_STATUS(THREAD_CREATE(&pSignalingClient->listenerTracker.threadId, lwsListenerHandler, (PVOID) pLwsCallInfo));
+    CHK_STATUS(THREAD_CREATE_EX(&pSignalingClient->listenerTracker.threadId, LWS_LISTENER_THREAD_NAME, LWS_LISTENER_THREAD_SIZE, lwsListenerHandler,
+                                (PVOID) pLwsCallInfo));
     CHK_STATUS(THREAD_DETACH(pSignalingClient->listenerTracker.threadId));
 
     timeout = (pSignalingClient->clientInfo.connectTimeout != 0) ? pSignalingClient->clientInfo.connectTimeout : SIGNALING_CONNECT_TIMEOUT;
@@ -1573,7 +1574,7 @@ STATUS lwsReceiveMessage(PSignalingClient pSignalingClient, PCHAR pMessage, UINT
             strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
             CHK(strLen <= MAX_SIGNALING_MESSAGE_TYPE_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
             CHK_STATUS(lwsGetMessageTypeFromString(pMessage + pTokens[i + 1].start, strLen,
-                                                &pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.messageType));
+                                                   &pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.messageType));
 
             parsedMessageType = TRUE;
             i++;
@@ -1914,7 +1915,8 @@ STATUS lwsDispatchMsg(PVOID pMessage)
     if (receivedTid == INVALID_TID_VALUE) {
         lwsMsgQ = xQueueCreate(KVSWEBRTC_LWS_MSGQ_LENGTH, SIZEOF(PSignalingMessageWrapper));
         CHK(lwsMsgQ != NULL, STATUS_SIGNALING_CREATE_MSGQ_FAILED);
-        CHK(THREAD_CREATE(&receivedTid, handleLwsMsg, (PVOID) NULL) == STATUS_SUCCESS, STATUS_SIGNALING_CREATE_THREAD_FAILED);
+        CHK(THREAD_CREATE_EX(&receivedTid, LWS_DISPATCH_THREAD_NAME, LWS_DISPATCH_THREAD_SIZE, handleLwsMsg, (PVOID) NULL) == STATUS_SUCCESS,
+            STATUS_SIGNALING_CREATE_THREAD_FAILED);
     }
     UBaseType_t num = uxQueueSpacesAvailable(lwsMsgQ);
     DLOGD("unhandled num in q: %d", KVSWEBRTC_LWS_MSGQ_LENGTH - num);

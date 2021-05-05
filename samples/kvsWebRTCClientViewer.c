@@ -51,9 +51,9 @@ INT32 main(INT32 argc, CHAR* argv[])
 
     sprintf(pSampleConfiguration->clientInfo.clientId, "%s_%u", SAMPLE_VIEWER_CLIENT_ID, RAND() % MAX_UINT32);
 
-    retStatus = signalingClientCreate(&pSampleConfiguration->clientInfo, &pSampleConfiguration->channelInfo,
-                                          &pSampleConfiguration->signalingClientCallbacks, pSampleConfiguration->pCredentialProvider,
-                                          &pSampleConfiguration->signalingClientHandle);
+    retStatus =
+        signalingClientCreate(&pSampleConfiguration->clientInfo, &pSampleConfiguration->channelInfo, &pSampleConfiguration->signalingClientCallbacks,
+                              pSampleConfiguration->pCredentialProvider, &pSampleConfiguration->signalingClientHandle);
     if (retStatus != STATUS_SUCCESS) {
         printf("[KVS Viewer] signalingClientCreate(): operation returned status code: 0x%08x \n", retStatus);
         goto CleanUp;
@@ -94,13 +94,13 @@ INT32 main(INT32 argc, CHAR* argv[])
         goto CleanUp;
     }
     printf("[KVS Viewer] Completed setting local description\n");
-
+#ifdef ENABLE_STREAMING
     retStatus = transceiverOnFrame(pSampleStreamingSession->pAudioRtcRtpTransceiver, (UINT64) pSampleStreamingSession, sampleFrameHandler);
     if (retStatus != STATUS_SUCCESS) {
         printf("[KVS Viewer] transceiverOnFrame(): operation returned status code: 0x%08x \n", retStatus);
         goto CleanUp;
     }
-
+#endif
     if (!pSampleConfiguration->trickleIce) {
         printf("[KVS Viewer] Non trickle ice. Wait for Candidate collection to complete\n");
         MUTEX_LOCK(pSampleConfiguration->sampleConfigurationObjLock);
