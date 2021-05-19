@@ -13,7 +13,7 @@ STATUS dtlsSessionOnOutBoundData(PDtlsSession pDtlsSession, UINT64 customData, D
     MUTEX_UNLOCK(pDtlsSession->sslLock);
 
 CleanUp:
-    return STATUS_SUCCESS;
+    return retStatus;
 }
 
 STATUS dtlsSessionOnStateChange(PDtlsSession pDtlsSession, UINT64 customData, DtlsSessionOnStateChange callbackFn)
@@ -61,7 +61,7 @@ STATUS dtlsSessionChangeState(PDtlsSession pDtlsSession, RTC_DTLS_TRANSPORT_STAT
     CHK(pDtlsSession != NULL, STATUS_DTLS_NULL_ARG);
     CHK(pDtlsSession->state != newState, retStatus);
 
-    if (pDtlsSession->state == CONNECTING && newState == CONNECTED) {
+    if (pDtlsSession->state == RTC_DTLS_TRANSPORT_STATE_CONNECTING && newState == RTC_DTLS_TRANSPORT_STATE_CONNECTED) {
         DLOGD("DTLS init completed. Time taken %" PRIu64 " ms",
               (GETTIME() - pDtlsSession->dtlsSessionStartTime) / HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
     }

@@ -73,7 +73,7 @@ static STATUS onRtcpSenderReport(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKv
         UINT32 octetCnt = getUnalignedInt32BigEndian(pRtcpPacket->payload + 20);
         DLOGV("RTCP_PACKET_TYPE_SENDER_REPORT %d %" PRIu64 " rtpTs: %u %u pkts %u bytes", senderSSRC, ntpTime, rtpTs, packetCnt, octetCnt);
     } else {
-        DLOGW("Received sender report for non existing ssrc: %u", senderSSRC);
+        DLOGV("Received sender report for non existing ssrc: %u", senderSSRC);
     }
 
 CleanUp:

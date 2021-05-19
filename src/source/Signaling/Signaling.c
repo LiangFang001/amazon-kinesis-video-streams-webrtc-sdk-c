@@ -81,6 +81,9 @@ STATUS signalingCreate(PSignalingClientInfoInternal pClientInfo, PChannelInfo pC
     pSignalingClient->signalingProtocols[PROTOCOL_INDEX_WSS].name = WSS_SCHEME_NAME;
     pSignalingClient->signalingProtocols[PROTOCOL_INDEX_WSS].callback = (lws_callback_function*) lwsWssCallbackRoutine;
 
+    pSignalingClient->currentWsi[PROTOCOL_INDEX_HTTPS] = NULL;
+    pSignalingClient->currentWsi[PROTOCOL_INDEX_WSS] = NULL;
+
     MEMSET(&creationInfo, 0x00, SIZEOF(struct lws_context_creation_info));
     creationInfo.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
     creationInfo.port = CONTEXT_PORT_NO_LISTEN;
@@ -98,14 +101,13 @@ STATUS signalingCreate(PSignalingClientInfoInternal pClientInfo, PChannelInfo pC
     creationInfo.ws_ping_pong_interval = SIGNALING_SERVICE_WSS_PING_PONG_INTERVAL_IN_SECONDS;
 #endif
 
-    CHK(NULL != (pSignalingClient->pLwsContext = lws_create_context(&creationInfo)), STATUS_SIGNALING_LWS_CREATE_CONTEXT_FAILED);
-
     ATOMIC_STORE_BOOL(&pSignalingClient->clientReady, FALSE);
     ATOMIC_STORE_BOOL(&pSignalingClient->shutdown, FALSE);
     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
     ATOMIC_STORE_BOOL(&pSignalingClient->deleting, FALSE);
     ATOMIC_STORE_BOOL(&pSignalingClient->deleted, FALSE);
     ATOMIC_STORE_BOOL(&pSignalingClient->iceConfigRetrieved, FALSE);
+    ATOMIC_STORE_BOOL(&pSignalingClient->serviceLockContention, FALSE);
 
     // Add to the signal handler
     // signal(SIGINT, lwsSignalHandler);
@@ -124,8 +126,8 @@ STATUS signalingCreate(PSignalingClientInfoInternal pClientInfo, PChannelInfo pC
     pSignalingClient->receiveLock = MUTEX_CREATE(FALSE);
     CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->receiveLock), STATUS_INVALID_OPERATION);
 
-    pSignalingClient->stateLock = MUTEX_CREATE(TRUE);
-    CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->stateLock), STATUS_INVALID_OPERATION);
+    pSignalingClient->nestedFsmLock = MUTEX_CREATE(TRUE);
+    CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->nestedFsmLock), STATUS_INVALID_OPERATION);
 
     pSignalingClient->messageQueueLock = MUTEX_CREATE(TRUE);
     CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->messageQueueLock), STATUS_INVALID_OPERATION);
@@ -141,6 +143,9 @@ STATUS signalingCreate(PSignalingClientInfoInternal pClientInfo, PChannelInfo pC
 
     // Create the ongoing message list
     CHK_STATUS(stackQueueCreate(&pSignalingClient->pMessageQueue));
+
+    pSignalingClient->pLwsContext = lws_create_context(&creationInfo);
+    CHK(pSignalingClient->pLwsContext != NULL, STATUS_SIGNALING_LWS_CREATE_CONTEXT_FAILED);
 
     // Create the timer queue for handling stale ICE configuration
     pSignalingClient->timerQueueHandle = INVALID_TIMER_QUEUE_HANDLE_VALUE;
@@ -203,10 +208,10 @@ STATUS signalingFree(PSignalingClient* ppSignalingClient)
     signalingTerminateOngoingOperations(pSignalingClient, TRUE);
 
     if (pSignalingClient->pLwsContext != NULL) {
-        MUTEX_LOCK(pSignalingClient->lwsSerializerLock);
+        MUTEX_LOCK(pSignalingClient->lwsServiceLock);
         lws_context_destroy(pSignalingClient->pLwsContext);
         pSignalingClient->pLwsContext = NULL;
-        MUTEX_UNLOCK(pSignalingClient->lwsSerializerLock);
+        MUTEX_UNLOCK(pSignalingClient->lwsServiceLock);
     }
 
     freeStateMachine(pSignalingClient->pStateMachine);
@@ -239,8 +244,8 @@ STATUS signalingFree(PSignalingClient* ppSignalingClient)
         CVAR_FREE(pSignalingClient->receiveCvar);
     }
 
-    if (IS_VALID_MUTEX_VALUE(pSignalingClient->stateLock)) {
-        MUTEX_FREE(pSignalingClient->stateLock);
+    if (IS_VALID_MUTEX_VALUE(pSignalingClient->nestedFsmLock)) {
+        MUTEX_FREE(pSignalingClient->nestedFsmLock);
     }
 
     if (IS_VALID_MUTEX_VALUE(pSignalingClient->messageQueueLock)) {
@@ -802,8 +807,6 @@ STATUS signalingUninitThreadTracker(PThreadTracker pThreadTracker)
     if (IS_VALID_CVAR_VALUE(pThreadTracker->await)) {
         CVAR_FREE(pThreadTracker->await);
     }
-
-    ATOMIC_STORE_BOOL(&pThreadTracker->terminated, FALSE);
 
 CleanUp:
     return retStatus;
