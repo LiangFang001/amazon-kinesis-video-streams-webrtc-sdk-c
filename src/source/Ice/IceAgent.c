@@ -27,6 +27,12 @@ typedef enum {
 extern StateMachineState ICE_AGENT_STATE_MACHINE_STATES[];
 extern UINT32 ICE_AGENT_STATE_MACHINE_STATE_COUNT;
 
+/// internal function prototype
+STATUS iceAgentInitHostCandidate(PIceAgent pIceAgent);
+STATUS iceAgentInitSrflxCandidate(PIceAgent pIceAgent);
+STATUS iceAgentInitRelayCandidate(PIceAgent pIceAgent, UINT32 iceServerIndex, KVS_SOCKET_PROTOCOL protocol);
+STATUS iceAgentInitRelayCandidates(PIceAgent pIceAgent);
+
 STATUS updateCandidateAddress(PIceCandidate pIceCandidate, PKvsIpAddress pIpAddr)
 {
     STATUS retStatus = STATUS_SUCCESS;
@@ -778,7 +784,14 @@ CleanUp:
     ICE_AGENT_LEAVE();
     return retStatus;
 }
-
+/**
+ * @brief gather local ip addresses and create a udp port. If port creation succeeded then create a new candidate
+ * and store it in localCandidates. Ips that are already a local candidate will not be added again.
+ *
+ * @param[in] PIceAgent IceAgent object
+ *
+ * @return STATUS status of execution
+ */
 STATUS iceAgentInitHostCandidate(PIceAgent pIceAgent)
 {
     ICE_AGENT_ENTRY();
@@ -933,7 +946,15 @@ CleanUp:
 
     return retStatus;
 }
-
+/**
+ * @brief initilize the relay candidate.
+ *
+ * @param[in] pIceAgent the context of the ice agent.
+ * @param[in] iceServerIndex the index of ice servers.
+ * @param[in] protocol the protocol which ice server uses.
+ *
+ * @return STATUS code of the execution
+ */
 STATUS iceAgentInitRelayCandidate(PIceAgent pIceAgent, UINT32 iceServerIndex, KVS_SOCKET_PROTOCOL protocol)
 {
     STATUS retStatus = STATUS_SUCCESS;
@@ -957,9 +978,10 @@ STATUS iceAgentInitRelayCandidate(PIceAgent pIceAgent, UINT32 iceServerIndex, KV
     // open up a new socket without binding to any host address. The candidate Ip address will later be updated
     // with the correct relay ip address once the Allocation success response is received. Relay candidate's socket is managed
     // by TurnConnection struct.
-    CHK_STATUS(createSocketConnection(KVS_IP_FAMILY_TYPE_IPV4, protocol, NULL, &pIceAgent->iceServers[iceServerIndex].ipAddress,
-                                      (UINT64) pNewCandidate, incomingRelayedDataHandler, pIceAgent->kvsRtcConfiguration.sendBufSize,
-                                      &pNewCandidate->pSocketConnection));
+    CHK(createSocketConnection(KVS_IP_FAMILY_TYPE_IPV4, protocol, NULL, &pIceAgent->iceServers[iceServerIndex].ipAddress, (UINT64) pNewCandidate,
+                               incomingRelayedDataHandler, pIceAgent->kvsRtcConfiguration.sendBufSize,
+                               &pNewCandidate->pSocketConnection) == STATUS_SUCCESS,
+        STATUS_TURN_CONNECTION_CREATE_SOCKET);
     // connectionListener will free the pSocketConnection at the end.
     CHK_STATUS(connectionListenerAddConnection(pIceAgent->pConnectionListener, pNewCandidate->pSocketConnection));
 
@@ -1327,7 +1349,8 @@ STATUS iceAgentShutdown(PIceAgent pIceAgent)
     }
 
     if (!turnShutdownCompleted) {
-        DLOGW("TurnConnection shutdown did not complete within %u seconds", KVS_ICE_TURN_CONNECTION_SHUTDOWN_TIMEOUT / HUNDREDS_OF_NANOS_IN_A_SECOND);
+        DLOGW("TurnConnection shutdown did not complete within %" PRIu64 " seconds",
+              KVS_ICE_TURN_CONNECTION_SHUTDOWN_TIMEOUT / HUNDREDS_OF_NANOS_IN_A_SECOND);
     }
 
     /* remove connections last because still need to send data to deallocate turn */
@@ -1742,6 +1765,8 @@ STATUS iceAgentSetupFsmReady(PIceAgent pIceAgent)
 
     /* shutdown turn allocations that are not needed. Invalidate not selected local ice candidates. */
     DLOGD("Freeing Turn allocations that are not selected. Total turn allocation count %u", pIceAgent->relayCandidateCount);
+
+    // remove all the ice candidate pair except selected one.
     CHK_STATUS(doubleListGetHeadNode(pIceAgent->localCandidates, &pCurNode));
     while (pCurNode != NULL) {
         pIceCandidate = (PIceCandidate) pCurNode->data;
@@ -2043,9 +2068,11 @@ STATUS iceAgentCheckCandidatePairConnection(PIceAgent pIceAgent)
     PIceCandidatePair pIceCandidatePair = NULL;
     PDoubleListNode pCurNode = NULL;
     BOOL locked = FALSE;
+    UINT64 startTime = 0;
+    UINT64 endTime = 0;
 
     CHK(pIceAgent != NULL, STATUS_NULL_ARG);
-
+    startTime = GETTIME();
     // Assuming pIceAgent->candidatePairs is sorted by priority
     MUTEX_LOCK(pIceAgent->lock);
     locked = TRUE;
@@ -2078,6 +2105,12 @@ STATUS iceAgentCheckCandidatePairConnection(PIceAgent pIceAgent)
     }
 
 CleanUp:
+
+    endTime = GETTIME();
+    if ((endTime - startTime) >= pIceAgent->kvsRtcConfiguration.iceConnectionCheckPollingInterval) {
+        DLOGW("check candidate pair time: %" PRIu64 ". you need to check this interval setting.",
+              (endTime - startTime) / HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
+    }
 
     CHK_LOG_ERR(retStatus);
 
@@ -2419,7 +2452,10 @@ STATUS handleStunPacket(PIceAgent pIceAgent, PBYTE pBuffer, UINT32 bufferLen, PS
         case STUN_PACKET_TYPE_BINDING_INDICATION:
             DLOGD("Received STUN binding indication");
             break;
-
+        case STUN_PACKET_TYPE_BINDING_RESPONSE_ERROR:
+            // STUN_PACKET_IS_TYPE_ERROR(pBuffer), retStatus)
+            DLOGW("binding response error");
+            break;
         default:
             CHK_STATUS(hexEncode(pBuffer, bufferLen, NULL, &hexStrLen));
             hexStr = MEMCALLOC(1, hexStrLen * SIZEOF(CHAR));

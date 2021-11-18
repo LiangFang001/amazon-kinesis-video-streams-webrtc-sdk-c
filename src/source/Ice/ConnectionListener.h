@@ -37,31 +37,31 @@ STATUS createConnectionListener(PConnectionListener*);
 /**
  * @brief free the ConnectionListener struct and all its resources
  *
- * @param[in, out] PConnectionListener* pointer to PConnectionListener being freed
+ * @param[in, out] ppConnectionListener pointer to PConnectionListener being freed
  *
  * @return STATUS status of execution
  */
-STATUS freeConnectionListener(PConnectionListener*);
+STATUS freeConnectionListener(PConnectionListener* ppConnectionListener);
 
 /**
  * @brief add a new PSocketConnection to listen for incoming data
  *
- * @param[in] PConnectionListener the ConnectionListener struct to use
- * @param[in] PSocketConnection new PSocketConnection to listen for incoming data
+ * @param[in] pConnectionListener the ConnectionListener struct to use
+ * @param[in] pSocketConnection new PSocketConnection to listen for incoming data
  *
  * @return STATUS status of execution
  */
-STATUS connectionListenerAddConnection(PConnectionListener, PSocketConnection);
+STATUS connectionListenerAddConnection(PConnectionListener pConnectionListener, PSocketConnection pSocketConnection);
 
 /**
  * @brief remove PSocketConnection from the list to listen for incoming data
  *
- * @param[in] PConnectionListener the ConnectionListener struct to use
- * @param[in] PSocketConnection PSocketConnection to be removed
+ * @param[in] pConnectionListener the ConnectionListener struct to use
+ * @param[in] pSocketConnection PSocketConnection to be removed
  *
  * @return STATUS status of execution
  */
-STATUS connectionListenerRemoveConnection(PConnectionListener, PSocketConnection);
+STATUS connectionListenerRemoveConnection(PConnectionListener pConnectionListener, PSocketConnection pSocketConnection);
 
 /**
  * @brief remove all listening PSocketConnection
@@ -76,11 +76,11 @@ STATUS connectionListenerRemoveAllConnection(PConnectionListener);
  * @brief Spin off a listener thread that listen for incoming traffic for all PSocketConnection stored in connectionList.
  * Whenever a PSocketConnection receives data, invoke ConnectionDataAvailableFunc passed in.
  *
- * @param[in] PConnectionListener the ConnectionListener struct to use
+ * @param[in] pConnectionListener the ConnectionListener struct to use
  *
  * @return STATUS status of execution
  */
-STATUS connectionListenerStart(PConnectionListener);
+STATUS connectionListenerStart(PConnectionListener pConnectionListener);
 
 ////////////////////////////////////////////
 // internal functionalities

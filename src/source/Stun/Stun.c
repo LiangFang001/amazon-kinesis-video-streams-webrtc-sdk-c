@@ -91,7 +91,9 @@ STATUS serializeStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passw
     BOOL fingerprintFound = FALSE, messaageIntegrityFound = FALSE;
     INT64 data64;
 
-    CHK(pStunPacket != NULL && (!generateMessageIntegrity || password != NULL) && pSize != NULL, STATUS_NULL_ARG);
+    CHK(pStunPacket != NULL, STATUS_STUN_SERIALIZE_EMPTY_STUN_BUF);
+    CHK((!generateMessageIntegrity || password != NULL), STATUS_STUN_SERIALIZE_INVALID_MSG_INTEGRITY);
+    CHK(pSize != NULL, STATUS_STUN_SERIALIZE_EMPTY_BUF_SIZE);
     CHK(password == NULL || passwordLen != 0, STATUS_INVALID_ARG);
     CHK(pStunPacket->header.magicCookie == STUN_HEADER_MAGIC_COOKIE, STATUS_STUN_MAGIC_COOKIE_MISMATCH);
 
@@ -432,6 +434,7 @@ STATUS serializeStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passw
     }
 
     // Check if we need to generate the message integrity attribute
+    // https://datatracker.ietf.org/doc/html/rfc5389#section-15.4
     if (generateMessageIntegrity) {
         encodedLen = STUN_ATTRIBUTE_HEADER_LEN + STUN_HMAC_VALUE_LEN;
 
@@ -509,6 +512,8 @@ CleanUp:
     if (STATUS_SUCCEEDED(retStatus) && pSize != NULL) {
         *pSize = packetSize;
     }
+
+    CHK_LOG_ERR(retStatus);
 
     LEAVES();
     return retStatus;

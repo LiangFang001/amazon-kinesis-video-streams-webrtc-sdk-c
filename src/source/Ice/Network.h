@@ -52,14 +52,14 @@ typedef enum {
 STATUS getLocalhostIpAddresses(PKvsIpAddress, PUINT32, IceSetInterfaceFilterFunc, UINT64);
 
 /**
- * @param - KVS_IP_FAMILY_TYPE - IN - Family for the socket. Must be one of KVS_IP_FAMILY_TYPE
- * @param - KVS_SOCKET_PROTOCOL - IN - either tcp or udp
- * @param - UINT32 - IN - send buffer size in bytes
- * @param - PINT32 - OUT - PINT32 for the socketfd
+ * @param[in] familyType Family for the socket. Must be one of KVS_IP_FAMILY_TYPE
+ * @param[in] protocol either tcp or udp
+ * @param[in] sendBufSize send buffer size in bytes
+ * @param[in] pOutSockFd for the socketfd
  *
  * @return - STATUS status of execution
  */
-STATUS createSocket(KVS_IP_FAMILY_TYPE, KVS_SOCKET_PROTOCOL, UINT32, PINT32);
+STATUS createSocket(KVS_IP_FAMILY_TYPE familyType, KVS_SOCKET_PROTOCOL protocol, UINT32 sendBufSize, PINT32 pOutSockFd);
 
 /**
  * @param - INT32 - IN - INT32 for the socketfd

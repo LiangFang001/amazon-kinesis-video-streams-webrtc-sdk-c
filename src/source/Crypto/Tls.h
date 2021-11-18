@@ -51,14 +51,14 @@ struct __TlsSession {
 };
 
 /**
- * Create TLS session.
- * NOT THREAD SAFE.
- * @param PTlsSessionCallbacks - callbacks
- * @param PTlsSession* - pointer to created TlsSession object
+ * @brief   Create TLS session. NOT THREAD SAFE.
  *
- * @return STATUS - status of operation
+ * @param[in] pCallbacks callbacks
+ * @param[in, out] ppTlsSession pointer to created TlsSession object
+ *
+ * @return STATUS status of operation
  */
-STATUS createTlsSession(PTlsSessionCallbacks, PTlsSession*);
+STATUS createTlsSession(PTlsSessionCallbacks pCallbacks, PTlsSession* ppTlsSession);
 
 /**
  * Free TLS session. Not thread safe.

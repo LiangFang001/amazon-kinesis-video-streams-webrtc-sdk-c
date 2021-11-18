@@ -146,7 +146,7 @@ struct __TurnConnection {
 
     IceServer turnServer;
 
-    MUTEX lock;
+    MUTEX lock; //!< the lock of this context.
     MUTEX sendLock;
     CVAR freeAllocationCvar;
 
@@ -190,22 +190,63 @@ struct __TurnConnection {
 };
 typedef struct __TurnConnection* PTurnConnection;
 
-STATUS createTurnConnection(PIceServer, TIMER_QUEUE_HANDLE, TURN_CONNECTION_DATA_TRANSFER_MODE, KVS_SOCKET_PROTOCOL, PTurnConnectionCallbacks,
-                            PSocketConnection, PConnectionListener, PTurnConnection*);
+STATUS createTurnConnection(PIceServer pTurnServer, TIMER_QUEUE_HANDLE timerQueueHandle, TURN_CONNECTION_DATA_TRANSFER_MODE dataTransferMode,
+                            KVS_SOCKET_PROTOCOL protocol, PTurnConnectionCallbacks pTurnConnectionCallbacks, PSocketConnection pTurnSocket,
+                            PConnectionListener pConnectionListener, PTurnConnection* ppTurnConnection);
 STATUS freeTurnConnection(PTurnConnection*);
-STATUS turnConnectionAddPeer(PTurnConnection, PKvsIpAddress);
-STATUS turnConnectionSendData(PTurnConnection, PBYTE, UINT32, PKvsIpAddress);
-STATUS turnConnectionStart(PTurnConnection);
+/**
+ * @brief add remote peer to the turn connection.
+ *
+ * @param[in] pTurnConnection the context of the turn connection.
+ * @param[in] pPeerAddress the ip address of remote peer.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS turnConnectionAddPeer(PTurnConnection pTurnConnection, PKvsIpAddress pPeerAddress);
+/**
+ * @brief add remote peer to the turn connection.
+ *
+ * @param[in] pTurnConnection the context of the turn connection.
+ * @param[in] pBuf
+ * @param[in] bufLen
+ * @param[in] pDestIp
+ *
+ * @return STATUS status of execution.
+ */
+STATUS turnConnectionSendData(PTurnConnection pTurnConnection, PBYTE pBuf, UINT32 bufLen, PKvsIpAddress pDestIp);
+/**
+ * @brief   start the turn connection.
+ *
+ * @param[in] pTurnConnection the context of the turn connection.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS turnConnectionStart(PTurnConnection pTurnConnection);
 STATUS turnConnectionShutdown(PTurnConnection, UINT64);
 BOOL turnConnectionIsShutdownComplete(PTurnConnection);
 BOOL turnConnectionGetRelayAddress(PTurnConnection, PKvsIpAddress);
 STATUS turnConnectionRefreshAllocation(PTurnConnection);
 STATUS turnConnectionRefreshPermission(PTurnConnection, PBOOL);
 STATUS turnConnectionFreePreAllocatedPackets(PTurnConnection);
-
-STATUS turnConnectionStepState(PTurnConnection);
+/**
+ * @brief advance the fsm of the turn connection.
+ *
+ * @param[in] pTurnConnection the context of the turn connection.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS turnConnectionStepState(PTurnConnection pTurnConnection);
 STATUS turnConnectionUpdateNonce(PTurnConnection);
-STATUS turnConnectionTimerCallback(UINT32, UINT64, UINT64);
+/**
+ * @brief   the callback for the fsm of the turn connection.
+ *
+ * @param[in] timerId the timer id.
+ * @param[in] currentTime the current time.
+ * @param[in] customData the user data.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS turnConnectionTimerCallback(UINT32 timerId, UINT64 currentTime, UINT64 customData);
 /**
  * @brief   get the long term key according to the md5 generation of the username, realm, and password.
  *
@@ -215,7 +256,7 @@ STATUS turnConnectionTimerCallback(UINT32, UINT64, UINT64);
  * @param[in, out] pBuffer
  * @param[in] bufferLen
  *
- * @return STATUS status of execution
+ * @return STATUS status of execution.
  */
 STATUS turnConnectionGetLongTermKey(PCHAR, PCHAR, PCHAR, PBYTE, UINT32);
 /**
@@ -236,7 +277,7 @@ PCHAR turnConnectionGetStateStr(TURN_CONNECTION_STATE);
 /**
  * @brief parse the data from the socket connection, and split them into stun packets, and turn packets.
  *
- * @param[in] pTurnConnection
+ * @param[in] pTurnConnection the context of the turn connection.
  * @param[in] pBuffer the pointer of data from socket connection.
  * @param[in] bufferLen the lengthe of pBuffer
  * @param[in] pSrc
@@ -246,16 +287,25 @@ PCHAR turnConnectionGetStateStr(TURN_CONNECTION_STATE);
  *
  * @return STATUS status of execution
  */
-STATUS turnConnectionIncomingDataHandler(PTurnConnection, PBYTE, UINT32, PKvsIpAddress, PKvsIpAddress, PTurnChannelData, PUINT32);
+STATUS turnConnectionIncomingDataHandler(PTurnConnection pTurnConnection, PBYTE pBuffer, UINT32 bufferLen, PKvsIpAddress pSrc, PKvsIpAddress pDest,
+                                         PTurnChannelData channelDataList, PUINT32 pChannelDataCount);
 
 STATUS turnConnectionHandleStun(PTurnConnection, PBYTE, UINT32);
-STATUS turnConnectionHandleStunError(PTurnConnection, PBYTE, UINT32);
+/**
+ * @brief parse the data from the socket connection, and split them into stun packets, and turn packets.
+ *
+ * @param[in] pTurnConnection the context of the turn connection.
+ * @param[in] pBuffer the pointer of data from socket connection.
+ * @param[in] bufferLen the lengthe of pBuffer
+ *
+ * @return STATUS status of execution
+ */
+STATUS turnConnectionHandleStunError(PTurnConnection pTurnConnection, PBYTE pBuffer, UINT32 bufferLen);
 STATUS turnConnectionHandleChannelData(PTurnConnection, PBYTE, UINT32, PTurnChannelData, PUINT32, PUINT32);
 STATUS turnConnectionHandleChannelDataTcpMode(PTurnConnection, PBYTE, UINT32, PTurnChannelData, PUINT32, PUINT32);
 VOID turnConnectionFatalError(PTurnConnection, STATUS);
 
 PTurnPeer turnConnectionGetPeerWithChannelNumber(PTurnConnection, UINT16);
-PTurnPeer turnConnectionGetPeerWithIp(PTurnConnection, PKvsIpAddress);
 
 #ifdef __cplusplus
 }

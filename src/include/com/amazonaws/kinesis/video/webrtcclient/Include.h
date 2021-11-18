@@ -1082,13 +1082,13 @@ typedef struct {
 PUBLIC_API STATUS createPeerConnection(PRtcConfiguration, PRtcPeerConnection*);
 
 /**
- * @brief Free a RtcPeerConnection
+ * @brief Free a RtcPeerConnection, NOT thread-safe.
  *
  * @param[in] PRtcPeerConnection* RtcPeerConnection that is to be freed
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS freePeerConnection(PRtcPeerConnection*);
+PUBLIC_API STATUS freePeerConnection(PRtcPeerConnection* ppPeerConnection);
 
 /**
  * @brief Set a callback when new Ice collects new local candidate.

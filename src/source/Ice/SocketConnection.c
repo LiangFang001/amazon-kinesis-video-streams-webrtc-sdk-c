@@ -4,6 +4,9 @@
 #define LOG_CLASS "SocketConnection"
 #include "../Include_i.h"
 
+/// internal function prototype
+STATUS socketSendDataWithRetry(PSocketConnection pSocketConnection, PBYTE buf, UINT32 bufLen, PKvsIpAddress pDestIp, PUINT32 pBytesWritten);
+
 STATUS createSocketConnection(KVS_IP_FAMILY_TYPE familyType, KVS_SOCKET_PROTOCOL protocol, PKvsIpAddress pBindAddr, PKvsIpAddress pPeerIpAddr,
                               UINT64 customData, ConnectionDataAvailableFunc dataAvailableFn, UINT32 sendBufSize,
                               PSocketConnection* ppSocketConnection)
@@ -75,7 +78,8 @@ STATUS freeSocketConnection(PSocketConnection* ppSocketConnection)
     }
 
     if (ATOMIC_LOAD_BOOL(&pSocketConnection->inUse)) {
-        DLOGW("Shutting down socket connection timedout after %u seconds", KVS_ICE_TURN_CONNECTION_SHUTDOWN_TIMEOUT / HUNDREDS_OF_NANOS_IN_A_SECOND);
+        DLOGW("Shutting down socket connection timedout after %" PRIu64 " seconds",
+              KVS_ICE_TURN_CONNECTION_SHUTDOWN_TIMEOUT / HUNDREDS_OF_NANOS_IN_A_SECOND);
     }
 
     if (IS_VALID_MUTEX_VALUE(pSocketConnection->lock)) {
@@ -300,10 +304,20 @@ BOOL socketConnectionIsConnected(PSocketConnection pSocketConnection)
         return TRUE;
     }
 
-    DLOGW("socket connection check failed with errno %s", getErrorString(getErrorCode()));
+    DLOGW("socket connection check failed with errno %s(%d)", getErrorString(getErrorCode()), getErrorCode());
     return FALSE;
 }
-
+/**
+ * @brief send the data to socket layer.
+ *
+ * @param[in] pSocketConnection the context of the socket.
+ * @param[in] buf the pointer of the send buffer.
+ * @param[in] bufLen the lenght of the send buffer.
+ * @param[in] pDestIp the ip address of destion.
+ * @param[in] pBytesWritten the bytes written.
+ *
+ * @return STATUS status of execution.
+ */
 STATUS socketSendDataWithRetry(PSocketConnection pSocketConnection, PBYTE buf, UINT32 bufLen, PKvsIpAddress pDestIp, PUINT32 pBytesWritten)
 {
     STATUS retStatus = STATUS_SUCCESS;
@@ -379,6 +393,7 @@ STATUS socketSendDataWithRetry(PSocketConnection pSocketConnection, PBYTE buf, U
     }
 
     if (result < 0) {
+        DLOGD("fail to send data and close the socket.");
         CLOSE_SOCKET_IF_CANT_RETRY(errorNum, pSocketConnection);
     }
 

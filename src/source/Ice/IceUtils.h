@@ -37,17 +37,19 @@ typedef struct {
  *
  * @param[in] maxIdCount the maximum number of transaction id.
  * @param[out] ppTransactionIdStore the pointer of buffer.
- * @return STATUS status of execution
+ * @return STATUS status of execution.
  */
 STATUS createTransactionIdStore(UINT32, PTransactionIdStore*);
 STATUS freeTransactionIdStore(PTransactionIdStore*);
 VOID transactionIdStoreInsert(PTransactionIdStore, PBYTE);
-BOOL transactionIdStoreHasId(PTransactionIdStore, PBYTE);
+
+BOOL transactionIdStoreHasId(PTransactionIdStore pTransactionIdStore, PBYTE transactionId);
 /**
  * @brief reset the buffer of transaction id.
  *
  * @param[in] pTransactionIdStore the transaction object.
- * @return STATUS status of execution
+ *
+ * @return STATUS status of execution.
  */
 VOID transactionIdStoreReset(PTransactionIdStore);
 /**
@@ -61,8 +63,33 @@ VOID transactionIdStoreReset(PTransactionIdStore);
 STATUS iceUtilsGenerateTransactionId(PBYTE, UINT32);
 
 // Stun packaging and sending functions
-STATUS iceUtilsPackageStunPacket(PStunPacket, PBYTE, UINT32, PBYTE, PUINT32);
-STATUS iceUtilsSendStunPacket(PStunPacket, PBYTE, UINT32, PKvsIpAddress, PSocketConnection, struct __TurnConnection*, BOOL);
+/**
+ * @brief
+ *
+ * @param[in] pStunPacket
+ * @param[in] password
+ * @param[in] passwordLen
+ * @param[in] pBuffer
+ * @param[in] pBufferLen
+ *
+ * @return STATUS status of execution.
+ */
+STATUS iceUtilsPackageStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, PBYTE pBuffer, PUINT32 pBufferLen);
+/**
+ * @brief
+ *
+ * @param[in] pStunPacket
+ * @param[in] password
+ * @param[in] passwordLen
+ * @param[in] pDest
+ * @param[in] pSocketConnection
+ * @param[in] pTurnConnection
+ * @param[in] useTurn
+ *
+ * @return STATUS status of execution
+ */
+STATUS iceUtilsSendStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, PKvsIpAddress pDest, PSocketConnection pSocketConnection,
+                              struct __TurnConnection* pTurnConnection, BOOL useTurn);
 /**
  * @brief   send the packet via the socket of the selected ice candidate.
  */
@@ -79,8 +106,15 @@ typedef struct {
 } IceServer, *PIceServer;
 /**
  * @brief #TBD, consider to change this api, but it is not a bottleneck.
+ *
+ * @param[in] pIceServer
+ * @param[in] url
+ * @param[in] username
+ * @param[in] credential
+ *
+ * @return STATUS status of execution.
  */
-STATUS parseIceServer(PIceServer, PCHAR, PCHAR, PCHAR);
+STATUS parseIceServer(PIceServer pIceServer, PCHAR url, PCHAR username, PCHAR credential);
 
 #ifdef __cplusplus
 }

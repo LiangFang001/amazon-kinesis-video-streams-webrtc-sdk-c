@@ -375,11 +375,24 @@ typedef struct {
     // Stun attributes
     PStunAttributeHeader* attributeList;
 } StunPacket, *PStunPacket;
-
-STATUS serializeStunPacket(PStunPacket, PBYTE, UINT32, BOOL, BOOL, PBYTE, PUINT32);
+/**
+ * @brief
+ *
+ * @param[in] pStunPacket
+ * @param[in] password
+ * @param[in] passwordLen
+ * @param[in] generateMessageIntegrity
+ * @param[in] generateFingerprint
+ * @param[in] pBuffer
+ * @param[in] pSize
+ *
+ * @return STATUS status of execution.
+ */
+STATUS serializeStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, BOOL generateMessageIntegrity, BOOL generateFingerprint,
+                           PBYTE pBuffer, PUINT32 pSize);
 STATUS deserializeStunPacket(PBYTE, UINT32, PBYTE, UINT32, PStunPacket*);
 STATUS freeStunPacket(PStunPacket*);
-STATUS createStunPacket(STUN_PACKET_TYPE, PBYTE, PStunPacket*);
+STATUS createStunPacket(STUN_PACKET_TYPE stunPacketType, PBYTE transactionId, PStunPacket* ppStunPacket);
 STATUS appendStunAddressAttribute(PStunPacket, STUN_ATTRIBUTE_TYPE, PKvsIpAddress);
 STATUS appendStunUsernameAttribute(PStunPacket, PCHAR);
 STATUS appendStunFlagAttribute(PStunPacket, STUN_ATTRIBUTE_TYPE);

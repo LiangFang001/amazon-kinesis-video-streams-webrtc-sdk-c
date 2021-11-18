@@ -4,6 +4,9 @@
 #define LOG_CLASS "TurnConnection"
 #include "../Include_i.h"
 
+// intenal function prototype.
+PTurnPeer turnConnectionGetPeerWithIp(PTurnConnection pTurnConnection, PKvsIpAddress pKvsIpAddress);
+
 STATUS createTurnConnection(PIceServer pTurnServer, TIMER_QUEUE_HANDLE timerQueueHandle, TURN_CONNECTION_DATA_TRANSFER_MODE dataTransferMode,
                             KVS_SOCKET_PROTOCOL protocol, PTurnConnectionCallbacks pTurnConnectionCallbacks, PSocketConnection pTurnSocket,
                             PConnectionListener pConnectionListener, PTurnConnection* ppTurnConnection)
@@ -631,7 +634,7 @@ STATUS turnConnectionAddPeer(PTurnConnection pTurnConnection, PKvsIpAddress pPee
     MUTEX_LOCK(pTurnConnection->lock);
     locked = TRUE;
 
-    /* check for duplicate */
+    // check for duplicate
     CHK(turnConnectionGetPeerWithIp(pTurnConnection, pPeerAddress) == NULL, retStatus);
     CHK_WARN(pTurnConnection->turnPeerCount < DEFAULT_TURN_MAX_PEER_COUNT, STATUS_INVALID_OPERATION, "Add peer failed. Max peer count reached");
 
@@ -1249,7 +1252,7 @@ STATUS turnConnectionTimerCallback(UINT32 timerId, UINT64 currentTime, UINT64 cu
     switch (pTurnConnection->state) {
         case TURN_STATE_GET_CREDENTIALS:
             // do not have information of the crendential, so leave the password as blank.
-            // when you receive 401 response, you can retrieve the information from the it.
+            // when you receive 401 response, you can retrieve the information from it.
             sendStatus = iceUtilsSendStunPacket(pTurnConnection->pTurnPacket, NULL, 0, &pTurnConnection->turnServer.ipAddress,
                                                 pTurnConnection->pControlChannel, NULL, FALSE);
             break;
@@ -1308,7 +1311,7 @@ STATUS turnConnectionTimerCallback(UINT32 timerId, UINT64 currentTime, UINT64 cu
                 }
             }
 
-            CHK_STATUS(turnConnectionRefreshAllocation(pTurnConnection));
+            CHK(turnConnectionRefreshAllocation(pTurnConnection) == STATUS_SUCCESS, STATUS_TURN_FSM_REFRESH_ALLOCATION);
             break;
 
         case TURN_STATE_CLEAN_UP:
@@ -1348,7 +1351,7 @@ STATUS turnConnectionTimerCallback(UINT32 timerId, UINT64 currentTime, UINT64 cu
     }
 
 CleanUp:
-
+    CHK_LOG_ERR(sendStatus);
     CHK_LOG_ERR(retStatus);
 
     if (locked) {
@@ -1457,7 +1460,14 @@ PTurnPeer turnConnectionGetPeerWithChannelNumber(PTurnConnection pTurnConnection
 
     return pTurnPeer;
 }
-
+/**
+ * @brief   get the context of remote peer according to input ip address.
+ *
+ * @param[in] pTurnConnection the context of the turn connection.
+ * @param[in] pKvsIpAddress the target ip address.
+ *
+ * @return PTurnPeer the context of remote peer.
+ */
 PTurnPeer turnConnectionGetPeerWithIp(PTurnConnection pTurnConnection, PKvsIpAddress pKvsIpAddress)
 {
     PTurnPeer pTurnPeer = NULL;

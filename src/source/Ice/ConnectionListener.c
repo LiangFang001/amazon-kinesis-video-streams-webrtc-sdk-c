@@ -116,6 +116,7 @@ STATUS connectionListenerAddConnection(PConnectionListener pConnectionListener, 
         }
     }
 
+    DLOGV("the number of socket connections:%" PRIu64, pConnectionListener->socketCount);
     MUTEX_UNLOCK(pConnectionListener->lock);
     locked = FALSE;
 
@@ -123,6 +124,10 @@ CleanUp:
 
     if (locked) {
         MUTEX_UNLOCK(pConnectionListener->lock);
+    }
+
+    if (iterate == TRUE) {
+        DLOGW("the limit of socket sonnections is reached.");
     }
 
     return retStatus;

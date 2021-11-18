@@ -17,6 +17,7 @@ extern "C" {
 #define KVS_ICE_CONNECTIVITY_CHECK_TIMEOUT                     10 * HUNDREDS_OF_NANOS_IN_A_SECOND
 #define KVS_ICE_CANDIDATE_NOMINATION_TIMEOUT                   10 * HUNDREDS_OF_NANOS_IN_A_SECOND
 // https://tools.ietf.org/html/rfc5245#section-10
+// Agents SHOULD use a Tr value of 15 seconds. Agents MAY use a bigger value but MUST NOT use a value smaller than 15 seconds.
 #define KVS_ICE_SEND_KEEP_ALIVE_INTERVAL         15 * HUNDREDS_OF_NANOS_IN_A_SECOND
 #define KVS_ICE_TURN_CONNECTION_SHUTDOWN_TIMEOUT 1 * HUNDREDS_OF_NANOS_IN_A_SECOND
 #define KVS_ICE_DEFAULT_TIMER_START_DELAY        3 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND
@@ -287,10 +288,10 @@ STATUS createIceAgent(PCHAR, PCHAR, PIceAgentCallbacks, PRtcConfiguration, TIMER
 
 /**
  * @brief deallocate the PIceAgent object and all its resources.
- * @param[in] ppIceAgent
+ * @param[in, out] ppIceAgent
  * @return STATUS status of execution
  */
-STATUS freeIceAgent(PIceAgent*);
+STATUS freeIceAgent(PIceAgent* ppIceAgent);
 
 /**
  * @brief if PIceCandidate doesnt exist already in remoteCandidates, create a copy and add to remoteCandidates
@@ -318,11 +319,11 @@ STATUS iceAgentStartAgent(PIceAgent, PCHAR, PCHAR, BOOL);
  * @brief Initiates candidate gathering.
  * #TBD, original sdk starts gathering ice candidate after setting local description, or receiving remote description.
  *
- * @param[in] PIceAgent IceAgent object
+ * @param[in] pIceAgent IceAgent object
  *
  * @return STATUS status of execution
  */
-STATUS iceAgentStartGathering(PIceAgent);
+STATUS iceAgentStartGathering(PIceAgent pIceAgent);
 
 /**
  * @brief Serialize a candidate for Trickle ICE or exchange via SDP
@@ -396,17 +397,38 @@ STATUS iceAgentValidateKvsRtcConfig(PKvsRtcConfiguration);
 
 /**
  * @brief handle the incoming packets from the sockete of ice candidate.
+ *
+ * @param[in] pIceAgent
+ * @param[in] pIceAgent
+ * @param[in] pIceAgent
+ * @param[in] pIceAgent
+ * @param[in] pIceAgent
+ * @param[in] pIceAgent
+ *
+ * @return STATUS status of execution.
  */
-STATUS incomingDataHandler(UINT64, PSocketConnection, PBYTE, UINT32, PKvsIpAddress, PKvsIpAddress);
+STATUS incomingDataHandler(UINT64 customData, PSocketConnection pSocketConnection, PBYTE pBuffer, UINT32 bufferLen, PKvsIpAddress pSrc,
+                           PKvsIpAddress pDest);
 /**
  * @brief the callback of the socket connection of relay candidates.
  */
-STATUS incomingRelayedDataHandler(UINT64, PSocketConnection, PBYTE, UINT32, PKvsIpAddress, PKvsIpAddress);
+STATUS incomingRelayedDataHandler(UINT64 customData, PSocketConnection pSocketConnection, PBYTE pBuffer, UINT32 bufferLen, PKvsIpAddress pSrc,
+                                  PKvsIpAddress pDest);
 
 /**
  * @brief handle the incoming stun packets.
+ *
+ * @param[in] pIceAgent
+ * @param[in] pBuffer
+ * @param[in] bufferLen
+ * @param[in] pSocketConnection
+ * @param[in] pSrcAddr
+ * @param[in] pDestAddr
+ *
+ * @return STATUS status of execution.
  */
-STATUS handleStunPacket(PIceAgent, PBYTE, UINT32, PSocketConnection, PKvsIpAddress, PKvsIpAddress);
+STATUS handleStunPacket(PIceAgent pIceAgent, PBYTE pBuffer, UINT32 bufferLen, PSocketConnection pSocketConnection, PKvsIpAddress pSrcAddr,
+                        PKvsIpAddress pDestAddr);
 
 // IceCandidate functions
 /**
@@ -415,7 +437,7 @@ STATUS handleStunPacket(PIceAgent, PBYTE, UINT32, PSocketConnection, PKvsIpAddre
  * @param[in] pIceCandidate
  * @param[in] pIpAddr
  *
- * @return STATUS status of execution
+ * @return STATUS status of execution.
  */
 STATUS updateCandidateAddress(PIceCandidate, PKvsIpAddress);
 STATUS findCandidateWithIp(PKvsIpAddress, PDoubleList, PIceCandidate*);
@@ -426,7 +448,7 @@ STATUS findCandidateWithSocketConnection(PSocketConnection, PDoubleList, PIceCan
  * @brief Need to acquire pIceAgent->lock first
  *          createt the ice candidate pair.
  */
-STATUS createIceCandidatePairs(PIceAgent, PIceCandidate, BOOL);
+STATUS createIceCandidatePairs(PIceAgent pIceAgent, PIceCandidate pIceCandidate, BOOL isRemoteCandidate);
 STATUS freeIceCandidatePair(PIceCandidatePair*);
 /**
  * @brief insert the ice candidate pair according to the priority of ice candidate pair.
@@ -437,8 +459,14 @@ STATUS pruneUnconnectedIceCandidatePair(PIceAgent);
 /**
  * @brief there are two state in the state machine, one is check-connection and another is nomination, sending the stun packet to
  *          confirm the connection between remote ice candidate and local ice candidate.
+ *
+ * @param[in] pStunBindingRequest the context of the stun packet.
+ * @param[in] pIceAgent the context of the ice agent.
+ * @param[in] pIceCandidatePair the context of the candidate pair.
+ *
+ * @return STATUS status of execution.
  */
-STATUS iceCandidatePairCheckConnection(PStunPacket, PIceAgent, PIceCandidatePair);
+STATUS iceCandidatePairCheckConnection(PStunPacket pStunBindingRequest, PIceAgent pIceAgent, PIceCandidatePair pIceCandidatePair);
 
 /**
  * @brief send the request of server reflex.
@@ -446,28 +474,20 @@ STATUS iceCandidatePairCheckConnection(PStunPacket, PIceAgent, PIceCandidatePair
 STATUS iceAgentSendSrflxCandidateRequest(PIceAgent);
 /**
  * @brief fsm::check-connection and fsm::nominating will use this api to check the connection of  the ice candidate pair.
+ *
+ * @param[in] pIceAgent the context of the ice agent.
+ *
+ * @return STATUS status of execution.
  */
-STATUS iceAgentCheckCandidatePairConnection(PIceAgent);
+STATUS iceAgentCheckCandidatePairConnection(PIceAgent pIceAgent);
 /**
  * @brief controlling ice agent sends the use-candidate stun packet out.
  */
 STATUS iceAgentSendCandidateNomination(PIceAgent);
-STATUS iceAgentSendStunPacket(PStunPacket, PBYTE, UINT32, PIceAgent, PIceCandidate, PKvsIpAddress);
+STATUS iceAgentSendStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, PIceAgent pIceAgent, PIceCandidate pLocalCandidate,
+                              PKvsIpAddress pDestAddr);
 
-/**
- * @brief gather local ip addresses and create a udp port. If port creation succeeded then create a new candidate
- * and store it in localCandidates. Ips that are already a local candidate will not be added again.
- *
- * @param[in] PIceAgent IceAgent object
- *
- * @return STATUS status of execution
- */
-STATUS iceAgentInitHostCandidate(PIceAgent);
-STATUS iceAgentInitSrflxCandidate(PIceAgent);
-STATUS iceAgentInitRelayCandidates(PIceAgent);
-STATUS iceAgentInitRelayCandidate(PIceAgent, UINT32, KVS_SOCKET_PROTOCOL);
-
-STATUS iceAgentSetupFsmCheckConnection(PIceAgent);
+STATUS iceAgentSetupFsmCheckConnection(PIceAgent pIceAgent);
 /**
  * @brief   the handler of state machine when it is at connnected state..
  *          select the pDataSendingIceCandidatePair according to sequence of ice candidate pair,
@@ -497,6 +517,7 @@ STATUS iceAgentSetupFsmReady(PIceAgent);
  * @param timerId - timer queue task id
  * @param currentTime
  * @param customData - custom data passed to timer queue when task was added
+ *
  * @return STATUS status of execution
  */
 STATUS iceAgentFsmTimerCallback(UINT32, UINT64, UINT64);
@@ -504,12 +525,16 @@ STATUS iceAgentFsmTimerCallback(UINT32, UINT64, UINT64);
  * @brief This is one callback which is used by timer. After ice agent enters the connected state, we need to send keep alive packet.
  * And we set the interval of keeping alive as 15 seconds.
  *
+ * When STUN is being used for keepalives, a STUN Binding Indication is used [RFC5389].
+ * The Indication MUST NOT utilize any authentication mechanism.
+ * It SHOULD contain the FINGERPRINT attribute to aid in demultiplexing, but it SHOULD NOT contain any other attributes.
+ *
  * #TBD, need to change this behavior. #fsm.
  *
  * @return STATUS status of execution
  */
 STATUS iceAgentKeepAliveTimerCallback(UINT32, UINT64, UINT64);
-STATUS iceAgentGatheringTimerCallback(UINT32, UINT64, UINT64);
+STATUS iceAgentGatheringTimerCallback(UINT32 timerId, UINT64 currentTime, UINT64 customData);
 
 // Default time callback for the state machine
 UINT64 iceAgentGetCurrentTime(UINT64);
@@ -519,7 +544,14 @@ UINT64 iceAgentGetCurrentTime(UINT64);
  *          only controlling ice agent can nominate the ice candidate.
  */
 STATUS iceAgentNominateCandidatePair(PIceAgent);
-STATUS iceAgentInvalidateCandidatePair(PIceAgent);
+/**
+ * @brief   invalidate the ice candidate pair if the local ice candidate is invalid.
+ *
+ * @param[in] the context of the ice agent.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS iceAgentInvalidateCandidatePair(PIceAgent pIceAgent);
 
 /**
  * @brief receive one stun packet can not match the ip and port of local/remote, so it may be one reflexive candidate.

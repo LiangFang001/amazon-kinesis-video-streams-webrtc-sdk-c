@@ -1128,7 +1128,7 @@ STATUS setRemoteDescription(PRtcPeerConnection pPeerConnection, PRtcSessionDescr
     }
 #endif
 CleanUp:
-
+    CHK_LOG_ERR(retStatus);
     LEAVES();
     return retStatus;
 }

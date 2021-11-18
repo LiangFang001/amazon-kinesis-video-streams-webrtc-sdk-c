@@ -48,42 +48,43 @@ struct __SocketConnection {
 typedef struct __SocketConnection* PSocketConnection;
 
 /**
- * Create a SocketConnection object and store it in PSocketConnection. creates a socket based on KVS_SOCKET_PROTOCOL
- * specified, and bind it to the host ip address. If the protocol is tcp, then peer ip address is required and it will
- * try to establish the tcp connection.
+ * @brief   Create a SocketConnection object and store it in PSocketConnection. creates a socket based on KVS_SOCKET_PROTOCOL
+ *          specified, and bind it to the host ip address. If the protocol is tcp, then peer ip address is required and it will
+ *          try to establish the tcp connection.
  *
- * @param - KVS_IP_FAMILY_TYPE - IN - Family for the socket. Must be one of KVS_IP_FAMILY_TYPE
- * @param - KVS_SOCKET_PROTOCOL - IN - socket protocol. TCP or UDP
- * @param - PKvsIpAddress - IN - host ip address to bind to (OPTIONAL)
- * @param - PKvsIpAddress - IN - peer ip address to connect in case of TCP (OPTIONAL)
- * @param - UINT64 - IN - data available callback custom data
- * @param - ConnectionDataAvailableFunc - IN - data available callback (OPTIONAL)
- * @param - UINT32 - IN - send buffer size in bytes
- * @param - PSocketConnection* - OUT - the resulting SocketConnection struct
+ * @param[in] familyType Family for the socket. Must be one of KVS_IP_FAMILY_TYPE
+ * @param[in] protocol socket protocol. TCP or UDP
+ * @param[in] pBindAddr host ip address to bind to (OPTIONAL)
+ * @param[in] pPeerIpAddr peer ip address to connect in case of TCP (OPTIONAL)
+ * @param[in] customData data available callback custom data
+ * @param[in] dataAvailableFn data available callback (OPTIONAL)
+ * @param[in] sendBufSize send buffer size in bytes
+ * @param[in, out] ppSocketConnection the resulting SocketConnection struct
  *
- * @return - STATUS - status of execution
+ * @return STATUS status of execution
  */
-STATUS createSocketConnection(KVS_IP_FAMILY_TYPE, KVS_SOCKET_PROTOCOL, PKvsIpAddress, PKvsIpAddress, UINT64, ConnectionDataAvailableFunc, UINT32,
-                              PSocketConnection*);
+STATUS createSocketConnection(KVS_IP_FAMILY_TYPE familyType, KVS_SOCKET_PROTOCOL protocol, PKvsIpAddress pBindAddr, PKvsIpAddress pPeerIpAddr,
+                              UINT64 customData, ConnectionDataAvailableFunc dataAvailableFn, UINT32 sendBufSize,
+                              PSocketConnection* ppSocketConnection);
 
 /**
- * Free the SocketConnection struct
+ * @brief Free the SocketConnection struct
  *
- * @param - PSocketConnection* - IN - SocketConnection to be freed
+ * @param[in, out] ppSocketConnection SocketConnection to be freed
  *
- * @return - STATUS - status of execution
+ * @return STATUS status of execution
  */
-STATUS freeSocketConnection(PSocketConnection*);
+STATUS freeSocketConnection(PSocketConnection* ppSocketConnection);
 
 /**
- * Given a created SocketConnection, initialize TLS or DTLS handshake depending on the socket protocol
+ * @brief Given a created SocketConnection, initialize TLS or DTLS handshake depending on the socket protocol
  *
- * @param - PSocketConnection - IN - the SocketConnection struct
- * @param - BOOL - IN - will SocketConnection act as server during the TLS or DTLS handshake
+ * @param[in] pSocketConnection the SocketConnection struct
+ * @param[in] isServer will SocketConnection act as server during the TLS or DTLS handshake
  *
- * @return - STATUS - status of execution
+ * @return STATUS status of execution
  */
-STATUS socketConnectionInitSecureConnection(PSocketConnection, BOOL);
+STATUS socketConnectionInitSecureConnection(PSocketConnection pSocketConnection, BOOL isServer);
 
 /**
  * Given a created SocketConnection, send data through the underlying socket. If socket type is UDP, then destination
@@ -125,24 +126,24 @@ STATUS socketConnectionClosed(PSocketConnection);
 /**
  * Check if PSocketConnection is closed
  *
- * @param - PSocketConnection - IN - the SocketConnection struct
+ * @param[in] PSocketConnection the SocketConnection struct
  *
- * @return - BOOL - whether connection is closed
+ * @return BOOL whether connection is closed
  */
-BOOL socketConnectionIsClosed(PSocketConnection);
+BOOL socketConnectionIsClosed(PSocketConnection pSocketConnection);
 
 /**
- * Return whether socket has been connected. Return TRUE for UDP sockets.
- * Return TRUE for TCP sockets once the connection has been established, otherwise return FALSE.
+ * @brief   Return whether socket has been connected. Return TRUE for UDP sockets.
+ *          Return TRUE for TCP sockets once the connection has been established, otherwise return FALSE.
  *
- * @param - PSocketConnection - IN - the SocketConnection struct
+ * @param[in] pSocketConnection the SocketConnection struct
  *
- * @return - STATUS - status of execution
+ * @return STATUS status of execution
  */
-BOOL socketConnectionIsConnected(PSocketConnection);
+BOOL socketConnectionIsConnected(PSocketConnection pSocketConnection);
 
 // internal functions
-STATUS socketSendDataWithRetry(PSocketConnection, PBYTE, UINT32, PKvsIpAddress, PUINT32);
+
 STATUS socketConnectionTlsSessionOutBoundPacket(UINT64, PBYTE, UINT32);
 VOID socketConnectionTlsSessionOnStateChange(UINT64, TLS_SESSION_STATE);
 
