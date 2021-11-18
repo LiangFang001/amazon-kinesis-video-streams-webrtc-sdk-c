@@ -270,8 +270,8 @@ if (ENABLE_DATA_CHANNEL)
   add_definitions(-DENABLE_DATA_CHANNEL)
 endif()
 
-file(GLOB PIC_STATE_SOURCE_FILES "src/source/state/*.c")
-file(GLOB PIC_UTILS_SOURCE_FILES "src/source/utils/*.c")
+file(GLOB PIC_STATE_SOURCE_FILES "src/source/State/*.c")
+file(GLOB PIC_UTILS_SOURCE_FILES "src/source/Utils/*.c")
 
 file(
   GLOB
