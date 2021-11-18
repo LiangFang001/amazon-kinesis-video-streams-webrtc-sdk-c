@@ -141,13 +141,6 @@ if(BUILD_DEPENDENCIES)
     build_dependency(gtest)
   endif()
 
-  # building kvsCommonLws also builds kvspic
-  set(BUILD_ARGS
-      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-      -DUSE_OPENSSL=${USE_OPENSSL}
-      -DUSE_MBEDTLS=${USE_MBEDTLS})
-  build_dependency(kvsCommonLws ${BUILD_ARGS})
-
   message(STATUS "Finished building dependencies.")
 endif()
 
@@ -277,6 +270,9 @@ if (ENABLE_DATA_CHANNEL)
   add_definitions(-DENABLE_DATA_CHANNEL)
 endif()
 
+file(GLOB PIC_STATE_SOURCE_FILES "src/source/state/*.c")
+file(GLOB PIC_UTILS_SOURCE_FILES "src/source/utils/*.c")
+
 file(
   GLOB
   WEBRTC_CLIENT_SOURCE_FILES
@@ -298,13 +294,31 @@ elseif (USE_MBEDTLS)
   list(FILTER WEBRTC_CLIENT_SOURCE_FILES EXCLUDE REGEX ".*_openssl\\.c")
 endif()
 
-file(GLOB WEBRTC_SIGNALING_CLIENT_SOURCE_FILES "src/source/Signaling/*.c")
-
+file(
+  GLOB
+  WEBRTC_SIGNALING_CLIENT_SOURCE_FILES
+  "src/source/Signaling/*.c"
+  "src/source/Common/*.c"
+  )
 
 include_directories(${OPEN_SRC_INCLUDE_DIRS})
 include_directories(${OPEN_SRC_INSTALL_PREFIX}/include)
 include_directories(${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/src/include)
 include_directories(${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/src/ice)
+
+add_library(kvspicState STATIC ${PIC_STATE_SOURCE_FILES})
+target_link_libraries(kvspicState)
+
+add_library(kvspicUtils STATIC ${PIC_UTILS_SOURCE_FILES})
+
+target_link_libraries(kvspicUtils ${CMAKE_THREAD_LIBS_INIT})
+if(KVCPIC_HAVE_DLFCN_H)
+  target_link_libraries(kvspicUtils ${CMAKE_DL_LIBS})
+endif()
+if(UNIX AND NOT APPLE)
+  # rt needed for clock_gettime
+  target_link_libraries(kvspicUtils rt)
+endif()
 
 if(BUILD_CLIENT)
   add_library(kvsWebrtcClient ${LINKAGE} ${WEBRTC_CLIENT_SOURCE_FILES})
@@ -333,14 +347,19 @@ if(BUILD_CLIENT)
   endif()
 endif()
 
+set(CPRODUCER_COMMON_TLS_OPTION KVS_USE_OPENSSL)
+if (USE_MBEDTLS)
+    set(CPRODUCER_COMMON_TLS_OPTION KVS_USE_MBEDTLS)
+endif()
+
 add_library(kvsWebrtcSignalingClient ${LINKAGE} ${WEBRTC_SIGNALING_CLIENT_SOURCE_FILES})
 target_compile_options(kvsWebrtcSignalingClient PUBLIC -Wno-format-truncation)
+target_compile_definitions(kvsWebrtcSignalingClient PRIVATE KVS_BUILD_WITH_LWS ${CPRODUCER_COMMON_TLS_OPTION})
 
 target_link_libraries(
   kvsWebrtcSignalingClient
   PUBLIC
         ${LIBWEBSOCKETS_LIBRARIES} 
-        kvsCommonLws
   PRIVATE kvspicUtils
          kvspicState
          ${CMAKE_THREAD_LIBS_INIT}
