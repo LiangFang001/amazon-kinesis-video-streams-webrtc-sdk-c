@@ -191,23 +191,35 @@ typedef struct {
 // Signal handler routine
 VOID lwsSignalHandler(INT32);
 
-// Performs a blocking call
-STATUS lwsCompleteSync(PLwsCallInfo);
-
 // LWS listener handler
 PVOID lwsListenerHandler(PVOID);
 
 // Retry thread
-PVOID reconnectHandler(PVOID);
+PVOID reconnectHandler(PVOID args);
 
 // LWS callback routine
 INT32 lwsHttpCallbackRoutine(struct lws*, enum lws_callback_reasons, PVOID, PVOID, size_t);
 INT32 lwsWssCallbackRoutine(struct lws*, enum lws_callback_reasons, PVOID, PVOID, size_t);
-
-STATUS lwsDescribeChannel(PSignalingClient, UINT64);
+/**
+ * @brief   https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_DescribeSignalingChannel.html
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in] time the current time.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS lwsDescribeChannel(PSignalingClient pSignalingClient, UINT64 time);
 STATUS lwsCreateChannel(PSignalingClient, UINT64);
 STATUS lwsGetChannelEndpoint(PSignalingClient, UINT64);
-STATUS lwsGetIceConfig(PSignalingClient, UINT64);
+/**
+ * @brief the api of getting the configuration of ice servers.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in] time the current time.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS lwsGetIceConfig(PSignalingClient pSignalingClient, UINT64 time);
 STATUS lwsConnectSignalingChannel(PSignalingClient, UINT64);
 STATUS lwsDeleteChannel(PSignalingClient, UINT64);
 
@@ -224,7 +236,15 @@ STATUS lwsWriteData(PSignalingClient, BOOL);
 STATUS lwsTerminateListenerLoop(PSignalingClient);
 STATUS lwsReceiveMessage(PSignalingClient, PCHAR, UINT32);
 STATUS lwsGetMessageTypeFromString(PCHAR, UINT32, SIGNALING_MESSAGE_TYPE*);
-STATUS lwsWakeServiceEventLoop(PSignalingClient, UINT32);
+/**
+ * @brief wake up the writable callback of specific protocol.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in] protocolIndex the index of protocol stack.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS lwsWakeService(PSignalingClient pSignalingClient, UINT32 protocolIndex);
 STATUS lwsTerminateConnectionWithStatus(PSignalingClient, SERVICE_CALL_RESULT);
 
 #ifdef __cplusplus

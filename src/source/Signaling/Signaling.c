@@ -13,6 +13,9 @@ STATUS signalingCreate(PSignalingClientInfoInternal pClientInfo, PChannelInfo pC
     PCHAR userLogLevelStr = NULL;
     UINT32 userLogLevel;
     struct lws_context_creation_info creationInfo;
+    const lws_retry_bo_t retryPolicy = {
+        .secs_since_valid_ping = SIGNALING_SERVICE_WSS_PING_PONG_INTERVAL_IN_SECONDS,
+    };
     PStateMachineState pStateMachineState;
     BOOL cacheFound = FALSE;
     PSignalingFileCacheEntry pFileCacheEntry = NULL;
@@ -96,10 +99,7 @@ STATUS signalingCreate(PSignalingClientInfoInternal pClientInfo, PChannelInfo pC
     creationInfo.ka_time = SIGNALING_SERVICE_TCP_KEEPALIVE_IN_SECONDS;
     creationInfo.ka_probes = SIGNALING_SERVICE_TCP_KEEPALIVE_PROBE_COUNT;
     creationInfo.ka_interval = SIGNALING_SERVICE_TCP_KEEPALIVE_PROBE_INTERVAL_IN_SECONDS;
-/** the new interface of libwebsocket does not have this, so i removed it first.*/
-#ifndef KVS_PLAT_ESP_FREERTOS
-    creationInfo.ws_ping_pong_interval = SIGNALING_SERVICE_WSS_PING_PONG_INTERVAL_IN_SECONDS;
-#endif
+    // creationInfo.retry_and_idle_policy = &retryPolicy;
 
     ATOMIC_STORE_BOOL(&pSignalingClient->clientReady, FALSE);
     ATOMIC_STORE_BOOL(&pSignalingClient->shutdown, FALSE);
@@ -132,11 +132,11 @@ STATUS signalingCreate(PSignalingClientInfoInternal pClientInfo, PChannelInfo pC
     pSignalingClient->messageQueueLock = MUTEX_CREATE(TRUE);
     CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->messageQueueLock), STATUS_INVALID_OPERATION);
 
-    pSignalingClient->lwsServiceLock = MUTEX_CREATE(TRUE);
-    CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->lwsServiceLock), STATUS_INVALID_OPERATION);
+    pSignalingClient->lwsInternalLock = MUTEX_CREATE(TRUE);
+    CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->lwsInternalLock), STATUS_INVALID_OPERATION);
 
-    pSignalingClient->lwsSerializerLock = MUTEX_CREATE(TRUE);
-    CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->lwsSerializerLock), STATUS_INVALID_OPERATION);
+    pSignalingClient->lwsExternalLock = MUTEX_CREATE(TRUE);
+    CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->lwsExternalLock), STATUS_INVALID_OPERATION);
 
     pSignalingClient->diagnosticsLock = MUTEX_CREATE(TRUE);
     CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->diagnosticsLock), STATUS_INVALID_OPERATION);
@@ -208,10 +208,10 @@ STATUS signalingFree(PSignalingClient* ppSignalingClient)
     signalingTerminateOngoingOperations(pSignalingClient, TRUE);
 
     if (pSignalingClient->pLwsContext != NULL) {
-        MUTEX_LOCK(pSignalingClient->lwsServiceLock);
+        MUTEX_LOCK(pSignalingClient->lwsInternalLock);
         lws_context_destroy(pSignalingClient->pLwsContext);
         pSignalingClient->pLwsContext = NULL;
-        MUTEX_UNLOCK(pSignalingClient->lwsServiceLock);
+        MUTEX_UNLOCK(pSignalingClient->lwsInternalLock);
     }
 
     freeStateMachine(pSignalingClient->pStateMachine);
@@ -252,12 +252,12 @@ STATUS signalingFree(PSignalingClient* ppSignalingClient)
         MUTEX_FREE(pSignalingClient->messageQueueLock);
     }
 
-    if (IS_VALID_MUTEX_VALUE(pSignalingClient->lwsServiceLock)) {
-        MUTEX_FREE(pSignalingClient->lwsServiceLock);
+    if (IS_VALID_MUTEX_VALUE(pSignalingClient->lwsInternalLock)) {
+        MUTEX_FREE(pSignalingClient->lwsInternalLock);
     }
 
-    if (IS_VALID_MUTEX_VALUE(pSignalingClient->lwsSerializerLock)) {
-        MUTEX_FREE(pSignalingClient->lwsSerializerLock);
+    if (IS_VALID_MUTEX_VALUE(pSignalingClient->lwsExternalLock)) {
+        MUTEX_FREE(pSignalingClient->lwsExternalLock);
     }
 
     if (IS_VALID_MUTEX_VALUE(pSignalingClient->diagnosticsLock)) {
@@ -1074,6 +1074,8 @@ STATUS signalingGetIceConfig(PSignalingClient pSignalingClient, UINT64 time)
 
         if (STATUS_SUCCEEDED(retStatus)) {
             pSignalingClient->getIceConfigTime = time;
+        } else {
+            DLOGE("failed to get the configuration of ice servers.");
         }
 
         // Calculate the latency whether the call succeeded or not

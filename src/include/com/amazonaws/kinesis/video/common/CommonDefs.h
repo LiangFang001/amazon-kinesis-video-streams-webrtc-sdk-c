@@ -682,6 +682,7 @@ typedef MUTEX (*createMutex)(BOOL);
 typedef VOID (*lockMutex)(MUTEX);
 typedef VOID (*unlockMutex)(MUTEX);
 typedef BOOL (*tryLockMutex)(MUTEX);
+typedef BOOL (*waitLockMutex)(MUTEX, UINT64);
 typedef VOID (*freeMutex)(MUTEX);
 typedef STATUS (*createThread)(PTID, startRoutine, PVOID);
 typedef STATUS (*createThreadEx)(PTID, PCHAR threadName, UINT32 threadSize, startRoutine, PVOID);
@@ -725,6 +726,7 @@ extern createMutex globalCreateMutex;
 extern lockMutex globalLockMutex;
 extern unlockMutex globalUnlockMutex;
 extern tryLockMutex globalTryLockMutex;
+extern waitLockMutex globalWaitLockMutex;
 extern freeMutex globalFreeMutex;
 extern createThread globalCreateThread;
 extern createThreadEx globalCreateThreadEx;
@@ -971,11 +973,12 @@ extern PUBLIC_API atomicXor globalAtomicXor;
 //
 // Mutex functionality
 //
-#define MUTEX_CREATE  globalCreateMutex
-#define MUTEX_LOCK    globalLockMutex
-#define MUTEX_UNLOCK  globalUnlockMutex
-#define MUTEX_TRYLOCK globalTryLockMutex
-#define MUTEX_FREE    globalFreeMutex
+#define MUTEX_CREATE   globalCreateMutex
+#define MUTEX_LOCK     globalLockMutex
+#define MUTEX_UNLOCK   globalUnlockMutex
+#define MUTEX_TRYLOCK  globalTryLockMutex
+#define MUTEX_WAITLOCK globalWaitLockMutex
+#define MUTEX_FREE     globalFreeMutex
 
 //
 // Condition variable functionality

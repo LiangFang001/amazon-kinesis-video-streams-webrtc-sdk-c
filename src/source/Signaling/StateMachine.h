@@ -30,8 +30,15 @@ extern "C" {
 // Indicates infinite retries
 #define INFINITE_RETRY_COUNT_SENTINEL 0
 
-// Whether to step the state machine
-STATUS signalingFsmStep(PSignalingClient, STATUS);
+/**
+ * @brief Whether to step the state machine
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in] status
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signalingFsmStep(PSignalingClient pSignalingClient, STATUS status);
 
 STATUS signalingFsmAccept(PSignalingClient, UINT64);
 SIGNALING_CLIENT_STATE signalingFsmGetState(UINT64);
@@ -52,7 +59,7 @@ STATUS signalingFsmGetEndpoint(UINT64, UINT64);
 STATUS signalingFsmFromGetIceConfig(UINT64, PUINT64);
 STATUS signalingFsmGetIceConfig(UINT64, UINT64);
 STATUS signalingFsmFromReady(UINT64, PUINT64);
-STATUS signalingFsmReady(UINT64, UINT64);
+STATUS signalingFsmReady(UINT64 customData, UINT64 time);
 STATUS signalingFsmFromConnect(UINT64, PUINT64);
 STATUS signalingFsmConnect(UINT64, UINT64);
 STATUS signalingFsmFromConnected(UINT64, PUINT64);

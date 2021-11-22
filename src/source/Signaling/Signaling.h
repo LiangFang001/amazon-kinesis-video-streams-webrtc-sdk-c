@@ -216,8 +216,7 @@ typedef struct {
     // Service call context
     ServiceCallContext serviceCallContext;
 
-    // Indicates whether to self-prime on Ready or not
-    BOOL continueOnReady;
+    BOOL continueOnReady; //!< Indicates whether to self-prime on Ready or not
 
     // Interlocking the state transitions
     MUTEX nestedFsmLock;
@@ -268,10 +267,10 @@ typedef struct {
     MUTEX messageQueueLock;
 
     // LWS needs to be locked
-    MUTEX lwsServiceLock;
+    MUTEX lwsInternalLock;
 
     // Serialized access to LWS service call
-    MUTEX lwsSerializerLock;
+    MUTEX lwsExternalLock;
 
     // Re-entrant lock for diagnostics/stats
     MUTEX diagnosticsLock;
@@ -301,8 +300,22 @@ STATUS signalingFree(PSignalingClient*);
 STATUS signalingSendMessage(PSignalingClient, PSignalingMessage);
 STATUS signalingGetIceConfigInfoCout(PSignalingClient, PUINT32);
 STATUS signalingGetIceConfigInfo(PSignalingClient, UINT32, PIceConfigInfo*);
-STATUS signalingConnect(PSignalingClient);
-STATUS signalingDisconnect(PSignalingClient);
+/**
+ * @brief
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signalingConnect(PSignalingClient pSignalingClient);
+/**
+ * @brief
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signalingDisconnect(PSignalingClient pSignalingClient);
 STATUS signalingDelete(PSignalingClient);
 
 STATUS signalingValidateCallbacks(PSignalingClient, PSignalingClientCallbacks);
