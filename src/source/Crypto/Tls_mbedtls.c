@@ -223,7 +223,6 @@ CleanUp:
 STATUS tlsSessionShutdown(PTlsSession pTlsSession)
 {
     STATUS retStatus = STATUS_SUCCESS;
-    INT32 sslRet;
 
     CHK(pTlsSession != NULL, STATUS_NULL_ARG);
     CHK(pTlsSession->state != TLS_SESSION_STATE_CLOSED, retStatus);

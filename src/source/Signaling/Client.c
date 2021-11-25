@@ -2,7 +2,7 @@
 #include "../Include_i.h"
 
 STATUS signalingClientCreate(PSignalingClientInfo pClientInfo, PChannelInfo pChannelInfo, PSignalingClientCallbacks pCallbacks,
-                                 PAwsCredentialProvider pCredentialProvider, PSIGNALING_CLIENT_HANDLE pSignalingHandle)
+                             PAwsCredentialProvider pCredentialProvider, PSIGNALING_CLIENT_HANDLE pSignalingHandle)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;

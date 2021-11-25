@@ -1623,7 +1623,6 @@ STATUS lwsWriteData(PSignalingClient pSignalingClient, BOOL awaitForResponse)
 
     MUTEX_UNLOCK(pSignalingClient->receiveLock);
     receiveLocked = FALSE;
-
     CHK((SERVICE_CALL_RESULT) ATOMIC_LOAD(&pSignalingClient->messageResult) == SERVICE_CALL_RESULT_OK, STATUS_SIGNALING_MESSAGE_DELIVERY_FAILED);
 
 CleanUp:
