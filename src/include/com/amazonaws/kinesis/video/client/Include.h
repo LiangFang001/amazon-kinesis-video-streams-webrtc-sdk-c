@@ -60,7 +60,7 @@ extern "C" {
 /**
  * Max len of the fully qualified URI
  */
-#define MAX_URI_CHAR_LEN 1024
+#define MAX_URI_CHAR_LEN 10 * 1024
 
 /**
  * Min streaming token expiration duration. Currently defined as 30 seconds.

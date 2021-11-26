@@ -119,7 +119,7 @@ extern "C" {
 #define DEFAULT_KVS_CACERT_PATH KVS_CA_CERT_PATH
 #else
 #ifdef KVS_PLAT_ESP_FREERTOS
-#define DEFAULT_KVS_CACERT_PATH "cert.pem"
+#define DEFAULT_KVS_CACERT_PATH "/sdcard/cert.pem"
 #else
 #define DEFAULT_KVS_CACERT_PATH EMPTY_STRING
 #endif
