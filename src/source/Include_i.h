@@ -24,7 +24,7 @@ extern "C" {
 ////////////////////////////////////////////////////
 // Project include files
 ////////////////////////////////////////////////////
-#include <com/amazonaws/kinesis/video/webrtcclient/Include.h>
+#include <kvs/WebRTCClient.h>
 
 #ifdef KVS_USE_OPENSSL
 #include <openssl/bio.h>
@@ -35,20 +35,12 @@ extern "C" {
 #include <openssl/sha.h>
 #include <openssl/ssl.h>
 #elif KVS_USE_MBEDTLS
-#include <mbedtls/ssl.h>
-#include <mbedtls/entropy.h>
-#include <mbedtls/ctr_drbg.h>
-#include <mbedtls/error.h>
-#include <mbedtls/certs.h>
-#include <mbedtls/sha256.h>
-#endif
-
-#ifdef ENABLE_STREAMING
-#ifdef KVS_PLAT_ESP_FREERTOS
-#include <srtp.h>
-#else
-#include <srtp2/srtp.h>
-#endif
+//#include <mbedtls/ssl.h>
+//#include <mbedtls/entropy.h>
+//#include <mbedtls/ctr_drbg.h>
+//#include <mbedtls/error.h>
+//#include <mbedtls/certs.h>
+//#include <mbedtls/sha256.h>
 #endif
 
 // INET/INET6 MUST be defined before usrsctp
@@ -58,7 +50,6 @@ extern "C" {
 #ifdef ENABLE_DATA_CHANNEL
 #include <usrsctp.h>
 #endif
-#include <libwebsockets.h>
 
 #if !defined __WINDOWS_BUILD__
 #include <signal.h>
@@ -148,14 +139,7 @@ STATUS generateJSONSafeString(PCHAR, UINT32);
 // Project internal includes
 ////////////////////////////////////////////////////
 #ifdef BUILD_CLIENT
-#include "Crypto/IOBuffer.h"
-#include "Crypto/Crypto.h"
-#include "Crypto/Dtls.h"
-#include "Crypto/Tls.h"
-#include "Ice/Network.h"
-#include "Ice/SocketConnection.h"
 #include "Ice/ConnectionListener.h"
-#include "Stun/Stun.h"
 #include "Ice/IceUtils.h"
 #include "Sdp/Sdp.h"
 #include "Ice/IceAgent.h"
@@ -180,11 +164,7 @@ STATUS generateJSONSafeString(PCHAR, UINT32);
 #include "Rtp/Codecs/RtpOpusPayloader.h"
 #include "Rtp/Codecs/RtpG711Payloader.h"
 #endif
-#include "Signaling/FileCache.h"
-#include "Signaling/Signaling.h"
-#include "Signaling/ChannelInfo.h"
-#include "Signaling/StateMachine.h"
-#include "Signaling/LwsApiCalls.h"
+
 #include "Metrics/Metrics.h"
 
 ////////////////////////////////////////////////////

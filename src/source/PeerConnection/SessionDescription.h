@@ -10,6 +10,9 @@ SessionDescription internal include file
 extern "C" {
 #endif
 
+#include "hash_table.h"
+#include "double_linked_list.h"
+
 #define SESSION_DESCRIPTION_INIT_LINE_ENDING            "\\r\\n"
 #define SESSION_DESCRIPTION_INIT_LINE_ENDING_WITHOUT_CR "\\n"
 

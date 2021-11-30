@@ -9,6 +9,10 @@ Ice Utils internal include file
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "stun.h"
+#include "network.h"
+
 // #TBD, need to review this design.
 #define DEFAULT_MAX_STORED_TRANSACTION_ID_COUNT 20
 #define MAX_STORED_TRANSACTION_ID_COUNT         100

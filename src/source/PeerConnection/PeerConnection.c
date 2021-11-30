@@ -1,6 +1,7 @@
 #define LOG_CLASS "PeerConnection"
 
 #include "../Include_i.h"
+#include "dtls.h"
 
 #define PC_ENTER()  // ENTER()
 #define PC_LEAVE()  // LEAVE()

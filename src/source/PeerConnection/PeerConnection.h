@@ -10,6 +10,10 @@ PeerConnection internal include file
 extern "C" {
 #endif
 
+#include "hash_table.h"
+#include "double_linked_list.h"
+#include "dtls.h"
+
 #define LOCAL_ICE_UFRAG_LEN 4
 #define LOCAL_ICE_PWD_LEN   24
 #define LOCAL_CNAME_LEN     16

@@ -11,6 +11,15 @@
 extern "C" {
 #endif
 
+#include "crypto.h"
+#ifdef ENABLE_STREAMING
+#ifdef KVS_PLAT_ESP_FREERTOS
+#include <srtp.h>
+#else
+#include <srtp2/srtp.h>
+#endif
+#endif
+
 #if defined(ENABLE_STREAMING)
 typedef struct __SrtpSession SrtpSession;
 struct __SrtpSession {

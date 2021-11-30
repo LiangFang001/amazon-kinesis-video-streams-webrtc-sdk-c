@@ -3,6 +3,7 @@
  */
 #define LOG_CLASS "TurnConnection"
 #include "../Include_i.h"
+#include "endianness.h"
 
 // intenal function prototype.
 PTurnPeer turnConnectionGetPeerWithIp(PTurnConnection pTurnConnection, PKvsIpAddress pKvsIpAddress);

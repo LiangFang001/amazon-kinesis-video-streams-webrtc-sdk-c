@@ -9,6 +9,7 @@ PeerConnection internal include file
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "hash_table.h"
 
 typedef STATUS (*FrameReadyFunc)(UINT64, UINT16, UINT16, UINT32);
 typedef STATUS (*FrameDroppedFunc)(UINT64, UINT16, UINT16, UINT32);

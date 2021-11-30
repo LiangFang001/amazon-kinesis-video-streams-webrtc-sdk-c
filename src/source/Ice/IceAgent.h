@@ -10,6 +10,13 @@ IceAgent internal include file
 extern "C" {
 #endif
 
+#include "hash_table.h"
+#include "double_linked_list.h"
+#include "endianness.h"
+#include "stun.h"
+#include "timer_queue.h"
+#include "state_machine.h"
+
 #define KVS_ICE_MAX_CANDIDATE_PAIR_COUNT                       1024
 #define KVS_ICE_MAX_REMOTE_CANDIDATE_COUNT                     100
 #define KVS_ICE_MAX_LOCAL_CANDIDATE_COUNT                      100

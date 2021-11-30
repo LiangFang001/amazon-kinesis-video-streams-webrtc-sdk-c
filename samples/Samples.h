@@ -10,7 +10,7 @@ Shared include file for the samples
 extern "C" {
 #endif
 
-#include <com/amazonaws/kinesis/video/webrtcclient/Include.h>
+#include <kvs/WebRTCClient.h>
 
 #define NUMBER_OF_H264_FRAME_FILES               1500
 #define NUMBER_OF_OPUS_FRAME_FILES               618

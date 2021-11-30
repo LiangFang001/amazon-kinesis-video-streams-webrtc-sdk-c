@@ -1,6 +1,7 @@
 #define LOG_CLASS "RtpPacket"
 
 #include "../Include_i.h"
+#include "endianness.h"
 
 STATUS createRtpPacket(UINT8 version, BOOL padding, BOOL extension, UINT8 csrcCount, BOOL marker, UINT8 payloadType, UINT16 sequenceNumber,
                        UINT32 timestamp, UINT32 ssrc, PUINT32 csrcArray, UINT16 extensionProfile, UINT32 extensionLength, PBYTE extensionPayload,

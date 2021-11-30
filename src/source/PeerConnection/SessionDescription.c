@@ -1,5 +1,9 @@
 #define LOG_CLASS "SessionDescription"
 #include "../Include_i.h"
+
+#ifndef JSMN_HEADER
+#define JSMN_HEADER
+#endif
 #include "jsmn.h"
 
 #define VIDEO_SUPPPORT_TYPE(codec) (codec == RTC_CODEC_VP8 || codec == RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE)

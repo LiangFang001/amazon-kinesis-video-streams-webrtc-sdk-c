@@ -160,19 +160,35 @@ endif()
 
 if (ENABLE_STREAMING AND NOT KVS_PLAT_ESP_FREERTOS)
   if (OPEN_SRC_INSTALL_PREFIX)
+    find_library(LLHTTP_LIBRARIES llhttp REQUIRED PATHS ${OPEN_SRC_INSTALL_PREFIX})
+  else()
+    find_library(LLHTTP_LIBRARIES llhttp REQUIRED )
+  endif()
+endif()
+
+if (ENABLE_STREAMING AND NOT KVS_PLAT_ESP_FREERTOS)
+  if (OPEN_SRC_INSTALL_PREFIX)
+    find_library(WSLAY_LIBRARIES wslay REQUIRED PATHS ${OPEN_SRC_INSTALL_PREFIX})
+  else()
+    find_library(WSLAY_LIBRARIES wslay REQUIRED )
+  endif()
+endif()
+
+if (ENABLE_STREAMING AND NOT KVS_PLAT_ESP_FREERTOS)
+  if (OPEN_SRC_INSTALL_PREFIX)
     find_library(SRTP_LIBRARIES srtp2 REQUIRED PATHS ${OPEN_SRC_INSTALL_PREFIX})
   else()
     find_library(SRTP_LIBRARIES srtp2 REQUIRED )
   endif()
 endif()
 
-if (WIN32)
-  SET(LIBWEBSOCKETS_LIBRARIES "websockets.lib")
-else()
-  if(NOT KVS_PLAT_ESP_FREERTOS)
-    pkg_check_modules(LIBWEBSOCKETS REQUIRED libwebsockets)
-  endif()
-endif()
+#if (WIN32)
+#  SET(LIBWEBSOCKETS_LIBRARIES "websockets.lib")
+#else()
+#  if(NOT KVS_PLAT_ESP_FREERTOS)
+#    pkg_check_modules(LIBWEBSOCKETS REQUIRED libwebsockets)
+#  endif()
+#endif()
 
 
 if(ENABLE_DATA_CHANNEL)
@@ -270,21 +286,23 @@ if (ENABLE_DATA_CHANNEL)
   add_definitions(-DENABLE_DATA_CHANNEL)
 endif()
 
-file(GLOB PIC_STATE_SOURCE_FILES "src/source/State/*.c")
-file(GLOB PIC_UTILS_SOURCE_FILES "src/source/Utils/*.c")
+file(GLOB PIC_STATE_SOURCE_FILES "src/source/state_machine/*.c")
+file(GLOB PIC_UTILS_SOURCE_FILES "src/source/utils/*.c")
 
 file(
   GLOB
   WEBRTC_CLIENT_SOURCE_FILES
-  "src/source/Crypto/*.c"
+  "src/source/crypto/*.c"
   "src/source/Ice/*.c"
+  "src/source/Json/*.c"
+  "src/source/net/*.c"
   "src/source/PeerConnection/*.c"
   "src/source/Rtcp/*.c"
   "src/source/Rtp/*.c"
   "src/source/Rtp/Codecs/*.c"
   "src/source/Sdp/*.c"
   "src/source/Srtp/*.c"
-  "src/source/Stun/*.c"
+  "src/source/stun/*.c"
   "src/source/Sctp/*.c"
   "src/source/Metrics/*.c")
 
@@ -297,14 +315,14 @@ endif()
 file(
   GLOB
   WEBRTC_SIGNALING_CLIENT_SOURCE_FILES
-  "src/source/Signaling/*.c"
-  "src/source/Common/*.c"
+  "src/source/credential/*.c"
+  "src/source/api_call/light/*.c"
+  "src/source/signaling/*.c"
   )
 
 include_directories(${OPEN_SRC_INCLUDE_DIRS})
 include_directories(${OPEN_SRC_INSTALL_PREFIX}/include)
 include_directories(${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/src/include)
-include_directories(${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/src/ice)
 
 add_library(kvspicState STATIC ${PIC_STATE_SOURCE_FILES})
 target_link_libraries(kvspicState)
@@ -312,9 +330,7 @@ target_link_libraries(kvspicState)
 add_library(kvspicUtils STATIC ${PIC_UTILS_SOURCE_FILES})
 
 target_link_libraries(kvspicUtils ${CMAKE_THREAD_LIBS_INIT})
-if(KVCPIC_HAVE_DLFCN_H)
-  target_link_libraries(kvspicUtils ${CMAKE_DL_LIBS})
-endif()
+
 if(UNIX AND NOT APPLE)
   # rt needed for clock_gettime
   target_link_libraries(kvspicUtils rt)
@@ -359,14 +375,16 @@ target_compile_definitions(kvsWebrtcSignalingClient PRIVATE KVS_BUILD_WITH_LWS $
 target_link_libraries(
   kvsWebrtcSignalingClient
   PUBLIC
-        ${LIBWEBSOCKETS_LIBRARIES} 
+        #${LIBWEBSOCKETS_LIBRARIES} 
   PRIVATE kvspicUtils
          kvspicState
          ${CMAKE_THREAD_LIBS_INIT}
          ${EXTRA_DEPS}
          ${OPENSSL_SSL_LIBRARY}
          ${OPENSSL_CRYPTO_LIBRARY}
-         ${MBEDTLS_LIBRARIES})
+         ${MBEDTLS_LIBRARIES}
+         ${LLHTTP_LIBRARIES}
+         ${WSLAY_LIBRARIES})
 
 if (WIN32)
   target_link_libraries(kvsWebrtcClient PRIVATE "Ws2_32" "iphlpapi")

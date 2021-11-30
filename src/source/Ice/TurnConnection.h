@@ -10,6 +10,10 @@ TurnConnection internal include file
 extern "C" {
 #endif
 
+#include "stun.h"
+#include "network.h"
+#include "timer_queue.h"
+
 // https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
 #define TURN_REQUEST_TRANSPORT_UDP               17
 #define TURN_REQUEST_TRANSPORT_TCP               6

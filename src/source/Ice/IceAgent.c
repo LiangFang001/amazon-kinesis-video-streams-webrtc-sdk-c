@@ -5,6 +5,10 @@
  */
 #define LOG_CLASS "IceAgent"
 #include "../Include_i.h"
+#include "double_linked_list.h"
+#include "hex.h"
+#include "crc32.h"
+#include "network.h"
 
 #define ICE_AGENT_ENTRY() ENTERS()
 #define ICE_AGENT_LEAVE() LEAVES()

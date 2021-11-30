@@ -1,0 +1,117 @@
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+#ifndef __AWS_KVS_WEBRTC_STRING_INCLUDE__
+#define __AWS_KVS_WEBRTC_STRING_INCLUDE__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "kvs/error.h"
+
+#define MAX_STRING_CONVERSION_BASE 36
+// Check for whitespace
+#define IS_WHITE_SPACE(ch) (((ch) == ' ') || ((ch) == '\t') || ((ch) == '\r') || ((ch) == '\n') || ((ch) == '\v') || ((ch) == '\f'))
+/**
+ * Internal String operations
+ */
+STATUS strtoint(PCHAR, PCHAR, UINT32, PUINT64, PBOOL);
+/**
+ * Integer to string conversion routines
+ */
+STATUS ulltostr(UINT64, PCHAR, UINT32, UINT32, PUINT32);
+STATUS ultostr(UINT32, PCHAR, UINT32, UINT32, PUINT32);
+
+/**
+ * String to integer conversion routines. NOTE: The base is in [2-36]
+ *
+ * @param 1 - IN - Input string to process
+ * @param 2 - IN/OPT - Pointer to the end of the string. If NULL, the NULL terminator would be used
+ * @param 3 - IN - Base of the number (10 - for decimal)
+ * @param 4 - OUT - The resulting value
+ */
+STATUS strtoui32(PCHAR, PCHAR, UINT32, PUINT32);
+STATUS strtoui64(PCHAR, PCHAR, UINT32, PUINT64);
+STATUS strtoi32(PCHAR, PCHAR, UINT32, PINT32);
+STATUS strtoi64(PCHAR, PCHAR, UINT32, PINT64);
+
+/**
+ * Safe variant of strchr
+ *
+ * @param 1 - IN - Input string to process
+ * @param 2 - IN/OPT - String length. 0 if NULL terminated and the length is calculated.
+ * @param 3 - IN - The character to look for
+ *
+ * @return - Pointer to the first occurrence or NULL
+ */
+PCHAR strnchr(PCHAR, UINT32, CHAR);
+
+/**
+ * Safe variant of strstr. This is a default implementation for strnstr when not available.
+ *
+ * @param 1 - IN - Input string to process
+ * @param 3 - IN - The string to look for
+ * @param 2 - IN - String length.
+ *
+ * @return - Pointer to the first occurrence or NULL
+ */
+PCHAR defaultStrnstr(PCHAR, PCHAR, SIZE_T);
+
+/**
+ * Left and right trim of the whitespace
+ *
+ * @param 1 - IN - Input string to process
+ * @param 2 - IN/OPT - String length. 0 if NULL terminated and the length is calculated.
+ * @param 3 and 4 - OUT - The pointer to the trimmed start and/or end
+ *
+ * @return Status of the operation
+ */
+STATUS ltrimstr(PCHAR, UINT32, PCHAR*);
+STATUS rtrimstr(PCHAR, UINT32, PCHAR*);
+STATUS trimstrall(PCHAR, UINT32, PCHAR*, PCHAR*);
+
+/**
+ * To lower and to upper string conversion
+ *
+ * @param 1 - IN - Input string to convert
+ * @param 2 - IN - String length. 0 if NULL terminated and the length is calculated.
+ * @param 3 - OUT - The pointer to the converted string - can be pointing to the same location. Size should be enough
+ *
+ * @return Status of the operation
+ */
+STATUS tolowerstr(PCHAR, UINT32, PCHAR);
+STATUS toupperstr(PCHAR, UINT32, PCHAR);
+
+/**
+ * To lower/upper string conversion internal function
+ *
+ * @param 1 - IN - Input string to convert
+ * @param 2 - IN - String length. 0 if NULL terminated and the length is calculated.
+ * @param 3 - INT - Whether to upper (TRUE) or to lower (FALSE)
+ * @param 4 - OUT - The pointer to the converted string - can be pointing to the same location. Size should be enough
+ *
+ * @return Status of the operation
+ */
+STATUS tolowerupperstr(PCHAR, UINT32, BOOL, PCHAR);
+
+/**
+ * Internal safe multiplication
+ */
+STATUS unsignedSafeMultiplyAdd(UINT64, UINT64, UINT64, PUINT64);
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* __AWS_KVS_WEBRTC_STRING_INCLUDE__ */

@@ -1,6 +1,7 @@
 #define LOG_CLASS "RtcpPacket"
 
 #include "../Include_i.h"
+#include "endianness.h"
 
 STATUS setRtcpPacketFromBytes(PBYTE pRawPacket, UINT32 pRawPacketsLen, PRtcpPacket pRtcpPacket)
 {
