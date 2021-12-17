@@ -1,6 +1,17 @@
-/*******************************************
-Signaling internal include file
-*******************************************/
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_WEBRTC_SIGNALING_CLIENT__
 #define __KINESIS_VIDEO_WEBRTC_SIGNALING_CLIENT__
 
@@ -9,20 +20,27 @@ Signaling internal include file
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "state_machine.h"
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+#include <sys/socket.h> //!< #YC_TBD, for freertos message queue.
 #include "kvs/WebRTCClient.h"
+#include "channel_info.h"
 #include "timer_queue.h"
-#if 0
-#include <libwebsockets.h>
-#endif
+
+/******************************************************************************
+ * DEFINITION
+ ******************************************************************************/
+/**
+ * Default connect sync API timeout
+ */
+#define SIGNALING_CONNECT_STATE_TIMEOUT (15 * HUNDREDS_OF_NANOS_IN_A_SECOND)
 
 // Request id header name
 #define SIGNALING_REQUEST_ID_HEADER_NAME KVS_REQUEST_ID_HEADER_NAME ":"
 
 // Signaling client from custom data conversion
 #define SIGNALING_CLIENT_FROM_CUSTOM_DATA(h) ((PSignalingClient)(h))
-#define CUSTOM_DATA_FROM_SIGNALING_CLIENT(p) ((UINT64)(p))
 
 // Grace period for refreshing the ICE configuration
 #define ICE_CONFIGURATION_REFRESH_GRACE_PERIOD (30 * HUNDREDS_OF_NANOS_IN_A_SECOND)
@@ -91,11 +109,32 @@ extern "C" {
         }                                                                                                                                            \
     } while (FALSE)
 
-// Forward declaration
-typedef struct __LwsCallInfo* PLwsCallInfo;
+// Send message JSON template
+#define WSS_MESSAGE_TEMPLATE                                                                                                                         \
+    "{\n"                                                                                                                                            \
+    "\t\"action\": \"%s\",\n"                                                                                                                        \
+    "\t\"RecipientClientId\": \"%.*s\",\n"                                                                                                           \
+    "\t\"MessagePayload\": \"%s\"\n"                                                                                                                 \
+    "}"
 
+// Send message JSON template with correlation id
+#define WSS_MESSAGE_TEMPLATE_WITH_CORRELATION_ID                                                                                                     \
+    "{\n"                                                                                                                                            \
+    "\t\"action\": \"%s\",\n"                                                                                                                        \
+    "\t\"RecipientClientId\": \"%.*s\",\n"                                                                                                           \
+    "\t\"MessagePayload\": \"%s\",\n"                                                                                                                \
+    "\t\"CorrelationId\": \"%.*s\"\n"                                                                                                                \
+    "}"
+
+/** #YC_TBD, need to add the code of initialization. */
+#define WSS_INBOUND_MSGQ_LENGTH 32
+
+/******************************************************************************
+ * TYPE DEFINITION
+ ******************************************************************************/
 // Testability hooks functions
 typedef STATUS (*SignalingApiCallHookFunc)(UINT64);
+typedef STATUS (*DispatchMsgHandlerFunc)(PVOID pMessage);
 
 /**
  * @brief   Internal client info object
@@ -133,16 +172,6 @@ typedef struct {
 } SignalingClientInfoInternal, *PSignalingClientInfoInternal;
 
 /**
- * Thread execution tracker
- */
-typedef struct {
-    volatile ATOMIC_BOOL terminated; //!< indicate the thread is terminated or not. true means terminated.
-    TID threadId;
-    MUTEX lock;
-    CVAR await;
-} ThreadTracker, *PThreadTracker;
-
-/**
  * Internal structure tracking various parameters for diagnostics and metrics/stats
  */
 typedef struct {
@@ -158,13 +187,21 @@ typedef struct {
     UINT64 dpApiLatency;
 } SignalingDiagnostics, PSignalingDiagnostics;
 
+typedef struct {
+    // Tracking when was the Last time the APIs were called
+    UINT64 describeTime; //!< the time of describing the channel.
+    UINT64 createTime;
+    UINT64 getEndpointTime;
+    UINT64 getIceConfigTime;
+    UINT64 deleteTime;
+    UINT64 connectTime;
+} ApiCallHistory, *PApiCallHistory;
+
 /**
  * Internal representation of the Signaling client.
  */
 typedef struct {
     volatile SIZE_T result; //!< Current service call result
-    // Sent message result
-    volatile SIZE_T messageResult; //!< the message result of websocket service. SERVICE_CALL_RESULT.
 
     // Client is ready to connect to signaling channel
     volatile ATOMIC_BOOL clientReady; //!< Inidicate the singaling fsm is ready.
@@ -185,7 +222,7 @@ typedef struct {
 
     // Based on the channel info we can async the ice config on create channel
     // call only and not async on repeat state transition when refreshing for example.
-    volatile ATOMIC_BOOL asyncGetIceConfig;
+    // volatile ATOMIC_BOOL asyncGetIceConfig;
 
     // Having state machine logic rely on call result of SERVICE_CALL_RESULT_SIGNALING_RECONNECT_ICE
     // to transition to ICE config state is not enough in Async update mode when
@@ -198,7 +235,7 @@ typedef struct {
     volatile ATOMIC_BOOL iceConfigRetrieved;
 
     // Indicates that there is another thread attempting to grab the service lock
-    volatile ATOMIC_BOOL serviceLockContention;
+    // volatile ATOMIC_BOOL serviceLockContention;
 
     // Current version of the structure
     UINT32 version;
@@ -234,7 +271,7 @@ typedef struct {
     IceConfigInfo iceConfigs[MAX_ICE_CONFIG_COUNT];
 
     // The state machine
-    PStateMachine pStateMachine;
+    PVOID signalingFsmHandle;
 
     // Current AWS credentials
     PAwsCredentials pAwsCredentials;
@@ -248,58 +285,45 @@ typedef struct {
     /**
      * used for the synchronization between the thread of calling connectSignalingChannel and the thread of lwsListenerHandler.
      */
-    MUTEX connectedLock;
+    // MUTEX connectedLock;
 
     // Conditional variable for Connected state
     // wait for the lws to notify the connection is established or not.
-    CVAR connectedCvar;
+    // CVAR connectedCvar;
 
     // Sync mutex for sending condition variable
     MUTEX sendLock;
 
     // Conditional variable for sending interlock
-    CVAR sendCvar; //!< the lock for protecting the process of sending the websocket message.
-
-    // Sync mutex for receiving response to the message condition variable
-    MUTEX receiveLock;
-
-    // Conditional variable for receiving response to the sent message
-    CVAR receiveCvar;
+    // CVAR sendCvar; //!< the lock for protecting the process of sending the websocket message.
 
     // Execute the state machine until this time
     UINT64 stepUntil;
 
     // Ongoing listener call info
-    PLwsCallInfo pOngoingCallInfo; //!< setup by the lws api of connecting signaling channel.
+    // PLwsCallInfo pOngoingCallInfo; //!< setup by the lws api of connecting signaling channel.
 
     // Listener thread for the socket
-    ThreadTracker listenerTracker;
+    // ThreadTracker listenerTracker;
 
     // Restarted thread handler
-    ThreadTracker reconnecterTracker; //!< receive the connection error msg or closed msg from lws.
-                                      //!< spin off one thread to re-connect.
+    // ThreadTracker reconnecterTracker; //!< receive the connection error msg or closed msg from lws.
+    //!< spin off one thread to re-connect.
 
     // LWS context to use for Restful API
     PVOID pWssContext;
-    // struct lws_context* pLwsContext;
-
-    // Signaling protocols - one more for the NULL terminator protocol
-    // struct lws_protocols signalingProtocols[LWS_PROTOCOL_COUNT + 1];
-
-    // Stored wsi objects
-    // struct lws* currentWsi[LWS_PROTOCOL_COUNT];
 
     // List of the ongoing messages
-    PStackQueue pMessageQueue; //!< the queue of singaling ongoing messsages.
+    PStackQueue pOutboundMsgQ; //!< the queue of singaling ongoing messsages.
 
     // Message queue lock
-    MUTEX messageQueueLock; //!< the lock of signaling ongoing message queue.
+    MUTEX outboundMsgQLock; //!< the lock of signaling ongoing message queue.
 
     // LWS needs to be locked
-    MUTEX lwsInternalLock;
+    // MUTEX lwsInternalLock;
 
     // Serialized access to LWS service call
-    MUTEX lwsExternalLock;
+    // MUTEX lwsExternalLock;
 
     // Re-entrant lock for diagnostics/stats
     MUTEX diagnosticsLock;
@@ -311,24 +335,143 @@ typedef struct {
     SignalingDiagnostics diagnostics;
 
     // Tracking when was the Last time the APIs were called
-    UINT64 describeTime; //!< the time of describing the channel.
-    UINT64 createTime;
-    UINT64 getEndpointTime;
-    UINT64 getIceConfigTime;
-    UINT64 deleteTime;
-    UINT64 connectTime;
+    ApiCallHistory apiCallHistory;
+    DispatchMsgHandlerFunc pDispatchMsgHandler;
+    TID dispatchMsgTid;
+    QueueHandle_t inboundMsqQ; //!< the inbound message queue is used to store the messages from the wss connection.
 } SignalingClient, *PSignalingClient;
+
+typedef struct {
+    // The first member is the public signaling message structure
+    ReceivedSignalingMessage receivedSignalingMessage;
+
+    // The messaging client object
+    PSignalingClient pSignalingClient;
+} SignalingMessageWrapper, *PSignalingMessageWrapper;
 
 // Public handle to and from object converters
 #define TO_SIGNALING_CLIENT_HANDLE(p)   ((SIGNALING_CLIENT_HANDLE)(p))
 #define FROM_SIGNALING_CLIENT_HANDLE(h) (IS_VALID_SIGNALING_CLIENT_HANDLE(h) ? (PSignalingClient)(h) : NULL)
 
-STATUS signalingCreate(PSignalingClientInfoInternal, PChannelInfo, PSignalingClientCallbacks, PAwsCredentialProvider, PSignalingClient*);
-STATUS signalingFree(PSignalingClient*);
-
-STATUS signalingSendMessage(PSignalingClient, PSignalingMessage);
-STATUS signalingGetIceConfigInfoCout(PSignalingClient, PUINT32);
-STATUS signalingGetIceConfigInfo(PSignalingClient, UINT32, PIceConfigInfo*);
+/******************************************************************************
+ * FUNCTION PROTOTYPE
+ ******************************************************************************/
+/**
+ * @brief get the corrsponding message type from the string.
+ *
+ * @param[in] typeStr the string.
+ * @param[in] typeLen the leng of string.
+ * @param[in] pMessageType the corresponding message type.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_getMessageTypeFromString(PCHAR typeStr, UINT32 typeLen, SIGNALING_MESSAGE_TYPE* pMessageType);
+/******************************************************************************
+ * AWS KVS WEBRTC API
+ ******************************************************************************/
+/**
+ * @brief describe the signaling channel.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in] time the current time.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_channel_describe(PSignalingClient pSignalingClient, UINT64 time);
+/**
+ * @brief create the signaling channel.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in] time the current time.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_channel_create(PSignalingClient pSignalingClient, UINT64 time);
+/**
+ * @brief get the end-point of the signaling channel.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in] time the current time.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_channel_getEndpoint(PSignalingClient pSignalingClient, UINT64 time);
+/**
+ * @brief get the information of ice servers.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in] time the current time.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_channel_getIceConfig(PSignalingClient pSignalingClient, UINT64 time);
+/**
+ * @brief connect to the signaling channel.
+ *
+ * @param[in] pSignalingClient the context of signaling client.
+ * @param[in] time the current time.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_channel_connect(PSignalingClient pSignalingClient, UINT64 time);
+/**
+ * @brief delete the signaling channel. if signaling client is connected to the signaling channel, you need to terminate the connection first.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in] time the current time.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_channel_delete(PSignalingClient pSignalingClient, UINT64 time);
+/******************************************************************************
+ * SIGNALING CLIENT
+ ******************************************************************************/
+/**
+ * @brief create the context of signaling client and its fsm.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_create(PSignalingClientInfoInternal pClientInfo, PChannelInfo pChannelInfo, PSignalingClientCallbacks pCallbacks,
+                        PAwsCredentialProvider pCredentialProvider, PSignalingClient* ppSignalingClient);
+/**
+ * @brief free the context of signaling client and its fsm.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_free(PSignalingClient* ppSignalingClient);
+/**
+ * @brief connect signaling client with the specific signaling channel.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_connect(PSignalingClient pSignalingClient);
+/**
+ * @brief send the message through the signaling channel when the signaling client is connected to the signaling channel.
+ *
+ *          https://docs.aws.amazon.com/kinesisvideostreams-webrtc-dg/latest/devguide/kvswebrtc-websocket-apis3.html
+ *          https://docs.aws.amazon.com/kinesisvideostreams-webrtc-dg/latest/devguide/kvswebrtc-websocket-apis4.html
+ *          https://docs.aws.amazon.com/kinesisvideostreams-webrtc-dg/latest/devguide/kvswebrtc-websocket-apis5.html
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in] pSignalingMessage the buffer of the signaling message.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_send(PSignalingClient pSignalingClient, PSignalingMessage pSignalingMessage);
+/**
+ * @brief disconnect signaling client from the specific signaling channel.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_disconnect(PSignalingClient pSignalingClient);
 /**
  * @brief
  *
@@ -336,42 +479,41 @@ STATUS signalingGetIceConfigInfo(PSignalingClient, UINT32, PIceConfigInfo*);
  *
  * @return STATUS status of execution.
  */
-STATUS signalingConnect(PSignalingClient pSignalingClient);
+STATUS signaling_delete(PSignalingClient pSignalingClient);
 /**
- * @brief
+ * @brief return the state of the signaling client.
  *
  * @param[in] pSignalingClient the context of the signaling client.
  *
+ * @return SIGNALING_CLIENT_STATE state of signaling.
+ */
+SIGNALING_CLIENT_STATE signaling_getCurrentState(PSignalingClient pSignalingClient);
+UINT64 signaling_getCurrentTime(UINT64);
+/**
+ * @brief get the count of ice servers.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in, out] pIceConfigCount
+ *
  * @return STATUS status of execution.
  */
-STATUS signalingDisconnect(PSignalingClient pSignalingClient);
-STATUS signalingDelete(PSignalingClient);
+STATUS signaling_getIceConfigInfoCout(PSignalingClient pSignalingClient, PUINT32 pIceConfigCount);
+/**
+ * @brief get the information of the ice server.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in] index
+ * @param[in, out] ppIceConfigInfo
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_getIceConfigInfo(PSignalingClient pSignalingClient, UINT32 index, PIceConfigInfo* ppIceConfigInfo);
+STATUS signaling_validateIceConfiguration(PSignalingClient pSignalingClient);
 
-STATUS signalingValidateCallbacks(PSignalingClient, PSignalingClientCallbacks);
-STATUS signalingValidateClientInfo(PSignalingClient, PSignalingClientInfoInternal);
-STATUS signalingValidateIceConfiguration(PSignalingClient);
+STATUS signaling_removeOutboundMessage(PSignalingClient, PCHAR);
+STATUS signaling_getOutboundMessage(PSignalingClient, PCHAR, PCHAR, PSignalingMessage*);
 
-STATUS signalingStoreOngoingMessage(PSignalingClient, PSignalingMessage);
-STATUS signalingRemoveOngoingMessage(PSignalingClient, PCHAR);
-STATUS signalingGetOngoingMessage(PSignalingClient, PCHAR, PCHAR, PSignalingMessage*);
-
-STATUS signalingRefreshIceConfigurationCallback(UINT32, UINT64, UINT64);
-
-UINT64 signalingGetCurrentTime(UINT64);
-
-STATUS signalingAwaitForThreadTermination(PThreadTracker, UINT64);
-STATUS signalingInitThreadTracker(PThreadTracker);
-STATUS signalingUninitThreadTracker(PThreadTracker);
-
-STATUS signalingTerminateOngoingOperations(PSignalingClient, BOOL);
-
-STATUS signalingDescribeChannel(PSignalingClient, UINT64);
-STATUS signalingCreateChannel(PSignalingClient, UINT64);
-STATUS signalingGetChannelEndpoint(PSignalingClient, UINT64);
-STATUS signalingGetIceConfig(PSignalingClient, UINT64);
-STATUS signalingConnectChannel(PSignalingClient, UINT64);
-STATUS signalingDeleteChannel(PSignalingClient, UINT64);
-STATUS signalingGetMetrics(PSignalingClient, PSignalingClientMetrics);
+STATUS signaling_getMetrics(PSignalingClient pSignalingClient, PSignalingClientMetrics pSignalingClientMetrics);
 
 #ifdef __cplusplus
 }

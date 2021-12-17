@@ -1,8 +1,27 @@
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #define LOG_CLASS "WssClient"
-#include "../Include_i.h"
-#include "wss_client.h"
+
 #include <mbedtls/base64.h>
 #include <mbedtls/sha1.h>
+
+#include "kvs/error.h"
+#include "kvs/common_defs.h"
+#include "kvs/platform_utils.h"
+#include "network.h"
+#include "wss_client.h"
 
 #define WSS_CLIENT_ENTER()
 #define WSS_CLIENT_EXIT()
@@ -14,7 +33,7 @@
 
 #define WSLAY_SUCCESS 0
 /*-----------------------------------------------------------*/
-STATUS wss_client_generateRandomNumber(PUINT8 num, UINT32 len)
+static STATUS wss_client_generateRandomNumber(PUINT8 num, UINT32 len)
 {
     WSS_CLIENT_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
@@ -30,7 +49,7 @@ CleanUp:
     mbedtls_ctr_drbg_free(&ctr_drbg);
     mbedtls_entropy_free(&entropy);
     WSS_CLIENT_EXIT();
-    return 0;
+    return retStatus;
 }
 
 STATUS wss_client_generateClientKey(PCHAR buf, UINT32 bufLen)
@@ -51,7 +70,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS wss_client_generateAcceptKey(PCHAR clientKey, UINT32 clientKeyLen, PCHAR acceptKey, UINT32 acceptKeyLen)
+static STATUS wss_client_generateAcceptKey(PCHAR clientKey, UINT32 clientKeyLen, PCHAR acceptKey, UINT32 acceptKeyLen)
 {
     WSS_CLIENT_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
@@ -85,23 +104,24 @@ STATUS wss_client_validateAcceptKey(PCHAR clientKey, UINT32 clientKeyLen, PCHAR 
 
 CleanUp:
     WSS_CLIENT_EXIT();
-    return 0;
+    return retStatus;
 }
 
-INT32 wssClientSocketSend(WssClientContext* pWssCtx, const UINT8* data, SIZE_T len, INT32 flags)
+static INT32 wss_client_socketSend(WssClientContext* pWssCtx, const UINT8* data, SIZE_T len, INT32 flags)
 {
+    UNUSED_PARAM(flags);
     return networkSend(pWssCtx->pNetworkContext, data, len);
 }
 
-INT32 wssClientSocketRead(WssClientContext* pWssCtx, UINT8* data, SIZE_T len, INT32 flags)
+static INT32 wss_client_socketRead(WssClientContext* pWssCtx, UINT8* data, SIZE_T len, INT32 flags)
 {
     return networkRecv(pWssCtx->pNetworkContext, data, len);
 }
 
-SSIZE_T wslay_send_callback(wslay_event_context_ptr ctx, const UINT8* data, SIZE_T len, INT32 flags, VOID* user_data)
+static SSIZE_T wslay_send_callback(wslay_event_context_ptr ctx, const UINT8* data, SIZE_T len, INT32 flags, VOID* user_data)
 {
     WssClientContext* pWssCtx = (WssClientContext*) user_data;
-    SSIZE_T r = wssClientSocketSend(pWssCtx, data, len, flags);
+    SSIZE_T r = wss_client_socketSend(pWssCtx, data, len, flags);
     if (r == -1) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             wslay_event_set_error(ctx, WSLAY_ERR_WOULDBLOCK);
@@ -112,10 +132,10 @@ SSIZE_T wslay_send_callback(wslay_event_context_ptr ctx, const UINT8* data, SIZE
     return r;
 }
 
-SSIZE_T wslay_recv_callback(wslay_event_context_ptr ctx, UINT8* data, SIZE_T len, INT32 flags, VOID* user_data)
+static SSIZE_T wslay_recv_callback(wslay_event_context_ptr ctx, UINT8* data, SIZE_T len, INT32 flags, VOID* user_data)
 {
     WssClientContext* pWssCtx = (WssClientContext*) user_data;
-    SSIZE_T r = wssClientSocketRead(pWssCtx, data, len, flags);
+    SSIZE_T r = wss_client_socketRead(pWssCtx, data, len, flags);
     if (r == -1) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             wslay_event_set_error(ctx, WSLAY_ERR_WOULDBLOCK);
@@ -129,14 +149,14 @@ SSIZE_T wslay_recv_callback(wslay_event_context_ptr ctx, UINT8* data, SIZE_T len
     return r;
 }
 
-INT32 wslay_genmask_callback(wslay_event_context_ptr ctx, UINT8* buf, SIZE_T len, VOID* user_data)
+static INT32 wslay_genmask_callback(wslay_event_context_ptr ctx, UINT8* buf, SIZE_T len, VOID* user_data)
 {
     WssClientContext* pWssCtx = (WssClientContext*) user_data;
     wss_client_generateRandomNumber(buf, len);
     return 0;
 }
 
-VOID wslay_msg_recv_callback(wslay_event_context_ptr ctx, const struct wslay_event_on_msg_recv_arg* arg, VOID* user_data)
+static VOID wslay_msg_recv_callback(wslay_event_context_ptr ctx, const struct wslay_event_on_msg_recv_arg* arg, VOID* user_data)
 {
     WssClientContext* pWssCtx = (WssClientContext*) user_data;
     if (!wslay_is_ctrl_frame(arg->opcode)) {
@@ -182,7 +202,7 @@ static STATUS wss_client_send(WssClientContext* pWssCtx, struct wslay_event_msg*
     // But this is a tradeoff. We can evaluate this design later.
     if (wslay_event_get_write_enabled(pWssCtx->event_ctx) == 1) {
         // send the message out immediately.
-        CHK(wslay_event_queue_msg(pWssCtx->event_ctx, arg) == WSLAY_SUCCESS, STATUS_WSS_CLIENT_SEND_FAILED);
+        CHK(wslay_event_queue_msg(pWssCtx->event_ctx, arg) == WSLAY_SUCCESS, STATUS_WSS_CLIENT_SEND_QUEUE_MSG_FAILED);
         CHK(wslay_event_send(pWssCtx->event_ctx) == WSLAY_SUCCESS, STATUS_WSS_CLIENT_SEND_FAILED);
     }
 
@@ -220,8 +240,8 @@ STATUS wss_client_sendPing(WssClientContext* pWssCtx)
     return wss_client_send(pWssCtx, &arg);
 }
 
-VOID wss_client_create(WssClientContext** ppWssClientCtx, NetworkContext_t* pNetworkContext, PVOID arg, MessageHandlerFunc pFunc,
-                       CtrlMessageHandlerFunc pCtrlFunc)
+VOID wss_client_create(PWssClientContext* ppWssClientCtx, NetworkContext_t* pNetworkContext, PVOID pUserData, MessageHandlerFunc pFunc,
+                       CtrlMessageHandlerFunc pCtrlFunc, TerminationHandlerFunc pTerminationHandlerFunc)
 {
     WSS_CLIENT_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
@@ -241,9 +261,10 @@ VOID wss_client_create(WssClientContext** ppWssClientCtx, NetworkContext_t* pNet
 
     pWssCtx->event_callbacks = callbacks;
     pWssCtx->pNetworkContext = pNetworkContext;
-    pWssCtx->pUserData = arg;
+    pWssCtx->pUserData = pUserData;
     pWssCtx->messageHandler = pFunc;
     pWssCtx->ctrlMessageHandler = pCtrlFunc;
+    pWssCtx->terminationHandler = pTerminationHandlerFunc;
 
     // the initialization of the mutex
     pWssCtx->clientLock = MUTEX_CREATE(FALSE);
@@ -264,7 +285,6 @@ PVOID wss_client_start(WssClientContext* pWssCtx)
 {
     WSS_CLIENT_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
-    PSignalingClient pSignalingClient = NULL;
     // for the inteface of socket.
     INT32 nfds = 0;
     INT32 retval;
@@ -272,9 +292,6 @@ PVOID wss_client_start(WssClientContext* pWssCtx)
     struct timeval tv;
     // for ping-pong.
     UINT32 counter = 0;
-
-    // Mark as started
-    pSignalingClient = (PSignalingClient) pWssCtx->pUserData;
 
     LISTENER_LOCK(pWssCtx);
 
@@ -285,7 +302,6 @@ PVOID wss_client_start(WssClientContext* pWssCtx)
     FD_ZERO(&rfds);
 
     // check the wss client want to read or write or not.
-
     while (wss_client_wantRead(pWssCtx)) {
         // need to setup the timeout of epoll in order to let the wss cleint thread to write the buffer out.
         FD_SET(nfds, &rfds);
@@ -320,11 +336,11 @@ PVOID wss_client_start(WssClientContext* pWssCtx)
 
 CleanUp:
 
-    if (STATUS_FAILED(retStatus) && pSignalingClient != NULL) {
-        ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) SERVICE_CALL_UNKNOWN);
+    LISTENER_UNLOCK(pWssCtx);
+    if (pWssCtx->terminationHandler != NULL) {
+        pWssCtx->terminationHandler(pWssCtx->pUserData, retStatus);
     }
 
-    LISTENER_UNLOCK(pWssCtx);
     WSS_CLIENT_EXIT();
     return (PVOID)(ULONG_PTR) retStatus;
 }

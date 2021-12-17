@@ -2,7 +2,7 @@
 #include "../Include_i.h"
 #include "channel_info.h"
 
-STATUS createValidateChannelInfo(PChannelInfo pOrigChannelInfo, PChannelInfo* ppChannelInfo)
+STATUS channel_info_create(PChannelInfo pOrigChannelInfo, PChannelInfo* ppChannelInfo)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -97,10 +97,10 @@ STATUS createValidateChannelInfo(PChannelInfo pOrigChannelInfo, PChannelInfo* pp
     // V1 handling
     if (pOrigChannelInfo->version > 0) {
         pChannelInfo->cachingPolicy = pOrigChannelInfo->cachingPolicy;
-        pChannelInfo->asyncIceServerConfig = pOrigChannelInfo->asyncIceServerConfig;
+        // pChannelInfo->asyncIceServerConfig = pOrigChannelInfo->asyncIceServerConfig;
     } else {
         pChannelInfo->cachingPolicy = SIGNALING_API_CALL_CACHE_TYPE_NONE;
-        pChannelInfo->asyncIceServerConfig = FALSE;
+        // pChannelInfo->asyncIceServerConfig = FALSE;
     }
 
     // Set the current pointer to the end

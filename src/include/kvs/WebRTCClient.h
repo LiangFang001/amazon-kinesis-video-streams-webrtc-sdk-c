@@ -237,11 +237,6 @@ extern "C" {
 #define SIGNALING_CREATE_TIMEOUT (20 * HUNDREDS_OF_NANOS_IN_A_SECOND)
 
 /**
- * Default connect sync API timeout
- */
-#define SIGNALING_CONNECT_STATE_TIMEOUT (15 * HUNDREDS_OF_NANOS_IN_A_SECOND)
-
-/**
  * Default refresh ICE server config API timeout
  */
 #define SIGNALING_REFRESH_ICE_CONFIG_STATE_TIMEOUT (15 * HUNDREDS_OF_NANOS_IN_A_SECOND)
@@ -421,13 +416,19 @@ typedef enum {
  * @brief Defines different signaling messages
  */
 typedef enum {
-    SIGNALING_MESSAGE_TYPE_OFFER,                //!< This message type leads to checks in existence of peer id and payload in the message
-    SIGNALING_MESSAGE_TYPE_ANSWER,               //!< This message type leads to checks in length/existence of payload in the message
-    SIGNALING_MESSAGE_TYPE_ICE_CANDIDATE,        //!< This message type leads to checks in length/existence of payload in the message
-    SIGNALING_MESSAGE_TYPE_GO_AWAY,              //!< This message moves signaling back to describe state
+    SIGNALING_MESSAGE_TYPE_OFFER,         //!< This message type leads to checks in existence of peer id and payload in the message
+    SIGNALING_MESSAGE_TYPE_ANSWER,        //!< This message type leads to checks in length/existence of payload in the message
+    SIGNALING_MESSAGE_TYPE_ICE_CANDIDATE, //!< This message type leads to checks in length/existence of payload in the message
+    SIGNALING_MESSAGE_TYPE_GO_AWAY,       //!< This message moves signaling back to describe state
+    //!< This message is used to initiate the connection shutdown. It enables a client to gracefully process previous messages, disconnect, and
+    //!< reconnect to the signaling channel if needed.
     SIGNALING_MESSAGE_TYPE_RECONNECT_ICE_SERVER, //!< This message moves signaling state back to get ICE config
-    SIGNALING_MESSAGE_TYPE_STATUS_RESPONSE,      //!< This message notifies the awaiting send after checking for failure in message delivery
-    SIGNALING_MESSAGE_TYPE_UNKNOWN,              //!< This message type is set when the type of message received is unknown
+    //!< This message is used to initiate the relay connection shutdown and enables a client to gracefully disconnect, obtain a new ICE server
+    //!< configuration, and reconnect to the relay servers if needed.
+    SIGNALING_MESSAGE_TYPE_STATUS_RESPONSE, //!< This message notifies the awaiting send after checking for failure in message delivery
+    SIGNALING_MESSAGE_TYPE_CTRL_BASE,
+    SIGNALING_MESSAGE_TYPE_CTRL_CLOSE,
+    SIGNALING_MESSAGE_TYPE_UNKNOWN, //!< This message type is set when the type of message received is unknown
 } SIGNALING_MESSAGE_TYPE;
 
 /**
@@ -817,9 +818,9 @@ typedef struct {
 typedef struct {
     UINT32 version;                                 //!< Version of the structure
     CHAR clientId[MAX_SIGNALING_CLIENT_ID_LEN + 1]; //!< Client id to use. Defines if the client is a producer/consumer
-    UINT32 loggingLevel;                            //!< Verbosity level for the logging. One of LOG_LEVEL_XXX
-                                                    //!< values or the default verbosity will be assumed. Currently,
-                                                    //!< default value is LOG_LEVEL_WARNING
+    // UINT32 loggingLevel;                            //!< Verbosity level for the logging. One of LOG_LEVEL_XXX
+    //!< values or the default verbosity will be assumed. Currently,
+    //!< default value is LOG_LEVEL_WARNING
 } SignalingClientInfo, *PSignalingClientInfo;
 
 /**
@@ -876,8 +877,8 @@ typedef struct {
 
     SIGNALING_API_CALL_CACHE_TYPE cachingPolicy; //!< Backend API call caching policy
 
-    BOOL asyncIceServerConfig; //!< When creating channel synchronously, do not await for the ICE
-                               //!< server configurations before returning from the call.
+    // BOOL asyncIceServerConfig; //!< When creating channel synchronously, do not await for the ICE
+    //!< server configurations before returning from the call.
 } ChannelInfo, *PChannelInfo;
 
 /**

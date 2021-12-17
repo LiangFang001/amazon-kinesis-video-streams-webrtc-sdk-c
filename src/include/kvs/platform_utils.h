@@ -10,6 +10,23 @@ extern "C" {
 
 #pragma once
 
+#define CONN_LISTENER_THERAD_NAME "connListener"
+#define CONN_LISTENER_THERAD_SIZE 8192
+
+#define LWS_LISTENER_THREAD_NAME "lwsListener"
+#define LWS_LISTENER_THREAD_SIZE 10240
+#define LWS_DISPATCH_THREAD_NAME "lwsDispatch"
+#define LWS_DISPATCH_THREAD_SIZE 10240
+
+#define PEER_TIMER_NAME "peerTimer"
+#define PEER_TIMER_SIZE 10240
+
+#define SIGNALING_TIMER_NAME "sigTimer"
+#define SIGNALING_TIMER_SIZE 8192
+
+#define SIGNALING_RECONNECT_TIMER_NAME "sigReconnect"
+#define SIGNALING_RECONNECT_TIMER_SIZE 8192
+
 // Tag for the logging
 #ifndef LOG_CLASS
 #define LOG_CLASS "platform-utils"

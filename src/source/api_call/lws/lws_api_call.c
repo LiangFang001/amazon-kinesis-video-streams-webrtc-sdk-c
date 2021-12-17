@@ -1176,7 +1176,7 @@ STATUS lwsGetIceConfig(PSignalingClient pSignalingClient, UINT64 time)
 
     // Perform some validation on the ice configuration
     pSignalingClient->iceConfigCount = configCount;
-    CHK_STATUS(signalingValidateIceConfiguration(pSignalingClient));
+    CHK_STATUS(signaling_validateIceConfiguration(pSignalingClient));
 
 CleanUp:
 
@@ -1480,7 +1480,7 @@ PVOID reconnectHandler(PVOID args)
     ATOMIC_INCREMENT(&pSignalingClient->diagnostics.numberOfReconnects);
 
     // Attempt to reconnect by driving the state machine to connected state
-    CHK_STATUS(signalingFsmStep(pSignalingClient, retStatus));
+    CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));
 
 CleanUp:
 
@@ -1517,7 +1517,7 @@ STATUS lwsSendMessage(PSignalingClient pSignalingClient, PCHAR pMessageType, PCH
     BOOL awaitForResponse;
 
     // Ensure we are in a connected state
-    CHK_STATUS(signalingFsmAccept(pSignalingClient, SIGNALING_STATE_CONNECTED));
+    CHK_STATUS(signaling_fsm_accept(pSignalingClient, SIGNALING_STATE_CONNECTED));
 
     CHK(pSignalingClient != NULL && pSignalingClient->pOngoingCallInfo != NULL, STATUS_NULL_ARG);
 
@@ -1675,12 +1675,12 @@ STATUS lwsReceiveMessage(PSignalingClient pSignalingClient, PCHAR pMessage, UINT
     if (pMessage == NULL || messageLen == 0) {
         if (BLOCK_ON_CORRELATION_ID) {
             // Get empty correlation id message from the ongoing if exists
-            CHK_STATUS(signalingGetOngoingMessage(pSignalingClient, EMPTY_STRING, EMPTY_STRING, &pOngoingMessage));
+            CHK_STATUS(signaling_getOutboundMessage(pSignalingClient, EMPTY_STRING, EMPTY_STRING, &pOngoingMessage));
             if (pOngoingMessage == NULL) {
                 DLOGW("Received an empty body for a message with no correlation id which has been already removed from the queue. Warning 0x%08x",
                       STATUS_SIGNALING_RECEIVE_EMPTY_DATA_NOT_SUPPORTED);
             } else {
-                CHK_STATUS(signalingRemoveOngoingMessage(pSignalingClient, EMPTY_STRING));
+                CHK_STATUS(signaling_removeOutboundMessage(pSignalingClient, EMPTY_STRING));
             }
         }
 
@@ -1802,7 +1802,7 @@ STATUS lwsReceiveMessage(PSignalingClient pSignalingClient, PCHAR pMessage, UINT
             SAFE_MEMFREE(pSignalingMessageWrapper);
 
             // Iterate the state machinery
-            CHK_STATUS(signalingFsmStep(pSignalingClient, retStatus));
+            CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));
 
             CHK(FALSE, retStatus);
             break;
@@ -1815,7 +1815,7 @@ STATUS lwsReceiveMessage(PSignalingClient pSignalingClient, PCHAR pMessage, UINT
             SAFE_MEMFREE(pSignalingMessageWrapper);
 
             // Iterate the state machinery
-            CHK_STATUS(signalingFsmStep(pSignalingClient, retStatus));
+            CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));
 
             CHK(FALSE, retStatus);
             break;
@@ -1990,7 +1990,7 @@ CleanUp:
 /** #TBD, need to add the code of initialization. */
 TID receivedTid = INVALID_TID_VALUE;
 QueueHandle_t lwsMsgQ = NULL;
-#define KVSWEBRTC_LWS_MSGQ_LENGTH 32
+#define WSS_INBOUND_MSGQ_LENGTH 32
 
 /**
  * @brief for the original design, we create one thread for each message.
@@ -2033,13 +2033,13 @@ STATUS lwsDispatchMsg(PVOID pMessage)
     PSignalingMessageWrapper msg = (PSignalingMessageWrapper) pMessage;
 
     if (receivedTid == INVALID_TID_VALUE) {
-        lwsMsgQ = xQueueCreate(KVSWEBRTC_LWS_MSGQ_LENGTH, SIZEOF(PSignalingMessageWrapper));
+        lwsMsgQ = xQueueCreate(WSS_INBOUND_MSGQ_LENGTH, SIZEOF(PSignalingMessageWrapper));
         CHK(lwsMsgQ != NULL, STATUS_SIGNALING_CREATE_MSGQ_FAILED);
         CHK(THREAD_CREATE_EX(&receivedTid, LWS_DISPATCH_THREAD_NAME, LWS_DISPATCH_THREAD_SIZE, handleLwsMsg, (PVOID) NULL) == STATUS_SUCCESS,
-            STATUS_SIGNALING_CREATE_THREAD_FAILED);
+            STATUS_SIGNALING_CREATE_DISPATCHER_FAILED);
     }
     UBaseType_t num = uxQueueSpacesAvailable(lwsMsgQ);
-    DLOGD("unhandled num in q: %d", KVSWEBRTC_LWS_MSGQ_LENGTH - num);
+    DLOGD("unhandled num in q: %d", WSS_INBOUND_MSGQ_LENGTH - num);
     CHK(xQueueSend(lwsMsgQ, &msg, 0) == pdPASS, STATUS_SIGNALING_DISPATCH_FAILED);
 
 CleanUp:

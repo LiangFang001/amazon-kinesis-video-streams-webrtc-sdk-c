@@ -1,5 +1,16 @@
-/**
- * Main public include file
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 #ifndef __KINESIS_VIDEO_CLIENT_INCLUDE__
 #define __KINESIS_VIDEO_CLIENT_INCLUDE__
@@ -9,14 +20,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/common_defs.h"
 #include <kvs/platform_utils.h>
 #include "kvs/error.h"
-
-////////////////////////////////////////////////////
-// Main defines
-////////////////////////////////////////////////////
+/******************************************************************************
+ * Main defines
+ ******************************************************************************/
 /**
  * Max device name length in chars
  */
@@ -94,12 +106,14 @@ extern "C" {
 ////////////////////////////////////////////////////
 
 /**
- * Service call result
+ * @brief Service call result
+ *  https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
  */
 typedef enum {
     // Not defined
     SERVICE_CALL_RESULT_NOT_SET = 0,
 
+    SERVICE_CALL_RESULT_UPGRADE = 101,
     // All OK
     SERVICE_CALL_RESULT_OK = 200,
 

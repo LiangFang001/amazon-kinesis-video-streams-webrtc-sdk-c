@@ -20,14 +20,14 @@ STATUS signalingClientCreate(PSignalingClientInfo pClientInfo, PChannelInfo pCha
     MEMSET(pSignalingClientInfoInternal, 0x00, SIZEOF(SignalingClientInfoInternal));
     pSignalingClientInfoInternal->signalingClientInfo = *pClientInfo;
 
-    CHK_STATUS(signalingCreate(pSignalingClientInfoInternal, pChannelInfo, pCallbacks, pCredentialProvider, &pSignalingClient));
+    CHK_STATUS(signaling_create(pSignalingClientInfoInternal, pChannelInfo, pCallbacks, pCredentialProvider, &pSignalingClient));
 
     *pSignalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
 
 CleanUp:
 
     if (STATUS_FAILED(retStatus)) {
-        signalingFree(&pSignalingClient);
+        signaling_free(&pSignalingClient);
     }
     SAFE_MEMFREE(pSignalingClientInfoInternal);
     LEAVES();
@@ -46,7 +46,7 @@ STATUS signalingClientFree(PSIGNALING_CLIENT_HANDLE pSignalingHandle)
     // Get the client handle
     pSignalingClient = FROM_SIGNALING_CLIENT_HANDLE(*pSignalingHandle);
 
-    CHK_STATUS(signalingFree(&pSignalingClient));
+    CHK_STATUS(signaling_free(&pSignalingClient));
 
     // Set the signaling client handle pointer to invalid
     *pSignalingHandle = INVALID_SIGNALING_CLIENT_HANDLE_VALUE;
@@ -65,7 +65,7 @@ STATUS signalingClientSendMessage(SIGNALING_CLIENT_HANDLE signalingClientHandle,
 
     DLOGI("Signaling Client Sending Message Sync");
 
-    CHK_STATUS(signalingSendMessage(pSignalingClient, pSignalingMessage));
+    CHK_STATUS(signaling_send(pSignalingClient, pSignalingMessage));
 
 CleanUp:
 
@@ -82,7 +82,7 @@ STATUS signalingClientConnect(SIGNALING_CLIENT_HANDLE signalingClientHandle)
 
     DLOGI("Signaling Client Connect Sync");
 
-    CHK_STATUS(signalingConnect(pSignalingClient));
+    CHK_STATUS(signaling_connect(pSignalingClient));
 
 CleanUp:
 
@@ -99,7 +99,7 @@ STATUS signalingClientDisconnect(SIGNALING_CLIENT_HANDLE signalingClientHandle)
 
     DLOGI("Signaling Client Disconnect Sync");
 
-    CHK_STATUS(signalingDisconnect(pSignalingClient));
+    CHK_STATUS(signaling_disconnect(pSignalingClient));
 
 CleanUp:
 
@@ -116,7 +116,7 @@ STATUS signalingClientDelete(SIGNALING_CLIENT_HANDLE signalingClientHandle)
 
     DLOGI("Signaling Client Delete Sync");
 
-    CHK_STATUS(signalingDelete(pSignalingClient));
+    CHK_STATUS(signaling_delete(pSignalingClient));
 
 CleanUp:
 
@@ -133,7 +133,7 @@ STATUS signalingClientGetIceConfigInfoCount(SIGNALING_CLIENT_HANDLE signalingCli
 
     DLOGI("Signaling Client Get ICE Config Info Count");
 
-    CHK_STATUS(signalingGetIceConfigInfoCout(pSignalingClient, pIceConfigCount));
+    CHK_STATUS(signaling_getIceConfigInfoCout(pSignalingClient, pIceConfigCount));
 
 CleanUp:
 
@@ -150,7 +150,7 @@ STATUS signalingClientGetIceConfigInfo(SIGNALING_CLIENT_HANDLE signalingClientHa
 
     DLOGI("Signaling Client Get ICE Config Info");
 
-    CHK_STATUS(signalingGetIceConfigInfo(pSignalingClient, index, ppIceConfigInfo));
+    CHK_STATUS(signaling_getIceConfigInfo(pSignalingClient, index, ppIceConfigInfo));
 
 CleanUp:
 
@@ -165,14 +165,12 @@ STATUS signalingClientGetCurrentState(SIGNALING_CLIENT_HANDLE signalingClientHan
     STATUS retStatus = STATUS_SUCCESS;
     SIGNALING_CLIENT_STATE state = SIGNALING_CLIENT_STATE_UNKNOWN;
     PSignalingClient pSignalingClient = FROM_SIGNALING_CLIENT_HANDLE(signalingClientHandle);
-    PStateMachineState pStateMachineState;
 
     DLOGV("Signaling Client Get Current State");
 
     CHK(pSignalingClient != NULL && pState != NULL, STATUS_NULL_ARG);
 
-    CHK_STATUS(getStateMachineCurrentState(pSignalingClient->pStateMachine, &pStateMachineState));
-    state = signalingFsmGetState(pStateMachineState->state);
+    state = signaling_getCurrentState(pSignalingClient);
 
 CleanUp:
 
@@ -262,7 +260,7 @@ STATUS signalingClientGetMetrics(SIGNALING_CLIENT_HANDLE signalingClientHandle, 
 
     DLOGV("Signaling Client Get Metrics");
 
-    CHK_STATUS(signalingGetMetrics(pSignalingClient, pSignalingClientMetrics));
+    CHK_STATUS(signaling_getMetrics(pSignalingClient, pSignalingClientMetrics));
 
 CleanUp:
 

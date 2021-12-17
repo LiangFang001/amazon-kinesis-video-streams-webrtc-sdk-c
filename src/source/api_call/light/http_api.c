@@ -1,3 +1,17 @@
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #define LOG_CLASS "HttpApi"
 #include "../Include_i.h"
 #include "http_api.h"
@@ -158,9 +172,9 @@
 #define MAX_STRLEN_OF_UINT32 (10)
 
 //////////////////////////////////////////////////////////////////////////
-// API calls
+// api calls
 //////////////////////////////////////////////////////////////////////////
-STATUS http_api_createChannel(PSignalingClient pSignalingClient, UINT64 time)
+STATUS http_api_createChannel(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode)
 {
     HTTP_API_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
@@ -178,19 +192,19 @@ STATUS http_api_createChannel(PSignalingClient pSignalingClient, UINT64 time)
     UINT32 httpBodyLen;
     PCHAR pHost = NULL;
     // rsp
-    UINT32 uHttpStatusCode = 0;
+    UINT32 uHttpStatusCode = SERVICE_CALL_RESULT_NOT_SET;
     HttpResponseContext* pHttpRspCtx = NULL;
     PCHAR pResponseStr;
     UINT32 resultLen;
 
-    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pUrl = (PCHAR) MEMALLOC(STRLEN(pSignalingClient->pChannelInfo->pControlPlaneUrl) + STRLEN(API_CREATE_SIGNALING_CHANNEL) + 1)),
-        STATUS_NOT_ENOUGH_MEMORY);
+        STATUS_HTTP_NOT_ENOUGH_MEMORY);
     // Create the API url
     STRCPY(pUrl, pSignalingClient->pChannelInfo->pControlPlaneUrl);
     STRCAT(pUrl, API_CREATE_SIGNALING_CHANNEL);
     httpBodyLen = SIZEOF(BODY_TEMPLATE_CREATE_CHANNEL) + STRLEN(pChannelInfo->pChannelName) + 1;
-    CHK(NULL != (pHttpBody = (CHAR*) MEMALLOC(httpBodyLen)), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHttpBody = (CHAR*) MEMALLOC(httpBodyLen)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
     /* generate HTTP request body */
     SNPRINTF(pHttpBody, httpBodyLen, BODY_TEMPLATE_CREATE_CHANNEL, pChannelInfo->pChannelName);
@@ -201,13 +215,14 @@ STATUS http_api_createChannel(PSignalingClient pSignalingClient, UINT64 time)
                                  pSignalingClient->pAwsCredentials, &pRequestInfo));
 
     /* Initialize and generate HTTP request, then send it. */
-    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(SIZEOF(NetworkContext_t))), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(SIZEOF(NetworkContext_t))), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK_STATUS(initNetworkContext(pNetworkContext));
 
     httpPackSendBuf(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pNetworkContext->pHttpSendBuffer,
                     MAX_HTTP_SEND_BUFFER_LEN, FALSE, TRUE, NULL);
 
     for (uConnectionRetryCnt = 0; uConnectionRetryCnt < API_CALL_CONNECTING_RETRY; uConnectionRetryCnt++) {
+        DLOGD("pHost:%s, pUrl:%s", pHost, pUrl);
         if ((retStatus = connectToServer(pNetworkContext, pHost, API_ENDPOINT_TCP_PORT)) == STATUS_SUCCESS) {
             break;
         }
@@ -220,22 +235,23 @@ STATUS http_api_createChannel(PSignalingClient pSignalingClient, UINT64 time)
     uBytesReceived = networkRecv(pNetworkContext, pNetworkContext->pHttpRecvBuffer, pNetworkContext->uHttpRecvBufferLen);
     CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
 
-    CHK_STATUS(httpParserStart(&pHttpRspCtx, (CHAR*) pNetworkContext->pHttpRecvBuffer, (UINT32) uBytesReceived, NULL));
+    CHK(httpParserStart(&pHttpRspCtx, (CHAR*) pNetworkContext->pHttpRecvBuffer, (UINT32) uBytesReceived, NULL) == STATUS_SUCCESS,
+        STATUS_HTTP_PARSER_ERROR);
 
     pResponseStr = httpParserGetHttpBodyLocation(pHttpRspCtx);
     resultLen = httpParserGetHttpBodyLength(pHttpRspCtx);
     uHttpStatusCode = httpParserGetHttpStatusCode(pHttpRspCtx);
 
-    ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) uHttpStatusCode);
     /* Check HTTP results */
-
-    CHK((SERVICE_CALL_RESULT) ATOMIC_LOAD(&pSignalingClient->result) == SERVICE_CALL_RESULT_OK && resultLen != 0 && pResponseStr != NULL, retStatus);
-
-    CHK_STATUS(http_api_rsp_createChannel((const CHAR*) pResponseStr, resultLen, pSignalingClient));
+    CHK(uHttpStatusCode == SERVICE_CALL_RESULT_OK && resultLen != 0 && pResponseStr != NULL, STATUS_HTTP_STATUS_CODE_ERROR);
+    CHK(http_api_rsp_createChannel((const CHAR*) pResponseStr, resultLen, pSignalingClient) == STATUS_SUCCESS, STATUS_HTTP_RSP_ERROR);
 
 CleanUp:
-
     CHK_LOG_ERR(retStatus);
+
+    if (pHttpStatusCode != NULL) {
+        *pHttpStatusCode = uHttpStatusCode;
+    }
 
     if (pNetworkContext != NULL) {
         disconnectFromServer(pNetworkContext);
@@ -258,7 +274,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS http_api_describeChannel(PSignalingClient pSignalingClient, UINT64 time)
+STATUS http_api_describeChannel(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode)
 {
     HTTP_API_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
@@ -282,11 +298,11 @@ STATUS http_api_describeChannel(PSignalingClient pSignalingClient, UINT64 time)
     PCHAR pResponseStr;
     UINT32 resultLen;
 
-    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pUrl = (PCHAR) MEMALLOC(STRLEN(pSignalingClient->pChannelInfo->pControlPlaneUrl) + STRLEN(API_DESCRIBE_SIGNALING_CHANNEL) + 1)),
-        STATUS_NOT_ENOUGH_MEMORY);
+        STATUS_HTTP_NOT_ENOUGH_MEMORY);
     httpBodyLen = STRLEN(BODY_TEMPLATE_DESCRIBE_CHANNEL) + STRLEN(pSignalingClient->pChannelInfo->pChannelName) + 1;
-    CHK(NULL != (pHttpBody = (PCHAR) MEMALLOC(httpBodyLen)), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHttpBody = (PCHAR) MEMALLOC(httpBodyLen)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     // Create the http url
     STRCPY(pUrl, pSignalingClient->pChannelInfo->pControlPlaneUrl);
     STRCAT(pUrl, API_DESCRIBE_SIGNALING_CHANNEL);
@@ -300,7 +316,7 @@ STATUS http_api_describeChannel(PSignalingClient pSignalingClient, UINT64 time)
                                  pSignalingClient->pAwsCredentials, &pRequestInfo));
 
     /* Initialize and generate HTTP request, then send it. */
-    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(SIZEOF(NetworkContext_t))), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(SIZEOF(NetworkContext_t))), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
     CHK_STATUS(initNetworkContext(pNetworkContext));
 
@@ -308,6 +324,7 @@ STATUS http_api_describeChannel(PSignalingClient pSignalingClient, UINT64 time)
                     MAX_HTTP_SEND_BUFFER_LEN, FALSE, TRUE, NULL);
 
     for (uConnectionRetryCnt = 0; uConnectionRetryCnt < API_CALL_CONNECTING_RETRY; uConnectionRetryCnt++) {
+        DLOGD("pHost:%s, pUrl:%s", pHost, pUrl);
         if ((retStatus = connectToServer(pNetworkContext, pHost, API_ENDPOINT_TCP_PORT)) == STATUS_SUCCESS) {
             break;
         }
@@ -322,18 +339,23 @@ STATUS http_api_describeChannel(PSignalingClient pSignalingClient, UINT64 time)
     DLOGD("pNetworkContext->pHttpRecvBuffer:%s", pNetworkContext->pHttpRecvBuffer);
     CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
 
-    CHK_STATUS(httpParserStart(&pHttpRspCtx, (CHAR*) pNetworkContext->pHttpRecvBuffer, (UINT32) uBytesReceived, NULL));
+    CHK(httpParserStart(&pHttpRspCtx, (CHAR*) pNetworkContext->pHttpRecvBuffer, (UINT32) uBytesReceived, NULL) == STATUS_SUCCESS,
+        STATUS_HTTP_PARSER_ERROR);
     pResponseStr = httpParserGetHttpBodyLocation(pHttpRspCtx);
     resultLen = httpParserGetHttpBodyLength(pHttpRspCtx);
     uHttpStatusCode = httpParserGetHttpStatusCode(pHttpRspCtx);
 
-    ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) uHttpStatusCode);
     /* Check HTTP results */
-    CHK((SERVICE_CALL_RESULT) ATOMIC_LOAD(&pSignalingClient->result) == SERVICE_CALL_RESULT_OK && resultLen != 0 && pResponseStr != NULL, retStatus);
-    CHK_STATUS(http_api_rsp_describeChannel((const CHAR*) pResponseStr, resultLen, pSignalingClient));
+    CHK(uHttpStatusCode == SERVICE_CALL_RESULT_OK && resultLen != 0 && pResponseStr != NULL, STATUS_HTTP_STATUS_CODE_ERROR);
+    CHK(http_api_rsp_describeChannel((const CHAR*) pResponseStr, resultLen, pSignalingClient) == STATUS_SUCCESS, STATUS_HTTP_RSP_ERROR);
 
 CleanUp:
     CHK_LOG_ERR(retStatus);
+
+    if (pHttpStatusCode != NULL) {
+        *pHttpStatusCode = uHttpStatusCode;
+    }
+
     if (pNetworkContext != NULL) {
         disconnectFromServer(pNetworkContext);
         terminateNetworkContext(pNetworkContext);
@@ -354,7 +376,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS http_api_getChannelEndpoint(PSignalingClient pSignalingClient, UINT64 time)
+STATUS http_api_getChannelEndpoint(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode)
 {
     HTTP_API_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
@@ -377,16 +399,16 @@ STATUS http_api_getChannelEndpoint(PSignalingClient pSignalingClient, UINT64 tim
     PCHAR pResponseStr;
     UINT32 resultLen;
 
-    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pUrl = (PCHAR) MEMALLOC(STRLEN(pSignalingClient->pChannelInfo->pControlPlaneUrl) + STRLEN(API_GET_SIGNALING_CHANNEL_ENDPOINT) + 1)),
-        STATUS_NOT_ENOUGH_MEMORY);
+        STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
     // Create the API url
     STRCPY(pUrl, pSignalingClient->pChannelInfo->pControlPlaneUrl);
     STRCAT(pUrl, API_GET_SIGNALING_CHANNEL_ENDPOINT);
     httpBodyLen = SIZEOF(BODY_TEMPLATE_GET_CHANNEL_ENDPOINT) + STRLEN(pSignalingClient->channelDescription.channelArn) +
         STRLEN(API_CALL_CHANNEL_PROTOCOL) + STRLEN(getStringFromChannelRoleType(pChannelInfo->channelRoleType)) + 1;
-    CHK(NULL != (pHttpBody = (PCHAR) MEMALLOC(httpBodyLen)), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHttpBody = (PCHAR) MEMALLOC(httpBodyLen)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
     /* generate HTTP request body */
     SNPRINTF(pHttpBody, httpBodyLen, BODY_TEMPLATE_GET_CHANNEL_ENDPOINT, pSignalingClient->channelDescription.channelArn, API_CALL_CHANNEL_PROTOCOL,
@@ -398,13 +420,14 @@ STATUS http_api_getChannelEndpoint(PSignalingClient pSignalingClient, UINT64 tim
                                  pSignalingClient->pAwsCredentials, &pRequestInfo));
 
     /* Initialize and generate HTTP request, then send it. */
-    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(SIZEOF(NetworkContext_t))), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(SIZEOF(NetworkContext_t))), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK_STATUS(initNetworkContext(pNetworkContext) != STATUS_SUCCESS);
 
     httpPackSendBuf(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pNetworkContext->pHttpSendBuffer,
                     MAX_HTTP_SEND_BUFFER_LEN, FALSE, TRUE, NULL);
 
     for (uConnectionRetryCnt = 0; uConnectionRetryCnt < API_CALL_CONNECTING_RETRY; uConnectionRetryCnt++) {
+        DLOGD("pHost:%s, pUrl:%s", pHost, pUrl);
         if ((retStatus = connectToServer(pNetworkContext, pHost, API_ENDPOINT_TCP_PORT)) == STATUS_SUCCESS) {
             break;
         }
@@ -419,20 +442,24 @@ STATUS http_api_getChannelEndpoint(PSignalingClient pSignalingClient, UINT64 tim
     DLOGD("pNetworkContext->pHttpRecvBuffer(%d):%s", uBytesReceived, pNetworkContext->pHttpRecvBuffer);
     CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
 
-    CHK_STATUS(httpParserStart(&pHttpRspCtx, (CHAR*) pNetworkContext->pHttpRecvBuffer, (UINT32) uBytesReceived, NULL));
+    CHK(httpParserStart(&pHttpRspCtx, (CHAR*) pNetworkContext->pHttpRecvBuffer, (UINT32) uBytesReceived, NULL) == STATUS_SUCCESS,
+        STATUS_HTTP_PARSER_ERROR);
     pResponseStr = httpParserGetHttpBodyLocation(pHttpRspCtx);
     resultLen = httpParserGetHttpBodyLength(pHttpRspCtx);
     uHttpStatusCode = httpParserGetHttpStatusCode(pHttpRspCtx);
 
-    ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) uHttpStatusCode);
     /* Check HTTP results */
-    CHK((SERVICE_CALL_RESULT) ATOMIC_LOAD(&pSignalingClient->result) == SERVICE_CALL_RESULT_OK && resultLen != 0 && pResponseStr != NULL, retStatus);
-
-    CHK_STATUS(http_api_rsp_getChannelEndpoint((const CHAR*) pResponseStr, resultLen, pSignalingClient));
+    CHK(uHttpStatusCode == SERVICE_CALL_RESULT_OK && resultLen != 0 && pResponseStr != NULL, STATUS_HTTP_STATUS_CODE_ERROR);
+    CHK(http_api_rsp_getChannelEndpoint((const CHAR*) pResponseStr, resultLen, pSignalingClient) == STATUS_SUCCESS, STATUS_HTTP_RSP_ERROR);
     /* We got a success response here. */
 
 CleanUp:
     CHK_LOG_ERR(retStatus);
+
+    if (pHttpStatusCode != NULL) {
+        *pHttpStatusCode = uHttpStatusCode;
+    }
+
     if (pNetworkContext != NULL) {
         disconnectFromServer(pNetworkContext);
         terminateNetworkContext(pNetworkContext);
@@ -453,7 +480,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, UINT64 time)
+STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode)
 {
     HTTP_API_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
@@ -477,11 +504,12 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, UINT64 time)
     PCHAR pResponseStr;
     UINT32 resultLen;
 
-    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_NOT_ENOUGH_MEMORY);
-    CHK(NULL != (pUrl = (PCHAR) MEMALLOC(STRLEN(pSignalingClient->channelEndpointHttps) + STRLEN(API_GET_ICE_CONFIG) + 1)), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pUrl = (PCHAR) MEMALLOC(STRLEN(pSignalingClient->channelEndpointHttps) + STRLEN(API_GET_ICE_CONFIG) + 1)),
+        STATUS_HTTP_NOT_ENOUGH_MEMORY);
     httpBodyLen = SIZEOF(BODY_TEMPLATE_GET_ICE_CONFIG) + STRLEN(pSignalingClient->channelDescription.channelArn) +
         STRLEN(pSignalingClient->clientInfo.signalingClientInfo.clientId) + 1;
-    CHK(NULL != (pHttpBody = (PCHAR) MEMALLOC(httpBodyLen)), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHttpBody = (PCHAR) MEMALLOC(httpBodyLen)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
     STRCPY(pUrl, pSignalingClient->channelEndpointHttps);
     STRCAT(pUrl, API_GET_ICE_CONFIG);
@@ -496,7 +524,7 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, UINT64 time)
                                  pSignalingClient->pAwsCredentials, &pRequestInfo));
 
     /* Initialize and generate HTTP request, then send it. */
-    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(SIZEOF(NetworkContext_t))), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(SIZEOF(NetworkContext_t))), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
     CHK_STATUS(initNetworkContext(pNetworkContext) != STATUS_SUCCESS);
 
@@ -504,6 +532,7 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, UINT64 time)
                     MAX_HTTP_SEND_BUFFER_LEN, FALSE, TRUE, NULL);
 
     for (uConnectionRetryCnt = 0; uConnectionRetryCnt < API_CALL_CONNECTING_RETRY; uConnectionRetryCnt++) {
+        DLOGD("pHost:%s, pUrl:%s", pHost, pUrl);
         if ((retStatus = connectToServer(pNetworkContext, pHost, API_ENDPOINT_TCP_PORT)) == STATUS_SUCCESS) {
             break;
         }
@@ -518,17 +547,16 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, UINT64 time)
     DLOGD("pNetworkContext->pHttpRecvBuffer(%d):%s", uBytesReceived, pNetworkContext->pHttpRecvBuffer);
     CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
 
-    CHK_STATUS(httpParserStart(&pHttpRspCtx, (CHAR*) pNetworkContext->pHttpRecvBuffer, (UINT32) uBytesReceived, NULL));
+    CHK(httpParserStart(&pHttpRspCtx, (CHAR*) pNetworkContext->pHttpRecvBuffer, (UINT32) uBytesReceived, NULL) == STATUS_SUCCESS,
+        STATUS_HTTP_PARSER_ERROR);
 
     pResponseStr = httpParserGetHttpBodyLocation(pHttpRspCtx);
     resultLen = httpParserGetHttpBodyLength(pHttpRspCtx);
     uHttpStatusCode = httpParserGetHttpStatusCode(pHttpRspCtx);
 
-    ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) uHttpStatusCode);
     /* Check HTTP results */
-    CHK((SERVICE_CALL_RESULT) ATOMIC_LOAD(&pSignalingClient->result) == SERVICE_CALL_RESULT_OK && resultLen != 0 && pResponseStr != NULL, retStatus);
-
-    CHK_STATUS(http_api_rsp_getIceConfig((const CHAR*) pResponseStr, resultLen, pSignalingClient));
+    CHK(uHttpStatusCode == SERVICE_CALL_RESULT_OK && resultLen != 0 && pResponseStr != NULL, STATUS_HTTP_STATUS_CODE_ERROR);
+    CHK(http_api_rsp_getIceConfig((const CHAR*) pResponseStr, resultLen, pSignalingClient) == STATUS_SUCCESS, STATUS_HTTP_RSP_ERROR);
 
     if (retStatus != STATUS_SUCCESS) {
         DLOGD("parse failed.");
@@ -536,6 +564,11 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, UINT64 time)
 
 CleanUp:
     CHK_LOG_ERR(retStatus);
+
+    if (pHttpStatusCode != NULL) {
+        *pHttpStatusCode = uHttpStatusCode;
+    }
+
     if (pNetworkContext != NULL) {
         disconnectFromServer(pNetworkContext);
         terminateNetworkContext(pNetworkContext);
@@ -555,7 +588,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS http_api_deleteChannel(PSignalingClient pSignalingClient, UINT64 time)
+STATUS http_api_deleteChannel(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode)
 {
     HTTP_API_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
@@ -568,23 +601,19 @@ STATUS http_api_deleteChannel(PSignalingClient pSignalingClient, UINT64 time)
     PCHAR pHttpBody = NULL;
     UINT32 httpBodyLen;
     PCHAR pHost = NULL;
-    SIZE_T result;
     UINT32 uHttpStatusCode = 0;
     HttpResponseContext* pHttpRspCtx = NULL;
 
-    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pUrl = (PCHAR) MEMALLOC(STRLEN(pSignalingClient->pChannelInfo->pControlPlaneUrl) + STRLEN(API_DELETE_SIGNALING_CHANNEL) + 1)),
-        STATUS_NOT_ENOUGH_MEMORY);
-    // Check if we need to terminate the ongoing listener
-    if (pSignalingClient->pWssContext != NULL) {
-        wss_api_terminateConnection(pSignalingClient, SERVICE_CALL_RESULT_OK);
-    }
+        STATUS_HTTP_NOT_ENOUGH_MEMORY);
+
     // Create the API url
     STRCPY(pUrl, pSignalingClient->pChannelInfo->pControlPlaneUrl);
     STRCAT(pUrl, API_DELETE_SIGNALING_CHANNEL);
     httpBodyLen = SIZEOF(BODY_TEMPLATE_DELETE_CHANNEL) + STRLEN(pSignalingClient->channelDescription.channelArn) +
         STRLEN(pSignalingClient->channelDescription.updateVersion) + 1;
-    CHK(NULL != (pHttpBody = (CHAR*) MEMALLOC(httpBodyLen)), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHttpBody = (CHAR*) MEMALLOC(httpBodyLen)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
     /* generate HTTP request body */
     SNPRINTF(pHttpBody, httpBodyLen, BODY_TEMPLATE_DELETE_CHANNEL, pSignalingClient->channelDescription.channelArn,
@@ -596,7 +625,7 @@ STATUS http_api_deleteChannel(PSignalingClient pSignalingClient, UINT64 time)
                                  pSignalingClient->pAwsCredentials, &pRequestInfo));
 
     /* Initialize and generate HTTP request, then send it. */
-    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(SIZEOF(NetworkContext_t))), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(SIZEOF(NetworkContext_t))), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK_STATUS(initNetworkContext(pNetworkContext));
 
     httpPackSendBuf(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pNetworkContext->pHttpSendBuffer,
@@ -615,19 +644,20 @@ STATUS http_api_deleteChannel(PSignalingClient pSignalingClient, UINT64 time)
     uBytesReceived = networkRecv(pNetworkContext, pNetworkContext->pHttpRecvBuffer, pNetworkContext->uHttpRecvBufferLen);
     CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
 
-    CHK_STATUS(httpParserStart(&pHttpRspCtx, (CHAR*) pNetworkContext->pHttpRecvBuffer, (UINT32) uBytesReceived, NULL));
+    CHK(httpParserStart(&pHttpRspCtx, (CHAR*) pNetworkContext->pHttpRecvBuffer, (UINT32) uBytesReceived, NULL) == STATUS_SUCCESS,
+        STATUS_HTTP_PARSER_ERROR);
     uHttpStatusCode = httpParserGetHttpStatusCode(pHttpRspCtx);
 
-    ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) uHttpStatusCode);
     /* Check HTTP results */
-    result = ATOMIC_LOAD(&pSignalingClient->result);
-    CHK((SERVICE_CALL_RESULT) result == SERVICE_CALL_RESULT_OK || (SERVICE_CALL_RESULT) result == SERVICE_CALL_RESOURCE_NOT_FOUND, retStatus);
-
+    CHK(uHttpStatusCode == SERVICE_CALL_RESULT_OK || uHttpStatusCode == SERVICE_CALL_RESOURCE_NOT_FOUND, retStatus);
     ATOMIC_STORE_BOOL(&pSignalingClient->deleted, TRUE);
 
 CleanUp:
-
     CHK_LOG_ERR(retStatus);
+
+    if (pHttpStatusCode != NULL) {
+        *pHttpStatusCode = uHttpStatusCode;
+    }
 
     if (pNetworkContext != NULL) {
         disconnectFromServer(pNetworkContext);
@@ -676,13 +706,13 @@ STATUS http_api_getIotCredential(PIotCredentialProvider pIotCredentialProvider)
     PCHAR pResponseStr;
     UINT32 resultLen;
 
-    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
     CHK(NULL !=
             (pUrl = (PCHAR) MEMALLOC(STRLEN(CONTROL_PLANE_URI_PREFIX) + STRLEN(pIotCredentialProvider->iotGetCredentialEndpoint) +
                                      STRLEN(ROLE_ALIASES_PATH) + STRLEN("/") + STRLEN(pIotCredentialProvider->roleAlias) +
                                      STRLEN(CREDENTIAL_SERVICE) + 1)),
-        STATUS_NOT_ENOUGH_MEMORY);
+        STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
     // Create the API url
 
@@ -708,7 +738,7 @@ STATUS http_api_getIotCredential(PIotCredentialProvider pIotCredentialProvider)
 
     /* Initialize and generate HTTP request, then send it. */
 
-    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(SIZEOF(NetworkContext_t))), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(SIZEOF(NetworkContext_t))), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK_STATUS(initNetworkContext(pNetworkContext) != STATUS_SUCCESS);
 
     httpPackSendBuf(pRequestInfo, HTTP_REQUEST_VERB_GET_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pNetworkContext->pHttpSendBuffer,
@@ -717,6 +747,7 @@ STATUS http_api_getIotCredential(PIotCredentialProvider pIotCredentialProvider)
     for (uConnectionRetryCnt = 0; uConnectionRetryCnt < API_CALL_CONNECTING_RETRY; uConnectionRetryCnt++) {
         // connectToServerWithX509Cert(NetworkContext_t* pNetworkContext, const PCHAR pServerHost, const PCHAR pServerPort, const PCHAR pRootCA, const
         // PCHAR pCertificate, const PCHAR pPrivateKey)
+        DLOGD("pHost:%s, pUrl:%s", pHost, pUrl);
         if ((retStatus = connectToServerWithX509Cert(pNetworkContext, pHost, API_ENDPOINT_TCP_PORT, pIotCredentialProvider->caCertPath,
                                                      pIotCredentialProvider->certPath, pIotCredentialProvider->privateKeyPath)) == STATUS_SUCCESS) {
             break;
@@ -739,7 +770,8 @@ STATUS http_api_getIotCredential(PIotCredentialProvider pIotCredentialProvider)
     CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
     DLOGD("pNetworkContext->pHttpRecvBuffer:%s", pNetworkContext->pHttpRecvBuffer);
     pNetworkContext->pHttpRecvBuffer[uBytesReceived] = '\0';
-    CHK_STATUS(httpParserStart(&pHttpRspCtx, (CHAR*) pNetworkContext->pHttpRecvBuffer, (UINT32) uBytesReceived, NULL));
+    CHK(httpParserStart(&pHttpRspCtx, (CHAR*) pNetworkContext->pHttpRecvBuffer, (UINT32) uBytesReceived, NULL) == STATUS_SUCCESS,
+        STATUS_HTTP_PARSER_ERROR);
     pResponseStr = httpParserGetHttpBodyLocation(pHttpRspCtx);
     resultLen = httpParserGetHttpBodyLength(pHttpRspCtx);
     uHttpStatusCode = httpParserGetHttpStatusCode(pHttpRspCtx);

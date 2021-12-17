@@ -1,6 +1,17 @@
-/*******************************************
-Signaling State Machine internal include file
-*******************************************/
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_WEBRTC_SIGNALING_STATE_MACHINE__
 #define __KINESIS_VIDEO_WEBRTC_SIGNALING_STATE_MACHINE__
 
@@ -9,9 +20,13 @@ Signaling State Machine internal include file
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "signaling.h"
-
+/******************************************************************************
+ * DEFINITION
+ ******************************************************************************/
 /**
  * Signaling states definitions
  */
@@ -29,49 +44,50 @@ extern "C" {
 #define SIGNALING_STATE_DELETE         ((UINT64)(1 << 10))
 #define SIGNALING_STATE_DELETED        ((UINT64)(1 << 11))
 
-// Indicates infinite retries
-#define INFINITE_RETRY_COUNT_SENTINEL 0
+typedef PVOID SignalingFsmHandle;
+typedef SignalingFsmHandle* PSignalingFsmHandle;
 
+/******************************************************************************
+ * FUNCTION PROTOTYPE
+ ******************************************************************************/
 /**
- * @brief Whether to step the state machine
+ * @brief create the signaling fsm.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in, out] pSignalingFsmHandle the handle of the signaling fsm.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_fsm_create(PSignalingClient pSignalingClient, PSignalingFsmHandle pSignalingFsmHandle);
+/**
+ * @brief free the signaling fsm.
+ *
+ * @param[in] pSignalingFsmHandle the handle of the signaling fsm.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_fsm_free(SignalingFsmHandle signalingFsmHandle);
+/**
+ * @brief step the state machine
  *
  * @param[in] pSignalingClient the context of the signaling client.
  * @param[in] status
  *
  * @return STATUS status of execution.
  */
-STATUS signalingFsmStep(PSignalingClient pSignalingClient, STATUS status);
-
-STATUS signalingFsmAccept(PSignalingClient, UINT64);
-SIGNALING_CLIENT_STATE signalingFsmGetState(UINT64);
-
+STATUS signaling_fsm_step(PSignalingClient pSignalingClient, STATUS status);
 /**
- * Signaling state machine callbacks
+ * @brief check the current state is the required state or not.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ * @param[in] requiredStates
+ *
+ * @return STATUS status of execution.
  */
-STATUS signalingFsmFromNew(UINT64, PUINT64);
-STATUS signalingFsmNew(UINT64, UINT64);
-STATUS signalingFsmFromGetToken(UINT64, PUINT64);
-STATUS signalingFsmGetToken(UINT64, UINT64);
-STATUS signalingFsmFromDescribe(UINT64, PUINT64);
-STATUS signalingFsmDescribe(UINT64, UINT64);
-STATUS signalingFsmFromCreate(UINT64, PUINT64);
-STATUS signalingFsmCreate(UINT64, UINT64);
-STATUS signalingFsmFromGetEndpoint(UINT64, PUINT64);
-STATUS signalingFsmGetEndpoint(UINT64, UINT64);
-STATUS signalingFsmFromGetIceConfig(UINT64, PUINT64);
-STATUS signalingFsmGetIceConfig(UINT64, UINT64);
-STATUS signalingFsmFromReady(UINT64, PUINT64);
-STATUS signalingFsmReady(UINT64 customData, UINT64 time);
-STATUS signalingFsmFromConnect(UINT64, PUINT64);
-STATUS signalingFsmConnect(UINT64, UINT64);
-STATUS signalingFsmFromConnected(UINT64, PUINT64);
-STATUS signalingFsmConnected(UINT64, UINT64);
-STATUS signalingFsmFromDisconnected(UINT64, PUINT64);
-STATUS signalingFsmDisconnected(UINT64, UINT64);
-STATUS signalingFsmFromDelete(UINT64, PUINT64);
-STATUS signalingFsmDelete(UINT64, UINT64);
-STATUS signalingFsmFromDeleted(UINT64, PUINT64);
-STATUS signalingFsmDeleted(UINT64, UINT64);
+STATUS signaling_fsm_accept(PSignalingClient pSignalingClient, UINT64 requiredStates);
+STATUS signaling_fsm_resetRetryCount(PSignalingClient pSignalingClient);
+STATUS signaling_fsm_setCurrentState(PSignalingClient pSignalingClient, UINT64 state);
+UINT64 signaling_fsm_getCurrentState(PSignalingClient pSignalingClient);
 
 #ifdef __cplusplus
 }

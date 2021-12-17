@@ -82,7 +82,7 @@ STATUS masterMessageReceived(UINT64 customData, PReceivedSignalingMessage pRecei
     message.payload[200] = '\0';
     message.payloadLen = 0;
 
-    status = signalingSendMessage(pTest->pActiveClient, &message);
+    status = signaling_send(pTest->pActiveClient, &message);
     CHK_LOG_ERR(status);
 
     // Return success to continue
@@ -875,7 +875,7 @@ TEST_F(SignalingApiFunctionalityTest, iceRefreshEmulation)
     channelInfo.messageTtl = TEST_SIGNALING_MESSAGE_TTL;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -999,7 +999,7 @@ TEST_F(SignalingApiFunctionalityTest, iceRefreshEmulationAuthExpiration)
     ((PStaticCredentialProvider) mTestCredentialProvider)->pAwsCredentials->expiration = GETTIME() + 4 * HUNDREDS_OF_NANOS_IN_A_SECOND;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -1095,7 +1095,7 @@ TEST_F(SignalingApiFunctionalityTest, iceRefreshEmulationWithFaultInjectionNoDis
     channelInfo.messageTtl = TEST_SIGNALING_MESSAGE_TTL;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -1208,7 +1208,7 @@ TEST_F(SignalingApiFunctionalityTest, iceRefreshEmulationWithFaultInjectionAuthE
     channelInfo.messageTtl = TEST_SIGNALING_MESSAGE_TTL;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -1316,7 +1316,7 @@ TEST_F(SignalingApiFunctionalityTest, iceRefreshEmulationWithFaultInjectionError
     channelInfo.messageTtl = TEST_SIGNALING_MESSAGE_TTL;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -1431,7 +1431,7 @@ TEST_F(SignalingApiFunctionalityTest, iceRefreshEmulationWithFaultInjectionError
     channelInfo.messageTtl = TEST_SIGNALING_MESSAGE_TTL;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -1681,7 +1681,7 @@ TEST_F(SignalingApiFunctionalityTest, connectTimeoutEmulation)
     channelInfo.messageTtl = TEST_SIGNALING_MESSAGE_TTL;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -1780,7 +1780,7 @@ TEST_F(SignalingApiFunctionalityTest, channelInfoArnSkipDescribe)
     channelInfo.messageTtl = TEST_SIGNALING_MESSAGE_TTL;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -1832,7 +1832,7 @@ TEST_F(SignalingApiFunctionalityTest, channelInfoArnSkipDescribe)
     channelInfo.pChannelArn = testArn;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -1911,7 +1911,7 @@ TEST_F(SignalingApiFunctionalityTest, deleteChannelCreatedWithArn)
     channelInfo.messageTtl = TEST_SIGNALING_MESSAGE_TTL;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -1963,7 +1963,7 @@ TEST_F(SignalingApiFunctionalityTest, deleteChannelCreatedWithArn)
     channelInfo.pChannelArn = testArn;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -2044,7 +2044,7 @@ TEST_F(SignalingApiFunctionalityTest, deleteChannelCreatedAuthExpiration)
     ((PStaticCredentialProvider) mTestCredentialProvider)->pAwsCredentials->expiration = GETTIME() + 4 * HUNDREDS_OF_NANOS_IN_A_SECOND;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -2139,7 +2139,7 @@ TEST_F(SignalingApiFunctionalityTest, signalingClientDisconnectSyncVariations)
     message.payloadLen = 0;
     message.correlationId[0] = '\0';
 
-    EXPECT_EQ(STATUS_INVALID_STREAM_STATE, signalingClientSendMessage(mSignalingClientHandle, &message));
+    EXPECT_EQ(STATUS_STATE_MACHINE_INVALID_STATE, signalingClientSendMessage(mSignalingClientHandle, &message));
 
     // Get ICE info is OK
     UINT32 count;
@@ -2212,7 +2212,7 @@ TEST_F(SignalingApiFunctionalityTest, cachingWithFaultInjection)
     channelInfo.cachingPolicy = SIGNALING_API_CALL_CACHE_TYPE_DESCRIBE_GETENDPOINT;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -2342,7 +2342,7 @@ TEST_F(SignalingApiFunctionalityTest, fileCachingTest)
         SPRINTF(signalingChannelName, "%s%u", TEST_SIGNALING_CHANNEL_NAME, i);
         channelInfo.pChannelName = signalingChannelName;
         EXPECT_EQ(STATUS_SUCCESS,
-                  signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+                  signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                       &pSignalingClient));
         signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
         EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -2357,7 +2357,7 @@ TEST_F(SignalingApiFunctionalityTest, fileCachingTest)
         channelInfo.pChannelName = signalingChannelName;
         channelInfo.pChannelArn = NULL;
         EXPECT_EQ(STATUS_SUCCESS,
-                  signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+                  signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                       &pSignalingClient))
             << "Failed on channel name: " << channelInfo.pChannelName;
 
@@ -2373,7 +2373,7 @@ TEST_F(SignalingApiFunctionalityTest, fileCachingTest)
         channelInfo.pChannelArn = channelArn;
 
         EXPECT_EQ(STATUS_SUCCESS,
-                  signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+                  signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                       &pSignalingClient));
 
         signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
@@ -2464,10 +2464,10 @@ TEST_F(SignalingApiFunctionalityTest, asyncIceConfigRefreshBeforeConnect)
     channelInfo.messageTtl = TEST_SIGNALING_MESSAGE_TTL;
 
     // should make the cached value to expire.
-    channelInfo.asyncIceServerConfig = TRUE;
+    //channelInfo.asyncIceServerConfig = TRUE;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));
@@ -2576,10 +2576,10 @@ TEST_F(SignalingApiFunctionalityTest, asyncIceConfigRefreshParallelToConnect)
     channelInfo.messageTtl = TEST_SIGNALING_MESSAGE_TTL;
 
     // should make the cached value to expire.
-    channelInfo.asyncIceServerConfig = TRUE;
+    //channelInfo.asyncIceServerConfig = TRUE;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              signalingCreate(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
+              signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
     signalingHandle = TO_SIGNALING_CLIENT_HANDLE(pSignalingClient);
     EXPECT_TRUE(IS_VALID_SIGNALING_CLIENT_HANDLE(signalingHandle));

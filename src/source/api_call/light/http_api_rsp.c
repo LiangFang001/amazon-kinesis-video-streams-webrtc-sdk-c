@@ -322,7 +322,7 @@ STATUS http_api_rsp_getIceConfig(const CHAR* pResponseStr, UINT32 resultLen, PSi
 
     // Perform some validation on the ice configuration
     pSignalingClient->iceConfigCount = configCount;
-    CHK_STATUS(signalingValidateIceConfiguration(pSignalingClient));
+    CHK_STATUS(signaling_validateIceConfiguration(pSignalingClient));
 
 CleanUp:
     MEMFREE(pTokens);

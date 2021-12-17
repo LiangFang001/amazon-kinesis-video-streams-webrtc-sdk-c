@@ -86,43 +86,6 @@ extern "C" {
 // https://tools.ietf.org/html/rfc5389#section-15.6
 #define STUN_MAX_ERROR_PHRASE_LEN (UINT16) 128
 
-// Byte sizes of the IP addresses
-#define IPV6_ADDRESS_LENGTH (UINT16) 16
-#define IPV4_ADDRESS_LENGTH (UINT16) 4
-
-#define CERTIFICATE_FINGERPRINT_LENGTH 160
-
-#define MAX_UDP_PACKET_SIZE 65507
-
-#define CONN_LISTENER_THERAD_NAME "connListener"
-#define CONN_LISTENER_THERAD_SIZE 8192
-
-#define LWS_LISTENER_THREAD_NAME "lwsListener"
-#define LWS_LISTENER_THREAD_SIZE 10240
-#define LWS_DISPATCH_THREAD_NAME "lwsDispatch"
-#define LWS_DISPATCH_THREAD_SIZE 10240
-
-#define PEER_TIMER_NAME "peerTimer"
-#define PEER_TIMER_SIZE 10240
-
-#define SIGNALING_TIMER_NAME "sigTimer"
-#define SIGNALING_TIMER_SIZE 8192
-
-#define SIGNALING_RECONNECT_TIMER_NAME "sigReconnect"
-#define SIGNALING_RECONNECT_TIMER_SIZE 8192
-
-typedef enum {
-    KVS_IP_FAMILY_TYPE_IPV4 = (UINT16) 0x0001,
-    KVS_IP_FAMILY_TYPE_IPV6 = (UINT16) 0x0002,
-} KVS_IP_FAMILY_TYPE;
-
-typedef struct {
-    UINT16 family;
-    UINT16 port;                       // port is stored in network byte order
-    BYTE address[IPV6_ADDRESS_LENGTH]; // address is stored in network byte order
-    BOOL isPointToPoint;
-} KvsIpAddress, *PKvsIpAddress;
-
 #define IS_IPV4_ADDR(pAddress) ((pAddress)->family == KVS_IP_FAMILY_TYPE_IPV4)
 
 // Used for ensuring alignment

@@ -1,3 +1,17 @@
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #define LOG_CLASS "WssApi"
 #include "../Include_i.h"
 #include "wss_api.h"
@@ -7,7 +21,6 @@
 #include "http_helper.h"
 #include "channel_info.h"
 #include "signaling_fsm.h"
-#include "base64.h"
 
 #define WSS_API_ENTER()
 #define WSS_API_EXIT()
@@ -30,24 +43,7 @@
 #define URL_PARAM_CHANNEL_ARN        "X-Amz-ChannelARN"
 #define URL_PARAM_CLIENT_ID          "X-Amz-ClientId"
 
-// Send message JSON template
-#define WSS_MESSAGE_TEMPLATE                                                                                                                         \
-    "{\n"                                                                                                                                            \
-    "\t\"action\": \"%s\",\n"                                                                                                                        \
-    "\t\"RecipientClientId\": \"%.*s\",\n"                                                                                                           \
-    "\t\"MessagePayload\": \"%s\"\n"                                                                                                                 \
-    "}"
-
-// Send message JSON template with correlation id
-#define WSS_MESSAGE_TEMPLATE_WITH_CORRELATION_ID                                                                                                     \
-    "{\n"                                                                                                                                            \
-    "\t\"action\": \"%s\",\n"                                                                                                                        \
-    "\t\"RecipientClientId\": \"%.*s\",\n"                                                                                                           \
-    "\t\"MessagePayload\": \"%s\",\n"                                                                                                                \
-    "\t\"CorrelationId\": \"%.*s\"\n"                                                                                                                \
-    "}"
-
-STATUS wssConnectSignalingChannel(PSignalingClient pSignalingClient, UINT64 time)
+STATUS wss_api_connect(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode)
 {
     WSS_API_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
@@ -66,30 +62,30 @@ STATUS wssConnectSignalingChannel(PSignalingClient pSignalingClient, UINT64 time
     HttpResponseContext* pHttpRspCtx = NULL;
     UINT32 urlLen = 0;
 
-    CHK(pSignalingClient != NULL, STATUS_NULL_ARG);
+    CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
     CHK(pSignalingClient->channelEndpointWss[0] != '\0', STATUS_INTERNAL_ERROR);
     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
-    CHK(NULL != (pHost = (CHAR*) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHost = (CHAR*) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
 
     // Prepare the json params for the call
     if (pSignalingClient->pChannelInfo->channelRoleType == SIGNALING_CHANNEL_ROLE_TYPE_VIEWER) {
         urlLen = STRLEN(URL_TEMPLATE_ENDPOINT_VIEWER) + STRLEN(pSignalingClient->channelEndpointWss) + STRLEN(URL_PARAM_CHANNEL_ARN) +
             STRLEN(pSignalingClient->channelDescription.channelArn) + STRLEN(URL_PARAM_CLIENT_ID) +
             STRLEN(pSignalingClient->clientInfo.signalingClientInfo.clientId) + 1;
-        CHK(NULL != (pUrl = (PCHAR) MEMALLOC(urlLen)), STATUS_NOT_ENOUGH_MEMORY);
+        CHK(NULL != (pUrl = (PCHAR) MEMALLOC(urlLen)), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
         SNPRINTF(pUrl, urlLen, URL_TEMPLATE_ENDPOINT_VIEWER, pSignalingClient->channelEndpointWss, URL_PARAM_CHANNEL_ARN,
                  pSignalingClient->channelDescription.channelArn, URL_PARAM_CLIENT_ID, pSignalingClient->clientInfo.signalingClientInfo.clientId);
     } else {
         urlLen = STRLEN(URL_TEMPLATE_ENDPOINT_MASTER) + STRLEN(pSignalingClient->channelEndpointWss) + STRLEN(URL_PARAM_CHANNEL_ARN) +
             STRLEN(pSignalingClient->channelDescription.channelArn) + 1;
-        CHK(NULL != (pUrl = (PCHAR) MEMALLOC(urlLen)), STATUS_NOT_ENOUGH_MEMORY);
+        CHK(NULL != (pUrl = (PCHAR) MEMALLOC(urlLen)), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
 
         SNPRINTF(pUrl, urlLen, URL_TEMPLATE_ENDPOINT_MASTER, pSignalingClient->channelEndpointWss, URL_PARAM_CHANNEL_ARN,
                  pSignalingClient->channelDescription.channelArn);
     }
 
     /* Initialize and generate HTTP request, then send it. */
-    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(sizeof(NetworkContext_t))), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(sizeof(NetworkContext_t))), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
     CHK_STATUS(initNetworkContext(pNetworkContext));
     CHK_STATUS(createRequestInfo(pUrl, NULL, pSignalingClient->pChannelInfo->pRegion, pSignalingClient->pChannelInfo->pCertPath, NULL, NULL,
                                  SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, API_CALL_CONNECTION_TIMEOUT,
@@ -138,18 +134,18 @@ STATUS wssConnectSignalingChannel(PSignalingClient pSignalingClient, UINT64 time
     CHK(node != NULL && wss_client_validateAcceptKey(clientKey, WSS_CLIENT_BASED64_RANDOM_SEED_LEN, node->value, node->valueLen) == STATUS_SUCCESS,
         STATUS_WSS_ACCEPT_KEY_ERROR);
     uHttpStatusCode = httpParserGetHttpStatusCode(pHttpRspCtx);
-    ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) uHttpStatusCode);
 
     /* Check HTTP results */
-    if (uHttpStatusCode == 101) {
+    if (uHttpStatusCode == SERVICE_CALL_RESULT_UPGRADE) {
         TID threadId;
         /**
          * switch to wss client.
          */
         /* We got a success response here. */
-        WssClientContext* wssClientCtx = NULL;
+        PWssClientContext wssClientCtx = NULL;
+        uHttpStatusCode = SERVICE_CALL_UNKNOWN;
 
-        wss_client_create(&wssClientCtx, pNetworkContext, pSignalingClient, wssHandleDataMsg, wssHandleCtrlMsg);
+        wss_client_create(&wssClientCtx, pNetworkContext, pSignalingClient, wss_api_handleDataMsg, wss_api_handleCtrlMsg, wss_api_handleTermination);
 
         pSignalingClient->pWssContext = wssClientCtx;
 
@@ -158,18 +154,14 @@ STATUS wssConnectSignalingChannel(PSignalingClient pSignalingClient, UINT64 time
 
         CHK_STATUS(THREAD_DETACH(threadId));
 
-        ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) SERVICE_CALL_RESULT_OK);
+        uHttpStatusCode = SERVICE_CALL_RESULT_OK;
         ATOMIC_STORE_BOOL(&pSignalingClient->connected, TRUE);
-
-        if (ATOMIC_LOAD_BOOL(&pSignalingClient->connected)) {
-            ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) SERVICE_CALL_RESULT_OK);
-        }
     }
-    CHK((SERVICE_CALL_RESULT) ATOMIC_LOAD(&pSignalingClient->result) == SERVICE_CALL_RESULT_OK, retStatus);
+    CHK(uHttpStatusCode == SERVICE_CALL_RESULT_OK, retStatus);
 
 CleanUp:
-
     CHK_LOG_ERR(retStatus);
+
     if (pHttpRspCtx != NULL) {
         retStatus = httpParserDetroy(pHttpRspCtx);
         if (retStatus != STATUS_SUCCESS) {
@@ -189,11 +181,16 @@ CleanUp:
         }
 
         if (pSignalingClient->pWssContext != NULL) {
-            wss_api_terminateConnection(pSignalingClient, serviceCallResult);
+            wss_api_terminate(pSignalingClient, serviceCallResult);
         }
 
-        ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) serviceCallResult);
+        uHttpStatusCode = serviceCallResult;
     }
+
+    if (pHttpStatusCode != NULL) {
+        *pHttpStatusCode = uHttpStatusCode;
+    }
+
     SAFE_MEMFREE(pHost);
     SAFE_MEMFREE(pUrl);
     freeRequestInfo(pRequestInfo);
@@ -201,19 +198,11 @@ CleanUp:
     return retStatus;
 }
 
-/**
- * @brief
- *
- * @param[in] pSignalingClient
- * @param[in] awaitForResponse
- *
- * @return
- */
-STATUS wssWriteData(PSignalingClient pSignalingClient, PBYTE pSendBuf, UINT32 bufLen, BOOL awaitForResponse)
+STATUS wss_api_send(PSignalingClient pSignalingClient, PBYTE pSendBuf, UINT32 bufLen)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
-    CHK(pSignalingClient != NULL && pSignalingClient->pWssContext != NULL, STATUS_NULL_ARG);
+    CHK(pSignalingClient != NULL && pSignalingClient->pWssContext != NULL, STATUS_WSS_API_NULL_ARG);
 
     DLOGD("Sending data over web socket: %s", pSendBuf);
     CHK_STATUS(wss_client_sendText(pSignalingClient->pWssContext, pSendBuf, bufLen));
@@ -223,211 +212,14 @@ CleanUp:
     return retStatus;
 }
 
-STATUS wssSendMessage(PSignalingClient pSignalingClient, PCHAR pMessageType, PCHAR peerClientId, PCHAR pMessage, UINT32 messageLen,
-                      PCHAR pCorrelationId, UINT32 correlationIdLen)
-{
-    WSS_API_ENTER();
-    STATUS retStatus = STATUS_SUCCESS;
-
-    PCHAR pEncodedMessage = NULL;
-    UINT32 size, writtenSize, correlationLen;
-    BOOL awaitForResponse;
-    PBYTE pSendBuffer = NULL;
-
-    // Ensure we are in a connected state
-    CHK_STATUS(signalingFsmAccept(pSignalingClient, SIGNALING_STATE_CONNECTED));
-    CHK(pSignalingClient != NULL && pSignalingClient->pWssContext != NULL, STATUS_NULL_ARG);
-    // #YC_TBD, need to enhance, #heap.
-    CHK(NULL != (pEncodedMessage = (PCHAR) MEMALLOC(MAX_SESSION_DESCRIPTION_INIT_SDP_LEN + 1)), STATUS_NOT_ENOUGH_MEMORY);
-    CHK(NULL != (pSendBuffer = (PBYTE) MEMALLOC(LWS_MESSAGE_BUFFER_SIZE)), STATUS_NOT_ENOUGH_MEMORY);
-
-    // Calculate the lengths if not specified
-    if (messageLen == 0) {
-        size = (UINT32) STRLEN(pMessage);
-    } else {
-        size = messageLen;
-    }
-
-    if (correlationIdLen == 0) {
-        correlationLen = (UINT32) STRLEN(pCorrelationId);
-    } else {
-        correlationLen = correlationIdLen;
-    }
-
-    // Base64 encode the message
-    writtenSize = MAX_SESSION_DESCRIPTION_INIT_SDP_LEN + 1;
-    CHK_STATUS(base64Encode(pMessage, size, pEncodedMessage, &writtenSize));
-
-    // Account for the template expansion + Action string + max recipient id
-    size = LWS_MESSAGE_BUFFER_SIZE;
-    CHK(writtenSize <= size, STATUS_SIGNALING_MAX_MESSAGE_LEN_AFTER_ENCODING);
-
-    // Prepare json message
-    if (correlationLen == 0) {
-        writtenSize = (UINT32) SNPRINTF((PCHAR)(pSendBuffer), size, WSS_MESSAGE_TEMPLATE, pMessageType, MAX_SIGNALING_CLIENT_ID_LEN, peerClientId,
-                                        pEncodedMessage);
-    } else {
-        writtenSize = (UINT32) SNPRINTF((PCHAR)(pSendBuffer), size, WSS_MESSAGE_TEMPLATE_WITH_CORRELATION_ID, pMessageType,
-                                        MAX_SIGNALING_CLIENT_ID_LEN, peerClientId, pEncodedMessage, correlationLen, pCorrelationId);
-    }
-
-    // Validate against max
-    CHK(writtenSize <= LWS_MESSAGE_BUFFER_SIZE, STATUS_SIGNALING_MAX_MESSAGE_LEN_AFTER_ENCODING);
-    writtenSize *= SIZEOF(CHAR);
-    CHK(writtenSize <= size, STATUS_INVALID_ARG);
-    // Send the data to the web socket
-    CHK_STATUS(wssWriteData(pSignalingClient, pSendBuffer, writtenSize, FALSE));
-
-CleanUp:
-    SAFE_MEMFREE(pEncodedMessage);
-    SAFE_MEMFREE(pSendBuffer);
-    WSS_API_EXIT();
-    return retStatus;
-}
-
-STATUS wss_api_getMessageTypeFromString(PCHAR typeStr, UINT32 typeLen, SIGNALING_MESSAGE_TYPE* pMessageType)
-{
-    ENTERS();
-    STATUS retStatus = STATUS_SUCCESS;
-    UINT32 len;
-
-    CHK(typeStr != NULL && pMessageType != NULL, STATUS_NULL_ARG);
-
-    if (typeLen == 0) {
-        len = (UINT32) STRLEN(typeStr);
-    } else {
-        len = typeLen;
-    }
-
-    if (0 == STRNCMP(typeStr, SIGNALING_SDP_TYPE_OFFER, len)) {
-        *pMessageType = SIGNALING_MESSAGE_TYPE_OFFER;
-    } else if (0 == STRNCMP(typeStr, SIGNALING_SDP_TYPE_ANSWER, len)) {
-        *pMessageType = SIGNALING_MESSAGE_TYPE_ANSWER;
-    } else if (0 == STRNCMP(typeStr, SIGNALING_ICE_CANDIDATE, len)) {
-        *pMessageType = SIGNALING_MESSAGE_TYPE_ICE_CANDIDATE;
-    } else if (0 == STRNCMP(typeStr, SIGNALING_GO_AWAY, len)) {
-        *pMessageType = SIGNALING_MESSAGE_TYPE_GO_AWAY;
-    } else if (0 == STRNCMP(typeStr, SIGNALING_RECONNECT_ICE_SERVER, len)) {
-        *pMessageType = SIGNALING_MESSAGE_TYPE_RECONNECT_ICE_SERVER;
-    } else if (0 == STRNCMP(typeStr, SIGNALING_STATUS_RESPONSE, len)) {
-        *pMessageType = SIGNALING_MESSAGE_TYPE_STATUS_RESPONSE;
-    } else {
-        *pMessageType = SIGNALING_MESSAGE_TYPE_UNKNOWN;
-        CHK_WARN(FALSE, retStatus, "Unrecognized message type received");
-    }
-
-CleanUp:
-
-    LEAVES();
-    return retStatus;
-}
-
-PVOID wssReceiveMessageWrapper(PVOID args)
-{
-    STATUS retStatus = STATUS_SUCCESS;
-    PSignalingMessageWrapper pSignalingMessageWrapper = (PSignalingMessageWrapper) args;
-    PSignalingClient pSignalingClient = NULL;
-
-    CHK(pSignalingMessageWrapper != NULL, STATUS_NULL_ARG);
-
-    pSignalingClient = pSignalingMessageWrapper->pSignalingClient;
-
-    CHK(pSignalingClient != NULL, STATUS_INTERNAL_ERROR);
-
-    // Updating the diagnostics info before calling the client callback
-    ATOMIC_INCREMENT(&pSignalingClient->diagnostics.numberOfMessagesReceived);
-
-    // Calling client receive message callback if specified
-    if (pSignalingClient->signalingClientCallbacks.messageReceivedFn != NULL) {
-        CHK_STATUS(pSignalingClient->signalingClientCallbacks.messageReceivedFn(pSignalingClient->signalingClientCallbacks.customData,
-                                                                                &pSignalingMessageWrapper->receivedSignalingMessage));
-    }
-
-CleanUp:
-    CHK_LOG_ERR(retStatus);
-
-    SAFE_MEMFREE(pSignalingMessageWrapper);
-
-    return (PVOID)(ULONG_PTR) retStatus;
-}
-#if 1 // defined(KVS_PLAT_ESP_FREERTOS) || defined(KVS_PLAT_RTK_FREERTOS)
-/** #YC_TBD, need to add the code of initialization. */
-TID receivedTid = INVALID_TID_VALUE;
-QueueHandle_t lwsMsgQ = NULL;
-#define KVSWEBRTC_LWS_MSGQ_LENGTH 32
-
-/**
- * @brief for the original design, we create one thread for each message.
- */
-PVOID wssHandleMsg(PVOID args)
-{
-    STATUS retStatus = STATUS_SUCCESS;
-    PSignalingMessageWrapper pMsg;
-    while (1) {
-        BaseType_t err = xQueueReceive(lwsMsgQ, &pMsg, 0xffffffffUL);
-        if (err == pdPASS) {
-            DLOGD("handling wss");
-            retStatus = STATUS_SUCCESS;
-
-            PSignalingClient pSignalingClient = NULL;
-
-            CHK(pMsg != NULL, STATUS_NULL_ARG);
-
-            pSignalingClient = pMsg->pSignalingClient;
-
-            CHK(pSignalingClient != NULL, STATUS_INTERNAL_ERROR);
-            // Calling client receive message callback if specified
-            if (pSignalingClient->signalingClientCallbacks.messageReceivedFn != NULL) {
-                CHK_STATUS(pSignalingClient->signalingClientCallbacks.messageReceivedFn(pSignalingClient->signalingClientCallbacks.customData,
-                                                                                        &pMsg->receivedSignalingMessage));
-            }
-        CleanUp:
-            CHK_LOG_ERR(retStatus);
-            SAFE_MEMFREE(pMsg);
-        } else {
-            DLOGW("Did not get the lws msg.");
-        }
-    }
-    DLOGW("should not happen.");
-    return (PVOID)(ULONG_PTR) retStatus;
-}
-
-STATUS wssDispatchMsg(PVOID pMessage)
-{
-    STATUS retStatus = STATUS_SUCCESS;
-    PSignalingMessageWrapper msg = (PSignalingMessageWrapper) pMessage;
-
-    if (receivedTid == INVALID_TID_VALUE) {
-        lwsMsgQ = xQueueCreate(KVSWEBRTC_LWS_MSGQ_LENGTH, SIZEOF(PSignalingMessageWrapper));
-        CHK(lwsMsgQ != NULL, STATUS_SIGNALING_CREATE_MSGQ_FAILED);
-        // CHK(THREAD_CREATE(&receivedTid, wssHandleMsg, (PVOID) NULL) == STATUS_SUCCESS, STATUS_SIGNALING_CREATE_THREAD_FAILED);
-        CHK(THREAD_CREATE_EX(&receivedTid, LWS_DISPATCH_THREAD_NAME, LWS_DISPATCH_THREAD_SIZE, wssHandleMsg, (PVOID) NULL) == STATUS_SUCCESS,
-            STATUS_SIGNALING_CREATE_THREAD_FAILED);
-    }
-    UBaseType_t num = uxQueueSpacesAvailable(lwsMsgQ);
-    DLOGD("unhandled num in q: %d", KVSWEBRTC_LWS_MSGQ_LENGTH - num);
-    CHK(xQueueSend(lwsMsgQ, &msg, 0) == pdPASS, STATUS_SIGNALING_DISPATCH_FAILED);
-
-CleanUp:
-    CHK_LOG_ERR(retStatus);
-    if (STATUS_FAILED(retStatus)) {
-        SAFE_MEMFREE(msg);
-    }
-    return retStatus;
-}
-#endif
-
-STATUS wssHandleDataMsg(PSignalingClient pSignalingClient, PCHAR pMessage, UINT32 messageLen)
+STATUS wss_api_handleDataMsg(PVOID pUSerData, PCHAR pMessage, UINT32 messageLen)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     PSignalingMessageWrapper pSignalingMessageWrapper = NULL;
-#if !defined(KVS_PLAT_ESP_FREERTOS) && !defined(KVS_PLAT_RTK_FREERTOS)
-    TID receivedTid = INVALID_TID_VALUE;
-#endif
-    PSignalingMessage pOngoingMessage;
+    PSignalingClient pSignalingClient = (PSignalingClient) pUSerData;
 
-    CHK(pSignalingClient != NULL, STATUS_NULL_ARG);
+    CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
 
     // If we have a signalingMessage and if there is a correlation id specified then the response should be non-empty
     if (pMessage == NULL || messageLen == 0) {
@@ -435,78 +227,19 @@ STATUS wssHandleDataMsg(PSignalingClient pSignalingClient, PCHAR pMessage, UINT3
         CHK_WARN(pMessage != NULL && messageLen != 0, retStatus, "Signaling received an empty message");
     }
 
-    CHK(NULL != (pSignalingMessageWrapper = (PSignalingMessageWrapper) MEMCALLOC(1, SIZEOF(SignalingMessageWrapper))), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pSignalingMessageWrapper = (PSignalingMessageWrapper) MEMCALLOC(1, SIZEOF(SignalingMessageWrapper))),
+        STATUS_WSS_API_NOT_ENOUGH_MEMORY);
 
-    CHK_STATUS(wss_api_rsp_receivedMessage(pMessage, messageLen, pSignalingMessageWrapper));
+    CHK(wss_api_rsp_receivedMessage(pMessage, messageLen, pSignalingMessageWrapper) == STATUS_SUCCESS, STATUS_WSS_API_PARSE_RSP);
 
     pSignalingMessageWrapper->pSignalingClient = pSignalingClient;
 
-    switch (pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.messageType) {
-        case SIGNALING_MESSAGE_TYPE_STATUS_RESPONSE:
-            // ATOMIC_STORE(&pSignalingClient->messageResult,
-            //                 (SIZE_T) getServiceCallResultFromHttpStatus(pSignalingMessageWrapper->receivedSignalingMessage.statusCode));
-            if (pSignalingMessageWrapper->receivedSignalingMessage.statusCode != SERVICE_CALL_RESULT_OK) {
-                DLOGW("Failed to deliver message. Correlation ID: %s, Error Type: %s, Error Code: %u, Description: %s",
-                      pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.correlationId,
-                      pSignalingMessageWrapper->receivedSignalingMessage.errorType, pSignalingMessageWrapper->receivedSignalingMessage.statusCode,
-                      pSignalingMessageWrapper->receivedSignalingMessage.description);
-            }
-            // Notify the awaiting send
-            // CVAR_BROADCAST(pSignalingClient->receiveCvar);
-            // Delete the message wrapper and exit
-            SAFE_MEMFREE(pSignalingMessageWrapper);
-            CHK(FALSE, retStatus);
-            break;
-
-        case SIGNALING_MESSAGE_TYPE_GO_AWAY:
-            // Move the describe state
-            CHK_STATUS(wss_api_terminateConnection(pSignalingClient, SERVICE_CALL_RESULT_SIGNALING_GO_AWAY));
-
-            // Delete the message wrapper and exit
-            SAFE_MEMFREE(pSignalingMessageWrapper);
-
-            // Iterate the state machinery
-            CHK_STATUS(signalingFsmStep(pSignalingClient, retStatus));
-
-            CHK(FALSE, retStatus);
-            break;
-
-        case SIGNALING_MESSAGE_TYPE_RECONNECT_ICE_SERVER:
-            // Move to get ice config state
-            CHK_STATUS(wss_api_terminateConnection(pSignalingClient, SERVICE_CALL_RESULT_SIGNALING_RECONNECT_ICE));
-
-            // Delete the message wrapper and exit
-            SAFE_MEMFREE(pSignalingMessageWrapper);
-
-            // Iterate the state machinery
-            CHK_STATUS(signalingFsmStep(pSignalingClient, retStatus));
-
-            CHK(FALSE, retStatus);
-            break;
-
-        case SIGNALING_MESSAGE_TYPE_OFFER:
-            CHK(pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.peerClientId[0] != '\0',
-                STATUS_SIGNALING_NO_PEER_CLIENT_ID_IN_MESSAGE);
-            // Explicit fall-through !!!
-        case SIGNALING_MESSAGE_TYPE_ANSWER:
-        case SIGNALING_MESSAGE_TYPE_ICE_CANDIDATE:
-            CHK(pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.payloadLen > 0 &&
-                    pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.payloadLen <= MAX_SIGNALING_MESSAGE_LEN,
-                STATUS_SIGNALING_INVALID_PAYLOAD_LEN_IN_MESSAGE);
-            CHK(pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.payload[0] != '\0', STATUS_SIGNALING_NO_PAYLOAD_IN_MESSAGE);
-            break;
-
-        default:
-            break;
+    // CHK_STATUS(signaling_dispatchMsg((PVOID) pSignalingMessageWrapper));
+    if (pSignalingClient->pDispatchMsgHandler != NULL) {
+        CHK_STATUS(pSignalingClient->pDispatchMsgHandler((PVOID) pSignalingMessageWrapper));
+    } else {
+        SAFE_MEMFREE(pSignalingMessageWrapper);
     }
-
-#if !defined(KVS_PLAT_ESP_FREERTOS) && !defined(KVS_PLAT_RTK_FREERTOS)
-    // Issue the callback on a separate thread
-    CHK_STATUS(THREAD_CREATE(&receivedTid, wssReceiveMessageWrapper, (PVOID) pSignalingMessageWrapper));
-    CHK_STATUS(THREAD_DETACH(receivedTid));
-#else
-    CHK_STATUS(wssDispatchMsg((PVOID) pSignalingMessageWrapper));
-#endif
 
 CleanUp:
 
@@ -518,28 +251,21 @@ CleanUp:
             retStatus = pSignalingClient->signalingClientCallbacks.errorReportFn(pSignalingClient->signalingClientCallbacks.customData, retStatus,
                                                                                  pMessage, messageLen);
         }
-#if !defined(KVS_PLAT_ESP_FREERTOS) && !defined(KVS_PLAT_RTK_FREERTOS)
-        // Kill the receive thread on error
-        if (IS_VALID_TID_VALUE(receivedTid)) {
-            THREAD_CANCEL(receivedTid);
-        }
-
-        SAFE_MEMFREE(pSignalingMessageWrapper);
-#endif
     }
     LEAVES();
     return retStatus;
 }
 
-STATUS wssHandleCtrlMsg(PSignalingClient pSignalingClient, UINT8 opcode, PCHAR pMessage, UINT32 messageLen)
+STATUS wss_api_handleCtrlMsg(PVOID pUserData, UINT8 opcode, PCHAR pMessage, UINT32 messageLen)
 {
     WSS_API_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
     BOOL connected;
     PCHAR pCurPtr;
+    PSignalingClient pSignalingClient = (PSignalingClient) pUserData;
 
-    CHK(pSignalingClient != NULL, STATUS_NULL_ARG);
-
+    CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
+    DLOGD("opcode:%x", opcode);
     if (opcode == WSLAY_PONG) {
         DLOGD("<== pong, len: %ld", messageLen);
     } else if (opcode == WSLAY_PING) {
@@ -550,29 +276,21 @@ STATUS wssHandleCtrlMsg(PSignalingClient pSignalingClient, UINT8 opcode, PCHAR p
         DLOGW("Client connection failed. Connection error string: %s", pCurPtr);
 
         connected = ATOMIC_EXCHANGE_BOOL(&pSignalingClient->connected, FALSE);
-        ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) SERVICE_CALL_UNKNOWN);
 
-        // Update the diagnostics info
-        ATOMIC_INCREMENT(&pSignalingClient->diagnostics.numberOfReconnects);
-        CHK_STATUS(signalingFsmStep(pSignalingClient, retStatus));
-        if (pSignalingClient != NULL) {
-            // Call the error handler in case of an error
-            if (STATUS_FAILED(retStatus)) {
-                // Update the diagnostics before calling the error callback
-                ATOMIC_INCREMENT(&pSignalingClient->diagnostics.numberOfRuntimeErrors);
-                if (pSignalingClient->signalingClientCallbacks.errorReportFn != NULL) {
-                    // reconnectErrLen = SNPRINTF(pReconnectErrMsg, SIGNALING_MAX_ERROR_MESSAGE_LEN, SIGNALING_RECONNECT_ERROR_MSG, retStatus);
-                    // pReconnectErrMsg[SIGNALING_MAX_ERROR_MESSAGE_LEN] = '\0';
-                    // pSignalingClient->signalingClientCallbacks.errorReportFn(pSignalingClient->signalingClientCallbacks.customData,
-                    //                                                         STATUS_SIGNALING_RECONNECT_FAILED, pReconnectErrMsg, reconnectErrLen);
-                }
-            }
-            // if (connected && !ATOMIC_LOAD_BOOL(&pSignalingClient->shutdown)) {
-            //    // Handle re-connection in a reconnect handler thread
-            //    CHK_STATUS(THREAD_CREATE(&pSignalingClient->reconnecterTracker.threadId, lwsReconnectHandler, (PVOID) pSignalingClient));
-            //    CHK_STATUS(THREAD_DETACH(pSignalingClient->reconnecterTracker.threadId));
-            //}
+        PSignalingMessageWrapper pSignalingMessageWrapper = NULL;
+
+        CHK(NULL != (pSignalingMessageWrapper = (PSignalingMessageWrapper) MEMCALLOC(1, SIZEOF(SignalingMessageWrapper))),
+            STATUS_WSS_API_NOT_ENOUGH_MEMORY);
+        pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.messageType = SIGNALING_MESSAGE_TYPE_CTRL_CLOSE;
+        pSignalingMessageWrapper->pSignalingClient = pSignalingClient;
+
+        // CHK_STATUS(signaling_dispatchMsg((PVOID) pSignalingMessageWrapper));
+        if (pSignalingClient->pDispatchMsgHandler != NULL) {
+            CHK_STATUS(pSignalingClient->pDispatchMsgHandler((PVOID) pSignalingMessageWrapper));
+        } else {
+            SAFE_MEMFREE(pSignalingMessageWrapper);
         }
+
     } else {
         DLOGD("<== ctrl msg(%d), len: %ld", opcode, messageLen);
     }
@@ -583,27 +301,39 @@ CleanUp:
     return retStatus;
 }
 
-/**
- * @brief   terminate the websocket connection but will set the result of signaling client for the next step.
- *
- * @param[in]
- * @param[in]
- *
- * @return
- */
-STATUS wss_api_terminateConnection(PSignalingClient pSignalingClient, SERVICE_CALL_RESULT callResult)
+STATUS wss_api_handleTermination(PVOID pUserData, STATUS errCode)
+{
+    WSS_API_ENTER();
+    STATUS retStatus = STATUS_SUCCESS;
+    BOOL connected;
+    PCHAR pCurPtr;
+    PSignalingClient pSignalingClient = (PSignalingClient) pUserData;
+
+    CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
+
+    if (STATUS_FAILED(errCode) && pSignalingClient != NULL) {
+        ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) SERVICE_CALL_UNKNOWN);
+    }
+CleanUp:
+    WSS_API_EXIT();
+    return retStatus;
+}
+
+STATUS wss_api_terminate(PSignalingClient pSignalingClient, SERVICE_CALL_RESULT callResult)
 {
     WSS_API_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
 
-    CHK(pSignalingClient != NULL, STATUS_NULL_ARG);
+    CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
 
     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
     ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) callResult);
 
     // waiting the termination of listener thread.
-    wss_client_close(pSignalingClient->pWssContext);
-    pSignalingClient->pWssContext = NULL;
+    if (pSignalingClient->pWssContext != NULL) {
+        wss_client_close(pSignalingClient->pWssContext);
+        pSignalingClient->pWssContext = NULL;
+    }
 
 CleanUp:
 

@@ -738,10 +738,11 @@ STATUS logSignalingClientStats(PSignalingClientMetrics pSignalingClientMetrics)
     DLOGD("Number of runtime errors in the session: %d", pSignalingClientMetrics->signalingClientStats.numberOfRuntimeErrors);
     DLOGD("Signaling client uptime: %" PRIu64 " ms",
           (pSignalingClientMetrics->signalingClientStats.connectionDuration / HUNDREDS_OF_NANOS_IN_A_MILLISECOND));
-    // This gives the EMA of the signalingCreateChannel, signalingDescribeChannel, signalingGetChannelEndpoint and signalingDeleteChannel calls
+    // This gives the EMA of the signaling_channel_create, signaling_channel_describe, signaling_channel_getEndpoint and signaling_channel_delete
+    // calls
     DLOGD("Control Plane API call latency: %" PRIu64 " ms",
           (pSignalingClientMetrics->signalingClientStats.cpApiCallLatency / HUNDREDS_OF_NANOS_IN_A_MILLISECOND));
-    // This gives the EMA of the signalingGetIceConfig() call.
+    // This gives the EMA of the signaling_channel_getIceConfig() call.
     DLOGD("Data Plane API call latency: %" PRIu64 " ms",
           (pSignalingClientMetrics->signalingClientStats.dpApiCallLatency / HUNDREDS_OF_NANOS_IN_A_MILLISECOND));
 CleanUp:

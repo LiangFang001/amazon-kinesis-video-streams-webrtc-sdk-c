@@ -126,14 +126,46 @@ struct __StateMachineImpl {
 };
 typedef struct __StateMachineImpl* PStateMachineImpl;
 
-STATUS createStateMachine(PStateMachineState, UINT32, UINT64, GetCurrentTimeFunc, UINT64, PStateMachine*);
-STATUS freeStateMachine(PStateMachine);
-STATUS stepStateMachine(PStateMachine);
-STATUS acceptStateMachineState(PStateMachine, UINT64);
-STATUS getStateMachineState(PStateMachine, UINT64, PStateMachineState*);
-STATUS getStateMachineCurrentState(PStateMachine, PStateMachineState*);
-STATUS setStateMachineCurrentState(PStateMachine, UINT64);
-STATUS resetStateMachineRetryCount(PStateMachine);
+STATUS state_machine_create(PStateMachineState, UINT32, UINT64, GetCurrentTimeFunc, UINT64, PStateMachine*);
+STATUS state_machine_free(PStateMachine);
+STATUS state_machine_step(PStateMachine);
+STATUS state_machine_accept(PStateMachine pStateMachine, UINT64 requiredStates);
+/**
+ * @brief Gets a pointer to the state object given it's state
+ *
+ * @param[in] pStateMachine
+ * @param[in] state
+ * @param[in, out] ppState
+ *
+ * @return STATUS status of execution.
+ */
+STATUS state_machine_getState(PStateMachine pStateMachine, UINT64 state, PStateMachineState* ppState);
+/**
+ * @brief Gets a pointer to the current state object.
+ *
+ * @param[in] pStateMachine
+ * @param[in, out] ppState
+ *
+ * @return STATUS status of execution.
+ */
+STATUS state_machine_getCurrentState(PStateMachine pStateMachine, PStateMachineState* ppState);
+/**
+ * @brief Force sets the state machine state
+ *
+ * @param[in] pStateMachine
+ * @param[in] state
+ *
+ * @return STATUS status of execution.
+ */
+STATUS state_machine_setCurrentState(PStateMachine pStateMachine, UINT64 state);
+/**
+ * @brief Resets the state machine retry count.
+ *
+ * @param[in] pStateMachine
+ *
+ * @return STATUS status of execution.
+ */
+STATUS state_machine_resetRetryCount(PStateMachine pStateMachine);
 
 #ifdef __cplusplus
 }

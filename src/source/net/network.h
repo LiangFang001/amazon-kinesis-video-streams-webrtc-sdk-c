@@ -10,6 +10,8 @@ HostInfo internal include file
 extern "C" {
 #endif
 
+#include "kvs/common_defs.h"
+#include "kvs/WebRTCClient.h"
 #include "endianness.h"
 
 #define MAX_LOCAL_NETWORK_INTERFACE_COUNT 128
@@ -35,11 +37,31 @@ extern "C" {
 #define EAI_SYSTEM -11
 #endif
 
+// Byte sizes of the IP addresses
+#define IPV6_ADDRESS_LENGTH (UINT16) 16
+#define IPV4_ADDRESS_LENGTH (UINT16) 4
+
+#define CERTIFICATE_FINGERPRINT_LENGTH 160
+
+#define MAX_UDP_PACKET_SIZE 65507
+
 typedef enum {
     KVS_SOCKET_PROTOCOL_NONE,
     KVS_SOCKET_PROTOCOL_TCP,
     KVS_SOCKET_PROTOCOL_UDP,
 } KVS_SOCKET_PROTOCOL;
+
+typedef enum {
+    KVS_IP_FAMILY_TYPE_IPV4 = (UINT16) 0x0001,
+    KVS_IP_FAMILY_TYPE_IPV6 = (UINT16) 0x0002,
+} KVS_IP_FAMILY_TYPE;
+
+typedef struct {
+    UINT16 family;
+    UINT16 port;                       // port is stored in network byte order
+    BYTE address[IPV6_ADDRESS_LENGTH]; // address is stored in network byte order
+    BOOL isPointToPoint;
+} KvsIpAddress, *PKvsIpAddress;
 
 /**
  * @param - PKvsIpAddress - IN/OUT - array for getLocalhostIpAddresses to store any local ips it found. The ip address and port

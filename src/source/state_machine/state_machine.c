@@ -8,8 +8,8 @@
 /**
  * Creates a new state machine
  */
-STATUS createStateMachine(PStateMachineState pStates, UINT32 stateCount, UINT64 customData, GetCurrentTimeFunc getCurrentTimeFunc,
-                          UINT64 getCurrentTimeFuncCustomData, PStateMachine* ppStateMachine)
+STATUS state_machine_create(PStateMachineState pStates, UINT32 stateCount, UINT64 customData, GetCurrentTimeFunc getCurrentTimeFunc,
+                            UINT64 getCurrentTimeFuncCustomData, PStateMachine* ppStateMachine)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -47,7 +47,7 @@ STATUS createStateMachine(PStateMachineState pStates, UINT32 stateCount, UINT64 
 CleanUp:
 
     if (STATUS_FAILED(retStatus)) {
-        freeStateMachine((PStateMachine) pStateMachine);
+        state_machine_free((PStateMachine) pStateMachine);
     }
 
     LEAVES();
@@ -57,7 +57,7 @@ CleanUp:
 /**
  * Frees the state machine object
  */
-STATUS freeStateMachine(PStateMachine pStateMachine)
+STATUS state_machine_free(PStateMachine pStateMachine)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -74,10 +74,7 @@ CleanUp:
     return retStatus;
 }
 
-/**
- * Gets a pointer to the state object given it's state
- */
-STATUS getStateMachineState(PStateMachine pStateMachine, UINT64 state, PStateMachineState* ppState)
+STATUS state_machine_getState(PStateMachine pStateMachine, UINT64 state, PStateMachineState* ppState)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -106,10 +103,7 @@ CleanUp:
     return retStatus;
 }
 
-/**
- * Gets a pointer to the current state object
- */
-STATUS getStateMachineCurrentState(PStateMachine pStateMachine, PStateMachineState* ppState)
+STATUS state_machine_getCurrentState(PStateMachine pStateMachine, PStateMachineState* ppState)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -120,7 +114,6 @@ STATUS getStateMachineCurrentState(PStateMachine pStateMachine, PStateMachineSta
     *ppState = pStateMachineImpl->context.pCurrentState;
 
 CleanUp:
-
     LEAVES();
     return retStatus;
 }
@@ -128,7 +121,7 @@ CleanUp:
 /**
  * Transition the state machine given it's context
  */
-STATUS stepStateMachine(PStateMachine pStateMachine)
+STATUS state_machine_step(PStateMachine pStateMachine)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -145,9 +138,9 @@ STATUS stepStateMachine(PStateMachine pStateMachine)
     CHK_STATUS(pStateMachineImpl->context.pCurrentState->getNextStateFn(pStateMachineImpl->customData, &nextState));
 
     // Validate if the next state can accept the current state before transitioning
-    CHK_STATUS(getStateMachineState(pStateMachine, nextState, &pState));
+    CHK_STATUS(state_machine_getState(pStateMachine, nextState, &pState));
 
-    CHK_STATUS(acceptStateMachineState((PStateMachine) pStateMachineImpl, pState->acceptStates));
+    CHK_STATUS(state_machine_accept((PStateMachine) pStateMachineImpl, pState->acceptStates));
 
     // Clear the iteration info if a different state and transition the state
     time = pStateMachineImpl->getCurrentTimeFunc(pStateMachineImpl->getCurrentTimeFuncCustomData);
@@ -187,7 +180,7 @@ CleanUp:
 /**
  * Checks whether the state machine state is accepted states
  */
-STATUS acceptStateMachineState(PStateMachine pStateMachine, UINT64 requiredStates)
+STATUS state_machine_accept(PStateMachine pStateMachine, UINT64 requiredStates)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -197,7 +190,7 @@ STATUS acceptStateMachineState(PStateMachine pStateMachine, UINT64 requiredState
 
     // Check the current state
     CHK((requiredStates & pStateMachineImpl->context.pCurrentState->state) == pStateMachineImpl->context.pCurrentState->state,
-        STATUS_INVALID_STREAM_STATE);
+        STATUS_STATE_MACHINE_INVALID_STATE);
 
 CleanUp:
 
@@ -205,10 +198,7 @@ CleanUp:
     return retStatus;
 }
 
-/**
- * Force sets the state machine state
- */
-STATUS setStateMachineCurrentState(PStateMachine pStateMachine, UINT64 state)
+STATUS state_machine_setCurrentState(PStateMachine pStateMachine, UINT64 state)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -216,7 +206,7 @@ STATUS setStateMachineCurrentState(PStateMachine pStateMachine, UINT64 state)
     PStateMachineState pState = NULL;
 
     CHK(pStateMachineImpl != NULL, STATUS_NULL_ARG);
-    CHK_STATUS(getStateMachineState(pStateMachine, state, &pState));
+    CHK_STATUS(state_machine_getState(pStateMachine, state, &pState));
 
     // Force set the state
     pStateMachineImpl->context.pCurrentState = pState;
@@ -227,10 +217,7 @@ CleanUp:
     return retStatus;
 }
 
-/**
- * Resets the state machine retry count
- */
-STATUS resetStateMachineRetryCount(PStateMachine pStateMachine)
+STATUS state_machine_resetRetryCount(PStateMachine pStateMachine)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;

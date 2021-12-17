@@ -50,11 +50,11 @@ STATUS iceAgentFsmStep(PIceAgent pIceAgent)
 
     oldState = pIceAgent->iceAgentState;
 
-    CHK_STATUS(stepStateMachine(pIceAgent->pStateMachine));
+    CHK_STATUS(state_machine_step(pIceAgent->pStateMachine));
 
-    // if any failure happened and state machine is not in failed state, stepStateMachine again into failed state.
+    // if any failure happened and state machine is not in failed state, state_machine_step again into failed state.
     if (pIceAgent->iceAgentState != ICE_AGENT_STATE_FAILED && STATUS_FAILED(pIceAgent->iceAgentStatus)) {
-        CHK_STATUS(stepStateMachine(pIceAgent->pStateMachine));
+        CHK_STATUS(state_machine_step(pIceAgent->pStateMachine));
     }
 
     if (oldState != pIceAgent->iceAgentState) {
@@ -63,9 +63,9 @@ STATUS iceAgentFsmStep(PIceAgent pIceAgent)
             pIceAgent->iceAgentCallbacks.connectionStateChangedFn(pIceAgent->iceAgentCallbacks.customData, pIceAgent->iceAgentState);
         }
     } else {
-        // state machine retry is not used. resetStateMachineRetryCount just to avoid
+        // state machine retry is not used. state_machine_resetRetryCount just to avoid
         // state machine retry grace period overflow warning.
-        CHK_STATUS(resetStateMachineRetryCount(pIceAgent->pStateMachine));
+        CHK_STATUS(state_machine_resetRetryCount(pIceAgent->pStateMachine));
     }
 
 CleanUp:
@@ -88,7 +88,7 @@ STATUS iceAgentFsmAccept(PIceAgent pIceAgent, UINT64 state)
     locked = TRUE;
 
     // Step the state machine
-    CHK_STATUS(acceptStateMachineState(pIceAgent->pStateMachine, state));
+    CHK_STATUS(state_machine_accept(pIceAgent->pStateMachine, state));
 
 CleanUp:
 
@@ -532,7 +532,7 @@ STATUS iceAgentFsmDisconnected(UINT64 customData, UINT64 time)
     }
 
     // step out of disconnection state to retry. Do not use stepIceAgentState machine because lock is not re-entrant.
-    CHK_STATUS(stepStateMachine(pIceAgent->pStateMachine));
+    CHK_STATUS(state_machine_step(pIceAgent->pStateMachine));
 
 CleanUp:
 

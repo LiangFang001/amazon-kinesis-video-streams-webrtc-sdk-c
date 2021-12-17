@@ -10,6 +10,8 @@ Signaling internal include file
 extern "C" {
 #endif
 
+#include "kvs/WebRTCClient.h"
+
 // Max control plane URI char len
 #define MAX_CONTROL_PLANE_URI_CHAR_LEN 256
 
@@ -38,7 +40,7 @@ extern "C" {
  *
  * @return - STATUS code of the execution
  */
-STATUS createValidateChannelInfo(PChannelInfo, PChannelInfo*);
+STATUS channel_info_create(PChannelInfo, PChannelInfo*);
 
 /**
  * Frees the channel info object.

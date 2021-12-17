@@ -9,7 +9,7 @@ namespace webrtcclient {
 class SignalingApiTest : public WebRtcClientTestBase {
 };
 
-TEST_F(SignalingApiTest, signalingSendMessage)
+TEST_F(SignalingApiTest, signaling_send)
 {
     STATUS expectedStatus;
     SignalingMessage signalingMessage;
@@ -29,7 +29,7 @@ TEST_F(SignalingApiTest, signalingSendMessage)
     EXPECT_NE(STATUS_SUCCESS, signalingClientSendMessage(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, NULL));
 
     // Not connected
-    expectedStatus = mAccessKeyIdSet ? STATUS_INVALID_STREAM_STATE : STATUS_NULL_ARG;
+    expectedStatus = mAccessKeyIdSet ? STATUS_STATE_MACHINE_INVALID_STATE : STATUS_NULL_ARG;
     EXPECT_EQ(expectedStatus, signalingClientSendMessage(mSignalingClientHandle, &signalingMessage));
 
     // Connect and retry
@@ -130,7 +130,7 @@ TEST_F(SignalingApiTest, signalingClientDelete)
     EXPECT_EQ(expectedStatus, signalingClientDelete(mSignalingClientHandle));
 
     // Attempt to call a connect should fail
-    expectedStatus = mAccessKeyIdSet ? STATUS_INVALID_STREAM_STATE : STATUS_NULL_ARG;
+    expectedStatus = mAccessKeyIdSet ? STATUS_STATE_MACHINE_INVALID_STATE : STATUS_NULL_ARG;
     EXPECT_EQ(expectedStatus, signalingClientConnect(mSignalingClientHandle));
 
     // Attempt to send a message should fail
