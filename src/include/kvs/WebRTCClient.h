@@ -817,10 +817,7 @@ typedef struct {
  */
 typedef struct {
     UINT32 version;                                 //!< Version of the structure
-    CHAR clientId[MAX_SIGNALING_CLIENT_ID_LEN + 1]; //!< Client id to use. Defines if the client is a producer/consumer
-    // UINT32 loggingLevel;                            //!< Verbosity level for the logging. One of LOG_LEVEL_XXX
-    //!< values or the default verbosity will be assumed. Currently,
-    //!< default value is LOG_LEVEL_WARNING
+    CHAR clientId[MAX_SIGNALING_CLIENT_ID_LEN + 1]; //!< Client id to use. Defines if the client is a producer/consumers
 } SignalingClientInfo, *PSignalingClientInfo;
 
 /**
@@ -877,8 +874,6 @@ typedef struct {
 
     SIGNALING_API_CALL_CACHE_TYPE cachingPolicy; //!< Backend API call caching policy
 
-    // BOOL asyncIceServerConfig; //!< When creating channel synchronously, do not await for the ICE
-    //!< server configurations before returning from the call.
 } ChannelInfo, *PChannelInfo;
 
 /**
@@ -957,22 +952,6 @@ typedef struct {
     SignalingClientErrorReportFunc errorReportFn;         //!<  Error reporting function. This is an optional member
     SignalingClientStateChangedFunc stateChangeFn;        //!< Signaling client state change callback
 } SignalingClientCallbacks, *PSignalingClientCallbacks;
-
-/**
- * @brief Signaling channel description returned from the service
- */
-typedef struct {
-    UINT32 version;                                 //!< Version of the SignalingChannelDescription struct
-    CHAR channelArn[MAX_ARN_LEN + 1];               //!< Channel Amazon Resource Name (ARN)
-    CHAR channelName[MAX_CHANNEL_NAME_LEN + 1];     //!< Signaling channel name. Should be unique per AWS account
-    SIGNALING_CHANNEL_STATUS channelStatus;         //!< Current channel status as reported by the service
-    SIGNALING_CHANNEL_TYPE channelType;             //!< Channel type as reported by the service
-    CHAR updateVersion[MAX_UPDATE_VERSION_LEN + 1]; //!< A random number generated on every update while describing
-                                                    //!< signaling channel
-    UINT64 messageTtl;                              //!< The period of time a signaling channel retains underlived messages before they are discarded
-                                                    //!< The values are in the range of 5 and 120 seconds
-    UINT64 creationTime;                            //!< Timestamp of when the channel gets created
-} SignalingChannelDescription, *PSignalingChannelDescription;
 
 /**
  * @brief RtcRtpTransceiverInit is used to configure a transceiver when creating it

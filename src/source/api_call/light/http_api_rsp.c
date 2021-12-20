@@ -179,8 +179,8 @@ STATUS http_api_rsp_getChannelEndpoint(const CHAR* pResponseStr, UINT32 resultLe
     CHK(tokenCount > 1, STATUS_INVALID_API_CALL_RETURN_JSON);
     CHK(pTokens[0].type == JSMN_OBJECT, STATUS_INVALID_API_CALL_RETURN_JSON);
 
-    pSignalingClient->channelEndpointWss[0] = '\0';
-    pSignalingClient->channelEndpointHttps[0] = '\0';
+    pSignalingClient->channelDescription.channelEndpointWss[0] = '\0';
+    pSignalingClient->channelDescription.channelEndpointHttps[0] = '\0';
 
     // Loop through the pTokens and extract the stream description
     for (i = 1; i < tokenCount; i++) {
@@ -197,11 +197,13 @@ STATUS http_api_rsp_getChannelEndpoint(const CHAR* pResponseStr, UINT32 resultLe
                     // Process if both are set
                     if (protocol && endpoint) {
                         if (0 == STRNCMPI(pProtocol, WSS_SCHEME_NAME, protocolLen)) {
-                            STRNCPY(pSignalingClient->channelEndpointWss, pEndpoint, MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
-                            pSignalingClient->channelEndpointWss[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
+                            STRNCPY(pSignalingClient->channelDescription.channelEndpointWss, pEndpoint,
+                                    MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
+                            pSignalingClient->channelDescription.channelEndpointWss[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
                         } else if (0 == STRNCMPI(pProtocol, HTTPS_SCHEME_NAME, protocolLen)) {
-                            STRNCPY(pSignalingClient->channelEndpointHttps, pEndpoint, MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
-                            pSignalingClient->channelEndpointHttps[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
+                            STRNCPY(pSignalingClient->channelDescription.channelEndpointHttps, pEndpoint,
+                                    MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
+                            pSignalingClient->channelDescription.channelEndpointHttps[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
                         }
                     }
 
@@ -232,16 +234,16 @@ STATUS http_api_rsp_getChannelEndpoint(const CHAR* pResponseStr, UINT32 resultLe
     // Check if we have unprocessed protocol
     if (protocol && endpoint) {
         if (0 == STRNCMPI(pProtocol, WSS_SCHEME_NAME, protocolLen)) {
-            STRNCPY(pSignalingClient->channelEndpointWss, pEndpoint, MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
-            pSignalingClient->channelEndpointWss[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
+            STRNCPY(pSignalingClient->channelDescription.channelEndpointWss, pEndpoint, MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
+            pSignalingClient->channelDescription.channelEndpointWss[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
         } else if (0 == STRNCMPI(pProtocol, HTTPS_SCHEME_NAME, protocolLen)) {
-            STRNCPY(pSignalingClient->channelEndpointHttps, pEndpoint, MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
-            pSignalingClient->channelEndpointHttps[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
+            STRNCPY(pSignalingClient->channelDescription.channelEndpointHttps, pEndpoint, MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
+            pSignalingClient->channelDescription.channelEndpointHttps[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
         }
     }
 
     // Perform some validation on the channel description
-    CHK(pSignalingClient->channelEndpointHttps[0] != '\0' && pSignalingClient->channelEndpointWss[0] != '\0',
+    CHK(pSignalingClient->channelDescription.channelEndpointHttps[0] != '\0' && pSignalingClient->channelDescription.channelEndpointWss[0] != '\0',
         STATUS_SIGNALING_MISSING_ENDPOINTS_IN_GET_ENDPOINT);
 
 CleanUp:

@@ -505,13 +505,13 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, PUINT32 pHttpSta
     UINT32 resultLen;
 
     CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
-    CHK(NULL != (pUrl = (PCHAR) MEMALLOC(STRLEN(pSignalingClient->channelEndpointHttps) + STRLEN(API_GET_ICE_CONFIG) + 1)),
+    CHK(NULL != (pUrl = (PCHAR) MEMALLOC(STRLEN(pSignalingClient->channelDescription.channelEndpointHttps) + STRLEN(API_GET_ICE_CONFIG) + 1)),
         STATUS_HTTP_NOT_ENOUGH_MEMORY);
     httpBodyLen = SIZEOF(BODY_TEMPLATE_GET_ICE_CONFIG) + STRLEN(pSignalingClient->channelDescription.channelArn) +
         STRLEN(pSignalingClient->clientInfo.signalingClientInfo.clientId) + 1;
     CHK(NULL != (pHttpBody = (PCHAR) MEMALLOC(httpBodyLen)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
-    STRCPY(pUrl, pSignalingClient->channelEndpointHttps);
+    STRCPY(pUrl, pSignalingClient->channelDescription.channelEndpointHttps);
     STRCAT(pUrl, API_GET_ICE_CONFIG);
     /* generate HTTP request body */
     SNPRINTF(pHttpBody, httpBodyLen, BODY_TEMPLATE_GET_ICE_CONFIG, pSignalingClient->channelDescription.channelArn,

@@ -63,24 +63,24 @@ STATUS wss_api_connect(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCod
     UINT32 urlLen = 0;
 
     CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
-    CHK(pSignalingClient->channelEndpointWss[0] != '\0', STATUS_INTERNAL_ERROR);
+    CHK(pSignalingClient->channelDescription.channelEndpointWss[0] != '\0', STATUS_INTERNAL_ERROR);
     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
     CHK(NULL != (pHost = (CHAR*) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
 
     // Prepare the json params for the call
     if (pSignalingClient->pChannelInfo->channelRoleType == SIGNALING_CHANNEL_ROLE_TYPE_VIEWER) {
-        urlLen = STRLEN(URL_TEMPLATE_ENDPOINT_VIEWER) + STRLEN(pSignalingClient->channelEndpointWss) + STRLEN(URL_PARAM_CHANNEL_ARN) +
-            STRLEN(pSignalingClient->channelDescription.channelArn) + STRLEN(URL_PARAM_CLIENT_ID) +
+        urlLen = STRLEN(URL_TEMPLATE_ENDPOINT_VIEWER) + STRLEN(pSignalingClient->channelDescription.channelEndpointWss) +
+            STRLEN(URL_PARAM_CHANNEL_ARN) + STRLEN(pSignalingClient->channelDescription.channelArn) + STRLEN(URL_PARAM_CLIENT_ID) +
             STRLEN(pSignalingClient->clientInfo.signalingClientInfo.clientId) + 1;
         CHK(NULL != (pUrl = (PCHAR) MEMALLOC(urlLen)), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
-        SNPRINTF(pUrl, urlLen, URL_TEMPLATE_ENDPOINT_VIEWER, pSignalingClient->channelEndpointWss, URL_PARAM_CHANNEL_ARN,
+        SNPRINTF(pUrl, urlLen, URL_TEMPLATE_ENDPOINT_VIEWER, pSignalingClient->channelDescription.channelEndpointWss, URL_PARAM_CHANNEL_ARN,
                  pSignalingClient->channelDescription.channelArn, URL_PARAM_CLIENT_ID, pSignalingClient->clientInfo.signalingClientInfo.clientId);
     } else {
-        urlLen = STRLEN(URL_TEMPLATE_ENDPOINT_MASTER) + STRLEN(pSignalingClient->channelEndpointWss) + STRLEN(URL_PARAM_CHANNEL_ARN) +
-            STRLEN(pSignalingClient->channelDescription.channelArn) + 1;
+        urlLen = STRLEN(URL_TEMPLATE_ENDPOINT_MASTER) + STRLEN(pSignalingClient->channelDescription.channelEndpointWss) +
+            STRLEN(URL_PARAM_CHANNEL_ARN) + STRLEN(pSignalingClient->channelDescription.channelArn) + 1;
         CHK(NULL != (pUrl = (PCHAR) MEMALLOC(urlLen)), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
 
-        SNPRINTF(pUrl, urlLen, URL_TEMPLATE_ENDPOINT_MASTER, pSignalingClient->channelEndpointWss, URL_PARAM_CHANNEL_ARN,
+        SNPRINTF(pUrl, urlLen, URL_TEMPLATE_ENDPOINT_MASTER, pSignalingClient->channelDescription.channelEndpointWss, URL_PARAM_CHANNEL_ARN,
                  pSignalingClient->channelDescription.channelArn);
     }
 

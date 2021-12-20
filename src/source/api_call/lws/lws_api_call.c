@@ -986,8 +986,8 @@ STATUS lwsGetChannelEndpoint(PSignalingClient pSignalingClient, UINT64 time)
     CHK(tokenCount > 1, STATUS_INVALID_API_CALL_RETURN_JSON);
     CHK(pTokens[0].type == JSMN_OBJECT, STATUS_INVALID_API_CALL_RETURN_JSON);
 
-    pSignalingClient->channelEndpointWss[0] = '\0';
-    pSignalingClient->channelEndpointHttps[0] = '\0';
+    pSignalingClient->channelDescription.channelEndpointWss[0] = '\0';
+    pSignalingClient->channelDescription.channelEndpointHttps[0] = '\0';
 
     // Loop through the pTokens and extract the stream description
     for (i = 1; i < tokenCount; i++) {
@@ -1007,8 +1007,9 @@ STATUS lwsGetChannelEndpoint(PSignalingClient pSignalingClient, UINT64 time)
                             STRNCPY(pSignalingClient->channelEndpointWss, pEndpoint, MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
                             pSignalingClient->channelEndpointWss[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
                         } else if (0 == STRNCMPI(pProtocol, HTTPS_SCHEME_NAME, protocolLen)) {
-                            STRNCPY(pSignalingClient->channelEndpointHttps, pEndpoint, MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
-                            pSignalingClient->channelEndpointHttps[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
+                            STRNCPY(pSignalingClient->channelDescription.channelEndpointHttps, pEndpoint,
+                                    MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
+                            pSignalingClient->channelDescription.channelEndpointHttps[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
                         }
                     }
 
@@ -1042,13 +1043,13 @@ STATUS lwsGetChannelEndpoint(PSignalingClient pSignalingClient, UINT64 time)
             STRNCPY(pSignalingClient->channelEndpointWss, pEndpoint, MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
             pSignalingClient->channelEndpointWss[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
         } else if (0 == STRNCMPI(pProtocol, HTTPS_SCHEME_NAME, protocolLen)) {
-            STRNCPY(pSignalingClient->channelEndpointHttps, pEndpoint, MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
-            pSignalingClient->channelEndpointHttps[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
+            STRNCPY(pSignalingClient->channelDescription.channelEndpointHttps, pEndpoint, MIN(endpointLen, MAX_SIGNALING_ENDPOINT_URI_LEN));
+            pSignalingClient->channelDescription.channelEndpointHttps[MAX_SIGNALING_ENDPOINT_URI_LEN] = '\0';
         }
     }
 
     // Perform some validation on the channel description
-    CHK(pSignalingClient->channelEndpointHttps[0] != '\0' && pSignalingClient->channelEndpointWss[0] != '\0',
+    CHK(pSignalingClient->channelDescription.channelEndpointHttps[0] != '\0' && pSignalingClient->channelEndpointWss[0] != '\0',
         STATUS_SIGNALING_MISSING_ENDPOINTS_IN_GET_ENDPOINT);
 
 CleanUp:
@@ -1081,7 +1082,7 @@ STATUS lwsGetIceConfig(PSignalingClient pSignalingClient, UINT64 time)
     BOOL jsonInIceServerList = FALSE;
 
     CHK(pSignalingClient != NULL, STATUS_NULL_ARG);
-    CHK(pSignalingClient->channelEndpointHttps[0] != '\0', STATUS_INTERNAL_ERROR);
+    CHK(pSignalingClient->channelDescription.channelEndpointHttps[0] != '\0', STATUS_INTERNAL_ERROR);
 
     CHK(NULL != (pUrl = (PCHAR) MEMALLOC(MAX_URI_CHAR_LEN + 1)), STATUS_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pParamsJson = (PCHAR) MEMALLOC(MAX_JSON_PARAMETER_STRING_LEN)), STATUS_NOT_ENOUGH_MEMORY);
@@ -1091,7 +1092,7 @@ STATUS lwsGetIceConfig(PSignalingClient pSignalingClient, UINT64 time)
     ATOMIC_INCREMENT(&pSignalingClient->diagnostics.iceRefreshCount);
 
     // Create the API url
-    STRCPY(pUrl, pSignalingClient->channelEndpointHttps);
+    STRCPY(pUrl, pSignalingClient->channelDescription.channelEndpointHttps);
     STRCAT(pUrl, GET_ICE_CONFIG_API_POSTFIX);
 
     // Prepare the json params for the call

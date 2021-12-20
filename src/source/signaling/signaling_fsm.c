@@ -16,7 +16,6 @@
  * HEADERS
  ******************************************************************************/
 #define LOG_CLASS "SignalingFsm"
-#include "../Include_i.h"
 #include "signaling_fsm.h"
 
 /******************************************************************************
@@ -770,7 +769,6 @@ STATUS signalingFsmReady(UINT64 customData, UINT64 time)
     }
 
     // Ensure we won't async the GetIceConfig as we reach the ready state
-    // ATOMIC_STORE_BOOL(&pSignalingClient->asyncGetIceConfig, FALSE);
     if (pSignalingClient->continueOnReady) {
         // Self-prime the connect
         CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));

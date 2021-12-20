@@ -2463,9 +2463,6 @@ TEST_F(SignalingApiFunctionalityTest, asyncIceConfigRefreshBeforeConnect)
     channelInfo.pCertPath = mCaCertPath;
     channelInfo.messageTtl = TEST_SIGNALING_MESSAGE_TTL;
 
-    // should make the cached value to expire.
-    //channelInfo.asyncIceServerConfig = TRUE;
-
     EXPECT_EQ(STATUS_SUCCESS,
               signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,
                                   &pSignalingClient));
@@ -2574,9 +2571,6 @@ TEST_F(SignalingApiFunctionalityTest, asyncIceConfigRefreshParallelToConnect)
     channelInfo.reconnect = TRUE;
     channelInfo.pCertPath = mCaCertPath;
     channelInfo.messageTtl = TEST_SIGNALING_MESSAGE_TTL;
-
-    // should make the cached value to expire.
-    //channelInfo.asyncIceServerConfig = TRUE;
 
     EXPECT_EQ(STATUS_SUCCESS,
               signaling_create(&clientInfoInternal, &channelInfo, &signalingClientCallbacks, (PAwsCredentialProvider) mTestCredentialProvider,

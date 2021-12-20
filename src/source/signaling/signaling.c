@@ -296,8 +296,8 @@ STATUS signaling_create(PSignalingClientInfoInternal pClientInfo, PChannelInfo p
             DLOGW("Failed to load signaling cache from file");
         } else if (cacheFound) {
             STRCPY(pSignalingClient->channelDescription.channelArn, pFileCacheEntry->channelArn);
-            STRCPY(pSignalingClient->channelEndpointHttps, pFileCacheEntry->httpsEndpoint);
-            STRCPY(pSignalingClient->channelEndpointWss, pFileCacheEntry->wssEndpoint);
+            STRCPY(pSignalingClient->channelDescription.channelEndpointHttps, pFileCacheEntry->httpsEndpoint);
+            STRCPY(pSignalingClient->channelDescription.channelEndpointWss, pFileCacheEntry->wssEndpoint);
             pSignalingClient->apiCallHistory.describeTime = pFileCacheEntry->creationTsEpochSeconds * HUNDREDS_OF_NANOS_IN_A_SECOND;
             pSignalingClient->apiCallHistory.getEndpointTime = pFileCacheEntry->creationTsEpochSeconds * HUNDREDS_OF_NANOS_IN_A_SECOND;
         }
@@ -315,10 +315,7 @@ STATUS signaling_create(PSignalingClientInfoInternal pClientInfo, PChannelInfo p
     ATOMIC_STORE_BOOL(&pSignalingClient->deleting, FALSE);
     ATOMIC_STORE_BOOL(&pSignalingClient->deleted, FALSE);
     ATOMIC_STORE_BOOL(&pSignalingClient->iceConfigRetrieved, FALSE);
-    // ATOMIC_STORE_BOOL(&pSignalingClient->serviceLockContention, FALSE);
 
-    // Add to the signal handler
-    // signal(SIGINT, lwsSignalHandler)
     // Create the sync primitives
     // pSignalingClient->connectedCvar = CVAR_CREATE();
     // CHK(IS_VALID_CVAR_VALUE(pSignalingClient->connectedCvar), STATUS_INVALID_OPERATION);
@@ -363,9 +360,6 @@ STATUS signaling_create(PSignalingClientInfoInternal pClientInfo, PChannelInfo p
                                                                             signaling_getCurrentState(pSignalingClient)));
     }
 
-    // Set the async processing based on the channel info
-    // ATOMIC_STORE_BOOL(&pSignalingClient->asyncGetIceConfig, pChannelInfo->asyncIceServerConfig);
-
     // Do not force ice config state
     ATOMIC_STORE_BOOL(&pSignalingClient->refreshIceConfig, FALSE);
 
@@ -403,10 +397,8 @@ STATUS signaling_free(PSignalingClient* ppSignalingClient)
 
     timerQueueFree(&pSignalingClient->timerQueueHandle);
     // if (pSignalingClient->pLwsContext != NULL) {
-    //    MUTEX_LOCK(pSignalingClient->lwsInternalLock);
     //    lws_context_destroy(pSignalingClient->pLwsContext);
     //    pSignalingClient->pLwsContext = NULL;
-    //    MUTEX_UNLOCK(pSignalingClient->lwsInternalLock);
     //}
     // original design un-initilizes the lws context here. #YC_TBD.
 
@@ -447,14 +439,6 @@ STATUS signaling_free(PSignalingClient* ppSignalingClient)
     if (IS_VALID_MUTEX_VALUE(pSignalingClient->outboundMsgQLock)) {
         MUTEX_FREE(pSignalingClient->outboundMsgQLock);
     }
-
-    // if (IS_VALID_MUTEX_VALUE(pSignalingClient->lwsInternalLock)) {
-    //    MUTEX_FREE(pSignalingClient->lwsInternalLock);
-    //}
-
-    // if (IS_VALID_MUTEX_VALUE(pSignalingClient->lwsExternalLock)) {
-    //    MUTEX_FREE(pSignalingClient->lwsExternalLock);
-    //}
 
     if (IS_VALID_MUTEX_VALUE(pSignalingClient->diagnosticsLock)) {
         MUTEX_FREE(pSignalingClient->diagnosticsLock);
@@ -886,16 +870,6 @@ STATUS signaling_refreshIceConfigurationCallback(UINT32 timerId, UINT64 schedule
     CHK(pSignalingClient != NULL, STATUS_SIGNALING_NULL_ARG);
 
     DLOGD("Refreshing the ICE Server Configuration");
-
-    // If we are coming from async code we need to check if we have already landed in Ready state
-    // if (ATOMIC_LOAD_BOOL(&pSignalingClient->asyncGetIceConfig)) {
-    //    // Re-schedule in a while
-    //    CHK_STATUS(timerQueueAddTimer(pSignalingClient->timerQueueHandle, SIGNALING_ASYNC_ICE_CONFIG_REFRESH_DELAY,
-    //                                  TIMER_QUEUE_SINGLE_INVOCATION_PERIOD, signaling_refreshIceConfigurationCallback, (UINT64) pSignalingClient,
-    //                                  &newTimerId));
-    //    CHK(FALSE, retStatus);
-    //}
-
     // Check if we are in a connect, connected, disconnected or ready states and if not bail.
     // The ICE state will be called in any other states
     state = signaling_fsm_getCurrentState(pSignalingClient);
@@ -1248,8 +1222,8 @@ STATUS signaling_channel_getEndpoint(PSignalingClient pSignalingClient, UINT64 t
                                                                                     : pSignalingClient->pChannelInfo->pChannelArn);
                         STRCPY(signalingFileCacheEntry.region, pSignalingClient->pChannelInfo->pRegion);
                         STRCPY(signalingFileCacheEntry.channelArn, pSignalingClient->channelDescription.channelArn);
-                        STRCPY(signalingFileCacheEntry.httpsEndpoint, pSignalingClient->channelEndpointHttps);
-                        STRCPY(signalingFileCacheEntry.wssEndpoint, pSignalingClient->channelEndpointWss);
+                        STRCPY(signalingFileCacheEntry.httpsEndpoint, pSignalingClient->channelDescription.channelEndpointHttps);
+                        STRCPY(signalingFileCacheEntry.wssEndpoint, pSignalingClient->channelDescription.channelEndpointWss);
                         if (STATUS_FAILED(signalingCacheSaveToFile(&signalingFileCacheEntry))) {
                             DLOGW("Failed to save signaling cache to file");
                         }
@@ -1287,31 +1261,17 @@ STATUS signaling_channel_getIceConfig(PSignalingClient pSignalingClient, UINT64 
 
     CHK(pSignalingClient != NULL, STATUS_SIGNALING_NULL_ARG);
 
-    // Check if we need to async the API and if so early return
-    // if (ATOMIC_LOAD_BOOL(&pSignalingClient->asyncGetIceConfig)) {
-    //    // We will emulate the call and kick off the ice refresh routine
-    //    CHK_STATUS(timerQueueAddTimer(pSignalingClient->timerQueueHandle, SIGNALING_ASYNC_ICE_CONFIG_REFRESH_DELAY,
-    //                                  TIMER_QUEUE_SINGLE_INVOCATION_PERIOD, signaling_refreshIceConfigurationCallback, (UINT64) pSignalingClient,
-    //                                  &timerId));
-
-    // Success early return to prime the state machine to the next state which is Ready
-    //    ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) SERVICE_CALL_RESULT_OK);
-    //    CHK(FALSE, retStatus);
-    //}
-
     // Check for the stale credentials
     CHECK_SIGNALING_CREDENTIALS_EXPIRATION(pSignalingClient);
 
     ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) SERVICE_CALL_RESULT_NOT_SET);
 
     // We are not caching ICE server config calls
-
     if (pSignalingClient->clientInfo.getIceConfigPreHookFn != NULL) {
         retStatus = pSignalingClient->clientInfo.getIceConfigPreHookFn(pSignalingClient->clientInfo.hookCustomData);
     }
 
     if (STATUS_SUCCEEDED(retStatus)) {
-        // retStatus = lwsGetIceConfig(pSignalingClient, time);
         retStatus = http_api_getIceConfig(pSignalingClient, &httpStatusCode);
         ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) httpStatusCode);
 

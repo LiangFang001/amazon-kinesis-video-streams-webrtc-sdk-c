@@ -135,7 +135,29 @@ extern "C" {
 // Testability hooks functions
 typedef STATUS (*SignalingApiCallHookFunc)(UINT64);
 typedef STATUS (*DispatchMsgHandlerFunc)(PVOID pMessage);
+/**
+ * @brief Signaling channel description returned from the service
+ */
+typedef struct {
+    UINT32 version;                                 //!< Version of the SignalingChannelDescription struct
+    CHAR channelArn[MAX_ARN_LEN + 1];               //!< Channel Amazon Resource Name (ARN)
+    CHAR channelName[MAX_CHANNEL_NAME_LEN + 1];     //!< Signaling channel name. Should be unique per AWS account
+    SIGNALING_CHANNEL_STATUS channelStatus;         //!< Current channel status as reported by the service
+    SIGNALING_CHANNEL_TYPE channelType;             //!< Channel type as reported by the service
+    CHAR updateVersion[MAX_UPDATE_VERSION_LEN + 1]; //!< A random number generated on every update while describing
+                                                    //!< signaling channel
+    UINT64 messageTtl;                              //!< The period of time a signaling channel retains underlived messages before they are discarded
+                                                    //!< The values are in the range of 5 and 120 seconds
+    UINT64 creationTime;                            //!< Timestamp of when the channel gets created
+    /**
+     * https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_ResourceEndpointListItem.html
+     */
+    // Signaling endpoint
+    CHAR channelEndpointWss[MAX_SIGNALING_ENDPOINT_URI_LEN + 1];
 
+    // Signaling endpoint
+    CHAR channelEndpointHttps[MAX_SIGNALING_ENDPOINT_URI_LEN + 1];
+} SignalingChannelDescription, *PSignalingChannelDescription;
 /**
  * @brief   Internal client info object
  */
@@ -146,7 +168,6 @@ typedef struct {
     //
     // Below members will be used for direct injection for tests hooks
     //
-
     // Injected ICE server refresh period
     UINT64 iceRefreshPeriod;
 
@@ -220,10 +241,6 @@ typedef struct {
     // The channel is deleted
     volatile ATOMIC_BOOL deleted;
 
-    // Based on the channel info we can async the ice config on create channel
-    // call only and not async on repeat state transition when refreshing for example.
-    // volatile ATOMIC_BOOL asyncGetIceConfig;
-
     // Having state machine logic rely on call result of SERVICE_CALL_RESULT_SIGNALING_RECONNECT_ICE
     // to transition to ICE config state is not enough in Async update mode when
     // connect is in progress as the result of connect will override the result
@@ -233,9 +250,6 @@ typedef struct {
 
     // Indicate whether the ICE configuration has been retrieved at least once
     volatile ATOMIC_BOOL iceConfigRetrieved;
-
-    // Indicates that there is another thread attempting to grab the service lock
-    // volatile ATOMIC_BOOL serviceLockContention;
 
     // Current version of the structure
     UINT32 version;
@@ -254,15 +268,6 @@ typedef struct {
 
     // Returned signaling channel description
     SignalingChannelDescription channelDescription; //!< the information from calling the api of describing the channel.
-
-    /**
-     * https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_ResourceEndpointListItem.html
-     */
-    // Signaling endpoint
-    CHAR channelEndpointWss[MAX_SIGNALING_ENDPOINT_URI_LEN + 1];
-
-    // Signaling endpoint
-    CHAR channelEndpointHttps[MAX_SIGNALING_ENDPOINT_URI_LEN + 1];
 
     // Number of Ice Server objects
     UINT32 iceConfigCount;
@@ -318,12 +323,6 @@ typedef struct {
 
     // Message queue lock
     MUTEX outboundMsgQLock; //!< the lock of signaling ongoing message queue.
-
-    // LWS needs to be locked
-    // MUTEX lwsInternalLock;
-
-    // Serialized access to LWS service call
-    // MUTEX lwsExternalLock;
 
     // Re-entrant lock for diagnostics/stats
     MUTEX diagnosticsLock;
