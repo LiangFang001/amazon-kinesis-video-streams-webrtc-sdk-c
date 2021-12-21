@@ -205,12 +205,19 @@ STATUS signaling_fsm_resetRetryCount(PSignalingClient pSignalingClient)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
+    BOOL locked = FALSE;
 
     CHK(pSignalingClient != NULL, STATUS_SIGNALING_FSM_NULL_ARG);
+
+    MUTEX_LOCK(pSignalingClient->nestedFsmLock);
+    locked = TRUE;
+
     state_machine_resetRetryCount(pSignalingClient->signalingFsmHandle);
 
 CleanUp:
-
+    if (locked) {
+        MUTEX_UNLOCK(pSignalingClient->nestedFsmLock);
+    }
     SIGNALING_FSM_LEAVES();
     return retStatus;
 }
@@ -219,13 +226,20 @@ STATUS signaling_fsm_setCurrentState(PSignalingClient pSignalingClient, UINT64 s
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
+    BOOL locked = FALSE;
 
     CHK(pSignalingClient != NULL, STATUS_SIGNALING_FSM_NULL_ARG);
+
+    MUTEX_LOCK(pSignalingClient->nestedFsmLock);
+    locked = TRUE;
 
     state_machine_setCurrentState(pSignalingClient->signalingFsmHandle, state);
 
 CleanUp:
 
+    if (locked) {
+        MUTEX_UNLOCK(pSignalingClient->nestedFsmLock);
+    }
     SIGNALING_FSM_LEAVES();
     return retStatus;
 }
@@ -236,8 +250,12 @@ UINT64 signaling_fsm_getCurrentState(PSignalingClient pSignalingClient)
     STATUS retStatus = STATUS_SUCCESS;
     SIGNALING_CLIENT_STATE clientState = SIGNALING_CLIENT_STATE_UNKNOWN;
     PStateMachineState pStateMachineState = NULL;
+    BOOL locked = FALSE;
 
     CHK(pSignalingClient != NULL, STATUS_SIGNALING_FSM_NULL_ARG);
+
+    MUTEX_LOCK(pSignalingClient->nestedFsmLock);
+    locked = TRUE;
 
     CHK_STATUS(state_machine_getCurrentState(pSignalingClient->signalingFsmHandle, &pStateMachineState));
 
@@ -286,6 +304,9 @@ UINT64 signaling_fsm_getCurrentState(PSignalingClient pSignalingClient)
     }
 
 CleanUp:
+    if (locked) {
+        MUTEX_UNLOCK(pSignalingClient->nestedFsmLock);
+    }
     SIGNALING_FSM_LEAVES();
     return clientState;
 }

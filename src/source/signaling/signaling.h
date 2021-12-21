@@ -291,20 +291,8 @@ typedef struct {
     // Interlocking the state transitions
     MUTEX nestedFsmLock;
 
-    // Sync mutex for sending condition variable
-    MUTEX sendLock;
-
-    // Conditional variable for sending interlock
-    // CVAR sendCvar; //!< the lock for protecting the process of sending the websocket message.
-
     // Execute the state machine until this time
     UINT64 stepUntil;
-
-    // Ongoing listener call info
-    // PLwsCallInfo pOngoingCallInfo; //!< setup by the lws api of connecting signaling channel.
-
-    // Listener thread for the socket
-    // ThreadTracker listenerTracker;
 
     // Restarted thread handler
     // ThreadTracker reconnecterTracker; //!< receive the connection error msg or closed msg from lws.

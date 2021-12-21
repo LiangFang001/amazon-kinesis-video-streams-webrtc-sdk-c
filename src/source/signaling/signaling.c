@@ -317,11 +317,6 @@ STATUS signaling_create(PSignalingClientInfoInternal pClientInfo, PChannelInfo p
     ATOMIC_STORE_BOOL(&pSignalingClient->iceConfigRetrieved, FALSE);
 
     // Create the sync primitives
-    // pSignalingClient->sendCvar = CVAR_CREATE();
-    // CHK(IS_VALID_CVAR_VALUE(pSignalingClient->sendCvar), STATUS_INVALID_OPERATION);
-    pSignalingClient->sendLock = MUTEX_CREATE(FALSE);
-    CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->sendLock), STATUS_INVALID_OPERATION);
-
     pSignalingClient->nestedFsmLock = MUTEX_CREATE(TRUE);
     CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->nestedFsmLock), STATUS_INVALID_OPERATION);
 
@@ -336,10 +331,6 @@ STATUS signaling_create(PSignalingClientInfoInternal pClientInfo, PChannelInfo p
 
     // pSignalingClient->pLwsContext = lws_create_context(&creationInfo);
     // CHK(pSignalingClient->pLwsContext != NULL, STATUS_SIGNALING_LWS_CREATE_CONTEXT_FAILED);
-
-    // Create the timer queue for handling stale ICE configuration
-    pSignalingClient->timerQueueHandle = INVALID_TIMER_QUEUE_HANDLE_VALUE;
-    CHK_STATUS(timerQueueCreateEx(&pSignalingClient->timerQueueHandle, SIGNALING_TIMER_NAME, SIGNALING_TIMER_SIZE));
 
     // Initializing the diagnostics mostly is taken care of by zero-mem in MEMCALLOC
     pSignalingClient->diagnostics.createTime = GETTIME();
@@ -391,7 +382,6 @@ STATUS signaling_free(PSignalingClient* ppSignalingClient)
 
     ATOMIC_STORE_BOOL(&pSignalingClient->shutdown, TRUE);
 
-    timerQueueFree(&pSignalingClient->timerQueueHandle);
     // if (pSignalingClient->pLwsContext != NULL) {
     //    lws_context_destroy(pSignalingClient->pLwsContext);
     //    pSignalingClient->pLwsContext = NULL;
@@ -411,14 +401,6 @@ STATUS signaling_free(PSignalingClient* ppSignalingClient)
     freeChannelInfo(&pSignalingClient->pChannelInfo);
 
     stackQueueFree(pSignalingClient->pOutboundMsgQ);
-
-    if (IS_VALID_MUTEX_VALUE(pSignalingClient->sendLock)) {
-        MUTEX_FREE(pSignalingClient->sendLock);
-    }
-
-    // if (IS_VALID_CVAR_VALUE(pSignalingClient->sendCvar)) {
-    //    CVAR_FREE(pSignalingClient->sendCvar);
-    //}
 
     if (IS_VALID_MUTEX_VALUE(pSignalingClient->nestedFsmLock)) {
         MUTEX_FREE(pSignalingClient->nestedFsmLock);
@@ -715,7 +697,6 @@ STATUS signaling_delete(PSignalingClient pSignalingClient)
     // Mark as being deleted
     ATOMIC_STORE_BOOL(&pSignalingClient->deleting, TRUE);
 
-    timerQueueFree(&pSignalingClient->timerQueueHandle);
     // Terminate the listener thread if alive
     // lwsTerminateListenerLoop(pSignalingClient);
     wss_api_terminate(pSignalingClient, SERVICE_CALL_RESULT_OK);
