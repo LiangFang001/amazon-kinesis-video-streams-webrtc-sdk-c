@@ -28,6 +28,9 @@ extern "C" {
 STATUS http_api_createChannel(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode);
 STATUS http_api_describeChannel(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode);
 STATUS http_api_getChannelEndpoint(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode);
+/**
+ * https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_AWSAcuitySignalingService_GetIceServerConfig.html
+ */
 STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode);
 STATUS http_api_deleteChannel(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode);
 STATUS http_api_getIotCredential(PIotCredentialProvider pIotCredentialProvider);

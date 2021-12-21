@@ -1,6 +1,17 @@
-/*******************************************
-Main internal include file
-*******************************************/
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __CONTENT_STATE_INCLUDE_I__
 #define __CONTENT_STATE_INCLUDE_I__
 
@@ -10,21 +21,16 @@ Main internal include file
 extern "C" {
 #endif
 
-////////////////////////////////////////////////////
-// Project include files
-////////////////////////////////////////////////////
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/common_defs.h"
 #include <kvs/platform_utils.h>
-
-// IMPORTANT! Some of the headers are not tightly packed!
-////////////////////////////////////////////////////
-// Public headers
-////////////////////////////////////////////////////
 #include "kvs/error.h"
 
-////////////////////////////////////////////////////
-// General defines and data structures
-////////////////////////////////////////////////////
+/******************************************************************************
+ * General defines and data structures
+ ******************************************************************************/
 /**
  * Service call retry timeout - 100ms
  */
@@ -47,8 +53,8 @@ extern "C" {
 /**
  * State transition function definitions
  *
- * @param 1 UINT64 - IN - Custom data passed in
- * @param 2 PUINT64 - OUT - Returned next state on success
+ * @param[in] UINT64 Custom data passed in
+ * @param[in, out] PUINT64 Returned next state on success
  *
  * @return Status of the callback
  */
@@ -57,8 +63,8 @@ typedef STATUS (*GetNextStateFunc)(UINT64, PUINT64);
 /**
  * State execution function definitions
  *
- * @param 1 - IN - Custom data passed in
- * @param 2 - IN - Delay time Time after which to execute the function
+ * @param[in] UINT64 Custom data passed in
+ * @param[in] UINT64 Delay time Time after which to execute the function
  *
  * @return Status of the callback
  */
@@ -67,42 +73,35 @@ typedef STATUS (*ExecuteStateFunc)(UINT64, UINT64);
 /**
  * State Machine state
  */
-typedef struct __StateMachineState StateMachineState;
-struct __StateMachineState {
+typedef struct __StateMachineState {
     UINT64 state;
     UINT64 acceptStates;
     GetNextStateFunc getNextStateFn;
     ExecuteStateFunc executeStateFn;
     UINT32 retry;
     STATUS status;
-};
-typedef struct __StateMachineState* PStateMachineState;
+} StateMachineState, *PStateMachineState;
 
 /**
  * State Machine definition
  */
-typedef struct __StateMachine StateMachine;
-struct __StateMachine {
+typedef struct __StateMachine {
     UINT32 version;
-};
-typedef struct __StateMachine* PStateMachine;
+} StateMachine, *PStateMachine;
 
 /**
  * State Machine context
  */
-typedef struct __StateMachineContext StateMachineContext;
-struct __StateMachineContext {
+typedef struct __StateMachineContext {
     PStateMachineState pCurrentState;
     UINT32 retryCount;
     UINT64 time;
-};
-typedef struct __StateMachineContext* PStateMachineContext;
+} StateMachineContext, *PStateMachineContext;
 
 /**
  * State Machine definition
  */
-typedef struct __StateMachineImpl StateMachineImpl;
-struct __StateMachineImpl {
+typedef struct __StateMachineImpl {
     // First member should be the public state machine
     StateMachine stateMachine;
 
@@ -123,12 +122,46 @@ struct __StateMachineImpl {
 
     // State machine states following the main structure
     PStateMachineState states;
-};
-typedef struct __StateMachineImpl* PStateMachineImpl;
+} StateMachineImpl, *PStateMachineImpl;
 
-STATUS state_machine_create(PStateMachineState, UINT32, UINT64, GetCurrentTimeFunc, UINT64, PStateMachine*);
-STATUS state_machine_free(PStateMachine);
-STATUS state_machine_step(PStateMachine);
+/**
+ * @brief Creates a new state machine
+ *
+ * @param[in] pStates
+ * @param[in] stateCount
+ * @param[in] customData
+ * @param[in] getCurrentTimeFunc
+ * @param[in] getCurrentTimeFuncCustomData
+ * @param[in] ppStateMachine
+ *
+ * @return STATUS status of execution.
+ */
+STATUS state_machine_create(PStateMachineState pStates, UINT32 stateCount, UINT64 customData, GetCurrentTimeFunc getCurrentTimeFunc,
+                            UINT64 getCurrentTimeFuncCustomData, PStateMachine* ppStateMachine);
+/**
+ * @brief Frees the state machine object
+ *
+ * @param[in] pStateMachine
+ *
+ * @return STATUS status of execution.
+ */
+STATUS state_machine_free(PStateMachine pStateMachine);
+/**
+ * @brief Transition the state machine given it's context
+ *
+ * @param[in] pStateMachine
+ *
+ * @return STATUS status of execution.
+ */
+STATUS state_machine_step(PStateMachine pStateMachine);
+/**
+ * @brief Checks whether the state machine state is accepted states
+ *
+ * @param[in] pStateMachine
+ * @param[in] requiredStates
+ *
+ * @return STATUS status of execution.
+ */
 STATUS state_machine_accept(PStateMachine pStateMachine, UINT64 requiredStates);
 /**
  * @brief Gets a pointer to the state object given it's state

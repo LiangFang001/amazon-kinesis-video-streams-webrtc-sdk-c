@@ -33,7 +33,7 @@
 STATUS signaling_validateCallbacks(PSignalingClient, PSignalingClientCallbacks);
 STATUS signaling_validateClientInfo(PSignalingClient, PSignalingClientInfoInternal);
 STATUS signaling_storeOutboundMessage(PSignalingClient, PSignalingMessage);
-STATUS signaling_refreshIceConfigurationCallback(UINT32, UINT64, UINT64);
+STATUS signaling_refreshIceConfiguration(PSignalingClient pSignalingClient);
 /******************************************************************************
  * FUNCTION
  ******************************************************************************/
@@ -317,10 +317,6 @@ STATUS signaling_create(PSignalingClientInfoInternal pClientInfo, PChannelInfo p
     ATOMIC_STORE_BOOL(&pSignalingClient->iceConfigRetrieved, FALSE);
 
     // Create the sync primitives
-    // pSignalingClient->connectedCvar = CVAR_CREATE();
-    // CHK(IS_VALID_CVAR_VALUE(pSignalingClient->connectedCvar), STATUS_INVALID_OPERATION);
-    // pSignalingClient->connectedLock = MUTEX_CREATE(FALSE);
-    // CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->connectedLock), STATUS_INVALID_OPERATION);
     // pSignalingClient->sendCvar = CVAR_CREATE();
     // CHK(IS_VALID_CVAR_VALUE(pSignalingClient->sendCvar), STATUS_INVALID_OPERATION);
     pSignalingClient->sendLock = MUTEX_CREATE(FALSE);
@@ -415,14 +411,6 @@ STATUS signaling_free(PSignalingClient* ppSignalingClient)
     freeChannelInfo(&pSignalingClient->pChannelInfo);
 
     stackQueueFree(pSignalingClient->pOutboundMsgQ);
-
-    // if (IS_VALID_MUTEX_VALUE(pSignalingClient->connectedLock)) {
-    //    MUTEX_FREE(pSignalingClient->connectedLock);
-    //}
-
-    // if (IS_VALID_CVAR_VALUE(pSignalingClient->connectedCvar)) {
-    //    CVAR_FREE(pSignalingClient->connectedCvar);
-    //}
 
     if (IS_VALID_MUTEX_VALUE(pSignalingClient->sendLock)) {
         MUTEX_FREE(pSignalingClient->sendLock);
@@ -613,14 +601,9 @@ STATUS signaling_getIceConfigInfoCout(PSignalingClient pSignalingClient, PUINT32
 
     CHK(pSignalingClient != NULL && pIceConfigCount != NULL, STATUS_SIGNALING_NULL_ARG);
 
-    CHK(signaling_fsm_accept(pSignalingClient, SIGNALING_STATE_READY | SIGNALING_STATE_CONNECT | SIGNALING_STATE_CONNECTED) == STATUS_SUCCESS,
-        STATUS_SIGNALING_FSM_INVALID_STATE);
+    CHK_STATUS(signaling_refreshIceConfiguration(pSignalingClient));
 
-    if (ATOMIC_LOAD_BOOL(&pSignalingClient->iceConfigRetrieved)) {
-        *pIceConfigCount = pSignalingClient->iceConfigCount;
-    } else {
-        *pIceConfigCount = 0;
-    }
+    *pIceConfigCount = pSignalingClient->iceConfigCount;
 
 CleanUp:
 
@@ -636,9 +619,10 @@ STATUS signaling_getIceConfigInfo(PSignalingClient pSignalingClient, UINT32 inde
     STATUS retStatus = STATUS_SUCCESS;
 
     CHK(pSignalingClient != NULL && ppIceConfigInfo != NULL, STATUS_SIGNALING_NULL_ARG);
+    // Refresh the ICE configuration first
+    CHK_STATUS(signaling_refreshIceConfiguration(pSignalingClient));
+
     CHK(index < pSignalingClient->iceConfigCount, STATUS_SIGNALING_INVALID_ARG);
-    CHK(signaling_fsm_accept(pSignalingClient, SIGNALING_STATE_READY | SIGNALING_STATE_CONNECT | SIGNALING_STATE_CONNECTED) == STATUS_SUCCESS,
-        STATUS_SIGNALING_FSM_INVALID_STATE);
 
     *ppIceConfigInfo = &pSignalingClient->iceConfigs[index];
 
@@ -826,50 +810,38 @@ STATUS signaling_validateIceConfiguration(PSignalingClient pSignalingClient)
 
     CHK(minTtl > ICE_CONFIGURATION_REFRESH_GRACE_PERIOD, STATUS_SIGNALING_ICE_TTL_LESS_THAN_GRACE_PERIOD);
 
-    // Indicate that we have successfully retrieved ICE configs
-    ATOMIC_STORE_BOOL(&pSignalingClient->iceConfigRetrieved, TRUE);
-
-    refreshPeriod = (pSignalingClient->clientInfo.iceRefreshPeriod != 0) ? pSignalingClient->clientInfo.iceRefreshPeriod
-                                                                         : minTtl - ICE_CONFIGURATION_REFRESH_GRACE_PERIOD;
-
-    // This might be running on the timer queue thread.
-    // There is no need to schedule more refresh calls if
-    // we already have in progress
-    CHK_STATUS(timerQueueGetTimersWithCustomData(pSignalingClient->timerQueueHandle, (UINT64) pSignalingClient, &timer, NULL));
-
-    // The timer queue executor thread will de-list the single fire timer only
-    // after the routine is returned.
-    // Here, we need to account for a timer being present as we might be
-    // running on the timer queue executor thread.
-    CHK(timer <= 1, retStatus);
-
-    // Schedule the refresh on the timer queue
-    CHK_STATUS(timerQueueAddTimer(pSignalingClient->timerQueueHandle, refreshPeriod, TIMER_QUEUE_SINGLE_INVOCATION_PERIOD,
-                                  signaling_refreshIceConfigurationCallback, (UINT64) pSignalingClient, &timer));
+    pSignalingClient->iceConfigTime = GETTIME();
+    pSignalingClient->iceConfigExpiration = pSignalingClient->iceConfigTime + (minTtl - ICE_CONFIGURATION_REFRESH_GRACE_PERIOD);
 
 CleanUp:
-
+    CHK_LOG_ERR(retStatus);
     LEAVES();
     return retStatus;
 }
 /**
  * @brief   refresh the information of ice server.
  */
-STATUS signaling_refreshIceConfigurationCallback(UINT32 timerId, UINT64 scheduledTime, UINT64 customData)
+STATUS signaling_refreshIceConfiguration(PSignalingClient pSignalingClient)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
-    PSignalingClient pSignalingClient = (PSignalingClient) customData;
     CHAR iceRefreshErrMsg[SIGNALING_MAX_ERROR_MESSAGE_LEN + 1];
-    UINT32 iceRefreshErrLen, newTimerId;
+    UINT32 iceRefreshErrLen;
+    UINT64 curTime;
     UINT64 state = SIGNALING_STATE_NONE;
-
-    UNUSED_PARAM(timerId);
-    UNUSED_PARAM(scheduledTime);
 
     CHK(pSignalingClient != NULL, STATUS_SIGNALING_NULL_ARG);
 
     DLOGD("Refreshing the ICE Server Configuration");
+    // Check whether we have a valid not-yet-expired ICE configuration and if so early exit
+    curTime = GETTIME();
+    CHK(pSignalingClient->iceConfigCount == 0 || curTime > pSignalingClient->iceConfigExpiration, retStatus);
+
+    CHK(signaling_fsm_accept(pSignalingClient,
+                             SIGNALING_STATE_READY | SIGNALING_STATE_CONNECT | SIGNALING_STATE_CONNECTED | SIGNALING_STATE_DISCONNECTED) ==
+            STATUS_SUCCESS,
+        STATUS_SIGNALING_FSM_INVALID_STATE);
+
     // Check if we are in a connect, connected, disconnected or ready states and if not bail.
     // The ICE state will be called in any other states
     state = signaling_fsm_getCurrentState(pSignalingClient);
@@ -1354,8 +1326,6 @@ STATUS signaling_channel_connect(PSignalingClient pSignalingClient, UINT64 time)
     UINT32 httpStatusCode = SERVICE_CALL_RESULT_NOT_SET;
 
     CHK(pSignalingClient != NULL, STATUS_SIGNALING_NULL_ARG);
-    // sleep until the absolute time.
-    THREAD_SLEEP_UNTIL(time);
 
     // Check for the stale credentials
     CHECK_SIGNALING_CREDENTIALS_EXPIRATION(pSignalingClient);

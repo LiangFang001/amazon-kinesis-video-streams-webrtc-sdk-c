@@ -251,6 +251,13 @@ typedef struct {
     // Indicate whether the ICE configuration has been retrieved at least once
     volatile ATOMIC_BOOL iceConfigRetrieved;
 
+    // Indicates when the ICE configuration has been retrieved
+    UINT64 iceConfigTime;
+
+    // Indicates when the ICE configuration is considered expired
+    UINT64 iceConfigExpiration;
+
+    BOOL continueOnReady; //!< Indicates whether to self-prime on Ready or not
     // Current version of the structure
     UINT32 version;
 
@@ -281,20 +288,8 @@ typedef struct {
     // Current AWS credentials
     PAwsCredentials pAwsCredentials;
 
-    BOOL continueOnReady; //!< Indicates whether to self-prime on Ready or not
-
     // Interlocking the state transitions
     MUTEX nestedFsmLock;
-
-    // Sync mutex for connected condition variable
-    /**
-     * used for the synchronization between the thread of calling connectSignalingChannel and the thread of lwsListenerHandler.
-     */
-    // MUTEX connectedLock;
-
-    // Conditional variable for Connected state
-    // wait for the lws to notify the connection is established or not.
-    // CVAR connectedCvar;
 
     // Sync mutex for sending condition variable
     MUTEX sendLock;

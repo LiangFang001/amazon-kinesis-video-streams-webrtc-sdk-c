@@ -383,7 +383,7 @@ STATUS http_api_rsp_getIoTCredential(PIotCredentialProvider pIotCredentialProvid
     }
 
     CHK(accessKeyId != NULL && secretKey != NULL && sessionToken != NULL, STATUS_IOT_FAILED);
-    DLOGD("accessKeyId:%s, secretKey:%s, sessionToken:%s", accessKeyId, secretKey, sessionToken);
+    DLOGD("accessKeyId:%s, secretKey:%s, sessionToken:%s, expirationTimestampStr:%s", accessKeyId, secretKey, sessionToken, expirationTimestampStr);
 //#TBD
 #if 1
     currentTime = pIotCredentialProvider->getCurrentTimeFn(pIotCredentialProvider->customData);

@@ -885,8 +885,9 @@ typedef struct {
  * NOTE:TTL is given in default which is 100ns duration
  */
 typedef struct {
-    UINT32 version;                                                  //!< Version of the struct
-    UINT64 ttl;                                                      //!< TTL of the configuration is 100ns
+    UINT32 version; //!< Version of the struct
+    UINT64 ttl;     //!< TTL of the configuration is 100ns
+    //!< https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_AWSAcuitySignalingService_IceServer.html#KinesisVideo-Type-AWSAcuitySignalingService_IceServer-Ttl
     UINT32 uriCount;                                                 //!<  Number of Ice URI objects
     CHAR uris[MAX_ICE_CONFIG_URI_COUNT][MAX_ICE_CONFIG_URI_LEN + 1]; //!< List of Ice server URIs
     CHAR userName[MAX_ICE_CONFIG_USER_NAME_LEN + 1];                 //!< Username for the server
