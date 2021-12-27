@@ -12,14 +12,27 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/common_defs.h"
 #include "kvs/error.h"
 #include "kvs/common.h"
 #include "version.h"
 
-//
-// Version functions
-//
+#ifdef KVSPIC_HAVE_UTSNAME_H
+#include <sys/utsname.h>
+#endif
+
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+#define VERSION_OS_NAME       "freertos/freertos"
+#define VERSION_PLATFORM_NAME "esp32"
+
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 #if defined _WIN32 || defined _WIN64 || defined __CYGWIN__
 
 STATUS defaultGetPlatformName(PCHAR pResult, UINT32 len)
@@ -109,7 +122,7 @@ STATUS defaultGetOsVersion(PCHAR pResult, UINT32 len)
     } else
 #endif
     {
-        requiredLen = SNPRINTF(pResult, len, (PCHAR) "%s", (PCHAR) KVSPIC_OS_VERSION);
+        requiredLen = SNPRINTF(pResult, len, (PCHAR) "%s", (PCHAR) VERSION_OS_NAME);
     }
 
     CHK(requiredLen > 0 && requiredLen < len, STATUS_NOT_ENOUGH_MEMORY);
@@ -133,7 +146,7 @@ STATUS defaultGetPlatformName(PCHAR pResult, UINT32 len)
     } else
 #endif
     {
-        requiredLen = SNPRINTF(pResult, len, (PCHAR) "%s", (PCHAR) KVSPIC_PLATFORM_NAME);
+        requiredLen = SNPRINTF(pResult, len, (PCHAR) "%s", (PCHAR) VERSION_PLATFORM_NAME);
     }
 
     CHK(requiredLen > 0 && requiredLen < len, STATUS_NOT_ENOUGH_MEMORY);

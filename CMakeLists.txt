@@ -36,10 +36,12 @@ if(KVS_PLAT_ESP_FREERTOS)
 endif()
 
 if(NOT WIN32)
+
 CHECK_INCLUDE_FILES(ifaddrs.h KVSWEBRTC_HAVE_IFADDRS_H)
 if(KVSWEBRTC_HAVE_IFADDRS_H)
   add_definitions(-DKVSWEBRTC_HAVE_IFADDRS_H)
 endif()
+
 CHECK_FUNCTION_EXISTS(getifaddrs KVSWEBRTC_HAVE_GETIFADDRS)
 if(KVSWEBRTC_HAVE_GETIFADDRS)
   add_definitions(-DKVSWEBRTC_HAVE_GETIFADDRS)
@@ -182,15 +184,6 @@ if (ENABLE_STREAMING AND NOT KVS_PLAT_ESP_FREERTOS)
   endif()
 endif()
 
-#if (WIN32)
-#  SET(LIBWEBSOCKETS_LIBRARIES "websockets.lib")
-#else()
-#  if(NOT KVS_PLAT_ESP_FREERTOS)
-#    pkg_check_modules(LIBWEBSOCKETS REQUIRED libwebsockets)
-#  endif()
-#endif()
-
-
 if(ENABLE_DATA_CHANNEL)
   # usrsctp dont support pkgconfig yet
   if(NOT KVS_PLAT_ESP_FREERTOS)
@@ -286,8 +279,8 @@ if (ENABLE_DATA_CHANNEL)
   add_definitions(-DENABLE_DATA_CHANNEL)
 endif()
 
-file(GLOB PIC_STATE_SOURCE_FILES "src/source/state_machine/*.c")
-file(GLOB PIC_UTILS_SOURCE_FILES "src/source/utils/*.c")
+file(GLOB WEBRTC_STATE_MACHINE_SOURCE_FILES "src/source/state_machine/*.c")
+file(GLOB WEBRTC_UTILS_SOURCE_FILES "src/source/utils/*.c")
 
 file(
   GLOB
@@ -316,7 +309,7 @@ file(
   GLOB
   WEBRTC_SIGNALING_CLIENT_SOURCE_FILES
   "src/source/credential/*.c"
-  "src/source/api_call/light/*.c"
+  "src/source/api_call/*.c"
   "src/source/signaling/*.c"
   )
 
@@ -324,16 +317,16 @@ include_directories(${OPEN_SRC_INCLUDE_DIRS})
 include_directories(${OPEN_SRC_INSTALL_PREFIX}/include)
 include_directories(${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/src/include)
 
-add_library(kvspicState STATIC ${PIC_STATE_SOURCE_FILES})
-target_link_libraries(kvspicState)
+add_library(kvsWebrtcStateMachine STATIC ${WEBRTC_STATE_MACHINE_SOURCE_FILES})
+target_link_libraries(kvsWebrtcStateMachine)
 
-add_library(kvspicUtils STATIC ${PIC_UTILS_SOURCE_FILES})
+add_library(kvsWebrtcUtils STATIC ${WEBRTC_UTILS_SOURCE_FILES})
 
-target_link_libraries(kvspicUtils ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(kvsWebrtcUtils ${CMAKE_THREAD_LIBS_INIT})
 
 if(UNIX AND NOT APPLE)
   # rt needed for clock_gettime
-  target_link_libraries(kvspicUtils rt)
+  target_link_libraries(kvsWebrtcUtils rt)
 endif()
 
 if(BUILD_CLIENT)
@@ -341,8 +334,8 @@ if(BUILD_CLIENT)
 
   target_link_libraries(
     kvsWebrtcClient
-    PRIVATE kvspicUtils
-            kvspicState
+    PRIVATE kvsWebrtcUtils
+            kvsWebrtcStateMachine
             ${CMAKE_THREAD_LIBS_INIT}
             ${OPENSSL_SSL_LIBRARY}
             ${OPENSSL_CRYPTO_LIBRARY}
@@ -374,10 +367,8 @@ target_compile_definitions(kvsWebrtcSignalingClient PRIVATE KVS_BUILD_WITH_LWS $
 
 target_link_libraries(
   kvsWebrtcSignalingClient
-  PUBLIC
-        #${LIBWEBSOCKETS_LIBRARIES} 
-  PRIVATE kvspicUtils
-         kvspicState
+  PRIVATE kvsWebrtcUtils
+         kvsWebrtcStateMachine
          ${CMAKE_THREAD_LIBS_INIT}
          ${EXTRA_DEPS}
          ${OPENSSL_SSL_LIBRARY}
@@ -419,13 +410,13 @@ if (BUILD_SAMPLE)
     kvsWebrtcClientMaster
     ${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/samples/Common.c
     ${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/samples/kvsWebRTCClientMaster.c)
-  target_link_libraries(kvsWebrtcClientMaster kvsWebrtcClient kvsWebrtcSignalingClient kvspicUtils)
+  target_link_libraries(kvsWebrtcClientMaster kvsWebrtcClient kvsWebrtcSignalingClient kvsWebrtcUtils)
 
   add_executable(
     kvsWebrtcClientViewer
     ${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/samples/Common.c
     ${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/samples/kvsWebRTCClientViewer.c)
-  target_link_libraries(kvsWebrtcClientViewer kvsWebrtcClient kvsWebrtcSignalingClient kvspicUtils)
+  target_link_libraries(kvsWebrtcClientViewer kvsWebrtcClient kvsWebrtcSignalingClient kvsWebrtcUtils)
 
   add_executable(
           discoverNatBehavior
@@ -438,7 +429,7 @@ if (BUILD_SAMPLE)
       ${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/samples/Common.c
       ${KINESIS_VIDEO_WEBRTC_CLIENT_SRC}/samples/kvsWebRTCClientMasterGstreamerSample.c
     )
-    target_link_libraries(kvsWebrtcClientMasterGstSample kvsWebrtcClient kvsWebrtcSignalingClient ${GST_SAMPLE_LIBRARIES} kvspicUtils)
+    target_link_libraries(kvsWebrtcClientMasterGstSample kvsWebrtcClient kvsWebrtcSignalingClient ${GST_SAMPLE_LIBRARIES} kvsWebrtcUtils)
 
     install(TARGETS kvsWebrtcClientMasterGstSample
       RUNTIME DESTINATION bin

@@ -1,6 +1,17 @@
-/*******************************************
-Request Info internal header
-*******************************************/
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_REQUEST_INFO_INCLUDE_I__
 #define __KINESIS_VIDEO_REQUEST_INFO_INCLUDE_I__
 
@@ -9,7 +20,11 @@ Request Info internal header
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+#include "kvs/common_defs.h"
+#include "kvs/common.h"
 /**
  * Request Header structure
  */
@@ -101,7 +116,7 @@ typedef struct __CallInfo {
     UINT32 httpStatus;
 
     // Execution result
-    SERVICE_CALL_RESULT callResult;
+    HTTP_STATUS_CODE callResult;
 
     // Error buffer for curl calls
     CHAR errorBuffer[CALL_INFO_ERROR_BUFFER_LEN + 1];
@@ -202,13 +217,13 @@ STATUS removeRequestHeaders(PRequestInfo);
  */
 STATUS createRequestHeader(PCHAR, UINT32, PCHAR, UINT32, PRequestHeader*);
 /**
- * Convenience method to convert HTTP statuses to SERVICE_CALL_RESULT status.
+ * Convenience method to convert HTTP statuses to HTTP_STATUS_CODE status.
  *
  * @param - UINT32 - http_status the HTTP status code of the call
  *
- * @return The HTTP status translated into a SERVICE_CALL_RESULT value.
+ * @return The HTTP status translated into a HTTP_STATUS_CODE value.
  */
-SERVICE_CALL_RESULT getServiceCallResultFromHttpStatus(UINT32);
+HTTP_STATUS_CODE getServiceCallResultFromHttpStatus(UINT32);
 /**
  * Releases the CallInfo allocations
  *

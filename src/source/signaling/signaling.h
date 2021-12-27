@@ -12,8 +12,9 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#ifndef __KINESIS_VIDEO_WEBRTC_SIGNALING_CLIENT__
-#define __KINESIS_VIDEO_WEBRTC_SIGNALING_CLIENT__
+
+#ifndef __AWS_KVS_WEBRTC_SIGNALING_INCLUDE__
+#define __AWS_KVS_WEBRTC_SIGNALING_INCLUDE__
 
 #pragma once
 
@@ -75,9 +76,6 @@ extern "C" {
 // Async ICE config refresh delay in case if the signaling is not yet in READY state
 #define SIGNALING_ASYNC_ICE_CONFIG_REFRESH_DELAY (50 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND)
 
-// Max libWebSockets protocol count. IMPORTANT: Ensure it's 1 + PROTOCOL_INDEX_WSS
-//#define LWS_PROTOCOL_COUNT 2
-
 // API call latency calculation
 #define SIGNALING_API_LATENCY_CALCULATION(pClient, time, isCpApi)                                                                                    \
     MUTEX_LOCK((pClient)->diagnosticsLock);                                                                                                          \
@@ -99,12 +97,14 @@ extern "C" {
 #define SIGNALING_GO_AWAY              "GO_AWAY"
 #define SIGNALING_RECONNECT_ICE_SERVER "RECONNECT_ICE_SERVER"
 #define SIGNALING_STATUS_RESPONSE      "STATUS_RESPONSE"
+// Max length of the signaling message type string length
+#define SIGNALING_MESSAGE_TYPE_MAX_LEN ARRAY_SIZE(SIGNALING_RECONNECT_ICE_SERVER)
 
 // Check for the stale credentials
 #define CHECK_SIGNALING_CREDENTIALS_EXPIRATION(p)                                                                                                    \
     do {                                                                                                                                             \
         if (GETTIME() >= (p)->pAwsCredentials->expiration) {                                                                                         \
-            ATOMIC_STORE(&(p)->result, (SIZE_T) SERVICE_CALL_NOT_AUTHORIZED);                                                                        \
+            ATOMIC_STORE(&(p)->apiCallStatus, (SIZE_T) HTTP_STATUS_UNAUTHORIZED);                                                                    \
             CHK(FALSE, retStatus);                                                                                                                   \
         }                                                                                                                                            \
     } while (FALSE)
@@ -157,6 +157,7 @@ typedef struct {
 
     // Signaling endpoint
     CHAR channelEndpointHttps[MAX_SIGNALING_ENDPOINT_URI_LEN + 1];
+    IceConfigInfo iceConfigs[MAX_ICE_CONFIG_COUNT];
 } SignalingChannelDescription, *PSignalingChannelDescription;
 /**
  * @brief   Internal client info object
@@ -168,11 +169,7 @@ typedef struct {
     //
     // Below members will be used for direct injection for tests hooks
     //
-    // Injected ICE server refresh period
-    UINT64 iceRefreshPeriod;
-
     // Injected connect timeout
-    UINT64 connectTimeout;
 
     // Custom data to be passed to the hooks
     UINT64 hookCustomData;
@@ -222,102 +219,54 @@ typedef struct {
  * Internal representation of the Signaling client.
  */
 typedef struct {
-    volatile SIZE_T result; //!< Current service call result
-
-    // Client is ready to connect to signaling channel
-    volatile ATOMIC_BOOL clientReady; //!< Inidicate the singaling fsm is ready.
-
-    // Shutting down the entire client
-    volatile ATOMIC_BOOL shutdown; //!< Indicate the signaling is freed.
-
-    // Wss is connected
-    volatile ATOMIC_BOOL connected; //!< Indidcate the signaling is connected or not by receiving the following lws message
-                                    //!< LWS_CALLBACK_CLIENT_ESTABLISHED
-                                    //!< LWS_CALLBACK_CLIENT_CONNECTION_ERROR
-
-    // The channel is being deleted
-    volatile ATOMIC_BOOL deleting; //!< Indicate the signaling is deleting.
-
-    // The channel is deleted
-    volatile ATOMIC_BOOL deleted;
-
-    // Having state machine logic rely on call result of SERVICE_CALL_RESULT_SIGNALING_RECONNECT_ICE
+    volatile SIZE_T apiCallStatus;  //!< Current service call result
+    volatile ATOMIC_BOOL shutdown;  //!< Indicate the signaling is freed. Shutting down the entire client
+    volatile ATOMIC_BOOL connected; //!< Indidcate the signaling is connected or not.
+    // Having state machine logic rely on call result of HTTP_STATUS_SIGNALING_RECONNECT_ICE
     // to transition to ICE config state is not enough in Async update mode when
     // connect is in progress as the result of connect will override the result
-    // of SERVICE_CALL_RESULT_SIGNALING_RECONNECT_ICE indicating state transition
+    // of HTTP_STATUS_SIGNALING_RECONNECT_ICE indicating state transition
     // if it comes first forcing the state machine to loop back to connected state.
     volatile ATOMIC_BOOL refreshIceConfig;
 
-    // Indicate whether the ICE configuration has been retrieved at least once
-    volatile ATOMIC_BOOL iceConfigRetrieved;
+    BOOL connecting; //!< Indicates whether to self-prime on Ready or not
+    BOOL reconnect;  //!< Flag determines if reconnection should be attempted on connection drop
 
-    // Indicates when the ICE configuration has been retrieved
-    UINT64 iceConfigTime;
+    UINT64 iceConfigTime;       //!< Indicates when the ICE configuration has been retrieved
+    UINT64 iceConfigExpiration; //!< Indicates when the ICE configuration is considered expired
 
-    // Indicates when the ICE configuration is considered expired
-    UINT64 iceConfigExpiration;
+    UINT32 version; //!< Current version of the structure
 
-    BOOL continueOnReady; //!< Indicates whether to self-prime on Ready or not
-    // Current version of the structure
-    UINT32 version;
-
-    // Stored Client info
-    SignalingClientInfoInternal clientInfo;
-
-    // Stored callbacks
-    SignalingClientCallbacks signalingClientCallbacks;
-
-    // AWS credentials provider
-    PAwsCredentialProvider pCredentialProvider;
-
-    // Channel info
-    PChannelInfo pChannelInfo;
-
-    // Returned signaling channel description
-    SignalingChannelDescription channelDescription; //!< the information from calling the api of describing the channel.
+    SignalingClientInfoInternal clientInfo;            //!< Stored Client info
+    SignalingClientCallbacks signalingClientCallbacks; //!< Stored callbacks
+    PChannelInfo pChannelInfo;                         //!< Channel info
+    SignalingChannelDescription channelDescription;    //!< Returned signaling channel description
+    //!< the information from calling the api of describing the channel.
 
     // Number of Ice Server objects
     UINT32 iceConfigCount;
-
     // Returned Ice configurations
     IceConfigInfo iceConfigs[MAX_ICE_CONFIG_COUNT];
 
     // The state machine
     PVOID signalingFsmHandle;
-
-    // Current AWS credentials
-    PAwsCredentials pAwsCredentials;
-
     // Interlocking the state transitions
     MUTEX nestedFsmLock;
 
-    // Execute the state machine until this time
-    UINT64 stepUntil;
+    PAwsCredentialProvider pCredentialProvider; //!< AWS credentials provider
+    PAwsCredentials pAwsCredentials;            //!< Current AWS credentials
 
-    // Restarted thread handler
-    // ThreadTracker reconnecterTracker; //!< receive the connection error msg or closed msg from lws.
-    //!< spin off one thread to re-connect.
+    UINT64 stepUntil; //!< Execute the state machine until this time
 
-    // LWS context to use for Restful API
-    PVOID pWssContext;
+    PStackQueue pOutboundMsgQ; //!< List of the ongoing messages, the queue of singaling ongoing messsages.
+    MUTEX outboundMsgQLock;    //!< Message queue lock, the lock of signaling ongoing message queue.
 
-    // List of the ongoing messages
-    PStackQueue pOutboundMsgQ; //!< the queue of singaling ongoing messsages.
+    MUTEX diagnosticsLock;            //!< Re-entrant lock for diagnostics/stats
+    SignalingDiagnostics diagnostics; //!< Internal diagnostics object
 
-    // Message queue lock
-    MUTEX outboundMsgQLock; //!< the lock of signaling ongoing message queue.
+    ApiCallHistory apiCallHistory; //!< Tracking when was the Last time the APIs were called
 
-    // Re-entrant lock for diagnostics/stats
-    MUTEX diagnosticsLock;
-
-    // Timer queue to handle stale ICE configuration
-    TIMER_QUEUE_HANDLE timerQueueHandle;
-
-    // Internal diagnostics object
-    SignalingDiagnostics diagnostics;
-
-    // Tracking when was the Last time the APIs were called
-    ApiCallHistory apiCallHistory;
+    PVOID pWssContext; //!< wss context to use
     DispatchMsgHandlerFunc pDispatchMsgHandler;
     TID dispatchMsgTid;
     QueueHandle_t inboundMsqQ; //!< the inbound message queue is used to store the messages from the wss connection.
@@ -500,4 +449,4 @@ STATUS signaling_getMetrics(PSignalingClient pSignalingClient, PSignalingClientM
 #ifdef __cplusplus
 }
 #endif
-#endif /* __KINESIS_VIDEO_WEBRTC_SIGNALING_CLIENT__ */
+#endif /* __AWS_KVS_WEBRTC_SIGNALING_INCLUDE__ */

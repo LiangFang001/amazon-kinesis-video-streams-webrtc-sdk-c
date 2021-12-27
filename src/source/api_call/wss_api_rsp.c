@@ -12,14 +12,22 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #define LOG_CLASS "WssApiRsp"
-#include "../Include_i.h"
 #include "wss_api.h"
 #include "base64.h"
 
+/******************************************************************************
+ * DEFINITION
+ ******************************************************************************/
 #define WSS_RSP_ENTER() // DLOGD("enter")
 #define WSS_RSP_EXIT()  // DLOGD("exit")
 
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 STATUS wss_api_rsp_receivedMessage(const CHAR* pMessage, UINT32 messageLen, PSignalingMessageWrapper pSignalingMessageWrapper)
 {
     WSS_RSP_ENTER();
@@ -48,7 +56,7 @@ STATUS wss_api_rsp_receivedMessage(const CHAR* pMessage, UINT32 messageLen, PSig
             i++;
         } else if (compareJsonString(pMessage, &pTokens[i], JSMN_STRING, (PCHAR) "messageType")) {
             strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-            CHK(strLen <= MAX_SIGNALING_MESSAGE_TYPE_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+            CHK(strLen <= SIGNALING_MESSAGE_TYPE_MAX_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
             CHK_STATUS(signaling_getMessageTypeFromString(pMessage + pTokens[i + 1].start, strLen,
                                                           &pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.messageType));
 
@@ -111,7 +119,7 @@ STATUS wss_api_rsp_receivedMessage(const CHAR* pMessage, UINT32 messageLen, PSig
     CHK(parsedMessageType, STATUS_SIGNALING_INVALID_MESSAGE_TYPE);
 
 CleanUp:
-    MEMFREE(pTokens);
+    SAFE_MEMFREE(pTokens);
     WSS_RSP_EXIT();
     return retStatus;
 }

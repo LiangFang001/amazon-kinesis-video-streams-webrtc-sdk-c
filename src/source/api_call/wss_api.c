@@ -12,45 +12,48 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #define LOG_CLASS "WssApi"
-#include "../Include_i.h"
 #include "wss_api.h"
 #include "wss_client.h"
 #include "request_info.h"
-#include "network_api.h"
 #include "http_helper.h"
 #include "channel_info.h"
 #include "signaling_fsm.h"
+#include "netio.h"
 
-#define WSS_API_ENTER()
-#define WSS_API_EXIT()
+/******************************************************************************
+ * DEFINITION
+ ******************************************************************************/
+#define WSS_API_ENTER() DLOGD("%s enter", __func__);
+#define WSS_API_EXIT()  DLOGD("%s exit", __func__);
 
-#define API_ENDPOINT_TCP_PORT                    "443"
-#define API_CALL_CONNECTION_TIMEOUT              (2 * HUNDREDS_OF_NANOS_IN_A_SECOND)
-#define API_CALL_COMPLETION_TIMEOUT              (5 * HUNDREDS_OF_NANOS_IN_A_SECOND)
-#define API_CALL_CONNECTING_RETRY                (3)
-#define API_CALL_CONNECTING_RETRY_INTERVAL_IN_MS (1000)
+#define WSS_API_SECURE_PORT                "443"
+#define WSS_API_CONNECTION_TIMEOUT         (2 * HUNDREDS_OF_NANOS_IN_A_SECOND)
+#define WSS_API_COMPLETION_TIMEOUT         (5 * HUNDREDS_OF_NANOS_IN_A_SECOND)
+#define WSS_API_SEND_BUFFER_MAX_SIZE       (2048)
+#define WSS_API_RECV_BUFFER_MAX_SIZE       (2048)
+#define WSS_API_PARAM_CHANNEL_ARN          "X-Amz-ChannelARN"
+#define WSS_API_PARAM_CLIENT_ID            "X-Amz-ClientId"
+#define WSS_API_HEADER_FIELD_CONNECTION    "Connection"
+#define WSS_API_HEADER_FIELD_UPGRADE       "upgrade"
+#define WSS_API_HEADER_FIELD_SEC_WS_ACCEPT "sec-websocket-accept"
+#define WSS_API_HEADER_VALUE_UPGRADE       "upgrade"
+#define WSS_API_HEADER_VALUE_WS            "websocket"
+#define WSS_API_ENDPOINT_MASTER            "%s?%s=%s"
+#define WSS_API_ENDPOINT_VIEWER            "%s?%s=%s&%s=%s"
 
-#define HTTP_HEADER_FIELD_CONNECTION    "Connection"
-#define HTTP_HEADER_FIELD_UPGRADE       "upgrade"
-#define HTTP_HEADER_FIELD_SEC_WS_ACCEPT "sec-websocket-accept"
-#define HTTP_HEADER_VALUE_UPGRADE       "upgrade"
-#define HTTP_HEADER_VALUE_WS            "websocket"
-
-// Parameterized string for WSS connect
-#define URL_TEMPLATE_ENDPOINT_MASTER "%s?%s=%s"
-#define URL_TEMPLATE_ENDPOINT_VIEWER "%s?%s=%s&%s=%s"
-#define URL_PARAM_CHANNEL_ARN        "X-Amz-ChannelARN"
-#define URL_PARAM_CLIENT_ID          "X-Amz-ClientId"
-
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 STATUS wss_api_connect(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode)
 {
     WSS_API_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
     /* Variables for network connection */
-    NetworkContext_t* pNetworkContext = NULL;
-    SIZE_T uConnectionRetryCnt = 0;
-    UINT32 uBytesToSend = 0, uBytesReceived = 0;
+    UINT32 uBytesReceived = 0;
 
     /* Variables for HTTP request */
     PCHAR pUrl = NULL;
@@ -61,109 +64,104 @@ STATUS wss_api_connect(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCod
     UINT32 uHttpStatusCode = 0;
     HttpResponseContext* pHttpRspCtx = NULL;
     UINT32 urlLen = 0;
+    // new net io.
+    NetIoHandle xNetIoHandle = NULL;
+    uint8_t* pHttpSendBuffer = NULL;
+    uint8_t* pHttpRecvBuffer = NULL;
 
     CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
     CHK(pSignalingClient->channelDescription.channelEndpointWss[0] != '\0', STATUS_INTERNAL_ERROR);
-    ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
     CHK(NULL != (pHost = (CHAR*) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHttpSendBuffer = (uint8_t*) MEMCALLOC(WSS_API_SEND_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHttpRecvBuffer = (uint8_t*) MEMCALLOC(WSS_API_RECV_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
     // Prepare the json params for the call
     if (pSignalingClient->pChannelInfo->channelRoleType == SIGNALING_CHANNEL_ROLE_TYPE_VIEWER) {
-        urlLen = STRLEN(URL_TEMPLATE_ENDPOINT_VIEWER) + STRLEN(pSignalingClient->channelDescription.channelEndpointWss) +
-            STRLEN(URL_PARAM_CHANNEL_ARN) + STRLEN(pSignalingClient->channelDescription.channelArn) + STRLEN(URL_PARAM_CLIENT_ID) +
+        urlLen = STRLEN(WSS_API_ENDPOINT_VIEWER) + STRLEN(pSignalingClient->channelDescription.channelEndpointWss) +
+            STRLEN(WSS_API_PARAM_CHANNEL_ARN) + STRLEN(pSignalingClient->channelDescription.channelArn) + STRLEN(WSS_API_PARAM_CLIENT_ID) +
             STRLEN(pSignalingClient->clientInfo.signalingClientInfo.clientId) + 1;
         CHK(NULL != (pUrl = (PCHAR) MEMALLOC(urlLen)), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
-        SNPRINTF(pUrl, urlLen, URL_TEMPLATE_ENDPOINT_VIEWER, pSignalingClient->channelDescription.channelEndpointWss, URL_PARAM_CHANNEL_ARN,
-                 pSignalingClient->channelDescription.channelArn, URL_PARAM_CLIENT_ID, pSignalingClient->clientInfo.signalingClientInfo.clientId);
+
+        SNPRINTF(pUrl, urlLen, WSS_API_ENDPOINT_VIEWER, pSignalingClient->channelDescription.channelEndpointWss, WSS_API_PARAM_CHANNEL_ARN,
+                 pSignalingClient->channelDescription.channelArn, WSS_API_PARAM_CLIENT_ID, pSignalingClient->clientInfo.signalingClientInfo.clientId);
     } else {
-        urlLen = STRLEN(URL_TEMPLATE_ENDPOINT_MASTER) + STRLEN(pSignalingClient->channelDescription.channelEndpointWss) +
-            STRLEN(URL_PARAM_CHANNEL_ARN) + STRLEN(pSignalingClient->channelDescription.channelArn) + 1;
+        urlLen = STRLEN(WSS_API_ENDPOINT_MASTER) + STRLEN(pSignalingClient->channelDescription.channelEndpointWss) +
+            STRLEN(WSS_API_PARAM_CHANNEL_ARN) + STRLEN(pSignalingClient->channelDescription.channelArn) + 1;
         CHK(NULL != (pUrl = (PCHAR) MEMALLOC(urlLen)), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
 
-        SNPRINTF(pUrl, urlLen, URL_TEMPLATE_ENDPOINT_MASTER, pSignalingClient->channelDescription.channelEndpointWss, URL_PARAM_CHANNEL_ARN,
+        SNPRINTF(pUrl, urlLen, WSS_API_ENDPOINT_MASTER, pSignalingClient->channelDescription.channelEndpointWss, WSS_API_PARAM_CHANNEL_ARN,
                  pSignalingClient->channelDescription.channelArn);
     }
 
     /* Initialize and generate HTTP request, then send it. */
-    CHK(NULL != (pNetworkContext = (NetworkContext_t*) MEMALLOC(sizeof(NetworkContext_t))), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
-    CHK_STATUS(initNetworkContext(pNetworkContext));
+    CHK(NULL != (xNetIoHandle = NetIo_create()), STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    CHK_STATUS(NetIo_setRecvTimeout(xNetIoHandle, WSS_API_COMPLETION_TIMEOUT));
+    CHK_STATUS(NetIo_setSendTimeout(xNetIoHandle, WSS_API_COMPLETION_TIMEOUT));
     CHK_STATUS(createRequestInfo(pUrl, NULL, pSignalingClient->pChannelInfo->pRegion, pSignalingClient->pChannelInfo->pCertPath, NULL, NULL,
-                                 SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, API_CALL_CONNECTION_TIMEOUT,
-                                 API_CALL_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
-                                 pSignalingClient->pAwsCredentials, &pRequestInfo));
+                                 SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, WSS_API_CONNECTION_TIMEOUT,
+                                 WSS_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT, pSignalingClient->pAwsCredentials,
+                                 &pRequestInfo));
     pRequestInfo->verb = HTTP_REQUEST_VERB_GET;
     MEMSET(clientKey, 0, WSS_CLIENT_BASED64_RANDOM_SEED_LEN + 1);
-    wss_client_generateClientKey(clientKey, WSS_CLIENT_BASED64_RANDOM_SEED_LEN + 1);
+    wss_client_generateClientKey(clientKey, WSS_CLIENT_BASED64_RANDOM_SEED_LEN);
 
-    httpPackSendBuf(pRequestInfo, HTTP_REQUEST_VERB_GET_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pNetworkContext->pHttpSendBuffer,
-                    MAX_HTTP_SEND_BUFFER_LEN, TRUE, TRUE, clientKey);
+    http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_GET_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
+                  WSS_API_SEND_BUFFER_MAX_SIZE, TRUE, TRUE, clientKey);
 
-    for (uConnectionRetryCnt = 0; uConnectionRetryCnt < API_CALL_CONNECTING_RETRY; uConnectionRetryCnt++) {
-        if ((retStatus = connectToServer(pNetworkContext, pHost, API_ENDPOINT_TCP_PORT)) == STATUS_SUCCESS) {
-            break;
-        }
-        THREAD_SLEEP(API_CALL_CONNECTING_RETRY_INTERVAL_IN_MS * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
-    }
-    CHK_STATUS(retStatus);
+    CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, WSS_API_SECURE_PORT));
 
-    uBytesToSend = STRLEN((PCHAR) pNetworkContext->pHttpSendBuffer);
-    CHK(uBytesToSend == networkSend(pNetworkContext, pNetworkContext->pHttpSendBuffer, uBytesToSend), STATUS_SEND_DATA_FAILED);
-
-    uBytesReceived = networkRecv(pNetworkContext, pNetworkContext->pHttpRecvBuffer, pNetworkContext->uHttpRecvBufferLen);
+    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_SEND_DATA_FAILED);
+    CHK_STATUS(NetIo_recv(xNetIoHandle, (unsigned char*) pHttpRecvBuffer, WSS_API_RECV_BUFFER_MAX_SIZE, &uBytesReceived));
 
     CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
 
-    struct list_head* requiredHeader = malloc(sizeof(struct list_head));
+    struct list_head* requiredHeader = MEMALLOC(sizeof(struct list_head));
     INIT_LIST_HEAD(requiredHeader);
-    httpParserAddRequiredHeader(requiredHeader, HTTP_HEADER_FIELD_CONNECTION, STRLEN(HTTP_HEADER_FIELD_CONNECTION), NULL, 0);
-    httpParserAddRequiredHeader(requiredHeader, HTTP_HEADER_FIELD_UPGRADE, STRLEN(HTTP_HEADER_FIELD_UPGRADE), NULL, 0);
-    httpParserAddRequiredHeader(requiredHeader, HTTP_HEADER_FIELD_SEC_WS_ACCEPT, STRLEN(HTTP_HEADER_FIELD_SEC_WS_ACCEPT), NULL, 0);
+    http_parser_addRequiredHeader(requiredHeader, WSS_API_HEADER_FIELD_CONNECTION, STRLEN(WSS_API_HEADER_FIELD_CONNECTION), NULL, 0);
+    http_parser_addRequiredHeader(requiredHeader, WSS_API_HEADER_FIELD_UPGRADE, STRLEN(WSS_API_HEADER_FIELD_UPGRADE), NULL, 0);
+    http_parser_addRequiredHeader(requiredHeader, WSS_API_HEADER_FIELD_SEC_WS_ACCEPT, STRLEN(WSS_API_HEADER_FIELD_SEC_WS_ACCEPT), NULL, 0);
 
-    CHK_STATUS(httpParserStart(&pHttpRspCtx, (CHAR*) pNetworkContext->pHttpRecvBuffer, (UINT32) uBytesReceived, requiredHeader));
+    CHK_STATUS(http_parser_start(&pHttpRspCtx, (CHAR*) pHttpRecvBuffer, (UINT32) uBytesReceived, requiredHeader));
 
     PHttpField node;
-    node = httpParserGetValueByField(requiredHeader, HTTP_HEADER_FIELD_CONNECTION, STRLEN(HTTP_HEADER_FIELD_CONNECTION));
-    CHK(node != NULL && node->valueLen == STRLEN(HTTP_HEADER_VALUE_UPGRADE) && MEMCMP(node->value, HTTP_HEADER_VALUE_UPGRADE, node->valueLen) == 0,
+    node = http_parser_getValueByField(requiredHeader, WSS_API_HEADER_FIELD_CONNECTION, STRLEN(WSS_API_HEADER_FIELD_CONNECTION));
+    CHK(node != NULL && node->valueLen == STRLEN(WSS_API_HEADER_VALUE_UPGRADE) &&
+            MEMCMP(node->value, WSS_API_HEADER_VALUE_UPGRADE, node->valueLen) == 0,
         STATUS_WSS_UPGRADE_CONNECTION_ERROR);
 
-    node = httpParserGetValueByField(requiredHeader, HTTP_HEADER_FIELD_UPGRADE, STRLEN(HTTP_HEADER_FIELD_UPGRADE));
-    CHK(node != NULL && node->valueLen == STRLEN(HTTP_HEADER_VALUE_WS) && MEMCMP(node->value, HTTP_HEADER_VALUE_WS, node->valueLen) == 0,
+    node = http_parser_getValueByField(requiredHeader, WSS_API_HEADER_FIELD_UPGRADE, STRLEN(WSS_API_HEADER_FIELD_UPGRADE));
+    CHK(node != NULL && node->valueLen == STRLEN(WSS_API_HEADER_VALUE_WS) && MEMCMP(node->value, WSS_API_HEADER_VALUE_WS, node->valueLen) == 0,
         STATUS_WSS_UPGRADE_PROTOCOL_ERROR);
 
-    node = httpParserGetValueByField(requiredHeader, HTTP_HEADER_FIELD_SEC_WS_ACCEPT, STRLEN(HTTP_HEADER_FIELD_SEC_WS_ACCEPT));
+    node = http_parser_getValueByField(requiredHeader, WSS_API_HEADER_FIELD_SEC_WS_ACCEPT, STRLEN(WSS_API_HEADER_FIELD_SEC_WS_ACCEPT));
     CHK(node != NULL && wss_client_validateAcceptKey(clientKey, WSS_CLIENT_BASED64_RANDOM_SEED_LEN, node->value, node->valueLen) == STATUS_SUCCESS,
         STATUS_WSS_ACCEPT_KEY_ERROR);
-    uHttpStatusCode = httpParserGetHttpStatusCode(pHttpRspCtx);
+    uHttpStatusCode = http_parser_getHttpStatusCode(pHttpRspCtx);
 
     /* Check HTTP results */
-    if (uHttpStatusCode == SERVICE_CALL_RESULT_UPGRADE) {
-        TID threadId;
+    if (uHttpStatusCode == HTTP_STATUS_SWITCH_PROTOCOL) {
         /**
          * switch to wss client.
          */
         /* We got a success response here. */
-        PWssClientContext wssClientCtx = NULL;
-        uHttpStatusCode = SERVICE_CALL_UNKNOWN;
+        PWssClientContext pWssClientCtx = NULL;
+        uHttpStatusCode = HTTP_STATUS_UNKNOWN;
 
-        wss_client_create(&wssClientCtx, pNetworkContext, pSignalingClient, wss_api_handleDataMsg, wss_api_handleCtrlMsg, wss_api_handleTermination);
+        wss_client_create(&pWssClientCtx, xNetIoHandle, pSignalingClient, wss_api_handleDataMsg, wss_api_handleCtrlMsg, wss_api_handleDisconnection);
+        pSignalingClient->pWssContext = pWssClientCtx;
+        CHK_STATUS(THREAD_CREATE_EX(&pWssClientCtx->listenerTid, WSS_LISTENER_THREAD_NAME, WSS_LISTENER_THREAD_SIZE, wss_client_start,
+                                    (PVOID) pWssClientCtx));
+        CHK_STATUS(THREAD_DETACH(pWssClientCtx->listenerTid));
 
-        pSignalingClient->pWssContext = wssClientCtx;
-
-        // CHK_STATUS(THREAD_CREATE(&threadId, wss_client_start, (PVOID) ));
-        CHK_STATUS(THREAD_CREATE_EX(&threadId, LWS_LISTENER_THREAD_NAME, LWS_LISTENER_THREAD_SIZE, wss_client_start, (PVOID) wssClientCtx));
-
-        CHK_STATUS(THREAD_DETACH(threadId));
-
-        uHttpStatusCode = SERVICE_CALL_RESULT_OK;
-        ATOMIC_STORE_BOOL(&pSignalingClient->connected, TRUE);
+        uHttpStatusCode = HTTP_STATUS_OK;
     }
-    CHK(uHttpStatusCode == SERVICE_CALL_RESULT_OK, retStatus);
+    CHK(uHttpStatusCode == HTTP_STATUS_OK, retStatus);
 
 CleanUp:
     CHK_LOG_ERR(retStatus);
 
     if (pHttpRspCtx != NULL) {
-        retStatus = httpParserDetroy(pHttpRspCtx);
+        retStatus = http_parser_detroy(pHttpRspCtx);
         if (retStatus != STATUS_SUCCESS) {
             DLOGD("destroying http parset failed.");
         }
@@ -171,17 +169,15 @@ CleanUp:
 
     if (STATUS_FAILED(retStatus) && pSignalingClient != NULL) {
         // Fix-up the timeout case
-        SERVICE_CALL_RESULT serviceCallResult =
-            (retStatus == STATUS_OPERATION_TIMED_OUT) ? SERVICE_CALL_NETWORK_CONNECTION_TIMEOUT : SERVICE_CALL_UNKNOWN;
+        HTTP_STATUS_CODE serviceCallResult = (retStatus == STATUS_OPERATION_TIMED_OUT) ? HTTP_STATUS_NETWORK_CONNECTION_TIMEOUT : HTTP_STATUS_UNKNOWN;
         // Trigger termination
-        if (pNetworkContext != NULL) {
-            disconnectFromServer(pNetworkContext);
-            terminateNetworkContext(pNetworkContext);
-            MEMFREE(pNetworkContext);
+        if (xNetIoHandle != NULL) {
+            NetIo_disconnect(xNetIoHandle);
+            NetIo_terminate(xNetIoHandle);
         }
 
         if (pSignalingClient->pWssContext != NULL) {
-            wss_api_terminate(pSignalingClient, serviceCallResult);
+            wss_api_disconnect(pSignalingClient);
         }
 
         uHttpStatusCode = serviceCallResult;
@@ -193,7 +189,10 @@ CleanUp:
 
     SAFE_MEMFREE(pHost);
     SAFE_MEMFREE(pUrl);
+    SAFE_MEMFREE(pHttpSendBuffer);
+    SAFE_MEMFREE(pHttpRecvBuffer);
     freeRequestInfo(pRequestInfo);
+
     WSS_API_EXIT();
     return retStatus;
 }
@@ -265,6 +264,7 @@ STATUS wss_api_handleCtrlMsg(PVOID pUserData, UINT8 opcode, PCHAR pMessage, UINT
     PSignalingClient pSignalingClient = (PSignalingClient) pUserData;
 
     CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
+
     DLOGD("opcode:%x", opcode);
     if (opcode == WSLAY_PONG) {
         DLOGD("<== pong, len: %ld", messageLen);
@@ -274,8 +274,6 @@ STATUS wss_api_handleCtrlMsg(PVOID pUserData, UINT8 opcode, PCHAR pMessage, UINT
         DLOGD("<== connection close, len: %ld, reason:%s", messageLen, pMessage);
         pCurPtr = pMessage == NULL ? "(None)" : (PCHAR) pMessage;
         DLOGW("Client connection failed. Connection error string: %s", pCurPtr);
-
-        connected = ATOMIC_EXCHANGE_BOOL(&pSignalingClient->connected, FALSE);
 
         PSignalingMessageWrapper pSignalingMessageWrapper = NULL;
 
@@ -301,7 +299,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS wss_api_handleTermination(PVOID pUserData, STATUS errCode)
+STATUS wss_api_handleDisconnection(PVOID pUserData, STATUS errCode)
 {
     WSS_API_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
@@ -311,27 +309,41 @@ STATUS wss_api_handleTermination(PVOID pUserData, STATUS errCode)
 
     CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
 
-    if (STATUS_FAILED(errCode) && pSignalingClient != NULL) {
-        ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) SERVICE_CALL_UNKNOWN);
+    PSignalingMessageWrapper pSignalingMessageWrapper = NULL;
+
+    CHK(NULL != (pSignalingMessageWrapper = (PSignalingMessageWrapper) MEMCALLOC(1, SIZEOF(SignalingMessageWrapper))),
+        STATUS_WSS_API_NOT_ENOUGH_MEMORY);
+    pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.messageType = SIGNALING_MESSAGE_TYPE_CTRL_LISTENER_TREMINATED;
+    pSignalingMessageWrapper->pSignalingClient = pSignalingClient;
+
+    if (pSignalingClient->pDispatchMsgHandler != NULL) {
+        CHK_STATUS(pSignalingClient->pDispatchMsgHandler((PVOID) pSignalingMessageWrapper));
+    } else {
+        SAFE_MEMFREE(pSignalingMessageWrapper);
     }
+
 CleanUp:
     WSS_API_EXIT();
     return retStatus;
 }
 
-STATUS wss_api_terminate(PSignalingClient pSignalingClient, SERVICE_CALL_RESULT callResult)
+STATUS wss_api_disconnect(PSignalingClient pSignalingClient)
 {
     WSS_API_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
 
     CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
+    PWssClientContext pWssClientCtx = (PWssClientContext) pSignalingClient->pWssContext;
+    CHK(pWssClientCtx != NULL, STATUS_WSS_API_NULL_ARG);
 
-    ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
-    ATOMIC_STORE(&pSignalingClient->result, (SIZE_T) callResult);
+    if (IS_VALID_TID_VALUE(pWssClientCtx->listenerTid)) {
+        THREAD_CANCEL(pWssClientCtx->listenerTid);
+        pWssClientCtx->listenerTid = INVALID_TID_VALUE;
+    }
 
     // waiting the termination of listener thread.
-    if (pSignalingClient->pWssContext != NULL) {
-        wss_client_close(pSignalingClient->pWssContext);
+    if (pWssClientCtx != NULL) {
+        wss_client_close(pWssClientCtx);
         pSignalingClient->pWssContext = NULL;
     }
 

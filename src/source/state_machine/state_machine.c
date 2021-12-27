@@ -29,7 +29,7 @@ STATUS state_machine_create(PStateMachineState pStates, UINT32 stateCount, UINT6
     PStateMachineImpl pStateMachine = NULL;
     UINT32 allocationSize = 0;
 
-    CHK(pStates != NULL && ppStateMachine != NULL && getCurrentTimeFunc != NULL, STATUS_NULL_ARG);
+    CHK(pStates != NULL && ppStateMachine != NULL && getCurrentTimeFunc != NULL, STATUS_STATE_MACHINE_NULL_ARG);
     CHK(stateCount > 0, STATUS_INVALID_ARG);
 
     // Allocate the main struct with an array of stream pointers at the end
@@ -92,7 +92,7 @@ STATUS state_machine_getState(PStateMachine pStateMachine, UINT64 state, PStateM
     PStateMachineImpl pStateMachineImpl = (PStateMachineImpl) pStateMachine;
     UINT32 i;
 
-    CHK(pStateMachineImpl != NULL && ppState, STATUS_NULL_ARG);
+    CHK(pStateMachineImpl != NULL && ppState, STATUS_STATE_MACHINE_NULL_ARG);
 
     // Iterate over and find the first state
     for (i = 0; pState == NULL && i < pStateMachineImpl->stateCount; i++) {
@@ -119,7 +119,7 @@ STATUS state_machine_getCurrentState(PStateMachine pStateMachine, PStateMachineS
     STATUS retStatus = STATUS_SUCCESS;
     PStateMachineImpl pStateMachineImpl = (PStateMachineImpl) pStateMachine;
 
-    CHK(pStateMachineImpl != NULL && ppState, STATUS_NULL_ARG);
+    CHK(pStateMachineImpl != NULL && ppState, STATUS_STATE_MACHINE_NULL_ARG);
 
     *ppState = pStateMachineImpl->context.pCurrentState;
 
@@ -137,11 +137,11 @@ STATUS state_machine_step(PStateMachine pStateMachine)
     UINT64 customData;
     PStateMachineImpl pStateMachineImpl = (PStateMachineImpl) pStateMachine;
 
-    CHK(pStateMachineImpl != NULL, STATUS_NULL_ARG);
+    CHK(pStateMachineImpl != NULL, STATUS_STATE_MACHINE_NULL_ARG);
     customData = pStateMachineImpl->customData;
 
     // Get the next state
-    CHK(pStateMachineImpl->context.pCurrentState->getNextStateFn != NULL, STATUS_NULL_ARG);
+    CHK(pStateMachineImpl->context.pCurrentState->getNextStateFn != NULL, STATUS_STATE_MACHINE_NULL_ARG);
     CHK_STATUS(pStateMachineImpl->context.pCurrentState->getNextStateFn(pStateMachineImpl->customData, &nextState));
 
     // Validate if the next state can accept the current state before transitioning
@@ -189,7 +189,7 @@ STATUS state_machine_accept(PStateMachine pStateMachine, UINT64 requiredStates)
     STATUS retStatus = STATUS_SUCCESS;
     PStateMachineImpl pStateMachineImpl = (PStateMachineImpl) pStateMachine;
 
-    CHK(pStateMachineImpl != NULL, STATUS_NULL_ARG);
+    CHK(pStateMachineImpl != NULL, STATUS_STATE_MACHINE_NULL_ARG);
 
     // Check the current state
     CHK((requiredStates & pStateMachineImpl->context.pCurrentState->state) == pStateMachineImpl->context.pCurrentState->state,
@@ -208,7 +208,7 @@ STATUS state_machine_setCurrentState(PStateMachine pStateMachine, UINT64 state)
     PStateMachineImpl pStateMachineImpl = (PStateMachineImpl) pStateMachine;
     PStateMachineState pState = NULL;
 
-    CHK(pStateMachineImpl != NULL, STATUS_NULL_ARG);
+    CHK(pStateMachineImpl != NULL, STATUS_STATE_MACHINE_NULL_ARG);
     CHK_STATUS(state_machine_getState(pStateMachine, state, &pState));
 
     // Force set the state
@@ -226,7 +226,7 @@ STATUS state_machine_resetRetryCount(PStateMachine pStateMachine)
     STATUS retStatus = STATUS_SUCCESS;
     PStateMachineImpl pStateMachineImpl = (PStateMachineImpl) pStateMachine;
 
-    CHK(pStateMachineImpl != NULL, STATUS_NULL_ARG);
+    CHK(pStateMachineImpl != NULL, STATUS_STATE_MACHINE_NULL_ARG);
 
     // Reset the state
     pStateMachineImpl->context.retryCount = 0;

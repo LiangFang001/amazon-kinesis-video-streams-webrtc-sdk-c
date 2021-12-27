@@ -80,7 +80,9 @@ VOID defaultLogPrint(UINT32 level, PCHAR tag, PCHAR fmt, ...)
     UINT32 logLevel = GET_LOGGER_LOG_LEVEL();
 
     UNUSED_PARAM(tag);
-
+    if (logFmtString == NULL) {
+        return;
+    }
     if (level >= logLevel) {
         addLogMetadata(logFmtString, (UINT32) MAX_LOG_FORMAT_LENGTH + 1, fmt, level);
 

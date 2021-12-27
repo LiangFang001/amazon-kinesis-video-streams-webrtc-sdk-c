@@ -12,14 +12,17 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #define LOG_CLASS "HttpHelper"
-#include "../Include_i.h"
-
 #include <llhttp.h>
 #include "http_helper.h"
 #include "aws_signer_v4.h"
 
-/*-----------------------------------------------------------*/
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 typedef struct {
     llhttp_t httpParser;
     PVOID customData;
@@ -27,8 +30,10 @@ typedef struct {
 
 #define GET_USER_DATA(p) (((PCustomLlhttp) p)->customData)
 
-/*-----------------------------------------------------------*/
-PHttpField httpParserGetValueByField(struct list_head* head, char* field, UINT32 fieldLen)
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+PHttpField http_parser_getValueByField(struct list_head* head, char* field, UINT32 fieldLen)
 {
     struct list_head* listptr;
     PHttpField node;
@@ -49,7 +54,7 @@ PHttpField httpParserGetValueByField(struct list_head* head, char* field, UINT32
     }
 }
 
-int32_t httpParserAddRequiredHeader(struct list_head* head, char* field, UINT32 fieldLen, char* value, UINT32 valueLen)
+int32_t http_parser_addRequiredHeader(struct list_head* head, char* field, UINT32 fieldLen, char* value, UINT32 valueLen)
 {
     PHttpField node = (PHttpField) MEMALLOC(sizeof(HttpField));
     node->field = field;
@@ -60,7 +65,7 @@ int32_t httpParserAddRequiredHeader(struct list_head* head, char* field, UINT32 
     return 0;
 }
 
-void httpParserDeleteAllHeader(struct list_head* head)
+void http_parser_deleteAllHeader(struct list_head* head)
 {
     struct list_head* listptr;
     PHttpField node;
@@ -68,7 +73,7 @@ void httpParserDeleteAllHeader(struct list_head* head)
     list_for_each(listptr, head)
     {
         node = list_entry(listptr, HttpField, list);
-        MEMFREE(node);
+        SAFE_MEMFREE(node);
         node = NULL;
     }
     return;
@@ -104,7 +109,7 @@ static INT32 _on_header_value_complete(llhttp_t* httpParser)
     if (pCtx->requiredHeader == NULL) {
         return 0;
     }
-    PHttpField node = httpParserGetValueByField(pCtx->requiredHeader, pCtx->curField.field, pCtx->curField.fieldLen);
+    PHttpField node = http_parser_getValueByField(pCtx->requiredHeader, pCtx->curField.field, pCtx->curField.fieldLen);
     if (node != NULL) {
         node->value = pCtx->curField.value;
         node->valueLen = pCtx->curField.valueLen;
@@ -114,24 +119,23 @@ static INT32 _on_header_value_complete(llhttp_t* httpParser)
 
     return 0;
 }
-/*-----------------------------------------------------------*/
 
-UINT32 httpParserGetHttpStatusCode(HttpResponseContext* pHttpRspCtx)
+UINT32 http_parser_getHttpStatusCode(HttpResponseContext* pHttpRspCtx)
 {
     return pHttpRspCtx->httpStatusCode;
 }
 
-PCHAR httpParserGetHttpBodyLocation(HttpResponseContext* pHttpRspCtx)
+PCHAR http_parser_getHttpBodyLocation(HttpResponseContext* pHttpRspCtx)
 {
     return pHttpRspCtx->phttpBodyLoc;
 }
 
-UINT32 httpParserGetHttpBodyLength(HttpResponseContext* pHttpRspCtx)
+UINT32 http_parser_getHttpBodyLength(HttpResponseContext* pHttpRspCtx)
 {
     return pHttpRspCtx->httpBodyLen;
 }
 
-STATUS httpParserStart(HttpResponseContext** ppHttpRspCtx, PCHAR pBuf, UINT32 uLen, struct list_head* requiredHeader)
+STATUS http_parser_start(HttpResponseContext** ppHttpRspCtx, PCHAR pBuf, UINT32 uLen, struct list_head* requiredHeader)
 {
     STATUS retStatus = STATUS_SUCCESS;
     CustomLlhttp userParser = {0};
@@ -175,19 +179,19 @@ STATUS httpParserStart(HttpResponseContext** ppHttpRspCtx, PCHAR pBuf, UINT32 uL
     return retStatus;
 }
 
-STATUS httpParserDetroy(HttpResponseContext* pHttpRspCtx)
+STATUS http_parser_detroy(HttpResponseContext* pHttpRspCtx)
 {
     STATUS retStatus = STATUS_SUCCESS;
     if (pHttpRspCtx != NULL && pHttpRspCtx->requiredHeader != NULL) {
-        httpParserDeleteAllHeader(pHttpRspCtx->requiredHeader);
-        MEMFREE(pHttpRspCtx->requiredHeader);
+        http_parser_deleteAllHeader(pHttpRspCtx->requiredHeader);
+        SAFE_MEMFREE(pHttpRspCtx->requiredHeader);
     }
-    MEMFREE(pHttpRspCtx);
+    SAFE_MEMFREE(pHttpRspCtx);
     return retStatus;
 }
 
-STATUS httpPackSendBuf(PRequestInfo pRequestInfo, PCHAR pVerb, PCHAR pHost, UINT32 hostLen, PCHAR outputBuf, UINT32 bufLen, BOOL bWss, BOOL bAssign,
-                       PCHAR clientKey)
+STATUS http_req_pack(PRequestInfo pRequestInfo, PCHAR pVerb, PCHAR pHost, UINT32 hostLen, PCHAR outputBuf, UINT32 bufLen, BOOL bWss, BOOL bAssign,
+                     PCHAR clientKey)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PCHAR p = NULL;
@@ -197,6 +201,7 @@ STATUS httpPackSendBuf(PRequestInfo pRequestInfo, PCHAR pVerb, PCHAR pHost, UINT
     PSingleListNode pCurNode;
     UINT64 item;
     PRequestHeader pRequestHeader;
+
     if (bAssign == TRUE) {
         // Sign the request
         if (!bWss) {
@@ -230,26 +235,9 @@ STATUS httpPackSendBuf(PRequestInfo pRequestInfo, PCHAR pVerb, PCHAR pHost, UINT
     if (bAssign == FALSE) {
         CHK_STATUS(setRequestHeader(pRequestInfo, "host", 0, pHost, 0));
     }
-    /*
-        GET /?X-Amz-Algorithm=AWS4-HMAC-SHA256&
-        X-Amz-ChannelARN=arn%3Aaws%3Akinesisvideo%3Aus-west-2%3A021108525330%3Achannel%2FScaryTestChannel%2F1599141861798&
-        X-Amz-Credential=AKIAQJ2RKREJMCCKFZ3G%2F20210309%2Fus-west-2%2Fkinesisvideo%2Faws4_request&
-        X-Amz-Date=20210309T151602Z&
-        X-Amz-Expires=604800&
-        X-Amz-SignedHeaders=host&
-        X-Amz-Signature=1797277081a3c6d77b4ad3acdd6515348fbed9d015bcabf0e891d9388d29ae5e HTTP/1.1
-        Pragma: no-cache
-        Cache-Control: no-cache
-        Host: m-d73cdb00.kinesisvideo.us-west-2.amazonaws.com
-        Upgrade: websocket
-        Connection: Upgrade
-        Sec-WebSocket-Key: yZfoKfFLHC2SNs5mO4HmaQ==
-        Sec-WebSocket-Protocol: wss
-        Sec-WebSocket-Version: 13
-    */
+
     p = (PCHAR)(outputBuf);
     /* header */
-    // p += SPRINTF(p, "%s %s%s HTTP/1.1\r\n", pVerb, uri, pParameterUriEncode);
     p += SPRINTF(p, "%s %s HTTP/1.1\r\n", pVerb, pPath);
 
     CHK_STATUS(singleListGetHeadNode(pRequestInfo->pRequestHeaders, &pCurNode));
@@ -258,7 +246,6 @@ STATUS httpPackSendBuf(PRequestInfo pRequestInfo, PCHAR pVerb, PCHAR pHost, UINT
         pRequestHeader = (PRequestHeader) item;
 
         // pPrevNode = pCurNode;
-        // DLOGD("Appending header - %s %s", pRequestHeader->pName, pRequestHeader->pValue);
         p += SPRINTF(p, "%s: %s\r\n", pRequestHeader->pName, pRequestHeader->pValue);
 
         CHK_STATUS(singleListGetNextNode(pCurNode, &pCurNode));

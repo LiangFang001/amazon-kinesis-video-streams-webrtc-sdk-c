@@ -21,6 +21,11 @@ extern "C" {
 // thread stack size to use when running on constrained device like raspberry pi
 #define THREAD_STACK_SIZE_ON_CONSTRAINED_DEVICE (512 * 1024)
 
+#if defined(KVS_PLAT_ESP_FREERTOS)
+#define DEFAULT_THREAD_SIZE 4096
+#define DEFAULT_THREAD_NAME "pthread"
+#endif
+
 #ifdef __cplusplus
 }
 #endif

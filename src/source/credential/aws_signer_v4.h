@@ -1,6 +1,17 @@
-/*******************************************
-AWS V4 Signer internal include file
-*******************************************/
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_AWS_V4_SIGNER_INCLUDE_I__
 #define __KINESIS_VIDEO_AWS_V4_SIGNER_INCLUDE_I__
 
@@ -9,9 +20,14 @@ AWS V4 Signer internal include file
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "request_info.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 #define AWS_SIG_V4_HEADER_AMZ_DATE           (PCHAR) "X-Amz-Date"
 #define AWS_SIG_V4_HEADER_AMZ_SECURITY_TOKEN (PCHAR) "x-amz-security-token"
 #define AWS_SIG_V4_HEADER_AUTH               (PCHAR) "Authorization"
@@ -84,9 +100,9 @@ extern "C" {
 
 #define KVS_MAX_HMAC_SIZE 64
 
-////////////////////////////////////////////////////
-// Function definitions
-////////////////////////////////////////////////////
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 /**
  * Generates AWS SigV4 signature encoded string into the provided buffer.
  *

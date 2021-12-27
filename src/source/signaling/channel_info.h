@@ -1,17 +1,33 @@
-/*******************************************
-Signaling internal include file
-*******************************************/
-#ifndef __KINESIS_VIDEO_WEBRTC_CHANNEL_INFO__
-#define __KINESIS_VIDEO_WEBRTC_CHANNEL_INFO__
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+#ifndef __AWS_KVS_WEBRTC_CHANNEL_INFO_INCLUDE__
+#define __AWS_KVS_WEBRTC_CHANNEL_INFO_INCLUDE__
 
 #pragma once
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/WebRTCClient.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 // Max control plane URI char len
 #define MAX_CONTROL_PLANE_URI_CHAR_LEN 256
 
@@ -34,6 +50,9 @@ extern "C" {
 #define MIN_SIGNALING_MESSAGE_TTL_VALUE (5 * HUNDREDS_OF_NANOS_IN_A_SECOND)
 #define MAX_SIGNALING_MESSAGE_TTL_VALUE (120 * HUNDREDS_OF_NANOS_IN_A_SECOND)
 
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 /**
  * Takes in a pointer to a public version of ChannelInfo object.
  * Validates and creates an internal object
@@ -102,4 +121,4 @@ PCHAR getStringFromChannelRoleType(SIGNALING_CHANNEL_ROLE_TYPE);
 #ifdef __cplusplus
 }
 #endif
-#endif /* __KINESIS_VIDEO_WEBRTC_CHANNEL_INFO__ */
+#endif /* __AWS_KVS_WEBRTC_CHANNEL_INFO_INCLUDE__ */

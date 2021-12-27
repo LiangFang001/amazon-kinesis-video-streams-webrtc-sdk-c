@@ -1,15 +1,31 @@
-/*******************************************
-Signaling internal include file
-*******************************************/
-#ifndef __KINESIS_VIDEO_WEBRTC_FILE_CACHE__
-#define __KINESIS_VIDEO_WEBRTC_FILE_CACHE__
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+#ifndef __AWS_KVS_WEBRTC_FILE_CACHE_INCLUDE__
+#define __AWS_KVS_WEBRTC_FILE_CACHE_INCLUDE__
 
 #pragma once
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 /* If SignalingFileCacheEntry layout is changed, change the version in cache file name so we wont read from older
  * cache file. */
 #define DEFAULT_CACHE_FILE_PATH                     "./.SignalingCache_v0"
@@ -32,10 +48,13 @@ typedef struct {
     CHAR wssEndpoint[MAX_SIGNALING_ENDPOINT_URI_LEN + 1];
 } SignalingFileCacheEntry, *PSignalingFileCacheEntry;
 
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 STATUS signalingCacheLoadFromFile(PCHAR, PCHAR, SIGNALING_CHANNEL_ROLE_TYPE, PSignalingFileCacheEntry, PBOOL);
 STATUS signalingCacheSaveToFile(PSignalingFileCacheEntry);
 
 #ifdef __cplusplus
 }
 #endif
-#endif /* __KINESIS_VIDEO_WEBRTC_FILE_CACHE__ */
+#endif /* __AWS_KVS_WEBRTC_FILE_CACHE_INCLUDE__ */

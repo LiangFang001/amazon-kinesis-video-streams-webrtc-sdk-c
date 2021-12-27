@@ -260,11 +260,6 @@ typedef pthread_cond_t* CVAR;
 #define MAX_MUTEX_NAME 32
 #endif
 
-#if defined(KVS_PLAT_ESP_FREERTOS)
-#define DEFAULT_THREAD_SIZE 4096
-#define DEFAULT_THREAD_NAME "pthread"
-#endif
-
 // Content ID - 64 bit uint
 typedef UINT64 CID;
 typedef CID* PCID;
@@ -483,12 +478,6 @@ typedef INT_PTR SSIZE_T, *PSSIZE_T;
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/time.h>
-
-#define KVSPIC_OS_VERSION    "freertos/freertos"
-#define KVSPIC_PLATFORM_NAME "esp32"
-#ifdef KVSPIC_HAVE_UTSNAME_H
-#include <sys/utsname.h>
-#endif
 #endif
 
 #if !defined(_MSC_VER) && !defined(__MINGW64__) && !defined(__MINGW32__) && !defined(__MACH__)

@@ -284,24 +284,24 @@ CleanUp:
     return retStatus;
 }
 
-SERVICE_CALL_RESULT getServiceCallResultFromHttpStatus(UINT32 httpStatus)
+HTTP_STATUS_CODE getServiceCallResultFromHttpStatus(UINT32 httpStatus)
 {
     switch (httpStatus) {
-        case SERVICE_CALL_RESULT_OK:
-        case SERVICE_CALL_INVALID_ARG:
-        case SERVICE_CALL_RESOURCE_NOT_FOUND:
-        case SERVICE_CALL_FORBIDDEN:
-        case SERVICE_CALL_RESOURCE_DELETED:
-        case SERVICE_CALL_NOT_AUTHORIZED:
-        case SERVICE_CALL_NOT_IMPLEMENTED:
-        case SERVICE_CALL_INTERNAL_ERROR:
-        case SERVICE_CALL_REQUEST_TIMEOUT:
-        case SERVICE_CALL_GATEWAY_TIMEOUT:
-        case SERVICE_CALL_NETWORK_READ_TIMEOUT:
-        case SERVICE_CALL_NETWORK_CONNECTION_TIMEOUT:
-            return (SERVICE_CALL_RESULT) httpStatus;
+        case HTTP_STATUS_OK:
+        case HTTP_STATUS_NOT_ACCEPTABLE:
+        case HTTP_STATUS_NOT_FOUND:
+        case HTTP_STATUS_FORBIDDEN:
+        case HTTP_STATUS_RESOURCE_DELETED:
+        case HTTP_STATUS_UNAUTHORIZED:
+        case HTTP_STATUS_NOT_IMPLEMENTED:
+        case HTTP_STATUS_INTERNAL_SERVER_ERROR:
+        case HTTP_STATUS_REQUEST_TIMEOUT:
+        case HTTP_STATUS_GATEWAY_TIMEOUT:
+        case HTTP_STATUS_NETWORK_READ_TIMEOUT:
+        case HTTP_STATUS_NETWORK_CONNECTION_TIMEOUT:
+            return (HTTP_STATUS_CODE) httpStatus;
         default:
-            return SERVICE_CALL_UNKNOWN;
+            return HTTP_STATUS_UNKNOWN;
     }
 }
 

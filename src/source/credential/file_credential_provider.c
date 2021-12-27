@@ -2,7 +2,7 @@
  * Kinesis Video Producer File based Credential Provider
  */
 #define LOG_CLASS "FileCredentialProvider"
-#include "Include_i.h"
+
 #include "auth.h"
 #include "file_credential_provider.h"
 

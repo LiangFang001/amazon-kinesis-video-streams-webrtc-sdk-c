@@ -111,79 +111,78 @@ extern "C" {
  */
 typedef enum {
     // Not defined
-    SERVICE_CALL_RESULT_NOT_SET = 0,
+    HTTP_STATUS_NONE = 0,
+    // Information responses
+    //
+    HTTP_STATUS_CONTINUE = 100,
 
-    SERVICE_CALL_RESULT_UPGRADE = 101,
+    HTTP_STATUS_SWITCH_PROTOCOL = 101,
+
+    // Successful responses
     // All OK
-    SERVICE_CALL_RESULT_OK = 200,
+    HTTP_STATUS_OK = 200,
 
-    // Invalid params error
-    SERVICE_CALL_INVALID_ARG = 406,
-
-    // Resource not found exception
-    SERVICE_CALL_RESOURCE_NOT_FOUND = 404,
-
-    // Client limit exceeded error
-    SERVICE_CALL_CLIENT_LIMIT = 10000,
-
-    // Device limit exceeded error
-    SERVICE_CALL_DEVICE_LIMIT = 10001,
-
-    // Stream limit exception
-    SERVICE_CALL_STREAM_LIMIT = 10002,
-
-    // Resource in use exception
-    SERVICE_CALL_RESOURCE_IN_USE = 10003,
-
+    // Client error responses
     // Bad request
-    SERVICE_CALL_BAD_REQUEST = 400,
-
-    // Forbidden
-    SERVICE_CALL_FORBIDDEN = 403,
-
-    // Device not provisioned
-    SERVICE_CALL_DEVICE_NOT_PROVISIONED = 10004,
-
-    // Device not found
-    SERVICE_CALL_DEVICE_NOT_FOUND = 10005,
-
+    HTTP_STATUS_BAD_REQUEST = 400,
     // Security error
-    SERVICE_CALL_NOT_AUTHORIZED = 401,
-
+    HTTP_STATUS_UNAUTHORIZED = 401,
+    // Forbidden
+    HTTP_STATUS_FORBIDDEN = 403,
+    // Resource not found exception
+    HTTP_STATUS_NOT_FOUND = 404,
+    // Invalid params error
+    HTTP_STATUS_NOT_ACCEPTABLE = 406,
     // Request timeout
-    SERVICE_CALL_REQUEST_TIMEOUT = 408,
-
-    // Gateway timeout
-    SERVICE_CALL_GATEWAY_TIMEOUT = 504,
-
-    // Network read timeout
-    SERVICE_CALL_NETWORK_READ_TIMEOUT = 598,
-
-    // Network connection timeout
-    SERVICE_CALL_NETWORK_CONNECTION_TIMEOUT = 599,
-
-    // Resource deleted exception
-    SERVICE_CALL_RESOURCE_DELETED = 10400,
-
-    // Not implemented
-    SERVICE_CALL_NOT_IMPLEMENTED = 501,
-
+    HTTP_STATUS_REQUEST_TIMEOUT = 408,
     // Internal server error
-    SERVICE_CALL_INTERNAL_ERROR = 500,
+    HTTP_STATUS_INTERNAL_SERVER_ERROR = 500,
+
+    // Server error responses
+    // Not implemented
+    HTTP_STATUS_NOT_IMPLEMENTED = 501,
 
     // Service unavailable
-    SERVICE_CALL_SERVICE_UNAVAILABLE = 503,
+    HTTP_STATUS_SERVICE_UNAVAILABLE = 503,
 
-    // Other errors
-    SERVICE_CALL_UNKNOWN = 10006,
+    // Gateway timeout
+    HTTP_STATUS_GATEWAY_TIMEOUT = 504,
+
+    // Network read timeout
+    HTTP_STATUS_NETWORK_READ_TIMEOUT = 598,
+
+    // Network connection timeout
+    HTTP_STATUS_NETWORK_CONNECTION_TIMEOUT = 599,
 
     // Go Away result
-    SERVICE_CALL_RESULT_SIGNALING_GO_AWAY = 6000,
+    HTTP_STATUS_SIGNALING_GO_AWAY = 6000,
 
     // Reconnect ICE Server
-    SERVICE_CALL_RESULT_SIGNALING_RECONNECT_ICE = 6001,
+    HTTP_STATUS_SIGNALING_RECONNECT_ICE = 6001,
 
-} SERVICE_CALL_RESULT;
+    // Client limit exceeded error
+    HTTP_STATUS_CLIENT_LIMIT = 10000,
+
+    // Device limit exceeded error
+    HTTP_STATUS_DEVICE_LIMIT = 10001,
+
+    // Stream limit exception
+    HTTP_STATUS_STREAM_LIMIT = 10002,
+
+    // Resource in use exception
+    HTTP_STATUS_RESOURCE_IN_USE = 10003,
+
+    // Device not provisioned
+    HTTP_STATUS_DEVICE_NOT_PROVISIONED = 10004,
+
+    // Device not found
+    HTTP_STATUS_DEVICE_NOT_FOUND = 10005,
+    // Other errors
+    HTTP_STATUS_UNKNOWN = 10006,
+    // Resource deleted exception
+    HTTP_STATUS_RESOURCE_DELETED = 10400,
+
+} HTTP_STATUS_CODE;
 
 #ifdef __cplusplus
 }

@@ -12,9 +12,10 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #define LOG_CLASS "HttpApiRsp"
-#include "../Include_i.h"
 #include "http_api.h"
 #include "channel_info.h"
 #include "auth.h"
@@ -22,25 +23,9 @@
 #define HTTP_RSP_ENTER() // DLOGD("enter")
 #define HTTP_RSP_EXIT()  // DLOGD("exit")
 
-/*-----------------------------------------------------------*/
-
-/**
- *
-    {
-        "ChannelInfo": {
-            "ChannelARN": "string",
-            "ChannelName": "string",
-            "ChannelStatus": "string",
-            "ChannelType": "string",
-            "CreationTime": number,
-            "SingleMasterConfiguration": {
-                "MessageTtlSeconds": number
-            },
-            "Version": "string"
-        }
-    }
- *
-*/
+/******************************************************************************
+ * FUNCTION
+ ******************************************************************************/
 STATUS http_api_rsp_createChannel(const CHAR* pResponseStr, UINT32 resultLen, PSignalingClient pSignalingClient)
 {
     HTTP_RSP_ENTER();
@@ -72,7 +57,7 @@ STATUS http_api_rsp_createChannel(const CHAR* pResponseStr, UINT32 resultLen, PS
     // Perform some validation on the channel description
     CHK(pSignalingClient->channelDescription.channelArn[0] != '\0', STATUS_SIGNALING_NO_ARN_RETURNED_ON_CREATE);
 CleanUp:
-    MEMFREE(pTokens);
+    SAFE_MEMFREE(pTokens);
     HTTP_RSP_EXIT();
     return retStatus;
 }
@@ -109,7 +94,6 @@ STATUS http_api_rsp_describeChannel(const CHAR* pResponseStr, UINT32 resultLen, 
                 CHK(strLen <= MAX_ARN_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
                 STRNCPY(pSignalingClient->channelDescription.channelArn, pResponseStr + pTokens[i + 1].start, strLen);
                 pSignalingClient->channelDescription.channelArn[MAX_ARN_LEN] = '\0';
-                DLOGD("channel arn: %s", pSignalingClient->channelDescription.channelArn);
                 i++;
             } else if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "ChannelName")) {
                 strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
@@ -156,7 +140,7 @@ STATUS http_api_rsp_describeChannel(const CHAR* pResponseStr, UINT32 resultLen, 
     }
 
 CleanUp:
-    MEMFREE(pTokens);
+    SAFE_MEMFREE(pTokens);
     HTTP_RSP_EXIT();
     return retStatus;
 }
@@ -247,7 +231,7 @@ STATUS http_api_rsp_getChannelEndpoint(const CHAR* pResponseStr, UINT32 resultLe
         STATUS_SIGNALING_MISSING_ENDPOINTS_IN_GET_ENDPOINT);
 
 CleanUp:
-    MEMFREE(pTokens);
+    SAFE_MEMFREE(pTokens);
     HTTP_RSP_EXIT();
     return retStatus;
 }
@@ -327,12 +311,11 @@ STATUS http_api_rsp_getIceConfig(const CHAR* pResponseStr, UINT32 resultLen, PSi
     CHK_STATUS(signaling_validateIceConfiguration(pSignalingClient));
 
 CleanUp:
-    MEMFREE(pTokens);
+    SAFE_MEMFREE(pTokens);
     HTTP_RSP_EXIT();
     return retStatus;
 }
 
-// STATUS http_api_rsp_getIoTCredential(const CHAR* pResponseStr, UINT32 resultLen, PSignalingClient pSignalingClient)
 STATUS http_api_rsp_getIoTCredential(PIotCredentialProvider pIotCredentialProvider, const CHAR* pResponseStr, UINT32 resultLen)
 {
     HTTP_RSP_ENTER();
@@ -383,9 +366,7 @@ STATUS http_api_rsp_getIoTCredential(PIotCredentialProvider pIotCredentialProvid
     }
 
     CHK(accessKeyId != NULL && secretKey != NULL && sessionToken != NULL, STATUS_IOT_FAILED);
-    DLOGD("accessKeyId:%s, secretKey:%s, sessionToken:%s, expirationTimestampStr:%s", accessKeyId, secretKey, sessionToken, expirationTimestampStr);
-//#TBD
-#if 1
+    //#TBD
     currentTime = pIotCredentialProvider->getCurrentTimeFn(pIotCredentialProvider->customData);
     CHK_STATUS(convertTimestampToEpoch(expirationTimestampStr, currentTime / HUNDREDS_OF_NANOS_IN_A_SECOND, &expiration));
     DLOGD("Iot credential expiration time %" PRIu64, expiration / HUNDREDS_OF_NANOS_IN_A_SECOND);
@@ -402,10 +383,10 @@ STATUS http_api_rsp_getIoTCredential(PIotCredentialProvider pIotCredentialProvid
 
     CHK_STATUS(createAwsCredentials(accessKeyId, accessKeyIdLen, secretKey, secretKeyLen, sessionToken, sessionTokenLen, expiration,
                                     &pIotCredentialProvider->pAwsCredentials));
-#endif
+
 CleanUp:
 
-    MEMFREE(pTokens);
+    SAFE_MEMFREE(pTokens);
     HTTP_RSP_EXIT();
     return retStatus;
 }

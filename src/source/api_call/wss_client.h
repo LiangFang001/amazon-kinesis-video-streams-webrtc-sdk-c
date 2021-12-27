@@ -12,20 +12,23 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#ifndef __KINESIS_VIDEO_WEBRTC_WSS_CLIENT_H__
-#define __KINESIS_VIDEO_WEBRTC_WSS_CLIENT_H__
+#ifndef __AWS_KVS_WEBRTC_WSS_CLIENT_INCLUDE__
+#define __AWS_KVS_WEBRTC_WSS_CLIENT_INCLUDE__
 
 #pragma once
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include <wslay/wslay.h>
-#include "network_api.h"
+#include "netio.h"
 
-// wslay related lib.
-// SIGNALING_SERVICE_WSS_PING_PONG_INTERVAL_IN_SECONDS
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 #define WSS_CLIENT_RFC6455_UUID                "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 #define WSS_CLIENT_RFC6455_UUID_LEN            STRLEN(WSS_CLIENT_RFC6455_UUID)
 #define WSS_CLIENT_RANDOM_SEED_LEN             16
@@ -35,7 +38,6 @@ extern "C" {
 #define WSS_CLIENT_POLLING_INTERVAL            100 // unit:ms.
 #define WSS_CLIENT_PING_PONG_INTERVAL          10  // unit:sec.
 #define WSS_CLIENT_PING_PONG_COUNTER           (WSS_CLIENT_PING_PONG_INTERVAL * 1000) / WSS_CLIENT_POLLING_INTERVAL
-#define WSS_CLIENT_PING_MAX_ACC_NUM            1
 
 typedef STATUS (*MessageHandlerFunc)(PVOID pUserData, PCHAR pMessage, UINT32 messageLen);
 typedef STATUS (*CtrlMessageHandlerFunc)(PVOID pUserData, UINT8 opcode, PCHAR pMessage, UINT32 messageLen);
@@ -44,7 +46,7 @@ typedef STATUS (*TerminationHandlerFunc)(PVOID pUserData, STATUS errCode);
 typedef struct {
     wslay_event_context_ptr event_ctx;            //!< the event context of wslay.
     struct wslay_event_callbacks event_callbacks; //!< the callback of event context.
-    NetworkContext_t* pNetworkContext;
+    NetIoHandle xNetIoHandle;
     UINT64 pingCounter;
     MUTEX clientLock;                          //!< the lock for the control of the whole wss client api.
     MUTEX listenerLock;                        //!< the lock for the listener thread.
@@ -52,8 +54,12 @@ typedef struct {
     MessageHandlerFunc messageHandler;         //!< the handler of receive the non-ctrl messages.
     CtrlMessageHandlerFunc ctrlMessageHandler; //!< the handler of receive the ctrl messages.
     TerminationHandlerFunc terminationHandler;
+    TID listenerTid;
 } WssClientContext, *PWssClientContext;
 
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 STATUS wss_client_generateClientKey(PCHAR buf, UINT32 bufLen);
 STATUS wss_client_validateAcceptKey(PCHAR clientKey, UINT32 clientKeyLen, PCHAR acceptKey, UINT32 acceptKeyLen);
 /**
@@ -68,7 +74,7 @@ STATUS wss_client_validateAcceptKey(PCHAR clientKey, UINT32 clientKeyLen, PCHAR 
  *
  * @return STATUS status of execution.
  */
-VOID wss_client_create(PWssClientContext* ppWssClientCtx, NetworkContext_t* pNetworkContext, PVOID pUserData, MessageHandlerFunc pFunc,
+VOID wss_client_create(PWssClientContext* ppWssClientCtx, NetIoHandle pNetworkContext, PVOID pUserData, MessageHandlerFunc pFunc,
                        CtrlMessageHandlerFunc pCtrlFunc, TerminationHandlerFunc pTerminationHandlerFunc);
 /**
  * @brief start the wss thread to handle the wss connection.
@@ -118,4 +124,4 @@ VOID wss_client_close(PWssClientContext pWssClientCtx);
 #ifdef __cplusplus
 }
 #endif
-#endif /* __KINESIS_VIDEO_WEBRTC_WSS_CLIENT_H__ */
+#endif /* __AWS_KVS_WEBRTC_WSS_CLIENT_INCLUDE__ */

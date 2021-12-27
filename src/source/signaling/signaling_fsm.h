@@ -12,8 +12,8 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#ifndef __KINESIS_VIDEO_WEBRTC_SIGNALING_STATE_MACHINE__
-#define __KINESIS_VIDEO_WEBRTC_SIGNALING_STATE_MACHINE__
+#ifndef __AWS_KVS_WEBRTC_SIGNALING_FSM_INCLUDE__
+#define __AWS_KVS_WEBRTC_SIGNALING_FSM_INCLUDE__
 
 #pragma once
 
@@ -41,8 +41,6 @@ extern "C" {
 #define SIGNALING_STATE_CONNECT        ((UINT64)(1 << 7))
 #define SIGNALING_STATE_CONNECTED      ((UINT64)(1 << 8))
 #define SIGNALING_STATE_DISCONNECTED   ((UINT64)(1 << 9))
-#define SIGNALING_STATE_DELETE         ((UINT64)(1 << 10))
-#define SIGNALING_STATE_DELETED        ((UINT64)(1 << 11))
 
 typedef PVOID SignalingFsmHandle;
 typedef SignalingFsmHandle* PSignalingFsmHandle;
@@ -92,4 +90,4 @@ UINT64 signaling_fsm_getCurrentState(PSignalingClient pSignalingClient);
 #ifdef __cplusplus
 }
 #endif
-#endif /* __KINESIS_VIDEO_WEBRTC_SIGNALING_STATE_MACHINE__ */
+#endif /* __AWS_KVS_WEBRTC_SIGNALING_FSM_INCLUDE__ */

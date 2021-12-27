@@ -12,8 +12,8 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#ifndef __CONTENT_STATE_INCLUDE_I__
-#define __CONTENT_STATE_INCLUDE_I__
+#ifndef __AWS_KVS_WEBRTC_STATE_MACHINE__
+#define __AWS_KVS_WEBRTC_STATE_MACHINE__
 
 #pragma once
 
@@ -74,12 +74,12 @@ typedef STATUS (*ExecuteStateFunc)(UINT64, UINT64);
  * State Machine state
  */
 typedef struct __StateMachineState {
-    UINT64 state;
-    UINT64 acceptStates;
-    GetNextStateFunc getNextStateFn;
-    ExecuteStateFunc executeStateFn;
-    UINT32 retry;
-    STATUS status;
+    UINT64 state;                    //!< the state of this state machine.
+    UINT64 acceptStates;             //!< the previous accepted states.
+    GetNextStateFunc getNextStateFn; //!< the transition function of state machine.
+    ExecuteStateFunc executeStateFn; //!< the main executor function.
+    UINT32 retry;                    //!< the maximum number of retry.
+    STATUS status;                   //!< the error code for the failure of this state machine.
 } StateMachineState, *PStateMachineState;
 
 /**
@@ -93,46 +93,34 @@ typedef struct __StateMachine {
  * State Machine context
  */
 typedef struct __StateMachineContext {
-    PStateMachineState pCurrentState;
-    UINT32 retryCount;
-    UINT64 time;
+    PStateMachineState pCurrentState; //!< the context of the current state.
+    UINT32 retryCount;                //!< the current number of retry in this state.
+    UINT64 time;                      //!< the current time of step the state machine.
+    UINT64 statusCode;
 } StateMachineContext, *PStateMachineContext;
 
 /**
  * State Machine definition
  */
 typedef struct __StateMachineImpl {
-    // First member should be the public state machine
-    StateMachine stateMachine;
-
-    // Current time functionality
-    GetCurrentTimeFunc getCurrentTimeFunc;
-
-    // Custom data to be passed with the time function
-    UINT64 getCurrentTimeFuncCustomData;
-
-    // Custom data to be passed with the state callbacks
-    UINT64 customData;
-
-    // State machine context
-    StateMachineContext context;
-
-    // State machine state count
-    UINT32 stateCount;
-
-    // State machine states following the main structure
-    PStateMachineState states;
+    StateMachine stateMachine;             //!< First member should be the public state machine
+    GetCurrentTimeFunc getCurrentTimeFunc; //!< Current time functionality
+    UINT64 getCurrentTimeFuncCustomData;   //!< Custom data to be passed with the time function
+    UINT64 customData;                     //!< Custom data to be passed with the state callbacks
+    StateMachineContext context;           //!< State machine context
+    UINT32 stateCount;                     //!< State machine state count
+    PStateMachineState states;             //!< State machine states following the main structure
 } StateMachineImpl, *PStateMachineImpl;
 
 /**
  * @brief Creates a new state machine
  *
- * @param[in] pStates
- * @param[in] stateCount
- * @param[in] customData
- * @param[in] getCurrentTimeFunc
- * @param[in] getCurrentTimeFuncCustomData
- * @param[in] ppStateMachine
+ * @param[in] pStates the array of the states.
+ * @param[in] stateCount the number of the states.
+ * @param[in] customData the user data.
+ * @param[in] getCurrentTimeFunc the function pointer of getting current time.
+ * @param[in] getCurrentTimeFuncCustomData the user data passed to the function of getting current time.
+ * @param[in] ppStateMachine the context of this state machine.
  *
  * @return STATUS status of execution.
  */
@@ -141,7 +129,7 @@ STATUS state_machine_create(PStateMachineState pStates, UINT32 stateCount, UINT6
 /**
  * @brief Frees the state machine object
  *
- * @param[in] pStateMachine
+ * @param[in] pStateMachine the context of this state machine.
  *
  * @return STATUS status of execution.
  */
@@ -149,7 +137,7 @@ STATUS state_machine_free(PStateMachine pStateMachine);
 /**
  * @brief Transition the state machine given it's context
  *
- * @param[in] pStateMachine
+ * @param[in] pStateMachine the context of this state machine.
  *
  * @return STATUS status of execution.
  */
@@ -157,7 +145,7 @@ STATUS state_machine_step(PStateMachine pStateMachine);
 /**
  * @brief Checks whether the state machine state is accepted states
  *
- * @param[in] pStateMachine
+ * @param[in] pStateMachine the context of this state machine.
  * @param[in] requiredStates
  *
  * @return STATUS status of execution.
@@ -166,7 +154,7 @@ STATUS state_machine_accept(PStateMachine pStateMachine, UINT64 requiredStates);
 /**
  * @brief Gets a pointer to the state object given it's state
  *
- * @param[in] pStateMachine
+ * @param[in] pStateMachine the context of this state machine.
  * @param[in] state
  * @param[in, out] ppState
  *
@@ -176,7 +164,7 @@ STATUS state_machine_getState(PStateMachine pStateMachine, UINT64 state, PStateM
 /**
  * @brief Gets a pointer to the current state object.
  *
- * @param[in] pStateMachine
+ * @param[in] pStateMachine the context of this state machine.
  * @param[in, out] ppState
  *
  * @return STATUS status of execution.
@@ -185,7 +173,7 @@ STATUS state_machine_getCurrentState(PStateMachine pStateMachine, PStateMachineS
 /**
  * @brief Force sets the state machine state
  *
- * @param[in] pStateMachine
+ * @param[in] pStateMachine the context of this state machine.
  * @param[in] state
  *
  * @return STATUS status of execution.
@@ -194,7 +182,7 @@ STATUS state_machine_setCurrentState(PStateMachine pStateMachine, UINT64 state);
 /**
  * @brief Resets the state machine retry count.
  *
- * @param[in] pStateMachine
+ * @param[in] pStateMachine the context of this state machine.
  *
  * @return STATUS status of execution.
  */
@@ -203,4 +191,4 @@ STATUS state_machine_resetRetryCount(PStateMachine pStateMachine);
 #ifdef __cplusplus
 }
 #endif
-#endif /* __CONTENT_STATE_INCLUDE_I__ */
+#endif /* __AWS_KVS_WEBRTC_STATE_MACHINE__ */

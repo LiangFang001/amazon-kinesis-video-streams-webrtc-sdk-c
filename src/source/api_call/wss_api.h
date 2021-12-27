@@ -12,8 +12,8 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#ifndef __KINESIS_VIDEO_WEBRTC_WSS_API_H__
-#define __KINESIS_VIDEO_WEBRTC_WSS_API_H__
+#ifndef __AWS_KVS_WEBRTC_WSS_API_INCLUDE__
+#define __AWS_KVS_WEBRTC_WSS_API_INCLUDE__
 
 #pragma once
 
@@ -29,9 +29,6 @@ extern "C" {
 /******************************************************************************
  * DEFINITIONS
  ******************************************************************************/
-// Max length of the signaling message type string length
-#define MAX_SIGNALING_MESSAGE_TYPE_LEN ARRAY_SIZE(SIGNALING_RECONNECT_ICE_SERVER)
-
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
@@ -72,7 +69,7 @@ STATUS wss_api_handleCtrlMsg(PVOID pUserData, UINT8 opcode, PCHAR pMessage, UINT
  *
  * @return STATUS status of execution.
  */
-STATUS wss_api_handleTermination(PVOID pUserData, STATUS errCode);
+STATUS wss_api_handleDisconnection(PVOID pUserData, STATUS errCode);
 /**
  * @brief send the data buffer out.
  *
@@ -83,7 +80,6 @@ STATUS wss_api_handleTermination(PVOID pUserData, STATUS errCode);
  * @return STATUS status of execution.
  */
 STATUS wss_api_send(PSignalingClient pSignalingClient, PBYTE pSendBuf, UINT32 bufLen);
-// #YC_TBD.
 /**
  * @brief terminate the websocket connection but will set the result of signaling client for the next step.
  *
@@ -92,7 +88,7 @@ STATUS wss_api_send(PSignalingClient pSignalingClient, PBYTE pSendBuf, UINT32 bu
  *
  * @return STATUS status of execution.
  */
-STATUS wss_api_terminate(PSignalingClient pSignalingClient, SERVICE_CALL_RESULT callResult);
+STATUS wss_api_disconnect(PSignalingClient pSignalingClient);
 
 /**
  * @brief https://docs.aws.amazon.com/kinesisvideostreams-webrtc-dg/latest/devguide/kvswebrtc-websocket-apis-7.html
@@ -108,4 +104,4 @@ STATUS wss_api_rsp_receivedMessage(const CHAR* pResponseStr, UINT32 resultLen, P
 #ifdef __cplusplus
 }
 #endif
-#endif /* __KINESIS_VIDEO_WEBRTC_WSS_API_H__ */
+#endif /* __AWS_KVS_WEBRTC_WSS_API_INCLUDE__ */

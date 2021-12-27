@@ -29,5 +29,5 @@ target_link_libraries(webrtc_client_test
     kvsWebrtcClient
     kvsWebrtcSignalingClient
     ${OPENSSL_CRYPTO_LIBRARY}
-    kvspicUtils
+    kvsWebrtcUtils
     ${GTEST_LIBNAME})

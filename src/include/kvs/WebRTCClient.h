@@ -1,5 +1,16 @@
 /*
- * Main public include file
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 #ifndef __KINESIS_VIDEO_WEBRTC_CLIENT_INCLUDE__
 #define __KINESIS_VIDEO_WEBRTC_CLIENT_INCLUDE__
@@ -10,9 +21,9 @@
 extern "C" {
 #endif
 
-////////////////////////////////////////////////////
-// Public headers
-////////////////////////////////////////////////////
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
@@ -29,10 +40,12 @@ extern "C" {
 #pragma clang diagnostic pop
 #endif
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 /////////////////////////////////////////////////////
 /// Lengths of different character arrays
 /////////////////////////////////////////////////////
-
 /*! \addtogroup NameLengths
  * Lengths of some string members of different structures
  *  @{
@@ -428,6 +441,7 @@ typedef enum {
     SIGNALING_MESSAGE_TYPE_STATUS_RESPONSE, //!< This message notifies the awaiting send after checking for failure in message delivery
     SIGNALING_MESSAGE_TYPE_CTRL_BASE,
     SIGNALING_MESSAGE_TYPE_CTRL_CLOSE,
+    SIGNALING_MESSAGE_TYPE_CTRL_LISTENER_TREMINATED,
     SIGNALING_MESSAGE_TYPE_UNKNOWN, //!< This message type is set when the type of message received is unknown
 } SIGNALING_MESSAGE_TYPE;
 
@@ -445,7 +459,7 @@ typedef enum {
     SIGNALING_CLIENT_STATE_GET_ENDPOINT,    //!< This state is set to provide an endpoint for sending/receiving messages
     SIGNALING_CLIENT_STATE_GET_ICE_CONFIG,  //!< This state gets ICE related details such as server list, username,
                                             //!< and passwords
-    SIGNALING_CLIENT_STATE_READY,           //!< On setting this state, if continueOnReady flag is set, a transition is
+    SIGNALING_CLIENT_STATE_READY,           //!< On setting this state, if connecting flag is set, a transition is
                                             //!< to the next state is made
     SIGNALING_CLIENT_STATE_CONNECTING,      //!< In this state, if already connected, nothing needs to be done. This can happen when
                                             //!< we get to this state after ICE refresh
@@ -805,7 +819,7 @@ typedef struct {
     SignalingMessage signalingMessage; //!< The signaling message with details such as message type, correlation ID,
                                        //!< peer client ID and payload
 
-    SERVICE_CALL_RESULT statusCode; //!< Response status code
+    HTTP_STATUS_CODE statusCode; //!< Response status code
 
     CHAR errorType[MAX_ERROR_TYPE_STRING_LEN + 1]; //!< Error type of the signaling message
 

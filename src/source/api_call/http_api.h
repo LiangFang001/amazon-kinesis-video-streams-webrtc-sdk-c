@@ -12,25 +12,28 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#ifndef __KINESIS_VIDEO_WEBRTC_HTTP_API_H_
-#define __KINESIS_VIDEO_WEBRTC_HTTP_API_H_
+#ifndef __AWS_KVS_WEBRTC_HTTP_API_INCLUDE__
+#define __AWS_KVS_WEBRTC_HTTP_API_INCLUDE__
 
 #pragma once
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+#include "kvs/common_defs.h"
+#include "kvs/error.h"
 #include "signaling.h"
 #include "iot_credential_provider.h"
-#include "request_info.h"
 
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 STATUS http_api_createChannel(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode);
 STATUS http_api_describeChannel(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode);
 STATUS http_api_getChannelEndpoint(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode);
-/**
- * https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_AWSAcuitySignalingService_GetIceServerConfig.html
- */
 STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode);
 STATUS http_api_deleteChannel(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCode);
 STATUS http_api_getIotCredential(PIotCredentialProvider pIotCredentialProvider);
@@ -45,4 +48,4 @@ STATUS http_api_rsp_getIoTCredential(PIotCredentialProvider pIotCredentialProvid
 #ifdef __cplusplus
 }
 #endif
-#endif /* __KINESIS_VIDEO_WEBRTC_HTTP_API_H_ */
+#endif /* __AWS_KVS_WEBRTC_HTTP_API_INCLUDE__ */
