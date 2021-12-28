@@ -24,7 +24,7 @@ extern "C" {
 /******************************************************************************
  * HEADERS
  ******************************************************************************/
-#include <sys/socket.h> //!< #YC_TBD, for freertos message queue.
+#include <sys/socket.h> //!< #TBD, for freertos message queue.
 #include "kvs/WebRTCClient.h"
 #include "channel_info.h"
 #include "timer_queue.h"
@@ -126,7 +126,7 @@ extern "C" {
     "\t\"CorrelationId\": \"%.*s\"\n"                                                                                                                \
     "}"
 
-/** #YC_TBD, need to add the code of initialization. */
+/** #TBD, need to add the code of initialization. */
 #define WSS_INBOUND_MSGQ_LENGTH 32
 
 /******************************************************************************

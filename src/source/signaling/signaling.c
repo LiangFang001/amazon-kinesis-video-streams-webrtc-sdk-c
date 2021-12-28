@@ -16,7 +16,7 @@
  * HEADERS
  ******************************************************************************/
 #define LOG_CLASS "Signaling"
-// this is for pdPASS, #YC_TBD.
+// this is for pdPASS, #TBD.
 #include <sys/socket.h>
 #include "logger.h"
 #include "channel_info.h"
@@ -165,7 +165,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
                     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
                     ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_UNKNOWN);
                     CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));
-                    // #YC_TBD
+                    // #TBD
                     ATOMIC_INCREMENT(&pSignalingClient->diagnostics.numberOfReconnects);
                     exit = TRUE;
                     CHK(FALSE, retStatus);
@@ -362,7 +362,7 @@ STATUS signaling_free(PSignalingClient* ppSignalingClient)
     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
     ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_OK);
 
-    // #YC_TBD, need to add cancel code.
+    // #TBD, need to add cancel code.
     if (IS_VALID_TID_VALUE(pSignalingClient->dispatchMsgTid)) {
         THREAD_CANCEL(pSignalingClient->dispatchMsgTid);
         pSignalingClient->dispatchMsgTid = INVALID_TID_VALUE;
@@ -657,7 +657,7 @@ STATUS signaling_delete(PSignalingClient pSignalingClient)
     CHK(pSignalingClient != NULL, STATUS_SIGNALING_NULL_ARG);
 
     CHK_STATUS(signaling_disconnect(pSignalingClient));
-    //#YC_TBD.
+    //#TBD.
     CHK_STATUS(signaling_channel_delete(pSignalingClient, 0));
 
 CleanUp:
@@ -1106,8 +1106,6 @@ STATUS signaling_channel_getEndpoint(PSignalingClient pSignalingClient, UINT64 t
             }
 
             if (STATUS_SUCCEEDED(retStatus)) {
-                // retStatus = lwsGetChannelEndpoint(pSignalingClient, time);
-                // #YC_TBD, #HTTP.
                 retStatus = http_api_getChannelEndpoint(pSignalingClient, &httpStatusCode);
                 ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) httpStatusCode);
 
@@ -1208,7 +1206,7 @@ STATUS signaling_channel_delete(PSignalingClient pSignalingClient, UINT64 time)
     UINT32 httpStatusCode = HTTP_STATUS_NONE;
 
     CHK(pSignalingClient != NULL, STATUS_SIGNALING_NULL_ARG);
-    //#YC_TBD
+    //#TBD
     // Check if we need to terminate the ongoing listener
     wss_api_disconnect(pSignalingClient);
     ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_OK);

@@ -848,7 +848,7 @@ STATUS signaling_fsm_step(PSignalingClient pSignalingClient, STATUS status)
             CHK(status != SIGNALING_STATE_MACHINE_STATES[i].status, SIGNALING_STATE_MACHINE_STATES[i].status);
         }
     }
-    //#YC_TBD.
+    //#TBD.
     // Fix-up the expired credentials transition
     // NOTE: Api Gateway might not return an error that can be interpreted as unauthorized to
     // make the correct transition to auth integration state.

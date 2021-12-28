@@ -168,7 +168,7 @@ STATUS http_parser_start(HttpResponseContext** ppHttpRspCtx, PCHAR pBuf, UINT32 
     llhttp_init((PVOID) &userParser, HTTP_RESPONSE, &httpSettings);
     userParser.customData = pCtx;
     httpErrno = llhttp_execute((void*) &userParser, pBuf, (size_t) uLen);
-    // #YC_TBD, need to be fixed.
+    // #TBD, need to be fixed.
     if (httpErrno != HPE_OK && httpErrno < HPE_CB_MESSAGE_BEGIN) {
         retStatus = STATUS_RECV_DATA_FAILED;
     } else {
