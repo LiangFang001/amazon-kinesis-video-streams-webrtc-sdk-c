@@ -1,6 +1,7 @@
 #define LOG_CLASS "RtpOpusPayloader"
 
 #include "../../Include_i.h"
+#include "RtpOpusPayloader.h"
 
 STATUS createPayloadForOpus(UINT32 mtu, PBYTE opusFrame, UINT32 opusFrameLength, PBYTE payloadBuffer, PUINT32 pPayloadLength,
                             PUINT32 pPayloadSubLength, PUINT32 pPayloadSubLenSize)

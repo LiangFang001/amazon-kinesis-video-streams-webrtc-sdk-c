@@ -9,10 +9,15 @@ PeerConnection internal include file
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "kvs/error.h"
+#include "kvs/common_defs.h"
 #include "hash_table.h"
 #include "double_linked_list.h"
 #include "dtls.h"
+#include "IceAgent.h"
+#include "network.h"
+#include "SrtpSession.h"
+#include "Sctp.h"
 
 #define LOCAL_ICE_UFRAG_LEN 4
 #define LOCAL_ICE_PWD_LEN   24
@@ -133,6 +138,8 @@ VOID onSctpSessionDataChannelOpen(UINT64, UINT32, PBYTE, UINT32);
 
 STATUS sendPacketToRtpReceiver(PKvsPeerConnection, PBYTE, UINT32);
 STATUS changePeerConnectionState(PKvsPeerConnection, RTC_PEER_CONNECTION_STATE);
+
+STATUS generateJSONSafeString(PCHAR, UINT32);
 
 #ifdef __cplusplus
 }

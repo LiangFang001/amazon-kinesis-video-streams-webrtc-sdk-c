@@ -2,6 +2,7 @@
 #define LOG_CLASS "JitterBuffer"
 
 #include "../Include_i.h"
+#include "JitterBuffer.h"
 
 STATUS createJitterBuffer(FrameReadyFunc onFrameReadyFunc, FrameDroppedFunc onFrameDroppedFunc, DepayRtpPayloadFunc depayRtpPayloadFunc,
                           UINT32 maxLatency, UINT32 clockRate, UINT64 customData, PJitterBuffer* ppJitterBuffer)

@@ -4,6 +4,8 @@
 #define LOG_CLASS "TurnConnection"
 #include "../Include_i.h"
 #include "endianness.h"
+#include "IceAgent.h"
+#include "TurnConnection.h"
 
 // intenal function prototype.
 PTurnPeer turnConnectionGetPeerWithIp(PTurnConnection pTurnConnection, PKvsIpAddress pKvsIpAddress);

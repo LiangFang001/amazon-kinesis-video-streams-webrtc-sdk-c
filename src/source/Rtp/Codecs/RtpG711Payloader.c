@@ -1,6 +1,7 @@
 #define LOG_CLASS "RtpG711Payloader"
 
 #include "../../Include_i.h"
+#include "RtpG711Payloader.h"
 
 STATUS createPayloadForG711(UINT32 mtu, PBYTE g711Frame, UINT32 g711FrameLength, PBYTE payloadBuffer, PUINT32 pPayloadLength,
                             PUINT32 pPayloadSubLength, PUINT32 pPayloadSubLenSize)

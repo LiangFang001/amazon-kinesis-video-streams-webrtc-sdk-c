@@ -4,6 +4,10 @@
 #define LOG_CLASS "Network"
 #include "../Include_i.h"
 #include "network.h"
+#ifdef KVSWEBRTC_HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
+#include <netdb.h>
 
 STATUS getLocalhostIpAddresses(PKvsIpAddress destIpList, PUINT32 pDestIpListLen, IceSetInterfaceFilterFunc filter, UINT64 customData)
 {

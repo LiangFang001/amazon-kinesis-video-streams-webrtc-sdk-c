@@ -11,7 +11,6 @@ extern "C" {
 #endif
 
 #include "network.h"
-#include "socket_connection.h"
 #include "tls.h"
 
 #define SOCKET_SEND_RETRY_TIMEOUT_MICRO_SECOND 500000
@@ -23,9 +22,9 @@ extern "C" {
         ATOMIC_STORE_BOOL(&(ps)->connectionClosed, TRUE);                                                                                            \
     }
 
+typedef struct __SocketConnection SocketConnection;
 typedef STATUS (*ConnectionDataAvailableFunc)(UINT64, struct __SocketConnection*, PBYTE, UINT32, PKvsIpAddress, PKvsIpAddress);
 
-typedef struct __SocketConnection SocketConnection;
 struct __SocketConnection {
     /* Indicate whether this socket is marked for cleanup */
     volatile ATOMIC_BOOL connectionClosed;

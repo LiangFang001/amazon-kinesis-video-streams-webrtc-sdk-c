@@ -3,6 +3,9 @@
  */
 #define LOG_CLASS "SocketConnection"
 #include "../Include_i.h"
+#include "socket_connection.h"
+#include "IceAgent.h"
+#include <netdb.h>
 
 /// internal function prototype
 STATUS socketSendDataWithRetry(PSocketConnection pSocketConnection, PBYTE buf, UINT32 bufLen, PKvsIpAddress pDestIp, PUINT32 pBytesWritten);

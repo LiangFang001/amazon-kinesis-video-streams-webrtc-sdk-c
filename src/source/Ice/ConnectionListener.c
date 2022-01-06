@@ -2,7 +2,13 @@
  * Kinesis Video Producer ConnectionListener
  */
 #define LOG_CLASS "ConnectionListener"
-#include "../Include_i.h"
+
+#include <sys/socket.h>
+#include <netdb.h>
+
+#include "ConnectionListener.h"
+#include "IceAgent.h"
+#include "IceUtils.h"
 
 STATUS createConnectionListener(PConnectionListener* ppConnectionListener)
 {

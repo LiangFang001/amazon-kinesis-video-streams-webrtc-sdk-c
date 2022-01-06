@@ -13,6 +13,9 @@ extern "C" {
 #include "stun.h"
 #include "network.h"
 #include "timer_queue.h"
+#include "socket_connection.h"
+#include "ConnectionListener.h"
+#include "IceUtils.h"
 
 // https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
 #define TURN_REQUEST_TRANSPORT_UDP               17

@@ -2,6 +2,8 @@
 #define LOG_CLASS "Retransmitter"
 
 #include "../Include_i.h"
+#include "RtpPacket.h"
+#include "Rtp.h"
 
 STATUS createRetransmitter(UINT32 seqNumListLen, UINT32 validIndexListLen, PRetransmitter* ppRetransmitter)
 {

@@ -10,6 +10,10 @@ Retransmitter internal include file
 extern "C" {
 #endif
 
+#include "RtcpPacket.h"
+#include "PeerConnection.h"
+#include "Retransmitter.h"
+
 typedef struct {
     PUINT16 sequenceNumberList;
     UINT32 seqNumListLen;

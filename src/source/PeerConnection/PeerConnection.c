@@ -2,6 +2,21 @@
 
 #include "../Include_i.h"
 #include "dtls.h"
+#include "ConnectionListener.h"
+#include "IceAgentStateMachine.h"
+#include "network.h"
+#include "RtcpPacket.h"
+#include "JitterBuffer.h"
+#include "PeerConnection.h"
+#include "SessionDescription.h"
+#include "Rtp.h"
+#include "Rtcp.h"
+#include "Sdp.h"
+#include "DataChannel.h"
+#include "RtpVP8Payloader.h"
+#include "RtpH264Payloader.h"
+#include "RtpOpusPayloader.h"
+#include "RtpG711Payloader.h"
 
 #define PC_ENTER()  // ENTER()
 #define PC_LEAVE()  // LEAVE()

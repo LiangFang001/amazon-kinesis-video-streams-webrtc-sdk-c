@@ -10,6 +10,9 @@ Signaling State Machine internal include file
 extern "C" {
 #endif
 
+#include "kvs/error.h"
+#include "kvs/common_defs.h"
+#include "IceAgent.h"
 /**
  * Ice states definitions
  *
@@ -44,7 +47,7 @@ extern "C" {
 
 /**
  * @brief advance the fsm of the ice agent.
- * 
+ *
  * @param[in] PIceAgent IceAgent object
  *
  * @return STATUS status of execution

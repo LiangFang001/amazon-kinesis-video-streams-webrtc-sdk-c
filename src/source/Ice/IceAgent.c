@@ -5,10 +5,16 @@
  */
 #define LOG_CLASS "IceAgent"
 #include "../Include_i.h"
+#include <arpa/inet.h>
+#include <lwip/sockets.h>
 #include "double_linked_list.h"
 #include "hex.h"
 #include "crc32.h"
 #include "network.h"
+#include "IceAgent.h"
+#include "TurnConnection.h"
+#include "IceAgentStateMachine.h"
+#include "PeerConnection.h"
 
 #define ICE_AGENT_ENTRY() ENTERS()
 #define ICE_AGENT_LEAVE() LEAVES()

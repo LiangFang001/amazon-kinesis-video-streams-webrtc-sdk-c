@@ -3,6 +3,10 @@
 #define LOG_CLASS "DataChannel"
 
 #include "../Include_i.h"
+#include "PeerConnection.h"
+#include "Sctp.h"
+#include "DataChannel.h"
+
 #define DATA_ENTER()  // ENTER()
 #define DATA_LEAVE()  // LEAVE()
 #define DATA_ENTERS() // ENTERS()

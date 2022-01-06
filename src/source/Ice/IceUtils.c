@@ -4,6 +4,7 @@
 #define LOG_CLASS "IceUtils"
 #include "../Include_i.h"
 #include "endianness.h"
+#include "TurnConnection.h"
 
 STATUS createTransactionIdStore(UINT32 maxIdCount, PTransactionIdStore* ppTransactionIdStore)
 {

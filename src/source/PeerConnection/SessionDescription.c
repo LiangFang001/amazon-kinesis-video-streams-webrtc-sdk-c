@@ -1,5 +1,8 @@
 #define LOG_CLASS "SessionDescription"
 #include "../Include_i.h"
+#include "network.h"
+#include "SessionDescription.h"
+#include "Rtp.h"
 
 #ifndef JSMN_HEADER
 #define JSMN_HEADER

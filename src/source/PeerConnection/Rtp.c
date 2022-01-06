@@ -2,6 +2,12 @@
 #define LOG_CLASS "RtcRtp"
 
 #include "../Include_i.h"
+#include "SessionDescription.h"
+#include "Rtp.h"
+#include "RtpVP8Payloader.h"
+#include "RtpH264Payloader.h"
+#include "RtpOpusPayloader.h"
+#include "RtpG711Payloader.h"
 
 typedef STATUS (*RtpPayloadFunc)(UINT32, PBYTE, UINT32, PBYTE, PUINT32, PUINT32, PUINT32);
 

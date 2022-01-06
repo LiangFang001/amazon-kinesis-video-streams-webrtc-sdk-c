@@ -1,6 +1,8 @@
 #define LOG_CLASS "NatTypeDiscovery"
 #include "../Include_i.h"
 #include "network.h"
+#include "ConnectionListener.h"
+#include "NatBehaviorDiscovery.h"
 
 /* Store STUN reponse in bindingResponseList. */
 STATUS natTestIncomingDataHandler(UINT64 customData, PSocketConnection pSocketConnection, PBYTE pBuffer, UINT32 bufferLen, PKvsIpAddress pSrc,

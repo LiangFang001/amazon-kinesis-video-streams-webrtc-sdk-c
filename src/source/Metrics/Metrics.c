@@ -3,6 +3,9 @@
  */
 #define LOG_CLASS "Metrics"
 #include "../Include_i.h"
+#include "PeerConnection.h"
+#include "Rtp.h"
+#include "DataChannel.h"
 
 STATUS getIceCandidatePairStats(PRtcPeerConnection pRtcPeerConnection, PRtcIceCandidatePairStats pRtcIceCandidatePairStats)
 {

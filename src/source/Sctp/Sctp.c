@@ -2,6 +2,8 @@
 
 #define LOG_CLASS "SCTP"
 #include "../Include_i.h"
+#include "endianness.h"
+#include "Sctp.h"
 
 /***************************************************
  *

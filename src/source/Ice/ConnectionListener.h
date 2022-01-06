@@ -10,6 +10,8 @@ Connection Listener internal include file
 extern "C" {
 #endif
 
+#include "kvs/error.h"
+
 #include "socket_connection.h"
 
 #define CONNECTION_LISTENER_SOCKET_WAIT_FOR_DATA_TIMEOUT     (200 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND)

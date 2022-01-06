@@ -1,6 +1,7 @@
 #ifdef ENABLE_STREAMING
 #define LOG_CLASS "SRTP"
 #include "../Include_i.h"
+#include "SrtpSession.h"
 
 STATUS initSrtpSession(PBYTE receiveKey, PBYTE transmitKey, KVS_SRTP_PROFILE profile, PSrtpSession* ppSrtpSession)
 {

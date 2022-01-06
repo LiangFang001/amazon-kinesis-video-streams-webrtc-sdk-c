@@ -16,6 +16,10 @@ extern "C" {
 #include "stun.h"
 #include "timer_queue.h"
 #include "state_machine.h"
+#include "IceUtils.h"
+#include "ConnectionListener.h"
+#include "network.h"
+#include "Sdp.h"
 
 #define KVS_ICE_MAX_CANDIDATE_PAIR_COUNT                       1024
 #define KVS_ICE_MAX_REMOTE_CANDIDATE_COUNT                     100

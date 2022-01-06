@@ -12,6 +12,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <usrsctp.h>
+
 /**
  * @brief WebRTC Protocol Layers
  *

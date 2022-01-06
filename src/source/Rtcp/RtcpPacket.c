@@ -2,6 +2,9 @@
 
 #include "../Include_i.h"
 #include "endianness.h"
+#include "RtpPacket.h"
+#include "RtcpPacket.h"
+#include <arpa/inet.h>
 
 STATUS setRtcpPacketFromBytes(PBYTE pRawPacket, UINT32 pRawPacketsLen, PRtcpPacket pRtcpPacket)
 {

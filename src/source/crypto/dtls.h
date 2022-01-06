@@ -12,8 +12,11 @@ extern "C" {
 #endif
 #include "timer_queue.h"
 #include "crypto.h"
+#include "network.h"
+#include "io_buffer.h"
+
 #ifdef KVS_USE_OPENSSL
-//TBD
+// TBD
 #elif KVS_USE_MBEDTLS
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>

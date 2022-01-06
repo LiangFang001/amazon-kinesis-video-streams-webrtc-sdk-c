@@ -1,7 +1,7 @@
 #define LOG_CLASS "Stun"
 #include "../Include_i.h"
-#include "stun.h"
 #include "crc32.h"
+#include "stun.h"
 
 STATUS stunPackageIpAddr(PStunHeader pStunHeader, STUN_ATTRIBUTE_TYPE type, PKvsIpAddress pAddress, PBYTE pBuffer, PUINT32 pDataLen)
 {

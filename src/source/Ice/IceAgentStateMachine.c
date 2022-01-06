@@ -3,6 +3,8 @@
  */
 #define LOG_CLASS "IceAgentState"
 #include "../Include_i.h"
+#include "TurnConnection.h"
+#include "IceAgentStateMachine.h"
 
 #define ICE_FSM_ENTER()
 #define ICE_FSM_LEAVE()

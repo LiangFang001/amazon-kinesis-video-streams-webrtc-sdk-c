@@ -1,6 +1,8 @@
 #define LOG_CLASS "RtpVP8Payloader"
 
 #include "../../Include_i.h"
+#include "RtpVP8Payloader.h"
+#include "RtpPacket.h"
 
 STATUS createPayloadForVP8(UINT32 mtu, PBYTE pData, UINT32 dataLen, PBYTE payloadBuffer, PUINT32 pPayloadLength, PUINT32 pPayloadSubLength,
                            PUINT32 pPayloadSubLenSize)

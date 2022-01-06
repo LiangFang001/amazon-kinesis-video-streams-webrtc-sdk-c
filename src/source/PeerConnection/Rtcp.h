@@ -7,6 +7,9 @@
 extern "C" {
 #endif
 
+#include "PeerConnection.h"
+#include "RtcpPacket.h"
+
 STATUS onRtcpPacket(PKvsPeerConnection, PBYTE, UINT32);
 STATUS onRtcpRembPacket(PRtcpPacket, PKvsPeerConnection);
 STATUS onRtcpPLIPacket(PRtcpPacket, PKvsPeerConnection);

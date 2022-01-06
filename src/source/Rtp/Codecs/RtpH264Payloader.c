@@ -1,6 +1,9 @@
 #define LOG_CLASS "RtpH264Payloader"
 
 #include "../../Include_i.h"
+#include "endianness.h"
+#include "RtpPacket.h"
+#include "RtpH264Payloader.h"
 
 STATUS createPayloadForH264(UINT32 mtu, PBYTE nalus, UINT32 nalusLength, PBYTE payloadBuffer, PUINT32 pPayloadLength, PUINT32 pPayloadSubLength,
                             PUINT32 pPayloadSubLenSize)

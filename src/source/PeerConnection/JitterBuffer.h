@@ -10,6 +10,7 @@ PeerConnection internal include file
 extern "C" {
 #endif
 #include "hash_table.h"
+#include "RtpPacket.h"
 
 typedef STATUS (*FrameReadyFunc)(UINT64, UINT16, UINT16, UINT32);
 typedef STATUS (*FrameDroppedFunc)(UINT64, UINT16, UINT16, UINT32);

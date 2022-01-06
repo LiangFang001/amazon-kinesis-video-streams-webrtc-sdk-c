@@ -10,6 +10,8 @@ H264 RTP Payloader include file
 extern "C" {
 #endif
 
+#include "RtpPacket.h"
+
 #define FU_A_HEADER_SIZE     2
 #define FU_B_HEADER_SIZE     4
 #define STAP_A_HEADER_SIZE   1

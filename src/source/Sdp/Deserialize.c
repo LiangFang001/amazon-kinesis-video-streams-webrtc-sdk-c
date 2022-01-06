@@ -1,5 +1,6 @@
 #define LOG_CLASS "SDP"
 #include "../Include_i.h"
+#include "SessionDescription.h"
 /**
  * @brief   parse the string of media (streaming description)
  *          m=audio 9 UDP/TLS/RTP/SAVPF 111 103 104 9 0 8 106 105 13 110 112 113 126\r\n

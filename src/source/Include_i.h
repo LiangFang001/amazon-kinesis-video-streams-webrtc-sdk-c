@@ -10,81 +10,15 @@ Main internal include file
 extern "C" {
 #endif
 
-#ifdef _WIN32
-#include <winsock2.h>
-#include <iphlpapi.h>
-#include <ws2tcpip.h>
-
-#ifndef MSG_NOSIGNAL
-#define MSG_NOSIGNAL 0
-#endif
-
-#endif
-
 ////////////////////////////////////////////////////
 // Project include files
 ////////////////////////////////////////////////////
 #include <kvs/WebRTCClient.h>
 
-#ifdef KVS_USE_OPENSSL
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/hmac.h>
-#include <openssl/md5.h>
-#include <openssl/rand.h>
-#include <openssl/sha.h>
-#include <openssl/ssl.h>
-#elif KVS_USE_MBEDTLS
-//#include <mbedtls/ssl.h>
-//#include <mbedtls/entropy.h>
-//#include <mbedtls/ctr_drbg.h>
-//#include <mbedtls/error.h>
-//#include <mbedtls/certs.h>
-//#include <mbedtls/sha256.h>
-#endif
-
 // INET/INET6 MUST be defined before usrsctp
 // If removed will cause corruption that is hard to determine at runtime
 #define INET  1
 #define INET6 1
-#ifdef ENABLE_DATA_CHANNEL
-#include <usrsctp.h>
-#endif
-
-#if !defined __WINDOWS_BUILD__
-#include <signal.h>
-#include <sys/types.h>
-#ifdef KVSWEBRTC_HAVE_IFADDRS_H
-#include <ifaddrs.h>
-#else
-//#error "need to add the network interface."
-#endif
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <net/if.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#ifdef KVSWEBRTC_HAVE_NETINET_TCP_H
-#include <netinet/tcp.h>
-#endif
-#endif
-
-// Max uFrag and uPwd length as documented in https://tools.ietf.org/html/rfc5245#section-15.4
-#define ICE_MAX_UFRAG_LEN 256
-#define ICE_MAX_UPWD_LEN  256
-
-// Max stun username attribute len: https://tools.ietf.org/html/rfc5389#section-15.3
-#define STUN_MAX_USERNAME_LEN (UINT16) 512
-
-// https://tools.ietf.org/html/rfc5389#section-15.7
-#define STUN_MAX_REALM_LEN (UINT16) 128
-
-// https://tools.ietf.org/html/rfc5389#section-15.8
-#define STUN_MAX_NONCE_LEN (UINT16) 128
-
-// https://tools.ietf.org/html/rfc5389#section-15.6
-#define STUN_MAX_ERROR_PHRASE_LEN (UINT16) 128
 
 #define IS_IPV4_ADDR(pAddress) ((pAddress)->family == KVS_IP_FAMILY_TYPE_IPV4)
 
@@ -92,48 +26,6 @@ extern "C" {
 // Project forward declarations
 ////////////////////////////////////////////////////
 struct __TurnConnection;
-struct __SocketConnection;
-STATUS generateJSONSafeString(PCHAR, UINT32);
-
-////////////////////////////////////////////////////
-// Project internal includes
-////////////////////////////////////////////////////
-#ifdef BUILD_CLIENT
-#include "Ice/ConnectionListener.h"
-#include "Ice/IceUtils.h"
-#include "Sdp/Sdp.h"
-#include "Ice/IceAgent.h"
-#include "Ice/TurnConnection.h"
-#include "Ice/IceAgentStateMachine.h"
-#include "Ice/NatBehaviorDiscovery.h"
-#include "Srtp/SrtpSession.h"
-#include "Sctp/Sctp.h"
-#include "Rtp/RtpPacket.h"
-#include "Rtcp/RtcpPacket.h"
-#include "Rtcp/RollingBuffer.h"
-#include "Rtcp/RtpRollingBuffer.h"
-#include "PeerConnection/JitterBuffer.h"
-#include "PeerConnection/PeerConnection.h"
-#include "PeerConnection/Retransmitter.h"
-#include "PeerConnection/SessionDescription.h"
-#include "PeerConnection/Rtp.h"
-#include "PeerConnection/Rtcp.h"
-#include "PeerConnection/DataChannel.h"
-#include "Rtp/Codecs/RtpVP8Payloader.h"
-#include "Rtp/Codecs/RtpH264Payloader.h"
-#include "Rtp/Codecs/RtpOpusPayloader.h"
-#include "Rtp/Codecs/RtpG711Payloader.h"
-#endif
-
-#include "Metrics/Metrics.h"
-
-////////////////////////////////////////////////////
-// Project internal defines
-////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////
-// Project internal functions
-////////////////////////////////////////////////////
 
 #define KVS_CONVERT_TIMESCALE(pts, from_timescale, to_timescale) (pts * to_timescale / from_timescale)
 

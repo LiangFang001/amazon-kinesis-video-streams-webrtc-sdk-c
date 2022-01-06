@@ -3,6 +3,8 @@
  */
 #define LOG_CLASS "TLS_mbedtls"
 #include "../Include_i.h"
+#include "io_buffer.h"
+#include "Rtp.h"
 
 STATUS createTlsSession(PTlsSessionCallbacks pCallbacks, PTlsSession* ppTlsSession)
 {

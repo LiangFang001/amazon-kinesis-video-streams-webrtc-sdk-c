@@ -10,6 +10,9 @@ RTCP Rolling Buffer include file
 extern "C" {
 #endif
 
+#include "RtpPacket.h"
+#include "RollingBuffer.h"
+
 typedef struct {
     PRollingBuffer pRollingBuffer;
     // index of last rtp packet in rolling buffer

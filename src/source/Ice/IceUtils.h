@@ -12,12 +12,17 @@ extern "C" {
 
 #include "stun.h"
 #include "network.h"
+#include "socket_connection.h"
 
 // #TBD, need to review this design.
 #define DEFAULT_MAX_STORED_TRANSACTION_ID_COUNT 20
 #define MAX_STORED_TRANSACTION_ID_COUNT         100
 
 #define ICE_STUN_DEFAULT_PORT 3478
+
+// Max uFrag and uPwd length as documented in https://tools.ietf.org/html/rfc5245#section-15.4
+#define ICE_MAX_UFRAG_LEN 256
+#define ICE_MAX_UPWD_LEN  256
 
 #define ICE_URL_PREFIX_STUN        "stun:"
 #define ICE_URL_PREFIX_TURN        "turn:"
