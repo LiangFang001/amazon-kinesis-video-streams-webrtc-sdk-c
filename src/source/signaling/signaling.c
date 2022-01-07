@@ -218,6 +218,7 @@ static STATUS signaling_dispatchMsg(PVOID pMessage)
         CHK(THREAD_CREATE_EX(&pSignalingClient->dispatchMsgTid, WSS_DISPATCH_THREAD_NAME, WSS_DISPATCH_THREAD_SIZE, signaling_handleMsg,
                              (PVOID) pSignalingClient) == STATUS_SUCCESS,
             STATUS_SIGNALING_CREATE_DISPATCHER_FAILED);
+        CHK_STATUS(THREAD_DETACH(pSignalingClient->dispatchMsgTid));
     }
 
     if (pSignalingClient->inboundMsqQ != NULL) {
