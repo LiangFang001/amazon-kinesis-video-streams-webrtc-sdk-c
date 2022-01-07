@@ -167,7 +167,7 @@ deadlock:dtlsSessionStart
 #     #1 allocateSctp /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:86 (libkvsWebrtcClient.so+0x00000003ec96)
 #     #2 onInboundPacket /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:136 (libkvsWebrtcClient.so+0x00000003f744)
 #     #3 incomingDataHandler /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/IceAgent.c:1633 (libkvsWebrtcClient.so+0x0000000185e5)
-#     #4 connectionListenerReceiveDataRoutine /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/ConnectionListener.c:328 (libkvsWebrtcClient.so+0x0000000226b7)
+#     #4 connection_listener_receiveRoutine /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/ConnectionListener.c:328 (libkvsWebrtcClient.so+0x0000000226b7)
 race:freeSctpSession
 
 #  WARNING: ThreadSanitizer: data race (pid=16323)
@@ -184,13 +184,13 @@ race:freeSctpSession
 #      #2 allocateSctp /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:86 (libkvsWebrtcClient.so+0x00000003ec96)
 #      #3 onInboundPacket /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:136 (libkvsWebrtcClient.so+0x00000003f744)
 #      #4 incomingDataHandler /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/IceAgent.c:1633 (libkvsWebrtcClient.so+0x0000000185e5)
-#      #5 connectionListenerReceiveDataRoutine /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/ConnectionListener.c:328 (libkvsWebrtcClient.so+0x0000000226b7)
+#      #5 connection_listener_receiveRoutine /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/ConnectionListener.c:328 (libkvsWebrtcClient.so+0x0000000226b7)
 race:usrsctp_close
 
 #  WARNING: ThreadSanitizer: data race (pid=16633)
 #    Read of size 4 at 0x7d1c00006e68 by thread T9 (mutexes: write M300, write M315):
 #      #0 socketConnectionReadData /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/SocketConnection.c:231 (libkvsWebrtcClient.so+0x000000013eb1)
-#      #1 connectionListenerReceiveDataRoutine /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/ConnectionListener.c:303 (libkvsWebrtcClient.so+0x00000002245d)
+#      #1 connection_listener_receiveRoutine /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/ConnectionListener.c:303 (libkvsWebrtcClient.so+0x00000002245d)
 #
 #    Previous write of size 4 at 0x7d1c00006e68 by thread T10 (mutexes: write M294, write M312):
 #      #0 socketConnectionInitSecureConnection /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/SocketConnection.c:129 (libkvsWebrtcClient.so+0x00000001359b)
@@ -628,7 +628,7 @@ race:getDataChannelStats
 #    #6 sctp_invoke_recv_callback <null> (libusrsctp.1.dylib:x86_64+0xb501a)
 #    #7 onInboundPacket PeerConnection.c:126 (libkvsWebrtcClient.dylib:x86_64+0x3b703)
 #    #8 incomingDataHandler IceAgent.c:2156 (libkvsWebrtcClient.dylib:x86_64+0x10b15)
-#    #9 connectionListenerReceiveDataRoutine ConnectionListener.c:380 (libkvsWebrtcClient.dylib:x86_64+0xb0cb)
+#    #9 connection_listener_receiveRoutine ConnectionListener.c:380 (libkvsWebrtcClient.dylib:x86_64+0xb0cb)
 
 #  As if synchronized via sleep:
 #    #0 usleep <null> (libclang_rt.tsan_osx_dynamic.dylib:x86_64h+0x2953e)
@@ -645,7 +645,7 @@ race:getDataChannelStats
 #    #4 sctp_invoke_recv_callback <null> (libusrsctp.1.dylib:x86_64+0xb501a)
 #    #5 onInboundPacket PeerConnection.c:126 (libkvsWebrtcClient.dylib:x86_64+0x3b703)
 #    #6 incomingDataHandler IceAgent.c:2156 (libkvsWebrtcClient.dylib:x86_64+0x10b15)
-#    #7 connectionListenerReceiveDataRoutine ConnectionListener.c:380 (libkvsWebrtcClient.dylib:x86_64+0xb0cb)
+#    #7 connection_listener_receiveRoutine ConnectionListener.c:380 (libkvsWebrtcClient.dylib:x86_64+0xb0cb)
 
 #  Thread T8 (tid=5082892, running) created by main thread at:
 #    #0 pthread_create <null> (libclang_rt.tsan_osx_dynamic.dylib:x86_64h+0x2a99d)

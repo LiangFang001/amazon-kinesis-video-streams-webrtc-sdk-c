@@ -28,23 +28,23 @@ TEST_F(IceApiTest, ConnectionListenerApiTest)
     EXPECT_EQ(STATUS_SUCCESS,
               createSocketConnection(KVS_IP_FAMILY_TYPE_IPV4, KVS_SOCKET_PROTOCOL_UDP, &localhost, NULL, 0, NULL, 0, &pDummySocketConnection));
 
-    EXPECT_NE(STATUS_SUCCESS, createConnectionListener(NULL));
-    EXPECT_NE(STATUS_SUCCESS, freeConnectionListener(NULL));
-    EXPECT_NE(STATUS_SUCCESS, connectionListenerRemoveConnection(NULL, NULL));
-    EXPECT_NE(STATUS_SUCCESS, connectionListenerAddConnection(NULL, NULL));
-    EXPECT_NE(STATUS_SUCCESS, connectionListenerStart(NULL));
+    EXPECT_NE(STATUS_SUCCESS, connection_listener_create(NULL));
+    EXPECT_NE(STATUS_SUCCESS, connection_listener_free(NULL));
+    EXPECT_NE(STATUS_SUCCESS, connection_listener_remove(NULL, NULL));
+    EXPECT_NE(STATUS_SUCCESS, connection_listener_add(NULL, NULL));
+    EXPECT_NE(STATUS_SUCCESS, connection_listener_start(NULL));
 
-    EXPECT_EQ(STATUS_SUCCESS, createConnectionListener(&pConnectionListener));
-    EXPECT_NE(STATUS_SUCCESS, connectionListenerRemoveConnection(pConnectionListener, NULL));
-    EXPECT_NE(STATUS_SUCCESS, connectionListenerAddConnection(pConnectionListener, NULL));
+    EXPECT_EQ(STATUS_SUCCESS, connection_listener_create(&pConnectionListener));
+    EXPECT_NE(STATUS_SUCCESS, connection_listener_remove(pConnectionListener, NULL));
+    EXPECT_NE(STATUS_SUCCESS, connection_listener_add(pConnectionListener, NULL));
 
-    EXPECT_EQ(STATUS_SUCCESS, connectionListenerAddConnection(pConnectionListener, pDummySocketConnection));
-    EXPECT_EQ(STATUS_SUCCESS, connectionListenerRemoveConnection(pConnectionListener, pDummySocketConnection));
+    EXPECT_EQ(STATUS_SUCCESS, connection_listener_add(pConnectionListener, pDummySocketConnection));
+    EXPECT_EQ(STATUS_SUCCESS, connection_listener_remove(pConnectionListener, pDummySocketConnection));
 
     // pDummySocketConnection is freed too
-    EXPECT_EQ(STATUS_SUCCESS, freeConnectionListener(&pConnectionListener));
+    EXPECT_EQ(STATUS_SUCCESS, connection_listener_free(&pConnectionListener));
     // free is idempotent
-    EXPECT_EQ(STATUS_SUCCESS, freeConnectionListener(&pConnectionListener));
+    EXPECT_EQ(STATUS_SUCCESS, connection_listener_free(&pConnectionListener));
 
     EXPECT_EQ(STATUS_SUCCESS, freeSocketConnection(&pDummySocketConnection));
 }

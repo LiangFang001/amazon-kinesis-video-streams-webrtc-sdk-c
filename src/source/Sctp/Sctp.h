@@ -1,7 +1,17 @@
-//
-// Sctp
-//
-
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_WEBRTC_CLIENT_SCTP_SCTP__
 #define __KINESIS_VIDEO_WEBRTC_CLIENT_SCTP_SCTP__
 
@@ -12,9 +22,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include <usrsctp.h>
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 /**
  * @brief WebRTC Protocol Layers
  *
@@ -95,6 +110,10 @@ typedef struct {
     UINT32 packetSize;
     SctpSessionCallbacks sctpSessionCallbacks;
 } SctpSession, *PSctpSession;
+
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 /**
  * @brief initialize the sctp context.
  *

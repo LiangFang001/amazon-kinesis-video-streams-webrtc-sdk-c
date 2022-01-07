@@ -1,7 +1,7 @@
 #define LOG_CLASS "NatTypeDiscovery"
 #include "../Include_i.h"
 #include "network.h"
-#include "ConnectionListener.h"
+#include "connection_listener.h"
 #include "NatBehaviorDiscovery.h"
 
 /* Store STUN reponse in bindingResponseList. */
@@ -305,9 +305,9 @@ STATUS discoverNatBehavior(PCHAR stunServer, NAT_BEHAVIOR* pNatMappingBehavior, 
                                       natTestIncomingDataHandler, 0, &pSocketConnection));
     ATOMIC_STORE_BOOL(&pSocketConnection->receiveData, TRUE);
 
-    CHK_STATUS(createConnectionListener(&pConnectionListener));
-    CHK_STATUS(connectionListenerAddConnection(pConnectionListener, pSocketConnection));
-    CHK_STATUS(connectionListenerStart(pConnectionListener));
+    CHK_STATUS(connection_listener_create(&pConnectionListener));
+    CHK_STATUS(connection_listener_add(pConnectionListener, pSocketConnection));
+    CHK_STATUS(connection_listener_start(pConnectionListener));
 
     MUTEX_LOCK(lock);
     locked = TRUE;
@@ -323,12 +323,12 @@ STATUS discoverNatBehavior(PCHAR stunServer, NAT_BEHAVIOR* pNatMappingBehavior, 
         CHK(FALSE, retStatus);
     }
 
-    CHK_STATUS(connectionListenerRemoveAllConnection(pConnectionListener));
+    CHK_STATUS(connection_listener_removeAll(pConnectionListener));
     freeSocketConnection(&pSocketConnection);
     CHK_STATUS(createSocketConnection(iceServerStun.ipAddress.family, KVS_SOCKET_PROTOCOL_UDP, pSelectedLocalInterface, NULL, (UINT64) &customData,
                                       natTestIncomingDataHandler, 0, &pSocketConnection));
     ATOMIC_STORE_BOOL(&pSocketConnection->receiveData, TRUE);
-    CHK_STATUS(connectionListenerAddConnection(pConnectionListener, pSocketConnection));
+    CHK_STATUS(connection_listener_add(pConnectionListener, pSocketConnection));
 
     MUTEX_LOCK(lock);
     locked = TRUE;
@@ -343,8 +343,8 @@ CleanUp:
     }
 
     if (pConnectionListener != NULL) {
-        connectionListenerRemoveAllConnection(pConnectionListener);
-        freeConnectionListener(&pConnectionListener);
+        connection_listener_removeAll(pConnectionListener);
+        connection_listener_free(&pConnectionListener);
     }
 
     if (pSocketConnection != NULL) {

@@ -45,7 +45,7 @@ class TurnConnectionFunctionalityTest : public WebRtcClientTestBase {
 
         EXPECT_TRUE(pTurnServer != NULL);
         EXPECT_EQ(STATUS_SUCCESS, timerQueueCreate(&timerQueueHandle));
-        EXPECT_EQ(STATUS_SUCCESS, createConnectionListener(&pConnectionListener));
+        EXPECT_EQ(STATUS_SUCCESS, connection_listener_create(&pConnectionListener));
 
         EXPECT_EQ(STATUS_SUCCESS, getLocalhostIpAddresses(localIpInterfaces, &localIpInterfaceCount, NULL, 0));
         for (i = 0; i < localIpInterfaceCount; ++i) {
@@ -68,18 +68,18 @@ class TurnConnectionFunctionalityTest : public WebRtcClientTestBase {
         EXPECT_EQ(STATUS_SUCCESS,
                   createSocketConnection((KVS_IP_FAMILY_TYPE) pTurnServer->ipAddress.family, KVS_ICE_DEFAULT_TURN_PROTOCOL, NULL,
                                          &pTurnServer->ipAddress, (UINT64) this, onDataHandler, 0, &pTurnSocket));
-        EXPECT_EQ(STATUS_SUCCESS, connectionListenerAddConnection(pConnectionListener, pTurnSocket));
+        EXPECT_EQ(STATUS_SUCCESS, connection_listener_add(pConnectionListener, pTurnSocket));
         ASSERT_EQ(STATUS_SUCCESS,
                   createTurnConnection(pTurnServer, timerQueueHandle, TURN_CONNECTION_DATA_TRANSFER_MODE_DATA_CHANNEL, KVS_ICE_DEFAULT_TURN_PROTOCOL,
                                        NULL, pTurnSocket, pConnectionListener, &pTurnConnection));
-        EXPECT_EQ(STATUS_SUCCESS, connectionListenerStart(pConnectionListener));
+        EXPECT_EQ(STATUS_SUCCESS, connection_listener_start(pConnectionListener));
     }
 
     VOID freeTestTurnConnection()
     {
         EXPECT_TRUE(pTurnConnection != NULL);
         EXPECT_EQ(STATUS_SUCCESS, freeTurnConnection(&pTurnConnection));
-        EXPECT_EQ(STATUS_SUCCESS, freeConnectionListener(&pConnectionListener));
+        EXPECT_EQ(STATUS_SUCCESS, connection_listener_free(&pConnectionListener));
         timerQueueFree(&timerQueueHandle);
         deinitializeSignalingClient();
     }

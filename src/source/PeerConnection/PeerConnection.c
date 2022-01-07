@@ -2,7 +2,7 @@
 
 #include "../Include_i.h"
 #include "dtls.h"
-#include "ConnectionListener.h"
+#include "connection_listener.h"
 #include "IceAgentStateMachine.h"
 #include "network.h"
 #include "RtcpPacket.h"
@@ -801,7 +801,7 @@ STATUS createPeerConnection(PRtcConfiguration pConfiguration, PRtcPeerConnection
     iceAgentCallbacks.inboundPacketFn = onInboundPacket;
     iceAgentCallbacks.connectionStateChangedFn = onIceConnectionStateChange;
     iceAgentCallbacks.newLocalCandidateFn = onNewIceLocalCandidate;
-    CHK_STATUS(createConnectionListener(&pConnectionListener));
+    CHK_STATUS(connection_listener_create(&pConnectionListener));
     // IceAgent will own the lifecycle of pConnectionListener;
     CHK_STATUS(createIceAgent(pKvsPeerConnection->localIceUfrag, pKvsPeerConnection->localIcePwd, &iceAgentCallbacks, pConfiguration,
                               pKvsPeerConnection->timerQueueHandle, pConnectionListener, &pKvsPeerConnection->pIceAgent));

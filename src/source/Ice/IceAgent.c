@@ -647,7 +647,7 @@ STATUS freeIceAgent(PIceAgent* ppIceAgent)
     }
 
     if (pIceAgent->pConnectionListener != NULL) {
-        CHK_LOG_ERR(freeConnectionListener(&pIceAgent->pConnectionListener));
+        CHK_LOG_ERR(connection_listener_free(&pIceAgent->pConnectionListener));
     }
 
     if (pIceAgent->iceCandidatePairs != NULL) {
@@ -852,7 +852,7 @@ STATUS iceAgentInitHostCandidate(PIceAgent pIceAgent)
 
             ATOMIC_STORE_BOOL(&pSocketConnection->receiveData, TRUE);
             // connectionListener will free the pSocketConnection at the end.
-            CHK_STATUS(connectionListenerAddConnection(pIceAgent->pConnectionListener, pNewIceCandidate->pSocketConnection));
+            CHK_STATUS(connection_listener_add(pIceAgent->pConnectionListener, pNewIceCandidate->pSocketConnection));
         }
     }
 
@@ -914,7 +914,7 @@ STATUS iceAgentInitSrflxCandidate(PIceAgent pIceAgent)
                                                       &pNewCandidate->pSocketConnection));
                     ATOMIC_STORE_BOOL(&pNewCandidate->pSocketConnection->receiveData, TRUE);
                     // connectionListener will free the pSocketConnection at the end.
-                    CHK_STATUS(connectionListenerAddConnection(pIceAgent->pConnectionListener, pNewCandidate->pSocketConnection));
+                    CHK_STATUS(connection_listener_add(pIceAgent->pConnectionListener, pNewCandidate->pSocketConnection));
                     pNewCandidate->iceCandidateType = ICE_CANDIDATE_TYPE_SERVER_REFLEXIVE;
                     pNewCandidate->state = ICE_CANDIDATE_STATE_NEW;
                     pNewCandidate->iceServerIndex = j;
@@ -993,7 +993,7 @@ STATUS iceAgentInitRelayCandidate(PIceAgent pIceAgent, UINT32 iceServerIndex, KV
                                &pNewCandidate->pSocketConnection) == STATUS_SUCCESS,
         STATUS_TURN_CONNECTION_CREATE_SOCKET);
     // connectionListener will free the pSocketConnection at the end.
-    CHK_STATUS(connectionListenerAddConnection(pIceAgent->pConnectionListener, pNewCandidate->pSocketConnection));
+    CHK_STATUS(connection_listener_add(pIceAgent->pConnectionListener, pNewCandidate->pSocketConnection));
 
     pNewCandidate->iceCandidateType = ICE_CANDIDATE_TYPE_RELAYED;
     pNewCandidate->state = ICE_CANDIDATE_STATE_NEW;
@@ -1280,7 +1280,7 @@ STATUS iceAgentStartGathering(PIceAgent pIceAgent)
     CHK_STATUS(iceAgentInitRelayCandidates(pIceAgent));
 
     // start listening for incoming data
-    CHK_STATUS(connectionListenerStart(pIceAgent->pConnectionListener));
+    CHK_STATUS(connection_listener_start(pIceAgent->pConnectionListener));
 
     pIceAgent->candidateGatheringEndTime = GETTIME() + pIceAgent->kvsRtcConfiguration.iceLocalCandidateGatheringTimeout;
 
@@ -1365,7 +1365,7 @@ STATUS iceAgentShutdown(PIceAgent pIceAgent)
 
     /* remove connections last because still need to send data to deallocate turn */
     if (pIceAgent->pConnectionListener != NULL) {
-        CHK_STATUS(connectionListenerRemoveAllConnection(pIceAgent->pConnectionListener));
+        CHK_STATUS(connection_listener_removeAll(pIceAgent->pConnectionListener));
     }
 
 CleanUp:
@@ -1465,7 +1465,7 @@ STATUS iceAgentRestart(PIceAgent pIceAgent, PCHAR localIceUfrag, PCHAR localIceP
     for (i = 0; i < localCandidateCount; ++i) {
         if (localCandidates[i] != pIceAgent->pDataSendingIceCandidatePair->local) {
             if (localCandidates[i]->iceCandidateType != ICE_CANDIDATE_TYPE_RELAYED) {
-                CHK_STATUS(connectionListenerRemoveConnection(pIceAgent->pConnectionListener, localCandidates[i]->pSocketConnection));
+                CHK_STATUS(connection_listener_remove(pIceAgent->pConnectionListener, localCandidates[i]->pSocketConnection));
                 CHK_STATUS(freeSocketConnection(&localCandidates[i]->pSocketConnection));
             } else {
                 CHK_STATUS(freeTurnConnection(&localCandidates[i]->pTurnConnection));
@@ -1641,8 +1641,7 @@ STATUS iceAgentSetupFsmConnected(PIceAgent pIceAgent)
             CHK_STATUS(freeTurnConnection(&pLastDataSendingIceCandidatePair->local->pTurnConnection));
 
         } else {
-            CHK_STATUS(
-                connectionListenerRemoveConnection(pIceAgent->pConnectionListener, pLastDataSendingIceCandidatePair->local->pSocketConnection));
+            CHK_STATUS(connection_listener_remove(pIceAgent->pConnectionListener, pLastDataSendingIceCandidatePair->local->pSocketConnection));
             CHK_STATUS(freeSocketConnection(&pLastDataSendingIceCandidatePair->local->pSocketConnection));
         }
 

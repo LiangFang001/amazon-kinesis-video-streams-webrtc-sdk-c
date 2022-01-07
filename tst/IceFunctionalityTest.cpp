@@ -140,7 +140,7 @@ PVOID connectionListenAddConnectionRoutine(PVOID arg)
         CHECK(STATUS_SUCCEEDED(createSocketConnection((KVS_IP_FAMILY_TYPE) localhost.family, KVS_SOCKET_PROTOCOL_UDP, &localhost, NULL, 0, NULL, 0,
                                                       &pSocketConnection)));
         pCustomData->socketConnectionList[i] = pSocketConnection;
-        CHECK(STATUS_SUCCEEDED(connectionListenerAddConnection(pCustomData->pConnectionListener, pSocketConnection)));
+        CHECK(STATUS_SUCCEEDED(connection_listener_add(pCustomData->pConnectionListener, pSocketConnection)));
     }
 
     return 0;
@@ -169,8 +169,8 @@ TEST_F(IceFunctionalityTest, connectionListenerFunctionalityTest)
     localhost.address[3] = 0x01;
     localhost.port = 0;
 
-    EXPECT_EQ(STATUS_SUCCESS, createConnectionListener(&pConnectionListener));
-    EXPECT_EQ(STATUS_SUCCESS, connectionListenerStart(pConnectionListener));
+    EXPECT_EQ(STATUS_SUCCESS, connection_listener_create(&pConnectionListener));
+    EXPECT_EQ(STATUS_SUCCESS, connection_listener_start(pConnectionListener));
 
     routine1CustomData.pConnectionListener = pConnectionListener;
     routine2CustomData.pConnectionListener = pConnectionListener;
@@ -190,12 +190,12 @@ TEST_F(IceFunctionalityTest, connectionListenerFunctionalityTest)
 
     CHECK(STATUS_SUCCEEDED(
         createSocketConnection((KVS_IP_FAMILY_TYPE) localhost.family, KVS_SOCKET_PROTOCOL_UDP, &localhost, NULL, 0, NULL, 0, &pSocketConnection)));
-    EXPECT_EQ(STATUS_SUCCESS, connectionListenerAddConnection(pConnectionListener, pSocketConnection));
+    EXPECT_EQ(STATUS_SUCCESS, connection_listener_add(pConnectionListener, pSocketConnection));
 
     newConnectionCount = pConnectionListener->socketCount;
     EXPECT_EQ(connectionCount + 1, newConnectionCount);
 
-    EXPECT_EQ(STATUS_SUCCESS, connectionListenerRemoveConnection(pConnectionListener, pSocketConnection));
+    EXPECT_EQ(STATUS_SUCCESS, connection_listener_remove(pConnectionListener, pSocketConnection));
     newConnectionCount = pConnectionListener->socketCount;
     EXPECT_EQ(connectionCount, newConnectionCount);
 
@@ -213,7 +213,7 @@ TEST_F(IceFunctionalityTest, connectionListenerFunctionalityTest)
     MUTEX_UNLOCK(pConnectionListener->lock);
     EXPECT_FALSE( IS_VALID_TID_VALUE(threadId));
 
-    EXPECT_EQ(STATUS_SUCCESS, freeConnectionListener(&pConnectionListener));
+    EXPECT_EQ(STATUS_SUCCESS, connection_listener_free(&pConnectionListener));
 
     EXPECT_EQ(STATUS_SUCCESS, freeSocketConnection(&pSocketConnection));
 
@@ -675,7 +675,7 @@ TEST_F(IceFunctionalityTest, IceAgentCandidateGatheringTest)
 
     EXPECT_EQ(STATUS_SUCCESS, generateJSONSafeString(localIceUfrag, LOCAL_ICE_UFRAG_LEN));
     EXPECT_EQ(STATUS_SUCCESS, generateJSONSafeString(localIcePwd, LOCAL_ICE_PWD_LEN));
-    EXPECT_EQ(STATUS_SUCCESS, createConnectionListener(&pConnectionListener));
+    EXPECT_EQ(STATUS_SUCCESS, connection_listener_create(&pConnectionListener));
     EXPECT_EQ(STATUS_SUCCESS, timerQueueCreate(&timerQueueHandle));
     EXPECT_EQ(STATUS_SUCCESS,
               createIceAgent(localIceUfrag, localIcePwd, &iceAgentCallbacks, &configuration, timerQueueHandle, pConnectionListener, &pIceAgent));
