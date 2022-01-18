@@ -372,6 +372,7 @@ CleanUp:
     }
 
     pWssClientCtx->listenerTid = INVALID_TID_VALUE;
+    THREAD_EXIT(NULL);
     WSS_CLIENT_EXIT();
     return (PVOID)(ULONG_PTR) retStatus;
 }

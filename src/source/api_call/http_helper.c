@@ -201,7 +201,9 @@ STATUS http_req_pack(PRequestInfo pRequestInfo, PCHAR pVerb, PCHAR pHost, UINT32
     PSingleListNode pCurNode;
     UINT64 item;
     PRequestHeader pRequestHeader;
-
+    INT32 len = 0;
+    INT32 totalLen = bufLen;
+    // sign aws v4 signature.
     if (bAssign == TRUE) {
         // Sign the request
         if (!bWss) {
@@ -217,7 +219,7 @@ STATUS http_req_pack(PRequestInfo pRequestInfo, PCHAR pVerb, PCHAR pHost, UINT32
     pHost[pHostEnd - pHostStart] = '\0';
 
     UINT32 pathLen = MAX_URI_CHAR_LEN;
-    CHK(NULL != (pPath = (PCHAR) MEMCALLOC(pathLen + 1, SIZEOF(CHAR))), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pPath = (PCHAR) MEMCALLOC(pathLen + 1, SIZEOF(CHAR))), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     // Store the pPath
     pPath[MAX_URI_CHAR_LEN] = '\0';
     if (pHostEnd != NULL) {
@@ -235,42 +237,55 @@ STATUS http_req_pack(PRequestInfo pRequestInfo, PCHAR pVerb, PCHAR pHost, UINT32
     if (bAssign == FALSE) {
         CHK_STATUS(setRequestHeader(pRequestInfo, "host", 0, pHost, 0));
     }
+    /* Web socket upgrade */
+    if (bWss && clientKey != NULL) {
+        CHK_STATUS(setRequestHeader(pRequestInfo, "Pragma", 0, "no-cache", 0));
+        CHK_STATUS(setRequestHeader(pRequestInfo, "Cache-Control", 0, "no-cache", 0));
+        CHK_STATUS(setRequestHeader(pRequestInfo, "upgrade", 0, "WebSocket", 0));
+        CHK_STATUS(setRequestHeader(pRequestInfo, "connection", 0, "Upgrade", 0));
+        CHK_STATUS(setRequestHeader(pRequestInfo, "Sec-WebSocket-Key", 0, clientKey, 0));
+        CHK_STATUS(setRequestHeader(pRequestInfo, "Sec-WebSocket-Protocol", 0, "wss", 0));
+        CHK_STATUS(setRequestHeader(pRequestInfo, "Sec-WebSocket-Version", 0, "13", 0));
+    }
 
     p = (PCHAR)(outputBuf);
     /* header */
-    p += SPRINTF(p, "%s %s HTTP/1.1\r\n", pVerb, pPath);
+    CHK(totalLen > 0, STATUS_HTTP_BUF_OVERFLOW);
+    CHK((len = SNPRINTF(p, totalLen, "%s %s HTTP/1.1\r\n", pVerb, pPath)) > 0, STATUS_HTTP_BUF_OVERFLOW);
+    totalLen -= len;
+    p += len;
 
     CHK_STATUS(singleListGetHeadNode(pRequestInfo->pRequestHeaders, &pCurNode));
     while (pCurNode != NULL) {
         CHK_STATUS(singleListGetNodeData(pCurNode, &item));
         pRequestHeader = (PRequestHeader) item;
-
-        // pPrevNode = pCurNode;
-        p += SPRINTF(p, "%s: %s\r\n", pRequestHeader->pName, pRequestHeader->pValue);
-
+        CHK(totalLen > 0, STATUS_HTTP_BUF_OVERFLOW);
+        CHK((len = SNPRINTF(p, totalLen, "%s: %s\r\n", pRequestHeader->pName, pRequestHeader->pValue)) > 0, STATUS_HTTP_BUF_OVERFLOW);
+        totalLen -= len;
+        p += len;
         CHK_STATUS(singleListGetNextNode(pCurNode, &pCurNode));
     }
-    /* Web socket upgrade */
-    if (bWss && clientKey != NULL) {
-        p += SPRINTF(p, "Pragma: no-cache\r\n");
-        p += SPRINTF(p, "Cache-Control: no-cache\r\n");
-        p += SPRINTF(p, "upgrade: WebSocket\r\n");
-        p += SPRINTF(p, "connection: Upgrade\r\n");
 
-        p += SPRINTF(p, "Sec-WebSocket-Key: %s\r\n", clientKey);
-        p += SPRINTF(p, "Sec-WebSocket-Protocol: wss\r\n");
-        p += SPRINTF(p, "Sec-WebSocket-Version: 13\r\n");
-    }
-
-    p += SPRINTF(p, "\r\n");
+    CHK(totalLen > 0, STATUS_HTTP_BUF_OVERFLOW);
+    len = SNPRINTF(p, totalLen, "\r\n");
+    CHK(len > 0, STATUS_HTTP_BUF_OVERFLOW);
+    totalLen -= len;
+    p += len;
     /* body */
     if (pRequestInfo->body != NULL) {
-        p += SPRINTF(p, "%s\r\n", pRequestInfo->body);
-        p += SPRINTF(p, "\r\n");
+        CHK(totalLen > 0, STATUS_HTTP_BUF_OVERFLOW);
+        CHK((len = SNPRINTF(p, totalLen, "%s\r\n", pRequestInfo->body)) > 0, STATUS_HTTP_BUF_OVERFLOW);
+        totalLen -= len;
+        p += len;
+        CHK(totalLen > 0, STATUS_HTTP_BUF_OVERFLOW);
+        CHK((len = SNPRINTF(p, totalLen, "\r\n")) > 0, STATUS_HTTP_BUF_OVERFLOW);
+        totalLen -= len;
+        p += len;
     }
 
 CleanUp:
 
+    CHK_LOG_ERR(retStatus);
     SAFE_MEMFREE(pPath);
     return retStatus;
 }

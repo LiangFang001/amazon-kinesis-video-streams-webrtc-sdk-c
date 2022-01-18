@@ -104,7 +104,7 @@ extern "C" {
  * FUNCTIONS
  ******************************************************************************/
 /**
- * Generates AWS SigV4 signature encoded string into the provided buffer.
+ * @brief Generates AWS SigV4 signature encoded string into the provided buffer.
  *
  * @param[in] - PRequestInfo - IN request info for signing
  * @param[in] - PCHAR - IN - Date/time string to use
@@ -114,10 +114,10 @@ extern "C" {
  *
  * @return - STATUS code of the execution
  */
-STATUS generateAwsSigV4Signature(PRequestInfo, PCHAR, BOOL, PCHAR*, PUINT32);
+STATUS generateAwsSigV4Signature(PRequestInfo, PCHAR, BOOL, PCHAR*, PINT32);
 
 /**
- * Generates a canonical request string
+ * @brief Generates a canonical request string
  *
  * @param - PRequestInfo - IN - Request object
  * @param - PCHAR - OUT/OPT - Canonical request string if specified
@@ -128,7 +128,7 @@ STATUS generateAwsSigV4Signature(PRequestInfo, PCHAR, BOOL, PCHAR*, PUINT32);
 STATUS generateCanonicalRequestString(PRequestInfo, PCHAR, PUINT32);
 
 /**
- * Generates canonical headers
+ * @brief Generates canonical headers
  *
  * @param - PRequestInfo - IN - Request object
  * @param - PCHAR - OUT/OPT - Canonical headers string if specified
@@ -139,7 +139,7 @@ STATUS generateCanonicalRequestString(PRequestInfo, PCHAR, PUINT32);
 STATUS generateCanonicalHeaders(PRequestInfo, PCHAR, PUINT32);
 
 /**
- * Generates signed headers string
+ * @brief Generates signed headers string
  *
  * @param - PRequestInfo - IN - Request object
  * @param - PCHAR - OUT/OPT - Canonical headers string if specified
@@ -150,7 +150,7 @@ STATUS generateCanonicalHeaders(PRequestInfo, PCHAR, PUINT32);
 STATUS generateSignedHeaders(PRequestInfo, PCHAR, PUINT32);
 
 /**
- * Generates signature date time
+ * @brief Generates signature date time
  *
  * @param - UINT64 - IN - Current date
  * @param - PCHAR - OUT - Signature date/time with length of SIGNATURE_DATE_TIME_STRING_LEN characters including NULL terminator
@@ -160,7 +160,7 @@ STATUS generateSignedHeaders(PRequestInfo, PCHAR, PUINT32);
 STATUS generateSignatureDateTime(UINT64, PCHAR);
 
 /**
- * Generates credential scope
+ * @brief Generates credential scope
  *
  * @param - PRequestInfo - IN - Request object
  * @param - PCHAR - IN - Datetime when signed
@@ -172,7 +172,7 @@ STATUS generateSignatureDateTime(UINT64, PCHAR);
 STATUS generateCredentialScope(PRequestInfo, PCHAR, PCHAR, PUINT32);
 
 /**
- * Generates URI Encoded credentials
+ * @brief Generates URI Encoded credentials
  *
  * @param - PRequestInfo - IN - Request object
  * @param - PCHAR - IN - Datetime when signed
@@ -184,7 +184,7 @@ STATUS generateCredentialScope(PRequestInfo, PCHAR, PCHAR, PUINT32);
 STATUS generateEncodedCredentials(PRequestInfo, PCHAR, PCHAR, PUINT32);
 
 /**
- * Calculates a Hex encoded SHA256 of a message
+ * @brief Calculates a Hex encoded SHA256 of a message
  *
  * @param - PBYTE - IN - Message to calculate SHA256 for
  * @param - UINT32 - IN - Size of the message in bytes
@@ -196,7 +196,7 @@ STATUS hexEncodedSha256(PBYTE, UINT32, PCHAR);
 
 /**
  *
- * Generates HMAC of a message
+ * @brief Generates HMAC of a message
  *
  * @param - PBYTE - IN - key for HMAC
  * @param - UINT32 - IN - key length
@@ -210,7 +210,7 @@ STATUS hexEncodedSha256(PBYTE, UINT32, PCHAR);
 STATUS generateRequestHmac(PBYTE, UINT32, PBYTE, UINT32, PBYTE, PUINT32);
 
 /**
- * Gets a canonical URI for the request
+ * @brief Gets a canonical URI for the request
  *
  * @param - PCHAR - IN - Request URL
  * @param - UINT32 - IN/OPT - Request len. Specifying 0 will calculate the length.
@@ -223,7 +223,7 @@ STATUS generateRequestHmac(PBYTE, UINT32, PBYTE, UINT32, PBYTE, PUINT32);
 STATUS getCanonicalUri(PCHAR, UINT32, PCHAR*, PCHAR*, PBOOL);
 
 /**
- * Gets the canonical query params of the URL
+ * @brief Gets the canonical query params of the URL
  *
  * NOTE: The returned query params string is allocated and should be freed by the caller.
  *
@@ -238,7 +238,7 @@ STATUS getCanonicalUri(PCHAR, UINT32, PCHAR*, PCHAR*, PBOOL);
 STATUS getCanonicalQueryParams(PCHAR, UINT32, BOOL, PCHAR*, PUINT32);
 
 /**
- * URI-encode a string
+ * @brief URI-encode a string
  *
  * @param - PCHAR - IN - String to encode
  * @param - UINT32 - IN - Length of the source. Specifying 0 will calculate the length.
@@ -249,7 +249,7 @@ STATUS getCanonicalQueryParams(PCHAR, UINT32, BOOL, PCHAR*, PUINT32);
  */
 STATUS uriEncodeString(PCHAR, UINT32, PCHAR, PUINT32);
 /**
- * URI-decode a string
+ * @brief URI-decode a string
  *
  * @param - PCHAR - IN - String to decode
  * @param - UINT32 - IN - Length of the source. Specifying 0 will calculate the length.
@@ -260,7 +260,7 @@ STATUS uriEncodeString(PCHAR, UINT32, PCHAR, PUINT32);
  */
 STATUS uriDecodeString(PCHAR, UINT32, PCHAR, PUINT32);
 /**
- * Returns a string representing the specified Verb
+ * @brief Returns a string representing the specified Verb
  *
  * @param - CURL_VERB - IN - Specified Verb to convert to string representation
  *
@@ -268,23 +268,23 @@ STATUS uriDecodeString(PCHAR, UINT32, PCHAR, PUINT32);
  */
 PCHAR getRequestVerbString(HTTP_REQUEST_VERB);
 /**
- * Signs a request by appending SigV4 headers
+ * @brief Signs a request by appending SigV4 headers
+ *
+ * @param[in, out] pRequestInfo request info for signing.
+ *
+ * @return STATUS code of the execution.
+ */
+STATUS signAwsRequestInfo(PRequestInfo pRequestInfo);
+/**
+ * @brief Signs a request by appending SigV4 query param
  *
  * @param - PRequestInfo - IN/OUT request info for signing
  *
  * @return - STATUS code of the execution
  */
-STATUS signAwsRequestInfo(PRequestInfo);
+STATUS signAwsRequestInfoQueryParam(PRequestInfo pRequestInfo);
 /**
- * Signs a request by appending SigV4 query param
- *
- * @param - PRequestInfo - IN/OUT request info for signing
- *
- * @return - STATUS code of the execution
- */
-STATUS signAwsRequestInfoQueryParam(PRequestInfo);
-/**
- * Gets a request host string
+ * @brief Gets a request host string
  *
  * @param - PCHAR - IN - Request URL
  * @param - PCHAR* - OUT - The request host start character. NULL on error.

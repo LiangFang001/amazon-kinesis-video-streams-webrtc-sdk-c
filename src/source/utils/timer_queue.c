@@ -635,7 +635,7 @@ CleanUp:
         CVAR_SIGNAL(pTimerQueue->exitCvar);
         MUTEX_UNLOCK(pTimerQueue->exitLock);
     }
-
+    THREAD_EXIT(NULL);
     LEAVES();
     return (PVOID)(ULONG_PTR) retStatus;
 }

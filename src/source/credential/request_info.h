@@ -135,36 +135,37 @@ typedef struct __CallInfo {
 } CallInfo, *PCallInfo;
 
 /**
- * Creates a Request Info object
+ * @brief Creates a Request Info object
  *
- * @param - PCHAR - IN - URL of the request
- * @param - PCHAR - IN/OPT - Body of the request
- * @param - PCHAR - IN - Region
- * @param - PCHAR - IN/OPT - CA Certificate path/file
- * @param - PCHAR - IN/OPT - SSL Certificate path/file
- * @param - PCHAR - IN/OPT - SSL Certificate private key file path
- * @param - SSL_CERTIFICATE_TYPE - IN/OPT - SSL certificate file type
- * @param - PCHAR - IN/OPT - User agent string
- * @param - UINT64 - IN - Connection timeout
- * @param - UINT64 - IN - Completion timeout
- * @param - UINT64 - IN/OPT - Low speed limit
- * @param - UINT64 - IN/OPT - Low speed time limit
- * @param - PAwsCredentials - IN/OPT - Credentials to use for the call
- * @param - PRequestInfo* - IN/OUT - The newly created object
+ * @param[in] PCHAR URL of the request
+ * @param[in, out] PCHAR Body of the request
+ * @param[in] CHAR Region
+ * @param[in, out] PCHAR CA Certificate path/file
+ * @param[in, out] PCHAR SSL Certificate path/file
+ * @param[in, out] PCHAR SSL Certificate private key file path
+ * @param[in, out] SSL_CERTIFICATE_TYPE  SSL certificate file type
+ * @param[in, out] PCHAR  User agent string
+ * @param[in] UINT64  Connection timeout
+ * @param[in] UINT64  Completion timeout
+ * @param[in, out] UINT64 Low speed limit
+ * @param[in, out] UINT64 Low speed time limit
+ * @param[in, out] PAwsCredentials Credentials to use for the call
+ * @param[in, out] PRequestInfo* The newly created object
  *
- * @return - STATUS code of the execution
+ * @return STATUS code of the execution
  */
-STATUS createRequestInfo(PCHAR, PCHAR, PCHAR, PCHAR, PCHAR, PCHAR, SSL_CERTIFICATE_TYPE, PCHAR, UINT64, UINT64, UINT64, UINT64, PAwsCredentials,
-                         PRequestInfo*);
+STATUS createRequestInfo(PCHAR url, PCHAR body, PCHAR region, PCHAR certPath, PCHAR sslCertPath, PCHAR sslPrivateKeyPath,
+                         SSL_CERTIFICATE_TYPE certType, PCHAR userAgent, UINT64 connectionTimeout, UINT64 completionTimeout, UINT64 lowSpeedLimit,
+                         UINT64 lowSpeedTimeLimit, PAwsCredentials pAwsCredentials, PRequestInfo* ppRequestInfo);
 
 /**
- * Frees a Request Info object
+ * @brief Frees a Request Info object
  *
- * @param - PRequestInfo* - IN/OUT - The object to release
+ * @param[in, out] PRequestInfo* The object to release
  *
- * @return - STATUS code of the execution
+ * @return STATUS code of the execution
  */
-STATUS freeRequestInfo(PRequestInfo*);
+STATUS freeRequestInfo(PRequestInfo* ppRequestInfo);
 
 /**
  * @brief Checks whether the request URL requires a secure connection
@@ -176,60 +177,60 @@ STATUS freeRequestInfo(PRequestInfo*);
  */
 STATUS requestRequiresSecureConnection(PCHAR pUrl, PBOOL pSecure);
 /**
- * Sets a header in the request info
+ * @brief Sets a header in the request info
  *
- * @param - PRequestInfo - IN - Request Info object
- * @param - PCHAR - IN - Header name
- * @param - UINT32 - IN/OPT - Header name length. Calculated if 0
- * @param - PCHAR - IN - Header value
- * @param - UINT32 - IN/OPT - Header value length. Calculated if 0
+ * @param[in] pRequestInfo Request Info object
+ * @param[in] headerName Header name
+ * @param[in, out] headerNameLen Header name length. Calculated if 0
+ * @param[in] headerValue Header value
+ * @param[in, out] headerValueLen Header value length. Calculated if 0
  *
- * @return - STATUS code of the execution
+ * @return STATUS code of the execution.
  */
-STATUS setRequestHeader(PRequestInfo, PCHAR, UINT32, PCHAR, UINT32);
+STATUS setRequestHeader(PRequestInfo pRequestInfo, PCHAR headerName, UINT32 headerNameLen, PCHAR headerValue, UINT32 headerValueLen);
 /**
- * Removes a header from the headers list if exists
+ * @brief Removes a header from the headers list if exists
  *
- * @param - PRequestInfo - IN - Request Info object
- * @param - PCHAR - IN - Header name to check and remove
+ * @param[in] PRequestInfo Request Info object
+ * @param[in] PCHAR Header name to check and remove
  *
- * @return - STATUS code of the execution
+ * @return STATUS code of the execution.
  */
-STATUS removeRequestHeader(PRequestInfo, PCHAR);
+STATUS removeRequestHeader(PRequestInfo pRequestInfo, PCHAR headerName);
 /**
- * Removes and deletes all headers
+ * @brief Removes and deletes all headers
  *
- * @param - PRequestInfo - IN - Request Info object
+ * @param[in] PRequestInfo Request Info object
  *
- * @return - STATUS code of the execution
+ * @return STATUS code of the execution.
  */
-STATUS removeRequestHeaders(PRequestInfo);
+STATUS removeRequestHeaders(PRequestInfo pRequestInfo);
 /**
- * Creates a request header
+ * @brief Creates a request header
  *
- * @param - PCHAR - IN - Header name
- * @param - UINT32 - IN - Header name length
- * @param - PCHAR - IN - Header value
- * @param - UINT32 - IN - Header value length
- * @param - PRequestHeader* - OUT - Resulting object
+ * @param[in] headerName Header name
+ * @param[in] Header name length
+ * @param[in] Header value
+ * @param[in] Header value length
+ * @param[in, out] Resulting object
  *
- * @return
+ * @return STATUS code of the execution.
  */
-STATUS createRequestHeader(PCHAR, UINT32, PCHAR, UINT32, PRequestHeader*);
+STATUS createRequestHeader(PCHAR headerName, UINT32 headerNameLen, PCHAR headerValue, UINT32 headerValueLen, PRequestHeader* ppHeader);
 /**
- * Convenience method to convert HTTP statuses to HTTP_STATUS_CODE status.
+ * @brief Convenience method to convert HTTP statuses to HTTP_STATUS_CODE status.
  *
- * @param - UINT32 - http_status the HTTP status code of the call
+ * @param[in] http_status the HTTP status code of the call
  *
  * @return The HTTP status translated into a HTTP_STATUS_CODE value.
  */
 HTTP_STATUS_CODE getServiceCallResultFromHttpStatus(UINT32);
 /**
- * Releases the CallInfo allocations
+ * @brief Releases the CallInfo allocations
  *
- * @param - PCallInfo - IN - Call info object to release
+ * @param[in] PCallInfo Call info object to release
  *
- * @return - STATUS code of the execution
+ * @return STATUS code of the execution
  */
 STATUS releaseCallInfo(PCallInfo);
 

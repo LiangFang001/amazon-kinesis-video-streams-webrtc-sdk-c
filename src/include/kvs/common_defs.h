@@ -649,6 +649,7 @@ typedef VOID (*threadSleep)(UINT64);
 typedef VOID (*threadSleepUntil)(UINT64);
 typedef STATUS (*cancelThread)(TID);
 typedef STATUS (*detachThread)(TID);
+typedef VOID (*exitThread)(PVOID);
 typedef CVAR (*createConditionVariable)();
 typedef STATUS (*signalConditionVariable)(CVAR);
 typedef STATUS (*broadcastConditionVariable)(CVAR);
@@ -693,6 +694,7 @@ extern threadSleep globalThreadSleep;
 extern threadSleepUntil globalThreadSleepUntil;
 extern cancelThread globalCancelThread;
 extern detachThread globalDetachThread;
+extern exitThread globalExitThread;
 extern createConditionVariable globalConditionVariableCreate;
 extern signalConditionVariable globalConditionVariableSignal;
 extern broadcastConditionVariable globalConditionVariableBroadcast;
@@ -950,6 +952,7 @@ extern PUBLIC_API atomicXor globalAtomicXor;
 #define THREAD_SLEEP_UNTIL globalThreadSleepUntil
 #define THREAD_CANCEL      globalCancelThread
 #define THREAD_DETACH      globalDetachThread
+#define THREAD_EXIT        globalExitThread
 
 //
 // Static initializers

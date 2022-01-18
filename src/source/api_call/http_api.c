@@ -187,9 +187,10 @@ STATUS http_api_createChannel(PSignalingClient pSignalingClient, PUINT32 pHttpSt
 
     /* Variables for HTTP request */
     PCHAR pUrl = NULL;
-    PRequestInfo pRequestInfo = NULL;
+    UINT32 urlLen;
     PCHAR pHttpBody = NULL;
     UINT32 httpBodyLen;
+    PRequestInfo pRequestInfo = NULL;
     PCHAR pHost = NULL;
     // rsp
     UINT32 uHttpStatusCode = HTTP_STATUS_NONE;
@@ -201,19 +202,19 @@ STATUS http_api_createChannel(PSignalingClient pSignalingClient, PUINT32 pHttpSt
     uint8_t* pHttpSendBuffer = NULL;
     uint8_t* pHttpRecvBuffer = NULL;
 
-    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
-    CHK(NULL != (pUrl = (PCHAR) MEMALLOC(STRLEN(pSignalingClient->pChannelInfo->pControlPlaneUrl) + STRLEN(HTTP_API_CREATE_SIGNALING_CHANNEL) + 1)),
-        STATUS_HTTP_NOT_ENOUGH_MEMORY);
-    // Create the API url
-    STRCPY(pUrl, pSignalingClient->pChannelInfo->pControlPlaneUrl);
-    STRCAT(pUrl, HTTP_API_CREATE_SIGNALING_CHANNEL);
+    CHK(NULL != (pHost = (PCHAR) MEMCALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    urlLen = STRLEN(pSignalingClient->pChannelInfo->pControlPlaneUrl) + STRLEN(HTTP_API_CREATE_SIGNALING_CHANNEL) + 1;
+    CHK(NULL != (pUrl = (PCHAR) MEMCALLOC(urlLen, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     httpBodyLen = SIZEOF(HTTP_API_BODY_CREATE_CHANNEL) + STRLEN(pChannelInfo->pChannelName) + 1;
-    CHK(NULL != (pHttpBody = (CHAR*) MEMALLOC(httpBodyLen)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHttpBody = (CHAR*) MEMCALLOC(httpBodyLen, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpSendBuffer = (uint8_t*) MEMCALLOC(HTTP_API_SEND_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpRecvBuffer = (uint8_t*) MEMCALLOC(HTTP_API_RECV_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
+    // Create the API url
+    CHK(SNPRINTF(pUrl, urlLen, "%s%s", pSignalingClient->pChannelInfo->pControlPlaneUrl, HTTP_API_CREATE_SIGNALING_CHANNEL) > 0,
+        STATUS_HTTP_BUF_OVERFLOW);
     /* generate HTTP request body */
-    SNPRINTF(pHttpBody, httpBodyLen, HTTP_API_BODY_CREATE_CHANNEL, pChannelInfo->pChannelName);
+    CHK(SNPRINTF(pHttpBody, httpBodyLen, HTTP_API_BODY_CREATE_CHANNEL, pChannelInfo->pChannelName) > 0, STATUS_HTTP_BUF_OVERFLOW);
     // Create the request info with the body
     CHK_STATUS(createRequestInfo(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, (PCHAR) pSignalingClient->pChannelInfo->pCertPath, NULL,
                                  NULL, SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
@@ -225,8 +226,8 @@ STATUS http_api_createChannel(PSignalingClient pSignalingClient, PUINT32 pHttpSt
     CHK_STATUS(NetIo_setRecvTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
     CHK_STATUS(NetIo_setSendTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
 
-    http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
-                  HTTP_API_SEND_BUFFER_MAX_SIZE, FALSE, TRUE, NULL);
+    CHK_STATUS(http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
+                             HTTP_API_SEND_BUFFER_MAX_SIZE, FALSE, TRUE, NULL));
 
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, HTTP_API_SECURE_PORT));
 
@@ -284,9 +285,10 @@ STATUS http_api_describeChannel(PSignalingClient pSignalingClient, PUINT32 pHttp
     /* Variables for HTTP request */
     // http req.
     PCHAR pUrl = NULL;
-    PRequestInfo pRequestInfo = NULL;
+    UINT32 urlLen;
     PCHAR pHttpBody = NULL;
     UINT32 httpBodyLen;
+    PRequestInfo pRequestInfo = NULL;
     PCHAR pHost = NULL;
     // rsp
     UINT32 uHttpStatusCode = 0;
@@ -298,19 +300,19 @@ STATUS http_api_describeChannel(PSignalingClient pSignalingClient, PUINT32 pHttp
     uint8_t* pHttpSendBuffer = NULL;
     uint8_t* pHttpRecvBuffer = NULL;
 
-    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
-    CHK(NULL != (pUrl = (PCHAR) MEMALLOC(STRLEN(pSignalingClient->pChannelInfo->pControlPlaneUrl) + STRLEN(HTTP_API_DESCRIBE_SIGNALING_CHANNEL) + 1)),
-        STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHost = (PCHAR) MEMCALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    urlLen = STRLEN(pSignalingClient->pChannelInfo->pControlPlaneUrl) + STRLEN(HTTP_API_DESCRIBE_SIGNALING_CHANNEL) + 1;
+    CHK(NULL != (pUrl = (PCHAR) MEMCALLOC(urlLen, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     httpBodyLen = STRLEN(HTTP_API_BODY_DESCRIBE_CHANNEL) + STRLEN(pSignalingClient->pChannelInfo->pChannelName) + 1;
     CHK(NULL != (pHttpBody = (PCHAR) MEMALLOC(httpBodyLen)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpSendBuffer = (uint8_t*) MEMCALLOC(HTTP_API_SEND_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpRecvBuffer = (uint8_t*) MEMCALLOC(HTTP_API_RECV_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
     // Create the http url
-    STRCPY(pUrl, pSignalingClient->pChannelInfo->pControlPlaneUrl);
-    STRCAT(pUrl, HTTP_API_DESCRIBE_SIGNALING_CHANNEL);
+    CHK(SNPRINTF(pUrl, urlLen, "%s%s", pSignalingClient->pChannelInfo->pControlPlaneUrl, HTTP_API_DESCRIBE_SIGNALING_CHANNEL) > 0,
+        STATUS_HTTP_BUF_OVERFLOW);
     // create the http body
-    SNPRINTF(pHttpBody, httpBodyLen, HTTP_API_BODY_DESCRIBE_CHANNEL, pSignalingClient->pChannelInfo->pChannelName);
+    CHK(SNPRINTF(pHttpBody, httpBodyLen, HTTP_API_BODY_DESCRIBE_CHANNEL, pSignalingClient->pChannelInfo->pChannelName) > 0, STATUS_HTTP_BUF_OVERFLOW);
 
     // Create the request info with the body
     CHK_STATUS(createRequestInfo(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, pSignalingClient->pChannelInfo->pCertPath, NULL, NULL,
@@ -323,8 +325,8 @@ STATUS http_api_describeChannel(PSignalingClient pSignalingClient, PUINT32 pHttp
     CHK_STATUS(NetIo_setRecvTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
     CHK_STATUS(NetIo_setSendTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
 
-    http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
-                  HTTP_API_SEND_BUFFER_MAX_SIZE, FALSE, TRUE, NULL);
+    CHK_STATUS(http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
+                             HTTP_API_SEND_BUFFER_MAX_SIZE, FALSE, TRUE, NULL));
 
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, HTTP_API_SECURE_PORT));
 
@@ -382,6 +384,7 @@ STATUS http_api_getChannelEndpoint(PSignalingClient pSignalingClient, PUINT32 pH
 
     /* Variables for HTTP request */
     PCHAR pUrl = NULL;
+    UINT32 urlLen;
     PRequestInfo pRequestInfo = NULL;
     PCHAR pHttpBody = NULL;
     UINT32 httpBodyLen;
@@ -396,23 +399,23 @@ STATUS http_api_getChannelEndpoint(PSignalingClient pSignalingClient, PUINT32 pH
     uint8_t* pHttpSendBuffer = NULL;
     uint8_t* pHttpRecvBuffer = NULL;
 
-    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
-    CHK(NULL !=
-            (pUrl = (PCHAR) MEMALLOC(STRLEN(pSignalingClient->pChannelInfo->pControlPlaneUrl) + STRLEN(HTTP_API_GET_SIGNALING_CHANNEL_ENDPOINT) + 1)),
-        STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHost = (PCHAR) MEMCALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    urlLen = STRLEN(pSignalingClient->pChannelInfo->pControlPlaneUrl) + STRLEN(HTTP_API_GET_SIGNALING_CHANNEL_ENDPOINT) + 1;
+    CHK(NULL != (pUrl = (PCHAR) MEMCALLOC(urlLen, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpSendBuffer = (uint8_t*) MEMCALLOC(HTTP_API_SEND_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpRecvBuffer = (uint8_t*) MEMCALLOC(HTTP_API_RECV_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
-
-    // Create the API url
-    STRCPY(pUrl, pSignalingClient->pChannelInfo->pControlPlaneUrl);
-    STRCAT(pUrl, HTTP_API_GET_SIGNALING_CHANNEL_ENDPOINT);
     httpBodyLen = SIZEOF(HTTP_API_BODY_GET_CHANNEL_ENDPOINT) + STRLEN(pSignalingClient->channelDescription.channelArn) +
         STRLEN(HTTP_API_CHANNEL_PROTOCOL) + STRLEN(getStringFromChannelRoleType(pChannelInfo->channelRoleType)) + 1;
     CHK(NULL != (pHttpBody = (PCHAR) MEMALLOC(httpBodyLen)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
+    // Create the API url
+    CHK(SNPRINTF(pUrl, urlLen, "%s%s", pSignalingClient->pChannelInfo->pControlPlaneUrl, HTTP_API_GET_SIGNALING_CHANNEL_ENDPOINT) > 0,
+        STATUS_HTTP_BUF_OVERFLOW);
     /* generate HTTP request body */
-    SNPRINTF(pHttpBody, httpBodyLen, HTTP_API_BODY_GET_CHANNEL_ENDPOINT, pSignalingClient->channelDescription.channelArn, HTTP_API_CHANNEL_PROTOCOL,
-             getStringFromChannelRoleType(pChannelInfo->channelRoleType));
+    CHK(SNPRINTF(pHttpBody, httpBodyLen, HTTP_API_BODY_GET_CHANNEL_ENDPOINT, pSignalingClient->channelDescription.channelArn,
+                 HTTP_API_CHANNEL_PROTOCOL, getStringFromChannelRoleType(pChannelInfo->channelRoleType)) > 0,
+        STATUS_HTTP_BUF_OVERFLOW);
+
     // Create the request info with the body
     CHK_STATUS(createRequestInfo(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, pSignalingClient->pChannelInfo->pCertPath, NULL, NULL,
                                  SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
@@ -424,8 +427,8 @@ STATUS http_api_getChannelEndpoint(PSignalingClient pSignalingClient, PUINT32 pH
     CHK_STATUS(NetIo_setRecvTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
     CHK_STATUS(NetIo_setSendTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
 
-    http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
-                  HTTP_API_SEND_BUFFER_MAX_SIZE, FALSE, TRUE, NULL);
+    CHK_STATUS(http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
+                             HTTP_API_SEND_BUFFER_MAX_SIZE, FALSE, TRUE, NULL));
 
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, HTTP_API_SECURE_PORT));
 
@@ -484,6 +487,7 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, PUINT32 pHttpSta
     /* Variables for HTTP request */
     // http req.
     PCHAR pUrl = NULL;
+    UINT32 urlLen;
     PRequestInfo pRequestInfo = NULL;
     PCHAR pHttpBody = NULL;
     UINT32 httpBodyLen;
@@ -498,20 +502,21 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, PUINT32 pHttpSta
     uint8_t* pHttpSendBuffer = NULL;
     uint8_t* pHttpRecvBuffer = NULL;
 
-    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
-    CHK(NULL != (pUrl = (PCHAR) MEMALLOC(STRLEN(pSignalingClient->channelDescription.channelEndpointHttps) + STRLEN(HTTP_API_GET_ICE_CONFIG) + 1)),
-        STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHost = (PCHAR) MEMCALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    urlLen = STRLEN(pSignalingClient->channelDescription.channelEndpointHttps) + STRLEN(HTTP_API_GET_ICE_CONFIG) + 1;
+    CHK(NULL != (pUrl = (PCHAR) MEMCALLOC(urlLen, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     httpBodyLen = SIZEOF(HTTP_API_BODY_GET_ICE_CONFIG) + STRLEN(pSignalingClient->channelDescription.channelArn) +
         STRLEN(pSignalingClient->clientInfo.signalingClientInfo.clientId) + 1;
     CHK(NULL != (pHttpBody = (PCHAR) MEMALLOC(httpBodyLen)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpSendBuffer = (uint8_t*) MEMCALLOC(HTTP_API_SEND_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpRecvBuffer = (uint8_t*) MEMCALLOC(HTTP_API_RECV_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
-    STRCPY(pUrl, pSignalingClient->channelDescription.channelEndpointHttps);
-    STRCAT(pUrl, HTTP_API_GET_ICE_CONFIG);
+    CHK(SNPRINTF(pUrl, urlLen, "%s%s", pSignalingClient->channelDescription.channelEndpointHttps, HTTP_API_GET_ICE_CONFIG) > 0,
+        STATUS_HTTP_BUF_OVERFLOW);
     /* generate HTTP request body */
-    SNPRINTF(pHttpBody, httpBodyLen, HTTP_API_BODY_GET_ICE_CONFIG, pSignalingClient->channelDescription.channelArn,
-             pSignalingClient->clientInfo.signalingClientInfo.clientId);
+    CHK(SNPRINTF(pHttpBody, httpBodyLen, HTTP_API_BODY_GET_ICE_CONFIG, pSignalingClient->channelDescription.channelArn,
+                 pSignalingClient->clientInfo.signalingClientInfo.clientId) > 0,
+        STATUS_HTTP_BUF_OVERFLOW);
 
     // Create the request info with the body
     CHK_STATUS(createRequestInfo(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, pSignalingClient->pChannelInfo->pCertPath, NULL, NULL,
@@ -524,8 +529,8 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, PUINT32 pHttpSta
     CHK_STATUS(NetIo_setRecvTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
     CHK_STATUS(NetIo_setSendTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
 
-    http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
-                  HTTP_API_SEND_BUFFER_MAX_SIZE, FALSE, TRUE, NULL);
+    CHK_STATUS(http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
+                             HTTP_API_SEND_BUFFER_MAX_SIZE, FALSE, TRUE, NULL));
 
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, HTTP_API_SECURE_PORT));
 
@@ -583,6 +588,7 @@ STATUS http_api_deleteChannel(PSignalingClient pSignalingClient, PUINT32 pHttpSt
     PChannelInfo pChannelInfo = pSignalingClient->pChannelInfo;
     UINT32 uBytesReceived = 0;
     PCHAR pUrl = NULL;
+    UINT32 urlLen;
     PRequestInfo pRequestInfo = NULL;
     PCHAR pHttpBody = NULL;
     UINT32 httpBodyLen;
@@ -594,22 +600,24 @@ STATUS http_api_deleteChannel(PSignalingClient pSignalingClient, PUINT32 pHttpSt
     uint8_t* pHttpSendBuffer = NULL;
     uint8_t* pHttpRecvBuffer = NULL;
 
-    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
-    CHK(NULL != (pUrl = (PCHAR) MEMALLOC(STRLEN(pSignalingClient->pChannelInfo->pControlPlaneUrl) + STRLEN(HTTP_API_DELETE_SIGNALING_CHANNEL) + 1)),
-        STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHost = (PCHAR) MEMCALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    urlLen = STRLEN(pSignalingClient->pChannelInfo->pControlPlaneUrl) + STRLEN(HTTP_API_DELETE_SIGNALING_CHANNEL) + 1;
+    CHK(NULL != (pUrl = (PCHAR) MEMCALLOC(urlLen, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpSendBuffer = (uint8_t*) MEMCALLOC(HTTP_API_SEND_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpRecvBuffer = (uint8_t*) MEMCALLOC(HTTP_API_RECV_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
-    // Create the API url
-    STRCPY(pUrl, pSignalingClient->pChannelInfo->pControlPlaneUrl);
-    STRCAT(pUrl, HTTP_API_DELETE_SIGNALING_CHANNEL);
     httpBodyLen = SIZEOF(HTTP_API_BODY_DELETE_CHANNEL) + STRLEN(pSignalingClient->channelDescription.channelArn) +
         STRLEN(pSignalingClient->channelDescription.updateVersion) + 1;
     CHK(NULL != (pHttpBody = (CHAR*) MEMALLOC(httpBodyLen)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
+    // Create the API url
+    CHK(SNPRINTF(pUrl, urlLen, "%s%s", pSignalingClient->pChannelInfo->pControlPlaneUrl, HTTP_API_DELETE_SIGNALING_CHANNEL) > 0,
+        STATUS_HTTP_BUF_OVERFLOW);
     /* generate HTTP request body */
-    SNPRINTF(pHttpBody, httpBodyLen, HTTP_API_BODY_DELETE_CHANNEL, pSignalingClient->channelDescription.channelArn,
-             pSignalingClient->channelDescription.updateVersion);
+    CHK(SNPRINTF(pHttpBody, httpBodyLen, HTTP_API_BODY_DELETE_CHANNEL, pSignalingClient->channelDescription.channelArn,
+                 pSignalingClient->channelDescription.updateVersion) > 0,
+        STATUS_HTTP_BUF_OVERFLOW);
+
     // Create the request info with the body
     CHK_STATUS(createRequestInfo(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, (PCHAR) pSignalingClient->pChannelInfo->pCertPath, NULL,
                                  NULL, SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
@@ -621,8 +629,8 @@ STATUS http_api_deleteChannel(PSignalingClient pSignalingClient, PUINT32 pHttpSt
     CHK_STATUS(NetIo_setRecvTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
     CHK_STATUS(NetIo_setSendTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
 
-    http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
-                  HTTP_API_SEND_BUFFER_MAX_SIZE, FALSE, TRUE, NULL);
+    CHK_STATUS(http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
+                             HTTP_API_SEND_BUFFER_MAX_SIZE, FALSE, TRUE, NULL));
 
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, HTTP_API_SECURE_PORT));
 
@@ -677,7 +685,7 @@ STATUS http_api_getIotCredential(PIotCredentialProvider pIotCredentialProvider)
     UINT32 uBytesReceived = 0;
     /* Variables for HTTP request */
     PCHAR pUrl = NULL;
-    UINT32 formatLen = 0;
+    UINT32 urlLen;
 
     PRequestInfo pRequestInfo = NULL;
     PCHAR pHttpBody = NULL;
@@ -693,20 +701,17 @@ STATUS http_api_getIotCredential(PIotCredentialProvider pIotCredentialProvider)
     uint8_t* pHttpSendBuffer = NULL;
     uint8_t* pHttpRecvBuffer = NULL;
 
-    CHK(NULL != (pHost = (PCHAR) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
-
-    CHK(NULL !=
-            (pUrl = (PCHAR) MEMALLOC(STRLEN(CONTROL_PLANE_URI_PREFIX) + STRLEN(pIotCredentialProvider->iotGetCredentialEndpoint) +
-                                     STRLEN(HTTP_API_ROLE_ALIASES) + STRLEN("/") + STRLEN(pIotCredentialProvider->roleAlias) +
-                                     STRLEN(HTTP_API_CREDENTIALS) + 1)),
-        STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHost = (PCHAR) MEMCALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    urlLen = STRLEN(CONTROL_PLANE_URI_PREFIX) + STRLEN(pIotCredentialProvider->iotGetCredentialEndpoint) + STRLEN(HTTP_API_ROLE_ALIASES) +
+        STRLEN("/") + STRLEN(pIotCredentialProvider->roleAlias) + STRLEN(HTTP_API_CREDENTIALS) + 1;
+    CHK(NULL != (pUrl = (PCHAR) MEMCALLOC(urlLen, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpSendBuffer = (uint8_t*) MEMCALLOC(HTTP_API_SEND_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpRecvBuffer = (uint8_t*) MEMCALLOC(HTTP_API_RECV_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
     // Create the API url
-    formatLen = SNPRINTF(pUrl, MAX_URI_CHAR_LEN, "%s%s%s%c%s%s", CONTROL_PLANE_URI_PREFIX, pIotCredentialProvider->iotGetCredentialEndpoint,
-                         HTTP_API_ROLE_ALIASES, '/', pIotCredentialProvider->roleAlias, HTTP_API_CREDENTIALS);
-    CHK(formatLen > 0 && formatLen < MAX_URI_CHAR_LEN, STATUS_IOT_FAILED);
+    CHK(SNPRINTF(pUrl, urlLen, "%s%s%s%c%s%s", CONTROL_PLANE_URI_PREFIX, pIotCredentialProvider->iotGetCredentialEndpoint, HTTP_API_ROLE_ALIASES, '/',
+                 pIotCredentialProvider->roleAlias, HTTP_API_CREDENTIALS) > 0,
+        STATUS_IOT_FAILED);
 
     // Create the request info with the body
     CHK_STATUS(createRequestInfo(pUrl, pHttpBody, DEFAULT_AWS_REGION, pIotCredentialProvider->caCertPath, pIotCredentialProvider->certPath,
@@ -729,8 +734,8 @@ STATUS http_api_getIotCredential(PIotCredentialProvider pIotCredentialProvider)
     CHK_STATUS(NetIo_setRecvTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
     CHK_STATUS(NetIo_setSendTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
 
-    http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_GET_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
-                  HTTP_API_SEND_BUFFER_MAX_SIZE, FALSE, FALSE, NULL);
+    CHK_STATUS(http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_GET_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
+                             HTTP_API_SEND_BUFFER_MAX_SIZE, FALSE, FALSE, NULL));
 
     CHK_STATUS(NetIo_connectWithX509Path(xNetIoHandle, pHost, HTTP_API_SECURE_PORT, pIotCredentialProvider->caCertPath,
                                          pIotCredentialProvider->certPath, pIotCredentialProvider->privateKeyPath));

@@ -33,7 +33,7 @@
 #define WSS_API_SECURE_PORT                "443"
 #define WSS_API_CONNECTION_TIMEOUT         (2 * HUNDREDS_OF_NANOS_IN_A_SECOND)
 #define WSS_API_COMPLETION_TIMEOUT         (5 * HUNDREDS_OF_NANOS_IN_A_SECOND)
-#define WSS_API_SEND_BUFFER_MAX_SIZE       (2048)
+#define WSS_API_SEND_BUFFER_MAX_SIZE       (4096)
 #define WSS_API_RECV_BUFFER_MAX_SIZE       (2048)
 #define WSS_API_PARAM_CHANNEL_ARN          "X-Amz-ChannelARN"
 #define WSS_API_PARAM_CLIENT_ID            "X-Amz-ClientId"
@@ -82,15 +82,18 @@ STATUS wss_api_connect(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCod
             STRLEN(pSignalingClient->clientInfo.signalingClientInfo.clientId) + 1;
         CHK(NULL != (pUrl = (PCHAR) MEMALLOC(urlLen)), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
 
-        SNPRINTF(pUrl, urlLen, WSS_API_ENDPOINT_VIEWER, pSignalingClient->channelDescription.channelEndpointWss, WSS_API_PARAM_CHANNEL_ARN,
-                 pSignalingClient->channelDescription.channelArn, WSS_API_PARAM_CLIENT_ID, pSignalingClient->clientInfo.signalingClientInfo.clientId);
+        CHK(SNPRINTF(pUrl, urlLen, WSS_API_ENDPOINT_VIEWER, pSignalingClient->channelDescription.channelEndpointWss, WSS_API_PARAM_CHANNEL_ARN,
+                     pSignalingClient->channelDescription.channelArn, WSS_API_PARAM_CLIENT_ID,
+                     pSignalingClient->clientInfo.signalingClientInfo.clientId) > 0,
+            STATUS_WSS_API_BUF_OVERFLOW);
     } else {
         urlLen = STRLEN(WSS_API_ENDPOINT_MASTER) + STRLEN(pSignalingClient->channelDescription.channelEndpointWss) +
             STRLEN(WSS_API_PARAM_CHANNEL_ARN) + STRLEN(pSignalingClient->channelDescription.channelArn) + 1;
         CHK(NULL != (pUrl = (PCHAR) MEMALLOC(urlLen)), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
 
-        SNPRINTF(pUrl, urlLen, WSS_API_ENDPOINT_MASTER, pSignalingClient->channelDescription.channelEndpointWss, WSS_API_PARAM_CHANNEL_ARN,
-                 pSignalingClient->channelDescription.channelArn);
+        CHK(SNPRINTF(pUrl, urlLen, WSS_API_ENDPOINT_MASTER, pSignalingClient->channelDescription.channelEndpointWss, WSS_API_PARAM_CHANNEL_ARN,
+                     pSignalingClient->channelDescription.channelArn) > 0,
+            STATUS_WSS_API_BUF_OVERFLOW);
     }
 
     /* Initialize and generate HTTP request, then send it. */
@@ -103,10 +106,10 @@ STATUS wss_api_connect(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCod
                                  &pRequestInfo));
     pRequestInfo->verb = HTTP_REQUEST_VERB_GET;
     MEMSET(clientKey, 0, WSS_CLIENT_BASED64_RANDOM_SEED_LEN + 1);
-    wss_client_generateClientKey(clientKey, WSS_CLIENT_BASED64_RANDOM_SEED_LEN);
+    CHK_STATUS(wss_client_generateClientKey(clientKey, WSS_CLIENT_BASED64_RANDOM_SEED_LEN + 1));
 
-    http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_GET_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
-                  WSS_API_SEND_BUFFER_MAX_SIZE, TRUE, TRUE, clientKey);
+    CHK_STATUS(http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_GET_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
+                             WSS_API_SEND_BUFFER_MAX_SIZE, TRUE, TRUE, clientKey));
 
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, WSS_API_SECURE_PORT));
 

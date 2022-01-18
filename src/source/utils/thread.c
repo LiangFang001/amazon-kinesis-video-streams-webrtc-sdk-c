@@ -411,6 +411,11 @@ CleanUp:
     return retStatus;
 }
 
+PUBLIC_API VOID defaultExitThread(PVOID valuePtr)
+{
+    pthread_exit(valuePtr);
+}
+
 #endif
 
 PUBLIC_API VOID defaultThreadSleepUntil(UINT64 time)
@@ -431,3 +436,4 @@ threadSleepUntil globalThreadSleepUntil = defaultThreadSleepUntil;
 joinThread globalJoinThread = defaultJoinThread;
 cancelThread globalCancelThread = defaultCancelThread;
 detachThread globalDetachThread = defaultDetachThread;
+exitThread globalExitThread = defaultExitThread;

@@ -192,7 +192,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
     }
 
     pSignalingClient->dispatchMsgTid = INVALID_TID_VALUE;
-
+    THREAD_EXIT(NULL);
     return (PVOID)(ULONG_PTR) retStatus;
 }
 
@@ -232,6 +232,7 @@ CleanUp:
     if (STATUS_FAILED(retStatus)) {
         SAFE_MEMFREE(pMsg);
     }
+
     return retStatus;
 }
 

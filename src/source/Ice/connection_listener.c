@@ -408,6 +408,6 @@ CleanUp:
     }
 
     CHK_LOG_ERR(retStatus);
-
+    THREAD_EXIT(NULL);
     return (PVOID)(ULONG_PTR) retStatus;
 }

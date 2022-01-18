@@ -14,11 +14,12 @@
  * with enough storage from the previous call with NULL param.
  *
  */
-STATUS generateAwsSigV4Signature(PRequestInfo pRequestInfo, PCHAR dateTimeStr, BOOL authHeaders, PCHAR* ppSigningInfo, PUINT32 pSigningInfoLen)
+STATUS generateAwsSigV4Signature(PRequestInfo pRequestInfo, PCHAR dateTimeStr, BOOL authHeaders, PCHAR* ppSigningInfo, PINT32 pSigningInfoLen)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
-    UINT32 requestLen, scopeLen, signedStrLen, signedHeadersLen = 0, scratchLen, curSize, hmacSize, hexHmacLen;
+    UINT32 requestLen, scopeLen, signedHeadersLen = 0, scratchLen, hmacSize, hexHmacLen;
+    INT32 signedStrLen, curSize;
     PCHAR pScratchBuf = NULL, pCredentialScope = NULL, pUrlEncodedCredentials = NULL, pSignedStr = NULL, pSignedHeaders = NULL;
     CHAR requestHexSha256[2 * SHA256_DIGEST_LENGTH + 1];
     BYTE hmac[KVS_MAX_HMAC_SIZE];
@@ -68,7 +69,7 @@ STATUS generateAwsSigV4Signature(PRequestInfo pRequestInfo, PCHAR dateTimeStr, B
 
     // Create V4 signature
     // http://docs.aws.amazon.com/general/latest/gr/sigv4-calculate-signature.html
-    curSize = (UINT32) STRLEN(AWS_SIG_V4_SIGNATURE_START);
+    curSize = (INT32) STRLEN(AWS_SIG_V4_SIGNATURE_START);
     MEMCPY(pScratchBuf, AWS_SIG_V4_SIGNATURE_START, curSize);
     MEMCPY((PBYTE) pScratchBuf + curSize, pRequestInfo->pAwsCredentials->secretKey, pRequestInfo->pAwsCredentials->secretKeyLen);
     curSize += pRequestInfo->pAwsCredentials->secretKeyLen;
@@ -113,7 +114,7 @@ STATUS signAwsRequestInfo(PRequestInfo pRequestInfo)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
-    UINT32 len;
+    INT32 len;
     PCHAR pHostStart, pHostEnd, pSignatureInfo = NULL;
     CHAR dateTimeStr[SIGNATURE_DATE_TIME_STRING_LEN];
     CHAR contentLenBuf[16];
@@ -161,7 +162,8 @@ STATUS signAwsRequestInfoQueryParam(PRequestInfo pRequestInfo)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
-    UINT32 urlLen, len, remaining, credsLen, expirationInSeconds, signedHeadersLen = 0, queryLen;
+    UINT32 urlLen, remaining, credsLen, expirationInSeconds, signedHeadersLen = 0, queryLen;
+    INT32 len;
     PCHAR pHostStart, pHostEnd, pSignatureInfo = NULL, pEncodedCreds = NULL, pQueryParams = NULL, pSignedHeaders = NULL, pEndUrl, pUriStart, pQuery;
     CHAR dateTimeStr[SIGNATURE_DATE_TIME_STRING_LEN];
     BOOL defaultPath;
@@ -173,7 +175,7 @@ STATUS signAwsRequestInfoQueryParam(PRequestInfo pRequestInfo)
 
     // Need to add host header
     CHK_STATUS(getRequestHost(pRequestInfo->url, &pHostStart, &pHostEnd));
-    len = (UINT32)(pHostEnd - pHostStart);
+    len = (INT32)(pHostEnd - pHostStart);
     CHK_STATUS(setRequestHeader(pRequestInfo, AWS_SIG_V4_HEADER_HOST, 0, pHostStart, len));
 
     // Encode the credentials scope
@@ -674,7 +676,7 @@ STATUS generateCredentialScope(PRequestInfo pRequestInfo, PCHAR dateTimeStr, PCH
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
-    UINT32 scopeLen = 0;
+    INT32 scopeLen = 0;
 
     CHK(pRequestInfo != NULL && dateTimeStr != NULL && pScopeLen != NULL, STATUS_NULL_ARG);
 
@@ -703,7 +705,7 @@ STATUS generateEncodedCredentials(PRequestInfo pRequestInfo, PCHAR dateTimeStr, 
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
-    UINT32 credsLen = 0;
+    INT32 credsLen = 0;
 
     CHK(pRequestInfo != NULL && dateTimeStr != NULL && pCredsLen != NULL, STATUS_NULL_ARG);
 
