@@ -131,11 +131,11 @@ STATUS getLocalhostIpAddresses(PKvsIpAddress destIpList, PUINT32 pDestIpListLen,
     }
 #else
     //#error "need to add the network interface."
-    extern char* esp_get_ip(void);
+    extern UCHAR* ameba_get_ip(void);
     destIpList[ipCount].isPointToPoint = 0;
     destIpList[ipCount].family = KVS_IP_FAMILY_TYPE_IPV4;
     destIpList[ipCount].port = 0;
-    MEMCPY(destIpList[ipCount].address, esp_get_ip(), IPV4_ADDRESS_LENGTH);
+    MEMCPY(destIpList[ipCount].address, ameba_get_ip(), IPV4_ADDRESS_LENGTH);
     DLOGD("Acquried IP: %d:%d:%d:%d", destIpList[ipCount].address[0], destIpList[ipCount].address[1], destIpList[ipCount].address[2],
           destIpList[ipCount].address[3]);
     ipCount++;
@@ -196,11 +196,13 @@ STATUS createSocket(KVS_IP_FAMILY_TYPE familyType, KVS_SOCKET_PROTOCOL protocol,
     UINT32 nonblock = 1;
     ioctlsocket(sockfd, FIONBIO, &nonblock);
 #else
+    #if 0
     // Set the non-blocking mode for the socket
     flags = fcntl(sockfd, F_GETFL, 0);
     CHK_ERR(flags >= 0, STATUS_GET_SOCKET_FLAG_FAILED, "Failed to get the socket flags with system error %s", strerror(errno));
     CHK_ERR(0 <= fcntl(sockfd, F_SETFL, flags | O_NONBLOCK), STATUS_SET_SOCKET_FLAG_FAILED, "Failed to Set the socket flags with system error %s",
             strerror(errno));
+    #endif
 #endif
 
     // done at this point for UDP
@@ -332,7 +334,7 @@ STATUS getIpWithHostName(PCHAR hostname, PKvsIpAddress destIp)
 
     errCode = getaddrinfo(hostname, NULL, NULL, &res);
     if (errCode != 0) {
-#ifdef KVS_PLAT_ESP_FREERTOS
+#ifdef KVS_PLAT_RTK_FREERTOS
         errStr = errCode == EAI_SYSTEM ? strerror(errno) : "gai_strerror(errCode) not supported.";
 #else
         errStr = errCode == EAI_SYSTEM ? strerror(errno) : (PCHAR) gai_strerror(errCode);

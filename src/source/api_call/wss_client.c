@@ -21,6 +21,8 @@
 #include <mbedtls/base64.h>
 #include <mbedtls/sha1.h>
 
+#include <sys/socket.h>
+
 #include "kvs/error.h"
 #include "kvs/common_defs.h"
 #include "kvs/platform_utils.h"

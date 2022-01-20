@@ -16,6 +16,7 @@
 #include "kvs/error.h"
 #include <kvs/platform_utils.h>
 #include "directory.h"
+#include <dirent.h>
 
 /**
  * Traverses the directory iteratively

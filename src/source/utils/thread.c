@@ -187,7 +187,7 @@ PUBLIC_API TID defaultGetThreadId()
     return (TID) pthread_self();
 }
 
-PUBLIC_API STATUS defaultCreateThreadEx(PTID pThreadId, PCHAR threadName, UINT32 threadSize, startRoutine start, PVOID args)
+PUBLIC_API STATUS defaultCreateThreadExPri(PTID pThreadId, PCHAR threadName, UINT32 prio, UINT32 threadSize, startRoutine start, PVOID args)
 {
     STATUS retStatus = STATUS_SUCCESS;
     pthread_t threadId;
@@ -197,6 +197,7 @@ PUBLIC_API STATUS defaultCreateThreadEx(PTID pThreadId, PCHAR threadName, UINT32
     pAttr = &attr;
     CHK(pThreadId != NULL, STATUS_NULL_ARG);
     result = pthread_attr_init(pAttr);
+    struct sched_param param;
 
 #ifdef CONSTRAINED_DEVICE
     pthread_attr_t attr;
@@ -245,6 +246,18 @@ PUBLIC_API STATUS defaultCreateThreadEx(PTID pThreadId, PCHAR threadName, UINT32
     }
 #endif
 
+    if(threadSize == 0){
+        pthread_attr_setstacksize(pAttr, DEFAULT_THREAD_SIZE);
+    }else{
+        pthread_attr_setstacksize(pAttr, threadSize);
+    }
+
+    if(prio != 0){
+        int rs = pthread_attr_getschedparam(pAttr,&param);
+        param.sched_priority = prio;
+        rs = pthread_attr_setschedparam(pAttr,&param);
+    }
+
     result = pthread_create(&threadId, pAttr, start, args);
 
 #if defined(KVS_PLAT_ESP_FREERTOS)
@@ -284,9 +297,14 @@ CleanUp:
     return retStatus;
 }
 
+PUBLIC_API STATUS defaultCreateThreadEx(PTID pThreadId, PCHAR threadName, UINT32 threadSize, startRoutine start, PVOID args)
+{
+    return defaultCreateThreadExPri(pThreadId, NULL, 1, threadSize, start, args);
+}
+
 PUBLIC_API STATUS defaultCreateThread(PTID pThreadId, startRoutine start, PVOID args)
 {
-    return defaultCreateThreadEx(pThreadId, NULL, 0, start, args);
+    return defaultCreateThreadExPri(pThreadId, NULL, 1, 0, start, args);
 }
 
 PUBLIC_API STATUS defaultJoinThread(TID threadId, PVOID* retVal)
@@ -431,6 +449,7 @@ getTId globalGetThreadId = defaultGetThreadId;
 getTName globalGetThreadName = defaultGetThreadName;
 createThread globalCreateThread = defaultCreateThread;
 createThreadEx globalCreateThreadEx = defaultCreateThreadEx;
+createThreadEx globalCreateThreadExPri = defaultCreateThreadExPri;
 threadSleep globalThreadSleep = defaultThreadSleep;
 threadSleepUntil globalThreadSleepUntil = defaultThreadSleepUntil;
 joinThread globalJoinThread = defaultJoinThread;

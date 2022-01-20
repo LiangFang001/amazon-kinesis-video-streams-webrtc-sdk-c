@@ -11,6 +11,11 @@
 extern "C" {
 #endif
 
+#ifdef KVS_PLAT_RTK_FREERTOS
+#include "basic_types.h"
+#include "integer.h"
+#endif
+
 ////////////////////////////////////////////////////
 // Project defines
 ////////////////////////////////////////////////////
@@ -174,7 +179,9 @@ typedef INT32 BOOL;
 #endif
 #endif
 #else
+#ifndef KVS_PLAT_RTK_FREERTOS
 typedef INT32 BOOL;
+#endif
 #endif
 
 typedef UINT8 BYTE;
@@ -331,8 +338,13 @@ typedef UINT64 ULONG_PTR, *PULONG_PTR;
 typedef ULONG_PTR SIZE_T, *PSIZE_T;
 typedef LONG_PTR SSIZE_T, *PSSIZE_T;
 #elif !(defined _WIN32 || defined _WIN64)
+#ifdef KVS_PLAT_RTK_FREERTOS
+typedef SIZE_T* PSIZE_T;
+typedef SSIZE_T* PSSIZE_T;
+#else
 typedef UINT_PTR SIZE_T, *PSIZE_T;
 typedef INT_PTR SSIZE_T, *PSSIZE_T;
+#endif
 #endif
 #define _SIZE_T_DEFINED_IN_COMMON
 #endif
@@ -476,7 +488,7 @@ typedef INT_PTR SSIZE_T, *PSSIZE_T;
 
 #if !(defined _WIN32 || defined _WIN64)
 #include <unistd.h>
-#include <dirent.h>
+//#include <dirent.h>
 #include <sys/time.h>
 #endif
 
@@ -945,14 +957,15 @@ extern PUBLIC_API atomicXor globalAtomicXor;
 //
 // Thread functionality
 //
-#define THREAD_CREATE      globalCreateThread
-#define THREAD_CREATE_EX   globalCreateThreadEx
-#define THREAD_JOIN        globalJoinThread
-#define THREAD_SLEEP       globalThreadSleep
-#define THREAD_SLEEP_UNTIL globalThreadSleepUntil
-#define THREAD_CANCEL      globalCancelThread
-#define THREAD_DETACH      globalDetachThread
-#define THREAD_EXIT        globalExitThread
+#define THREAD_CREATE           globalCreateThread
+#define THREAD_CREATE_EX        globalCreateThreadEx
+#define THREAD_CREATE_EX_PRI    globalCreateThreadExPri
+#define THREAD_JOIN             globalJoinThread
+#define THREAD_SLEEP            globalThreadSleep
+#define THREAD_SLEEP_UNTIL      globalThreadSleepUntil
+#define THREAD_CANCEL           globalCancelThread
+#define THREAD_DETACH           globalDetachThread
+#define THREAD_EXIT             globalExitThread
 
 //
 // Static initializers

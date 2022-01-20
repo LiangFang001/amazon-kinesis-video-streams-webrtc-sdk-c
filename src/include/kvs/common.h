@@ -13,6 +13,10 @@ extern "C" {
 #include "kvs/Client.h"
 #include "single_linked_list.h"
 #include "stack_queue.h"
+
+/* Config for Ameba-Pro */
+#include "sample_config_webrtc.h"
+
 ////////////////////////////////////////////////////
 // Public headers
 ////////////////////////////////////////////////////
@@ -120,8 +124,9 @@ extern "C" {
 #ifdef CMAKE_DETECTED_CACERT_PATH
 #define DEFAULT_KVS_CACERT_PATH KVS_CA_CERT_PATH
 #else
-#ifdef KVS_PLAT_ESP_FREERTOS
-#define DEFAULT_KVS_CACERT_PATH "/sdcard/cert.pem"
+#ifdef KVS_PLAT_RTK_FREERTOS
+#define KVS_CA_CERT_PATH KVS_WEBRTC_ROOT_CA_PATH
+#define DEFAULT_KVS_CACERT_PATH KVS_WEBRTC_ROOT_CA_PATH
 #else
 #define DEFAULT_KVS_CACERT_PATH EMPTY_STRING
 #endif

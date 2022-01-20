@@ -10,11 +10,11 @@
 extern "C" {
 #endif
 
-#include "kvs/common_defs.h"
-
 #ifndef STATUS
 #define STATUS UINT32
 #endif
+
+#include "kvs/common_defs.h"
 
 #define STATUS_SUCCESS      ((STATUS) 0x00000000)
 #define STATUS_FAILED(x)    (((STATUS)(x)) != STATUS_SUCCESS)

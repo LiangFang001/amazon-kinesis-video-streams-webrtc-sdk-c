@@ -16,6 +16,7 @@
 #include "kvs/error.h"
 #include "kvs/platform_utils.h"
 #include "fileio.h"
+#include <dirent.h>
 
 /**
  * Read a file from the given full/relative filePath into the memory area pointed to by pBuffer.
