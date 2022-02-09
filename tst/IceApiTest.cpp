@@ -26,7 +26,7 @@ TEST_F(IceApiTest, ConnectionListenerApiTest)
     localhost.port = 0;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              createSocketConnection(KVS_IP_FAMILY_TYPE_IPV4, KVS_SOCKET_PROTOCOL_UDP, &localhost, NULL, 0, NULL, 0, &pDummySocketConnection));
+              socket_connection_create(KVS_IP_FAMILY_TYPE_IPV4, KVS_SOCKET_PROTOCOL_UDP, &localhost, NULL, 0, NULL, 0, &pDummySocketConnection));
 
     EXPECT_NE(STATUS_SUCCESS, connection_listener_create(NULL));
     EXPECT_NE(STATUS_SUCCESS, connection_listener_free(NULL));
@@ -46,7 +46,7 @@ TEST_F(IceApiTest, ConnectionListenerApiTest)
     // free is idempotent
     EXPECT_EQ(STATUS_SUCCESS, connection_listener_free(&pConnectionListener));
 
-    EXPECT_EQ(STATUS_SUCCESS, freeSocketConnection(&pDummySocketConnection));
+    EXPECT_EQ(STATUS_SUCCESS, socket_connection_free(&pDummySocketConnection));
 }
 
 TEST_F(IceApiTest, IceUtilApiTest)
@@ -66,36 +66,36 @@ TEST_F(IceApiTest, IceUtilApiTest)
     MEMSET(&testBuffer, 0x0, testBufferLen);
     MEMSET(&testPassword, 0x0, testPasswordLen);
 
-    EXPECT_NE(STATUS_SUCCESS, createTransactionIdStore(20, NULL));
-    EXPECT_NE(STATUS_SUCCESS, createTransactionIdStore(0, &pTransactionIdStore));
-    EXPECT_NE(STATUS_SUCCESS, createTransactionIdStore(MAX_STORED_TRANSACTION_ID_COUNT, &pTransactionIdStore));
-    EXPECT_NE(STATUS_SUCCESS, freeTransactionIdStore(NULL));
-    EXPECT_DEATH(transactionIdStoreInsert(NULL, testTransactionId), "");
-    EXPECT_DEATH(transactionIdStoreHasId(NULL, testTransactionId), "");
-    EXPECT_DEATH(transactionIdStoreReset(NULL), "");
-    EXPECT_NE(STATUS_SUCCESS, iceUtilsGenerateTransactionId(NULL, STUN_TRANSACTION_ID_LEN));
-    EXPECT_NE(STATUS_SUCCESS, iceUtilsGenerateTransactionId(testTransactionId, 0));
+    EXPECT_NE(STATUS_SUCCESS, transaction_id_store_create(20, NULL));
+    EXPECT_NE(STATUS_SUCCESS, transaction_id_store_create(0, &pTransactionIdStore));
+    EXPECT_NE(STATUS_SUCCESS, transaction_id_store_create(MAX_STORED_TRANSACTION_ID_COUNT, &pTransactionIdStore));
+    EXPECT_NE(STATUS_SUCCESS, transaction_id_store_free(NULL));
+    EXPECT_DEATH(transaction_id_store_insert(NULL, testTransactionId), "");
+    EXPECT_DEATH(transaction_id_store_isExisted(NULL, testTransactionId), "");
+    EXPECT_DEATH(transaction_id_store_reset(NULL), "");
+    EXPECT_NE(STATUS_SUCCESS, ice_utils_generateTransactionId(NULL, STUN_TRANSACTION_ID_LEN));
+    EXPECT_NE(STATUS_SUCCESS, ice_utils_generateTransactionId(testTransactionId, 0));
 
-    EXPECT_EQ(STATUS_SUCCESS, createStunPacket(STUN_PACKET_TYPE_SEND_INDICATION, NULL, &pStunPacket));
-    EXPECT_NE(STATUS_SUCCESS, iceUtilsPackageStunPacket(NULL, testPassword, testPasswordLen, testBuffer, &testBufferLen));
-    EXPECT_NE(STATUS_SUCCESS, iceUtilsPackageStunPacket(pStunPacket, NULL, testPasswordLen, testBuffer, &testBufferLen));
-    EXPECT_NE(STATUS_SUCCESS, iceUtilsPackageStunPacket(pStunPacket, testPassword, 0, testBuffer, &testBufferLen));
-    EXPECT_NE(STATUS_SUCCESS, iceUtilsPackageStunPacket(pStunPacket, testPassword, testPasswordLen, NULL, &testBufferLen));
-    EXPECT_NE(STATUS_SUCCESS, iceUtilsPackageStunPacket(pStunPacket, testPassword, testPasswordLen, testBuffer, NULL));
+    EXPECT_EQ(STATUS_SUCCESS, stun_createPacket(STUN_PACKET_TYPE_SEND_INDICATION, NULL, &pStunPacket));
+    EXPECT_NE(STATUS_SUCCESS, ice_utils_packStunPacket(NULL, testPassword, testPasswordLen, testBuffer, &testBufferLen));
+    EXPECT_NE(STATUS_SUCCESS, ice_utils_packStunPacket(pStunPacket, NULL, testPasswordLen, testBuffer, &testBufferLen));
+    EXPECT_NE(STATUS_SUCCESS, ice_utils_packStunPacket(pStunPacket, testPassword, 0, testBuffer, &testBufferLen));
+    EXPECT_NE(STATUS_SUCCESS, ice_utils_packStunPacket(pStunPacket, testPassword, testPasswordLen, NULL, &testBufferLen));
+    EXPECT_NE(STATUS_SUCCESS, ice_utils_packStunPacket(pStunPacket, testPassword, testPasswordLen, testBuffer, NULL));
 
-    EXPECT_NE(STATUS_SUCCESS, iceUtilsSendStunPacket(pStunPacket, testPassword, testPasswordLen, &testIpAddr, &testSocketConn, NULL, TRUE));
-    EXPECT_NE(STATUS_SUCCESS, iceUtilsSendStunPacket(pStunPacket, testPassword, testPasswordLen, &testIpAddr, NULL, &testTurnConn, FALSE));
+    EXPECT_NE(STATUS_SUCCESS, ice_utils_sendStunPacket(pStunPacket, testPassword, testPasswordLen, &testIpAddr, &testSocketConn, NULL, TRUE));
+    EXPECT_NE(STATUS_SUCCESS, ice_utils_sendStunPacket(pStunPacket, testPassword, testPasswordLen, &testIpAddr, NULL, &testTurnConn, FALSE));
 
-    EXPECT_EQ(STATUS_SUCCESS, createTransactionIdStore(20, &pTransactionIdStore));
-    transactionIdStoreInsert(pTransactionIdStore, testTransactionId);
-    transactionIdStoreHasId(pTransactionIdStore, testTransactionId);
-    transactionIdStoreReset(pTransactionIdStore);
-    EXPECT_EQ(STATUS_SUCCESS, iceUtilsGenerateTransactionId(testTransactionId, STUN_TRANSACTION_ID_LEN));
-    EXPECT_EQ(STATUS_SUCCESS, iceUtilsPackageStunPacket(pStunPacket, testPassword, testPasswordLen, testBuffer, &testBufferLen));
-    EXPECT_EQ(STATUS_SUCCESS, iceUtilsPackageStunPacket(pStunPacket, NULL, 0, testBuffer, &testBufferLen));
+    EXPECT_EQ(STATUS_SUCCESS, transaction_id_store_create(20, &pTransactionIdStore));
+    transaction_id_store_insert(pTransactionIdStore, testTransactionId);
+    transaction_id_store_isExisted(pTransactionIdStore, testTransactionId);
+    transaction_id_store_reset(pTransactionIdStore);
+    EXPECT_EQ(STATUS_SUCCESS, ice_utils_generateTransactionId(testTransactionId, STUN_TRANSACTION_ID_LEN));
+    EXPECT_EQ(STATUS_SUCCESS, ice_utils_packStunPacket(pStunPacket, testPassword, testPasswordLen, testBuffer, &testBufferLen));
+    EXPECT_EQ(STATUS_SUCCESS, ice_utils_packStunPacket(pStunPacket, NULL, 0, testBuffer, &testBufferLen));
 
-    EXPECT_EQ(STATUS_SUCCESS, freeStunPacket(&pStunPacket));
-    EXPECT_EQ(STATUS_SUCCESS, freeTransactionIdStore(&pTransactionIdStore));
+    EXPECT_EQ(STATUS_SUCCESS, stun_freePacket(&pStunPacket));
+    EXPECT_EQ(STATUS_SUCCESS, transaction_id_store_free(&pTransactionIdStore));
 }
 } // namespace webrtcclient
 } // namespace video

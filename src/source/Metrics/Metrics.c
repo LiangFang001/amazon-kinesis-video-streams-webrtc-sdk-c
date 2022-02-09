@@ -2,7 +2,6 @@
  * Kinesis WebRTC Metrics
  */
 #define LOG_CLASS "Metrics"
-#include "../Include_i.h"
 #include "PeerConnection.h"
 #include "Rtp.h"
 #include "DataChannel.h"
@@ -12,8 +11,10 @@ STATUS getIceCandidatePairStats(PRtcPeerConnection pRtcPeerConnection, PRtcIceCa
     STATUS retStatus = STATUS_SUCCESS;
     BOOL locked = FALSE;
     PIceAgent pIceAgent = NULL;
+
     CHK((pRtcPeerConnection != NULL || pRtcIceCandidatePairStats != NULL), STATUS_NULL_ARG);
     pIceAgent = ((PKvsPeerConnection) pRtcPeerConnection)->pIceAgent;
+
     MUTEX_LOCK(pIceAgent->lock);
     locked = TRUE;
     CHK(pIceAgent->pDataSendingIceCandidatePair != NULL, STATUS_SUCCESS);

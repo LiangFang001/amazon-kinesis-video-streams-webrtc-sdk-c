@@ -1,7 +1,6 @@
 #ifdef ENABLE_STREAMING
 #define LOG_CLASS "JitterBuffer"
 
-#include "../Include_i.h"
 #include "JitterBuffer.h"
 
 STATUS createJitterBuffer(FrameReadyFunc onFrameReadyFunc, FrameDroppedFunc onFrameDroppedFunc, DepayRtpPayloadFunc depayRtpPayloadFunc,

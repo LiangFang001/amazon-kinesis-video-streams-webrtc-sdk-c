@@ -40,14 +40,14 @@ STATUS http_api_rsp_createChannel(const CHAR* pResponseStr, UINT32 resultLen, PS
     // Parse out the ARN
     jsmn_init(&parser);
     tokenCount = jsmn_parse(&parser, pResponseStr, resultLen, pTokens, MAX_JSON_TOKEN_COUNT);
-    CHK(tokenCount > 1, STATUS_INVALID_API_CALL_RETURN_JSON);
-    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_INVALID_API_CALL_RETURN_JSON);
+    CHK(tokenCount > 1, STATUS_JSON_API_CALL_INVALID_RETURN);
+    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_JSON_API_CALL_INVALID_RETURN);
 
     // Loop through the pTokens and extract the stream description
     for (i = 1; i < tokenCount; i++) {
         if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "ChannelARN")) {
             strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-            CHK(strLen <= MAX_ARN_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+            CHK(strLen <= MAX_ARN_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
             STRNCPY(pSignalingClient->channelDescription.channelArn, pResponseStr + pTokens[i + 1].start, strLen);
             pSignalingClient->channelDescription.channelArn[MAX_ARN_LEN] = '\0';
             i++;
@@ -76,8 +76,8 @@ STATUS http_api_rsp_describeChannel(const CHAR* pResponseStr, UINT32 resultLen, 
     jsmn_init(&parser);
     tokenCount = jsmn_parse(&parser, pResponseStr, resultLen, pTokens, MAX_JSON_TOKEN_COUNT);
 
-    CHK(tokenCount > 1, STATUS_INVALID_API_CALL_RETURN_JSON);
-    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_INVALID_API_CALL_RETURN_JSON);
+    CHK(tokenCount > 1, STATUS_JSON_API_CALL_INVALID_RETURN);
+    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_JSON_API_CALL_INVALID_RETURN);
     MEMSET(&pSignalingClient->channelDescription, 0x00, SIZEOF(SignalingChannelDescription));
 
     // Loop through the pTokens and extract the stream description
@@ -91,30 +91,30 @@ STATUS http_api_rsp_describeChannel(const CHAR* pResponseStr, UINT32 resultLen, 
         } else {
             if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "ChannelARN")) {
                 strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-                CHK(strLen <= MAX_ARN_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+                CHK(strLen <= MAX_ARN_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
                 STRNCPY(pSignalingClient->channelDescription.channelArn, pResponseStr + pTokens[i + 1].start, strLen);
                 pSignalingClient->channelDescription.channelArn[MAX_ARN_LEN] = '\0';
                 i++;
             } else if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "ChannelName")) {
                 strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-                CHK(strLen <= MAX_CHANNEL_NAME_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+                CHK(strLen <= MAX_CHANNEL_NAME_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
                 STRNCPY(pSignalingClient->channelDescription.channelName, pResponseStr + pTokens[i + 1].start, strLen);
                 pSignalingClient->channelDescription.channelName[MAX_CHANNEL_NAME_LEN] = '\0';
                 i++;
             } else if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "Version")) {
                 strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-                CHK(strLen <= MAX_UPDATE_VERSION_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+                CHK(strLen <= MAX_UPDATE_VERSION_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
                 STRNCPY(pSignalingClient->channelDescription.updateVersion, pResponseStr + pTokens[i + 1].start, strLen);
                 pSignalingClient->channelDescription.updateVersion[MAX_UPDATE_VERSION_LEN] = '\0';
                 i++;
             } else if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "ChannelStatus")) {
                 strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-                CHK(strLen <= MAX_DESCRIBE_CHANNEL_STATUS_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+                CHK(strLen <= MAX_DESCRIBE_CHANNEL_STATUS_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
                 pSignalingClient->channelDescription.channelStatus = getChannelStatusFromString(pResponseStr + pTokens[i + 1].start, strLen);
                 i++;
             } else if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "ChannelType")) {
                 strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-                CHK(strLen <= MAX_DESCRIBE_CHANNEL_TYPE_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+                CHK(strLen <= MAX_DESCRIBE_CHANNEL_TYPE_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
                 pSignalingClient->channelDescription.channelType = getChannelTypeFromString(pResponseStr + pTokens[i + 1].start, strLen);
                 i++;
             } else if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "CreationTime")) {
@@ -160,8 +160,8 @@ STATUS http_api_rsp_getChannelEndpoint(const CHAR* pResponseStr, UINT32 resultLe
     // Parse and extract the endpoints
     jsmn_init(&parser);
     tokenCount = jsmn_parse(&parser, pResponseStr, resultLen, pTokens, MAX_JSON_TOKEN_COUNT);
-    CHK(tokenCount > 1, STATUS_INVALID_API_CALL_RETURN_JSON);
-    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_INVALID_API_CALL_RETURN_JSON);
+    CHK(tokenCount > 1, STATUS_JSON_API_CALL_INVALID_RETURN);
+    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_JSON_API_CALL_INVALID_RETURN);
 
     pSignalingClient->channelDescription.channelEndpointWss[0] = '\0';
     pSignalingClient->channelDescription.channelEndpointHttps[0] = '\0';
@@ -205,7 +205,7 @@ STATUS http_api_rsp_getChannelEndpoint(const CHAR* pResponseStr, UINT32 resultLe
                     i++;
                 } else if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "ResourceEndpoint")) {
                     strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-                    CHK(strLen <= MAX_CHANNEL_NAME_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+                    CHK(strLen <= MAX_CHANNEL_NAME_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
                     pEndpoint = pResponseStr + pTokens[i + 1].start;
                     endpointLen = strLen;
                     endpoint = TRUE;
@@ -252,8 +252,8 @@ STATUS http_api_rsp_getIceConfig(const CHAR* pResponseStr, UINT32 resultLen, PSi
     // Parse and extract the endpoints
     jsmn_init(&parser);
     tokenCount = jsmn_parse(&parser, pResponseStr, resultLen, pTokens, MAX_JSON_TOKEN_COUNT);
-    CHK(tokenCount > 1, STATUS_INVALID_API_CALL_RETURN_JSON);
-    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_INVALID_API_CALL_RETURN_JSON);
+    CHK(tokenCount > 1, STATUS_JSON_API_CALL_INVALID_RETURN);
+    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_JSON_API_CALL_INVALID_RETURN);
 
     MEMSET(&pSignalingClient->iceConfigs, 0x00, MAX_ICE_CONFIG_COUNT * SIZEOF(IceConfigInfo));
     pSignalingClient->iceConfigCount = 0;
@@ -264,7 +264,7 @@ STATUS http_api_rsp_getIceConfig(const CHAR* pResponseStr, UINT32 resultLen, PSi
             if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "IceServerList")) {
                 jsonInIceServerList = TRUE;
 
-                CHK(pTokens[i + 1].type == JSMN_ARRAY, STATUS_INVALID_API_CALL_RETURN_JSON);
+                CHK(pTokens[i + 1].type == JSMN_ARRAY, STATUS_JSON_API_CALL_INVALID_RETURN);
                 CHK(pTokens[i + 1].size <= MAX_ICE_CONFIG_COUNT, STATUS_SIGNALING_MAX_ICE_CONFIG_COUNT);
             }
         } else {
@@ -273,13 +273,13 @@ STATUS http_api_rsp_getIceConfig(const CHAR* pResponseStr, UINT32 resultLen, PSi
                 configCount++;
             } else if (compareJsonString(pResponseStr, pToken, JSMN_STRING, (PCHAR) "Username")) {
                 strLen = (UINT32)(pToken[1].end - pToken[1].start);
-                CHK(strLen <= MAX_ICE_CONFIG_USER_NAME_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+                CHK(strLen <= MAX_ICE_CONFIG_USER_NAME_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
                 STRNCPY(pSignalingClient->iceConfigs[configCount - 1].userName, pResponseStr + pToken[1].start, strLen);
                 pSignalingClient->iceConfigs[configCount - 1].userName[MAX_ICE_CONFIG_USER_NAME_LEN] = '\0';
                 i++;
             } else if (compareJsonString(pResponseStr, pToken, JSMN_STRING, (PCHAR) "Password")) {
                 strLen = (UINT32)(pToken[1].end - pToken[1].start);
-                CHK(strLen <= MAX_ICE_CONFIG_CREDENTIAL_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+                CHK(strLen <= MAX_ICE_CONFIG_CREDENTIAL_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
                 STRNCPY(pSignalingClient->iceConfigs[configCount - 1].password, pResponseStr + pToken[1].start, strLen);
                 pSignalingClient->iceConfigs[configCount - 1].userName[MAX_ICE_CONFIG_CREDENTIAL_LEN] = '\0';
                 i++;
@@ -291,7 +291,7 @@ STATUS http_api_rsp_getIceConfig(const CHAR* pResponseStr, UINT32 resultLen, PSi
                 i++;
             } else if (compareJsonString(pResponseStr, pToken, JSMN_STRING, (PCHAR) "Uris")) {
                 // Expect an array of elements
-                CHK(pToken[1].type == JSMN_ARRAY, STATUS_INVALID_API_CALL_RETURN_JSON);
+                CHK(pToken[1].type == JSMN_ARRAY, STATUS_JSON_API_CALL_INVALID_RETURN);
                 CHK(pToken[1].size <= MAX_ICE_CONFIG_URI_COUNT, STATUS_SIGNALING_MAX_ICE_URI_COUNT);
                 for (j = 0; j < pToken[1].size; j++) {
                     strLen = (UINT32)(pToken[j + 2].end - pToken[j + 2].start);
@@ -332,32 +332,32 @@ STATUS http_api_rsp_getIoTCredential(PIotCredentialProvider pIotCredentialProvid
 
     // CHK(pIotCredentialProvider != NULL && pCallInfo != NULL, STATUS_NULL_ARG);
     CHK(NULL != (pTokens = (jsmntok_t*) MEMALLOC(MAX_JSON_TOKEN_COUNT * SIZEOF(jsmntok_t))), STATUS_NOT_ENOUGH_MEMORY);
-    CHK(resultLen > 0, STATUS_IOT_FAILED);
+    CHK(resultLen > 0, STATUS_HTTP_IOT_FAILED);
 
     jsmn_init(&parser);
     tokenCount = jsmn_parse(&parser, pResponseStr, resultLen, pTokens, MAX_JSON_TOKEN_COUNT);
-    CHK(tokenCount > 1, STATUS_INVALID_API_CALL_RETURN_JSON);
-    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_INVALID_API_CALL_RETURN_JSON);
+    CHK(tokenCount > 1, STATUS_JSON_API_CALL_INVALID_RETURN);
+    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_JSON_API_CALL_INVALID_RETURN);
 
     for (i = 1; i < (UINT32) tokenCount; i++) {
         if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "accessKeyId")) {
             accessKeyIdLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-            CHK(accessKeyIdLen <= MAX_ACCESS_KEY_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+            CHK(accessKeyIdLen <= MAX_ACCESS_KEY_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
             accessKeyId = pResponseStr + pTokens[i + 1].start;
             i++;
         } else if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "secretAccessKey")) {
             secretKeyLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-            CHK(secretKeyLen <= MAX_SECRET_KEY_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+            CHK(secretKeyLen <= MAX_SECRET_KEY_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
             secretKey = pResponseStr + pTokens[i + 1].start;
             i++;
         } else if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "sessionToken")) {
             sessionTokenLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-            CHK(sessionTokenLen <= MAX_SESSION_TOKEN_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+            CHK(sessionTokenLen <= MAX_SESSION_TOKEN_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
             sessionToken = pResponseStr + pTokens[i + 1].start;
             i++;
         } else if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, "expiration")) {
             expirationTimestampLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-            CHK(expirationTimestampLen <= MAX_EXPIRATION_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+            CHK(expirationTimestampLen <= MAX_EXPIRATION_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
             expirationTimestamp = pResponseStr + pTokens[i + 1].start;
             MEMCPY(expirationTimestampStr, expirationTimestamp, expirationTimestampLen);
             expirationTimestampStr[expirationTimestampLen] = '\0';
@@ -365,7 +365,7 @@ STATUS http_api_rsp_getIoTCredential(PIotCredentialProvider pIotCredentialProvid
         }
     }
 
-    CHK(accessKeyId != NULL && secretKey != NULL && sessionToken != NULL, STATUS_IOT_FAILED);
+    CHK(accessKeyId != NULL && secretKey != NULL && sessionToken != NULL, STATUS_HTTP_IOT_FAILED);
     //#TBD
     currentTime = pIotCredentialProvider->getCurrentTimeFn(pIotCredentialProvider->customData);
     CHK_STATUS(convertTimestampToEpoch(expirationTimestampStr, currentTime / HUNDREDS_OF_NANOS_IN_A_SECOND, &expiration));

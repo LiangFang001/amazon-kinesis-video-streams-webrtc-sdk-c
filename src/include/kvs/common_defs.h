@@ -395,6 +395,9 @@ typedef INT_PTR SSIZE_T, *PSSIZE_T;
 #define HUNDREDS_OF_NANOS_IN_A_MINUTE      (HUNDREDS_OF_NANOS_IN_A_SECOND * 60LL)
 #define HUNDREDS_OF_NANOS_IN_AN_HOUR       (HUNDREDS_OF_NANOS_IN_A_MINUTE * 60LL)
 
+#ifndef STATUS
+#define STATUS UINT32
+#endif
 //
 // Infinite time
 //
@@ -957,15 +960,15 @@ extern PUBLIC_API atomicXor globalAtomicXor;
 //
 // Thread functionality
 //
-#define THREAD_CREATE           globalCreateThread
-#define THREAD_CREATE_EX        globalCreateThreadEx
-#define THREAD_CREATE_EX_PRI    globalCreateThreadExPri
-#define THREAD_JOIN             globalJoinThread
-#define THREAD_SLEEP            globalThreadSleep
-#define THREAD_SLEEP_UNTIL      globalThreadSleepUntil
-#define THREAD_CANCEL           globalCancelThread
-#define THREAD_DETACH           globalDetachThread
-#define THREAD_EXIT             globalExitThread
+#define THREAD_CREATE        globalCreateThread
+#define THREAD_CREATE_EX     globalCreateThreadEx
+#define THREAD_CREATE_EX_PRI globalCreateThreadExPri
+#define THREAD_JOIN          globalJoinThread
+#define THREAD_SLEEP         globalThreadSleep
+#define THREAD_SLEEP_UNTIL   globalThreadSleepUntil
+#define THREAD_CANCEL        globalCancelThread
+#define THREAD_DETACH        globalDetachThread
+#define THREAD_EXIT          globalExitThread
 
 //
 // Static initializers

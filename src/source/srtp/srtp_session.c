@@ -1,9 +1,32 @@
-#ifdef ENABLE_STREAMING
-#define LOG_CLASS "SRTP"
-#include "../Include_i.h"
-#include "SrtpSession.h"
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 
-STATUS initSrtpSession(PBYTE receiveKey, PBYTE transmitKey, KVS_SRTP_PROFILE profile, PSrtpSession* ppSrtpSession)
+#ifdef ENABLE_STREAMING
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+#define LOG_CLASS "SRTP"
+#include "srtp_session.h"
+
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+STATUS srtp_session_init(PBYTE receiveKey, PBYTE transmitKey, KVS_SRTP_PROFILE profile, PSrtpSession* ppSrtpSession)
 {
     ENTERS();
     UNUSED_PARAM(profile);
@@ -32,7 +55,7 @@ STATUS initSrtpSession(PBYTE receiveKey, PBYTE transmitKey, KVS_SRTP_PROFILE pro
             srtcp_policy_setter = srtp_crypto_policy_set_rtp_default;
             break;
         default:
-            CHK(FALSE, STATUS_SSL_UNKNOWN_SRTP_PROFILE);
+            CHK(FALSE, STATUS_DTLS_UNKNOWN_SRTP_PROFILE);
     }
 
     srtp_policy_setter(&receivePolicy.rtp);
@@ -59,14 +82,14 @@ STATUS initSrtpSession(PBYTE receiveKey, PBYTE transmitKey, KVS_SRTP_PROFILE pro
 
 CleanUp:
     if (STATUS_FAILED(retStatus)) {
-        freeSrtpSession(&pSrtpSession);
+        srtp_session_free(&pSrtpSession);
     }
 
     LEAVES();
     return retStatus;
 }
 
-STATUS freeSrtpSession(PSrtpSession* ppSrtpSession)
+STATUS srtp_session_free(PSrtpSession* ppSrtpSession)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -95,7 +118,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS decryptSrtpPacket(PSrtpSession pSrtpSession, PVOID encryptedMessage, PINT32 len)
+STATUS srtp_session_decryptSrtpPacket(PSrtpSession pSrtpSession, PVOID encryptedMessage, PINT32 len)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -109,7 +132,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS decryptSrtcpPacket(PSrtpSession pSrtpSession, PVOID encryptedMessage, PINT32 len)
+STATUS srtp_session_decryptSrtcpPacket(PSrtpSession pSrtpSession, PVOID encryptedMessage, PINT32 len)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -124,7 +147,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS encryptRtpPacket(PSrtpSession pSrtpSession, PVOID message, PINT32 len)
+STATUS srtp_session_encryptRtpPacket(PSrtpSession pSrtpSession, PVOID message, PINT32 len)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -140,7 +163,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS encryptRtcpPacket(PSrtpSession pSrtpSession, PVOID message, PINT32 len)
+STATUS srtp_session_encryptRtcpPacket(PSrtpSession pSrtpSession, PVOID message, PINT32 len)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -148,7 +171,7 @@ STATUS encryptRtcpPacket(PSrtpSession pSrtpSession, PVOID message, PINT32 len)
 
     status = srtp_protect_rtcp(pSrtpSession->srtp_transmit_session, message, len);
 
-    CHK_ERR(status == srtp_err_status_ok, STATUS_SRTCP_ENCRYPT_FAILED, "srtp_protect_rtcp returned %lu on srtp session %" PRIu64, status,
+    CHK_ERR(status == srtp_err_status_ok, STATUS_SRTP_ENCRYPT_FAILED, "srtp_protect_rtcp returned %lu on srtp session %" PRIu64, status,
             pSrtpSession->srtp_transmit_session);
 
 CleanUp:

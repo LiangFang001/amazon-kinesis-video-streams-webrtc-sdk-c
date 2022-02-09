@@ -10,7 +10,7 @@ extern "C" {
 #include "stun.h"
 #include "network.h"
 #include "socket_connection.h"
-#include "IceUtils.h"
+#include "ice_utils.h"
 
 #define DEFAULT_NAT_TEST_MAX_BINDING_REQUEST_COUNT 5
 #define DEFAULT_TEST_NAT_TEST_RESPONSE_WAIT_TIME   500 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND

@@ -1077,7 +1077,7 @@ typedef struct {
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  * @{
  */
-PUBLIC_API STATUS createPeerConnection(PRtcConfiguration, PRtcPeerConnection*);
+PUBLIC_API STATUS peer_connection_create(PRtcConfiguration, PRtcPeerConnection*);
 
 /**
  * @brief Free a RtcPeerConnection, NOT thread-safe.
@@ -1086,7 +1086,7 @@ PUBLIC_API STATUS createPeerConnection(PRtcConfiguration, PRtcPeerConnection*);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS freePeerConnection(PRtcPeerConnection* ppPeerConnection);
+PUBLIC_API STATUS peer_connection_free(PRtcPeerConnection* ppPeerConnection);
 
 /**
  * @brief Set a callback when new Ice collects new local candidate.
@@ -1161,7 +1161,7 @@ PUBLIC_API STATUS createOffer(PRtcPeerConnection, PRtcSessionDescriptionInit);
 /**
  * @brief The canTrickleIceCandidates attribute indicates whether the remote peer is able to accept trickled ICE candidates.
  * The value is determined based on whether a remote description indicates support for trickle ICE. Prior to the completion
- * of setRemoteDescription, this value is null.
+ * of peer_connection_setRemoteDescription, this value is null.
  *
  * Reference: https://www.w3.org/TR/webrtc/#dom-rtcpeerconnection-cantrickleicecandidates
  *
@@ -1182,7 +1182,7 @@ PUBLIC_API NullableBool canTrickleIceCandidates(PRtcPeerConnection);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS createAnswer(PRtcPeerConnection, PRtcSessionDescriptionInit);
+PUBLIC_API STATUS peer_connection_createAnswer(PRtcPeerConnection, PRtcSessionDescriptionInit);
 
 /**
  * @brief Create a JSON string from RtcSessionDescriptionInit
@@ -1204,7 +1204,7 @@ PUBLIC_API STATUS serializeSessionDescriptionInit(PRtcSessionDescriptionInit, PC
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS deserializeSessionDescriptionInit(PCHAR, UINT32, PRtcSessionDescriptionInit);
+PUBLIC_API STATUS session_description_deserializeInit(PCHAR, UINT32, PRtcSessionDescriptionInit);
 
 /**
  * @brief Parses a JSON string and populates a PRtcIceCandidateInit
@@ -1228,7 +1228,7 @@ PUBLIC_API STATUS deserializeRtcIceCandidateInit(PCHAR, UINT32, PRtcIceCandidate
  *
  * @return - STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS setLocalDescription(PRtcPeerConnection, PRtcSessionDescriptionInit);
+PUBLIC_API STATUS peer_connection_setLocalDescription(PRtcPeerConnection, PRtcSessionDescriptionInit);
 
 /**
  * @brief Instructs the RtcPeerConnection to apply
@@ -1241,7 +1241,7 @@ PUBLIC_API STATUS setLocalDescription(PRtcPeerConnection, PRtcSessionDescription
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS setRemoteDescription(PRtcPeerConnection, PRtcSessionDescriptionInit);
+PUBLIC_API STATUS peer_connection_setRemoteDescription(PRtcPeerConnection, PRtcSessionDescriptionInit);
 
 /**
  * @brief Instructs the RtcPeerConnection that ICE should be restarted. Subsequent calls to createOffer will create
@@ -1253,7 +1253,7 @@ PUBLIC_API STATUS setRemoteDescription(PRtcPeerConnection, PRtcSessionDescriptio
  *
  * @return - STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS restartIce(PRtcPeerConnection);
+PUBLIC_API STATUS peer_connection_restartIce(PRtcPeerConnection);
 
 /**
  * @brief Close the underlying DTLS session and IceAgent connection. Trigger RtcOnConnectionStateChange to RTC_PEER_CONNECTION_STATE_CLOSED
@@ -1264,7 +1264,7 @@ PUBLIC_API STATUS restartIce(PRtcPeerConnection);
  *
  * @return - STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS closePeerConnection(PRtcPeerConnection);
+PUBLIC_API STATUS peer_connection_close(PRtcPeerConnection);
 
 /**
  * @brief Create a new RtcRtpTransceiver and add it to the set of transceivers.
@@ -1316,7 +1316,7 @@ PUBLIC_API STATUS transceiverOnPictureLoss(PRtcRtpTransceiver, UINT64, RtcOnPict
 /**
  * @brief Frees the previously created transceiver object
  *
- * This method is currently a no-op as Transceivers are freed when freePeerConnection is called
+ * This method is currently a no-op as Transceivers are freed when peer_connection_free is called
  * in the future when renegotiation is supported this will be useful to remove Transceivers at anytime
  *
  * @param[in,out/opt] PRtcRtpTransceiver* in,out/OPT RtcRtpTransceiver to be freed
@@ -1381,7 +1381,7 @@ PUBLIC_API STATUS updateEncoderStats(PRtcRtpTransceiver, PRtcEncoderStats);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS addIceCandidate(PRtcPeerConnection, PCHAR);
+PUBLIC_API STATUS peer_connection_addIceCandidate(PRtcPeerConnection, PCHAR);
 
 /**
  * @brief createDataChannel creates a new RtcDataChannel object with the given label.

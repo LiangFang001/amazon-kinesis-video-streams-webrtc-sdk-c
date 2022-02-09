@@ -1,6 +1,5 @@
 #define LOG_CLASS "RtpRollingBuffer"
 
-#include "../Include_i.h"
 #include "RtpRollingBuffer.h"
 
 STATUS createRtpRollingBuffer(UINT32 capacity, PRtpRollingBuffer* ppRtpRollingBuffer)

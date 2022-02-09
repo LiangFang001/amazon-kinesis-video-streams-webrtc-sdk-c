@@ -16,16 +16,16 @@ TEST_F(PeerConnectionApiTest, deserializeRtcIceCandidateInit)
     MEMSET(&rtcIceCandidateInit, 0x00, SIZEOF(rtcIceCandidateInit));
 
     auto notAnObject = "helloWorld";
-    EXPECT_EQ(deserializeRtcIceCandidateInit((PCHAR) notAnObject, STRLEN(notAnObject), &rtcIceCandidateInit), STATUS_INVALID_API_CALL_RETURN_JSON);
+    EXPECT_EQ(deserializeRtcIceCandidateInit((PCHAR) notAnObject, STRLEN(notAnObject), &rtcIceCandidateInit), STATUS_JSON_API_CALL_INVALID_RETURN);
 
     auto emptyObject = "{}";
-    EXPECT_EQ(deserializeRtcIceCandidateInit((PCHAR) emptyObject, STRLEN(emptyObject), &rtcIceCandidateInit), STATUS_INVALID_API_CALL_RETURN_JSON);
+    EXPECT_EQ(deserializeRtcIceCandidateInit((PCHAR) emptyObject, STRLEN(emptyObject), &rtcIceCandidateInit), STATUS_JSON_API_CALL_INVALID_RETURN);
 
     auto noCandidate = "{randomKey: \"randomValue\"}";
-    EXPECT_EQ(deserializeRtcIceCandidateInit((PCHAR) noCandidate, STRLEN(noCandidate), &rtcIceCandidateInit), STATUS_ICE_CANDIDATE_MISSING_CANDIDATE);
+    EXPECT_EQ(deserializeRtcIceCandidateInit((PCHAR) noCandidate, STRLEN(noCandidate), &rtcIceCandidateInit), STATUS_SDP_ICE_CANDIDATE_MISSING_CANDIDATE);
 
     auto keyNoValue = "{1,2,3,4,5}candidate";
-    EXPECT_EQ(deserializeRtcIceCandidateInit((PCHAR) keyNoValue, STRLEN(keyNoValue), &rtcIceCandidateInit), STATUS_ICE_CANDIDATE_MISSING_CANDIDATE);
+    EXPECT_EQ(deserializeRtcIceCandidateInit((PCHAR) keyNoValue, STRLEN(keyNoValue), &rtcIceCandidateInit), STATUS_SDP_ICE_CANDIDATE_MISSING_CANDIDATE);
 
     auto validCandidate = "{candidate: \"foobar\"}";
     EXPECT_EQ(deserializeRtcIceCandidateInit((PCHAR) validCandidate, STRLEN(validCandidate), &rtcIceCandidateInit), STATUS_SUCCESS);
@@ -68,63 +68,63 @@ TEST_F(PeerConnectionApiTest, suppliedCertificatesVariation)
     configuration.certificates[0].certificateSize = 0;
     configuration.certificates[0].pPrivateKey = NULL;
     configuration.certificates[0].privateKeySize = 1;
-    EXPECT_EQ(STATUS_SSL_INVALID_CERTIFICATE_BITS, createPeerConnection(&configuration, &pRtcPeerConnection));
+    EXPECT_EQ(STATUS_DTLS_INVALID_CERTIFICATE_BITS, peer_connection_create(&configuration, &pRtcPeerConnection));
 
     // Private key is null but the size is not zero with specified size for the cert
     configuration.certificates[0].pCertificate = (PBYTE) 1;
     configuration.certificates[0].certificateSize = 100;
     configuration.certificates[0].pPrivateKey = NULL;
     configuration.certificates[0].privateKeySize = 1;
-    EXPECT_EQ(STATUS_SSL_INVALID_CERTIFICATE_BITS, createPeerConnection(&configuration, &pRtcPeerConnection));
+    EXPECT_EQ(STATUS_DTLS_INVALID_CERTIFICATE_BITS, peer_connection_create(&configuration, &pRtcPeerConnection));
 
     // Bad private key size later in the chain that should be ignored
     configuration.certificates[0].pCertificate = NULL;
     configuration.certificates[0].certificateSize = 0;
     configuration.certificates[0].pPrivateKey = NULL;
     configuration.certificates[0].privateKeySize = 1;
-    EXPECT_EQ(STATUS_SUCCESS, createPeerConnection(&configuration, &pRtcPeerConnection));
-    EXPECT_EQ(STATUS_SUCCESS, freePeerConnection(&pRtcPeerConnection));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_create(&configuration, &pRtcPeerConnection));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_free(&pRtcPeerConnection));
 
     // Bad private key size later in the chain with cert size not zero that should be ignored
     configuration.certificates[0].pCertificate = NULL;
     configuration.certificates[0].certificateSize = 100;
     configuration.certificates[0].pPrivateKey = NULL;
     configuration.certificates[0].privateKeySize = 1;
-    EXPECT_EQ(STATUS_SUCCESS, createPeerConnection(&configuration, &pRtcPeerConnection));
-    EXPECT_EQ(STATUS_SUCCESS, freePeerConnection(&pRtcPeerConnection));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_create(&configuration, &pRtcPeerConnection));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_free(&pRtcPeerConnection));
 }
 
-TEST_F(PeerConnectionApiTest, deserializeSessionDescriptionInit)
+TEST_F(PeerConnectionApiTest, session_description_deserializeInit)
 {
     RtcSessionDescriptionInit rtcSessionDescriptionInit;
     MEMSET(&rtcSessionDescriptionInit, 0x00, SIZEOF(RtcSessionDescriptionInit));
 
     auto notAnObject = "helloWorld";
-    EXPECT_EQ(deserializeSessionDescriptionInit((PCHAR) notAnObject, STRLEN(notAnObject), &rtcSessionDescriptionInit),
-              STATUS_INVALID_API_CALL_RETURN_JSON);
+    EXPECT_EQ(session_description_deserializeInit((PCHAR) notAnObject, STRLEN(notAnObject), &rtcSessionDescriptionInit),
+              STATUS_JSON_API_CALL_INVALID_RETURN);
 
     auto emptyObject = "{}";
-    EXPECT_EQ(deserializeSessionDescriptionInit((PCHAR) emptyObject, STRLEN(emptyObject), &rtcSessionDescriptionInit),
-              STATUS_INVALID_API_CALL_RETURN_JSON);
+    EXPECT_EQ(session_description_deserializeInit((PCHAR) emptyObject, STRLEN(emptyObject), &rtcSessionDescriptionInit),
+              STATUS_JSON_API_CALL_INVALID_RETURN);
 
     auto noSDPKey = "{type: \"offer\"}";
-    EXPECT_EQ(deserializeSessionDescriptionInit((PCHAR) noSDPKey, STRLEN(noSDPKey), &rtcSessionDescriptionInit),
-              STATUS_SESSION_DESCRIPTION_INIT_MISSING_SDP);
+    EXPECT_EQ(session_description_deserializeInit((PCHAR) noSDPKey, STRLEN(noSDPKey), &rtcSessionDescriptionInit),
+              STATUS_SDP_INIT_MISSING_SDP);
 
     auto noTypeKey = "{\"sdp\": \"KVS\\r\\nWebRTC\\r\\nSDP\\r\\nValue\\r\\n\"}";
-    EXPECT_EQ(deserializeSessionDescriptionInit((PCHAR) noTypeKey, STRLEN(noTypeKey), &rtcSessionDescriptionInit),
-              STATUS_SESSION_DESCRIPTION_INIT_MISSING_TYPE);
+    EXPECT_EQ(session_description_deserializeInit((PCHAR) noTypeKey, STRLEN(noTypeKey), &rtcSessionDescriptionInit),
+              STATUS_SDP_INIT_MISSING_TYPE);
 
     auto invalidTypeKey = "{sdp: \"kvsSdp\", type: \"foobar\"}";
-    EXPECT_EQ(deserializeSessionDescriptionInit((PCHAR) invalidTypeKey, STRLEN(invalidTypeKey), &rtcSessionDescriptionInit),
-              STATUS_SESSION_DESCRIPTION_INIT_INVALID_TYPE);
+    EXPECT_EQ(session_description_deserializeInit((PCHAR) invalidTypeKey, STRLEN(invalidTypeKey), &rtcSessionDescriptionInit),
+              STATUS_SDP_INIT_INVALID_TYPE);
 
     auto keyNoValue = "{1,2,3,4,5}sdp";
-    EXPECT_EQ(deserializeSessionDescriptionInit((PCHAR) keyNoValue, STRLEN(keyNoValue), &rtcSessionDescriptionInit),
-              STATUS_SESSION_DESCRIPTION_INIT_MISSING_SDP);
+    EXPECT_EQ(session_description_deserializeInit((PCHAR) keyNoValue, STRLEN(keyNoValue), &rtcSessionDescriptionInit),
+              STATUS_SDP_INIT_MISSING_SDP);
 
     auto validSessionDescriptionInit = "{sdp: \"KVS\\r\\nWebRTC\\r\\nSDP\\r\\nValue\\r\\n\", type: \"offer\"}";
-    EXPECT_EQ(deserializeSessionDescriptionInit((PCHAR) validSessionDescriptionInit, STRLEN(validSessionDescriptionInit), &rtcSessionDescriptionInit),
+    EXPECT_EQ(session_description_deserializeInit((PCHAR) validSessionDescriptionInit, STRLEN(validSessionDescriptionInit), &rtcSessionDescriptionInit),
               STATUS_SUCCESS);
     EXPECT_STREQ(rtcSessionDescriptionInit.sdp, "KVS\r\nWebRTC\r\nSDP\r\nValue\r\n");
     EXPECT_EQ(rtcSessionDescriptionInit.type, SDP_TYPE_OFFER);

@@ -16,7 +16,7 @@
  * HEADERS
  ******************************************************************************/
 #define LOG_CLASS "SignalingClient"
-#include "../Include_i.h"
+
 #include "signaling_fsm.h"
 #include "signaling.h"
 

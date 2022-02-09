@@ -41,8 +41,8 @@ STATUS wss_api_rsp_receivedMessage(const CHAR* pMessage, UINT32 messageLen, PSig
     CHK(NULL != (pTokens = (jsmntok_t*) MEMALLOC(MAX_JSON_TOKEN_COUNT * SIZEOF(jsmntok_t))), STATUS_NOT_ENOUGH_MEMORY);
     jsmn_init(&parser);
     tokenCount = jsmn_parse(&parser, pMessage, messageLen, pTokens, MAX_JSON_TOKEN_COUNT);
-    CHK(tokenCount > 1, STATUS_INVALID_API_CALL_RETURN_JSON);
-    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_INVALID_API_CALL_RETURN_JSON);
+    CHK(tokenCount > 1, STATUS_JSON_API_CALL_INVALID_RETURN);
+    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_JSON_API_CALL_INVALID_RETURN);
 
     pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.version = SIGNALING_MESSAGE_CURRENT_VERSION;
 
@@ -50,13 +50,13 @@ STATUS wss_api_rsp_receivedMessage(const CHAR* pMessage, UINT32 messageLen, PSig
     for (i = 1; i < tokenCount; i++) {
         if (compareJsonString(pMessage, &pTokens[i], JSMN_STRING, (PCHAR) "senderClientId")) {
             strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-            CHK(strLen <= MAX_SIGNALING_CLIENT_ID_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+            CHK(strLen <= MAX_SIGNALING_CLIENT_ID_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
             STRNCPY(pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.peerClientId, pMessage + pTokens[i + 1].start, strLen);
             pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.peerClientId[MAX_SIGNALING_CLIENT_ID_LEN] = '\0';
             i++;
         } else if (compareJsonString(pMessage, &pTokens[i], JSMN_STRING, (PCHAR) "messageType")) {
             strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-            CHK(strLen <= SIGNALING_MESSAGE_TYPE_MAX_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+            CHK(strLen <= SIGNALING_MESSAGE_TYPE_MAX_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
             CHK_STATUS(signaling_getMessageTypeFromString(pMessage + pTokens[i + 1].start, strLen,
                                                           &pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.messageType));
 
@@ -64,7 +64,7 @@ STATUS wss_api_rsp_receivedMessage(const CHAR* pMessage, UINT32 messageLen, PSig
             i++;
         } else if (compareJsonString(pMessage, &pTokens[i], JSMN_STRING, (PCHAR) "messagePayload")) {
             strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-            CHK(strLen <= MAX_SIGNALING_MESSAGE_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+            CHK(strLen <= MAX_SIGNALING_MESSAGE_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
 
             // Base64 decode the message
             CHK_STATUS(base64Decode(pMessage + pTokens[i + 1].start, strLen,
@@ -82,7 +82,7 @@ STATUS wss_api_rsp_receivedMessage(const CHAR* pMessage, UINT32 messageLen, PSig
             } else {
                 if (compareJsonString(pMessage, &pTokens[i], JSMN_STRING, (PCHAR) "correlationId")) {
                     strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-                    CHK(strLen <= MAX_CORRELATION_ID_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+                    CHK(strLen <= MAX_CORRELATION_ID_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
                     STRNCPY(pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.correlationId, pMessage + pTokens[i + 1].start,
                             strLen);
                     pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.correlationId[MAX_CORRELATION_ID_LEN] = '\0';
@@ -90,14 +90,14 @@ STATUS wss_api_rsp_receivedMessage(const CHAR* pMessage, UINT32 messageLen, PSig
                     i++;
                 } else if (compareJsonString(pMessage, &pTokens[i], JSMN_STRING, (PCHAR) "errorType")) {
                     strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-                    CHK(strLen <= MAX_ERROR_TYPE_STRING_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+                    CHK(strLen <= MAX_ERROR_TYPE_STRING_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
                     STRNCPY(pSignalingMessageWrapper->receivedSignalingMessage.errorType, pMessage + pTokens[i + 1].start, strLen);
                     pSignalingMessageWrapper->receivedSignalingMessage.errorType[MAX_ERROR_TYPE_STRING_LEN] = '\0';
 
                     i++;
                 } else if (compareJsonString(pMessage, &pTokens[i], JSMN_STRING, (PCHAR) "statusCode")) {
                     strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-                    CHK(strLen <= MAX_STATUS_CODE_STRING_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+                    CHK(strLen <= MAX_STATUS_CODE_STRING_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
 
                     // Parse the status code
                     CHK_STATUS(STRTOUI32(pMessage + pTokens[i + 1].start, pMessage + pTokens[i + 1].end, 10,
@@ -106,7 +106,7 @@ STATUS wss_api_rsp_receivedMessage(const CHAR* pMessage, UINT32 messageLen, PSig
                     i++;
                 } else if (compareJsonString(pMessage, &pTokens[i], JSMN_STRING, (PCHAR) "description")) {
                     strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-                    CHK(strLen <= MAX_MESSAGE_DESCRIPTION_LEN, STATUS_INVALID_API_CALL_RETURN_JSON);
+                    CHK(strLen <= MAX_MESSAGE_DESCRIPTION_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
                     STRNCPY(pSignalingMessageWrapper->receivedSignalingMessage.description, pMessage + pTokens[i + 1].start, strLen);
                     pSignalingMessageWrapper->receivedSignalingMessage.description[MAX_MESSAGE_DESCRIPTION_LEN] = '\0';
 

@@ -1189,7 +1189,7 @@ TEST_F(SignalingApiFunctionalityTest, iceRefreshEmulationWithFaultInjectionAuthE
     clientInfoInternal.getIceConfigPreHookFn = getIceConfigPreHook;
 
     // Make it fail after the first call and recover after two failures on the 3rd call
-    getIceConfigResult = STATUS_SERVICE_CALL_NOT_AUTHORIZED_ERROR;
+    getIceConfigResult = STATUS_SIGNALING_NOT_AUTHORIZED_ERROR;
     getIceConfigFail = 1;
     getIceConfigRecover = 3;
 
@@ -2187,10 +2187,10 @@ TEST_F(SignalingApiFunctionalityTest, cachingWithFaultInjection)
 
     // Make describe and getendpoint fail once so we can check the no-caching behavior
     // in case when there is a failure.
-    describeResult = STATUS_SERVICE_CALL_TIMEOUT_ERROR;
+    describeResult = STATUS_SIGNALING_TIMEOUT_ERROR;
     describeFail = 0;
     describeRecover = 1;
-    getEndpointResult = STATUS_SERVICE_CALL_TIMEOUT_ERROR;
+    getEndpointResult = STATUS_SIGNALING_TIMEOUT_ERROR;
     getEndpointFail = 0;
     getEndpointRecover = 1;
 
@@ -2240,7 +2240,7 @@ TEST_F(SignalingApiFunctionalityTest, cachingWithFaultInjection)
     EXPECT_EQ(2, getEndpointCount);
 
     // Connect to the signaling client and make it fail
-    connectResult = STATUS_SERVICE_CALL_NOT_AUTHORIZED_ERROR;
+    connectResult = STATUS_SIGNALING_NOT_AUTHORIZED_ERROR;
     connectFail = 0;
     connectRecover = MAX_UINT32;
     EXPECT_NE(STATUS_SUCCESS, signalingClientConnect(signalingHandle));

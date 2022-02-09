@@ -28,52 +28,52 @@ TEST_F(StunApiTest, serializeValidityTests)
 
     pBuffer = buffer;
 
-    EXPECT_NE(STATUS_SUCCESS, serializeStunPacket(NULL, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, NULL, &size));
-    EXPECT_NE(STATUS_SUCCESS, serializeStunPacket(NULL, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, TRUE, NULL, &size));
-    EXPECT_NE(STATUS_SUCCESS, serializeStunPacket(NULL, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, FALSE, NULL, &size));
-    EXPECT_NE(STATUS_SUCCESS, serializeStunPacket(NULL, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, FALSE, NULL, &size));
-    EXPECT_NE(STATUS_SUCCESS, serializeStunPacket(&stunPacket, NULL, 0, TRUE, TRUE, NULL, &size));
+    EXPECT_NE(STATUS_SUCCESS, stun_serializePacket(NULL, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, NULL, &size));
+    EXPECT_NE(STATUS_SUCCESS, stun_serializePacket(NULL, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, TRUE, NULL, &size));
+    EXPECT_NE(STATUS_SUCCESS, stun_serializePacket(NULL, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, FALSE, NULL, &size));
+    EXPECT_NE(STATUS_SUCCESS, stun_serializePacket(NULL, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, FALSE, NULL, &size));
+    EXPECT_NE(STATUS_SUCCESS, stun_serializePacket(&stunPacket, NULL, 0, TRUE, TRUE, NULL, &size));
 
     password[0] = '\0';
-    EXPECT_NE(STATUS_SUCCESS, serializeStunPacket(&stunPacket, NULL, 0, TRUE, TRUE, NULL, &size));
+    EXPECT_NE(STATUS_SUCCESS, stun_serializePacket(&stunPacket, NULL, 0, TRUE, TRUE, NULL, &size));
 
     password[0] = 't';
-    EXPECT_NE(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, NULL, NULL));
+    EXPECT_NE(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, NULL, NULL));
 
-    EXPECT_NE(STATUS_SUCCESS, serializeStunPacket(NULL, NULL, 0, TRUE, TRUE, NULL, NULL));
-    EXPECT_NE(STATUS_SUCCESS, serializeStunPacket(NULL, NULL, 0, TRUE, TRUE, pBuffer, NULL));
-
-    // Valid
-    EXPECT_EQ(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, NULL, &size));
-    EXPECT_EQ(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, pBuffer, &size));
+    EXPECT_NE(STATUS_SUCCESS, stun_serializePacket(NULL, NULL, 0, TRUE, TRUE, NULL, NULL));
+    EXPECT_NE(STATUS_SUCCESS, stun_serializePacket(NULL, NULL, 0, TRUE, TRUE, pBuffer, NULL));
 
     // Valid
-    EXPECT_EQ(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, FALSE, NULL, &size));
-    EXPECT_EQ(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, FALSE, pBuffer, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, NULL, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, pBuffer, &size));
 
     // Valid
-    EXPECT_EQ(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, TRUE, NULL, &size));
-    EXPECT_EQ(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, TRUE, pBuffer, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, FALSE, NULL, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, FALSE, pBuffer, &size));
 
     // Valid
-    EXPECT_EQ(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, FALSE, NULL, &size));
-    EXPECT_EQ(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, FALSE, pBuffer, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, TRUE, NULL, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, TRUE, pBuffer, &size));
+
+    // Valid
+    EXPECT_EQ(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, FALSE, NULL, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, FALSE, pBuffer, &size));
 
     // Invalid - size
-    EXPECT_EQ(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, FALSE, NULL, &size));
-    EXPECT_NE(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, pBuffer, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, FALSE, NULL, &size));
+    EXPECT_NE(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, pBuffer, &size));
 
     // Invalid - size
-    EXPECT_EQ(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, TRUE, NULL, &size));
-    EXPECT_NE(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, pBuffer, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, TRUE, NULL, &size));
+    EXPECT_NE(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, pBuffer, &size));
 
     // Invalid - size
-    EXPECT_EQ(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, FALSE, NULL, &size));
-    EXPECT_NE(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, pBuffer, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), FALSE, FALSE, NULL, &size));
+    EXPECT_NE(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, pBuffer, &size));
 
     // Invalid cookie
     stunPacket.header.magicCookie = 123;
-    EXPECT_NE(STATUS_SUCCESS, serializeStunPacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, pBuffer, &size));
+    EXPECT_NE(STATUS_SUCCESS, stun_serializePacket(&stunPacket, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), TRUE, TRUE, pBuffer, &size));
 }
 
 TEST_F(StunApiTest, deserializeValidityTests)
@@ -91,41 +91,41 @@ TEST_F(StunApiTest, deserializeValidityTests)
     password[0] = '\0';
     BYTE stunPacketBad[SIZEOF(stunPacket)];
 
-    EXPECT_NE(STATUS_SUCCESS, deserializeStunPacket(NULL, size, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
-    EXPECT_NE(STATUS_SUCCESS, deserializeStunPacket(pBuffer, 0, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
+    EXPECT_NE(STATUS_SUCCESS, stun_deserializePacket(NULL, size, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
+    EXPECT_NE(STATUS_SUCCESS, stun_deserializePacket(pBuffer, 0, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
     EXPECT_NE(
         STATUS_SUCCESS,
-        deserializeStunPacket(pBuffer, SIZEOF(StunHeader) - 1, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
-    EXPECT_NE(STATUS_SUCCESS, deserializeStunPacket(pBuffer, size, NULL, 0, &pStunPacket));
-    EXPECT_NE(STATUS_SUCCESS, deserializeStunPacket(pBuffer, size, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), &pStunPacket));
-    EXPECT_NE(STATUS_SUCCESS, deserializeStunPacket(pBuffer, size, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), NULL));
+        stun_deserializePacket(pBuffer, SIZEOF(StunHeader) - 1, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
+    EXPECT_NE(STATUS_SUCCESS, stun_deserializePacket(pBuffer, size, NULL, 0, &pStunPacket));
+    EXPECT_NE(STATUS_SUCCESS, stun_deserializePacket(pBuffer, size, (PBYTE) password, STRLEN(password) * SIZEOF(CHAR), &pStunPacket));
+    EXPECT_NE(STATUS_SUCCESS, stun_deserializePacket(pBuffer, size, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), NULL));
 
     // Modify the integrity
     MEMCPY(stunPacketBad, stunPacket, SIZEOF(stunPacket));
     // Modify the last bit of HMAC
     stunPacketBad[SIZEOF(stunPacket) - 9] = 0x27;
     EXPECT_EQ(STATUS_STUN_MESSAGE_INTEGRITY_MISMATCH,
-              deserializeStunPacket(stunPacketBad, size, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
+              stun_deserializePacket(stunPacketBad, size, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
     MEMCPY(stunPacketBad, stunPacket, SIZEOF(stunPacket));
     // Modify the body bit
     stunPacketBad[25] = 0x37;
     EXPECT_EQ(STATUS_STUN_MESSAGE_INTEGRITY_MISMATCH,
-              deserializeStunPacket(stunPacketBad, size, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
+              stun_deserializePacket(stunPacketBad, size, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
 
     // Modify the fingerprint
     MEMCPY(stunPacketBad, stunPacket, SIZEOF(stunPacket));
     // Modify the last bit of fingerprint
     stunPacketBad[SIZEOF(stunPacket) - 1] = 0x11;
     EXPECT_EQ(STATUS_STUN_FINGERPRINT_MISMATCH,
-              deserializeStunPacket(stunPacketBad, size, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
+              stun_deserializePacket(stunPacketBad, size, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
 
     // De-serialize and attempt to add to it
     EXPECT_EQ(STATUS_SUCCESS,
-              deserializeStunPacket(pBuffer, size, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
+              stun_deserializePacket(pBuffer, size, (PBYTE) TEST_STUN_PASSWORD, STRLEN(TEST_STUN_PASSWORD) * SIZEOF(CHAR), &pStunPacket));
 
-    EXPECT_EQ(STATUS_SUCCESS, freeStunPacket(&pStunPacket));
+    EXPECT_EQ(STATUS_SUCCESS, stun_freePacket(&pStunPacket));
     EXPECT_TRUE(NULL == pStunPacket);
-    EXPECT_EQ(STATUS_SUCCESS, freeStunPacket(&pStunPacket));
+    EXPECT_EQ(STATUS_SUCCESS, stun_freePacket(&pStunPacket));
 }
 
 TEST_F(StunApiTest, packageIpValidityTests)
@@ -141,16 +141,16 @@ TEST_F(StunApiTest, packageIpValidityTests)
 
     MEMCPY(address.address, ipAddress, IPV6_ADDRESS_LENGTH);
 
-    EXPECT_NE(STATUS_SUCCESS, stunPackageIpAddr(NULL, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, &address, NULL, &size));
-    EXPECT_NE(STATUS_SUCCESS, stunPackageIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, NULL, NULL, &size));
-    EXPECT_NE(STATUS_SUCCESS, stunPackageIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, &address, NULL, NULL));
-    EXPECT_NE(STATUS_SUCCESS, stunPackageIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, NULL, NULL, NULL));
+    EXPECT_NE(STATUS_SUCCESS, stun_packIpAddr(NULL, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, &address, NULL, &size));
+    EXPECT_NE(STATUS_SUCCESS, stun_packIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, NULL, NULL, &size));
+    EXPECT_NE(STATUS_SUCCESS, stun_packIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, &address, NULL, NULL));
+    EXPECT_NE(STATUS_SUCCESS, stun_packIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, NULL, NULL, NULL));
 
     // V4
     address.family = KVS_IP_FAMILY_TYPE_IPV4;
-    EXPECT_EQ(STATUS_SUCCESS, stunPackageIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, &address, NULL, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_packIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, &address, NULL, &size));
     EXPECT_EQ(12, size);
-    EXPECT_EQ(STATUS_SUCCESS, stunPackageIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, &address, buffer, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_packIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, &address, buffer, &size));
     EXPECT_EQ(12, size);
 
     // Address shouldn't change
@@ -158,9 +158,9 @@ TEST_F(StunApiTest, packageIpValidityTests)
 
     // V6
     address.family = KVS_IP_FAMILY_TYPE_IPV6;
-    EXPECT_EQ(STATUS_SUCCESS, stunPackageIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, &address, NULL, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_packIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, &address, NULL, &size));
     EXPECT_EQ(24, size);
-    EXPECT_EQ(STATUS_SUCCESS, stunPackageIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, &address, buffer, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_packIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, &address, buffer, &size));
     EXPECT_EQ(24, size);
     EXPECT_EQ(0, MEMCMP(ipAddress, address.address, IPV6_ADDRESS_LENGTH));
 
@@ -170,17 +170,17 @@ TEST_F(StunApiTest, packageIpValidityTests)
 
     // V4
     address.family = KVS_IP_FAMILY_TYPE_IPV4;
-    EXPECT_EQ(STATUS_SUCCESS, stunPackageIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_XOR_MAPPED_ADDRESS, &address, NULL, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_packIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_XOR_MAPPED_ADDRESS, &address, NULL, &size));
     EXPECT_EQ(12, size);
-    EXPECT_EQ(STATUS_SUCCESS, stunPackageIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_XOR_MAPPED_ADDRESS, &address, buffer, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_packIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_XOR_MAPPED_ADDRESS, &address, buffer, &size));
     EXPECT_EQ(12, size);
     EXPECT_EQ(0, MEMCMP(ipAddress, address.address, IPV6_ADDRESS_LENGTH));
 
     // V6
     address.family = KVS_IP_FAMILY_TYPE_IPV6;
-    EXPECT_EQ(STATUS_SUCCESS, stunPackageIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_XOR_MAPPED_ADDRESS, &address, NULL, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_packIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_XOR_MAPPED_ADDRESS, &address, NULL, &size));
     EXPECT_EQ(24, size);
-    EXPECT_EQ(STATUS_SUCCESS, stunPackageIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_XOR_MAPPED_ADDRESS, &address, buffer, &size));
+    EXPECT_EQ(STATUS_SUCCESS, stun_packIpAddr(&stunHeader, STUN_ATTRIBUTE_TYPE_XOR_MAPPED_ADDRESS, &address, buffer, &size));
     EXPECT_EQ(24, size);
     EXPECT_EQ(0, MEMCMP(ipAddress, address.address, IPV6_ADDRESS_LENGTH));
 }
@@ -190,37 +190,37 @@ TEST_F(StunApiTest, createStunPackageValidityTests)
     BYTE transactionId[STUN_TRANSACTION_ID_LEN] = {0};
     PStunPacket pStunPacket;
 
-    EXPECT_NE(STATUS_SUCCESS, createStunPacket(STUN_PACKET_TYPE_BINDING_REQUEST, transactionId, NULL));
-    EXPECT_NE(STATUS_SUCCESS, createStunPacket(STUN_PACKET_TYPE_BINDING_REQUEST, NULL, NULL));
+    EXPECT_NE(STATUS_SUCCESS, stun_createPacket(STUN_PACKET_TYPE_BINDING_REQUEST, transactionId, NULL));
+    EXPECT_NE(STATUS_SUCCESS, stun_createPacket(STUN_PACKET_TYPE_BINDING_REQUEST, NULL, NULL));
 
-    EXPECT_EQ(STATUS_SUCCESS, createStunPacket(STUN_PACKET_TYPE_BINDING_REQUEST, transactionId, &pStunPacket));
+    EXPECT_EQ(STATUS_SUCCESS, stun_createPacket(STUN_PACKET_TYPE_BINDING_REQUEST, transactionId, &pStunPacket));
 
-    EXPECT_EQ(STATUS_SUCCESS, freeStunPacket(&pStunPacket));
+    EXPECT_EQ(STATUS_SUCCESS, stun_freePacket(&pStunPacket));
     EXPECT_TRUE(NULL == pStunPacket);
-    EXPECT_EQ(STATUS_SUCCESS, freeStunPacket(&pStunPacket));
+    EXPECT_EQ(STATUS_SUCCESS, stun_freePacket(&pStunPacket));
 
-    EXPECT_EQ(STATUS_SUCCESS, createStunPacket(STUN_PACKET_TYPE_BINDING_REQUEST, transactionId, &pStunPacket));
+    EXPECT_EQ(STATUS_SUCCESS, stun_createPacket(STUN_PACKET_TYPE_BINDING_REQUEST, transactionId, &pStunPacket));
     EXPECT_EQ(0, MEMCMP(pStunPacket->header.transactionId, transactionId, STUN_TRANSACTION_ID_LEN));
-    EXPECT_EQ(STATUS_SUCCESS, freeStunPacket(&pStunPacket));
+    EXPECT_EQ(STATUS_SUCCESS, stun_freePacket(&pStunPacket));
 
     // Random transaction id
-    EXPECT_EQ(STATUS_SUCCESS, createStunPacket(STUN_PACKET_TYPE_BINDING_REQUEST, NULL, &pStunPacket));
+    EXPECT_EQ(STATUS_SUCCESS, stun_createPacket(STUN_PACKET_TYPE_BINDING_REQUEST, NULL, &pStunPacket));
     EXPECT_NE(0, MEMCMP(pStunPacket->header.transactionId, transactionId, STUN_TRANSACTION_ID_LEN));
-    EXPECT_EQ(STATUS_SUCCESS, freeStunPacket(&pStunPacket));
+    EXPECT_EQ(STATUS_SUCCESS, stun_freePacket(&pStunPacket));
 }
 
 TEST_F(StunApiTest, appendStunAttributeValidityTests)
 {
     PStunPacket pStunPacket = (PStunPacket) 1;
     PKvsIpAddress pAddress = (PKvsIpAddress) 2;
-    EXPECT_NE(STATUS_SUCCESS, appendStunAddressAttribute(NULL, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, pAddress));
-    EXPECT_NE(STATUS_SUCCESS, appendStunAddressAttribute(pStunPacket, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, NULL));
-    EXPECT_NE(STATUS_SUCCESS, appendStunAddressAttribute(NULL, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, NULL));
+    EXPECT_NE(STATUS_SUCCESS, stun_attribute_appendAddress(NULL, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, pAddress));
+    EXPECT_NE(STATUS_SUCCESS, stun_attribute_appendAddress(pStunPacket, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, NULL));
+    EXPECT_NE(STATUS_SUCCESS, stun_attribute_appendAddress(NULL, STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS, NULL));
 
-    EXPECT_NE(STATUS_SUCCESS, appendStunUsernameAttribute(NULL, (PCHAR) "abc"));
-    EXPECT_NE(STATUS_SUCCESS, appendStunUsernameAttribute(pStunPacket, NULL));
+    EXPECT_NE(STATUS_SUCCESS, stun_attribute_appendUsername(NULL, (PCHAR) "abc"));
+    EXPECT_NE(STATUS_SUCCESS, stun_attribute_appendUsername(pStunPacket, NULL));
 
-    EXPECT_NE(STATUS_SUCCESS, appendStunPriorityAttribute(NULL, 0));
+    EXPECT_NE(STATUS_SUCCESS, stun_attribute_appendPriority(NULL, 0));
 }
 
 } // namespace webrtcclient

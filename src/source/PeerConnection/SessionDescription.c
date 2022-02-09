@@ -1,5 +1,5 @@
 #define LOG_CLASS "SessionDescription"
-#include "../Include_i.h"
+
 #include "network.h"
 #include "SessionDescription.h"
 #include "Rtp.h"
@@ -70,8 +70,8 @@ CleanUp:
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-STATUS deserializeSessionDescriptionInit(PCHAR sessionDescriptionJSON, UINT32 sessionDescriptionJSONLen,
-                                         PRtcSessionDescriptionInit pSessionDescriptionInit)
+STATUS session_description_deserializeInit(PCHAR sessionDescriptionJSON, UINT32 sessionDescriptionJSONLen,
+                                           PRtcSessionDescriptionInit pSessionDescriptionInit)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -87,8 +87,8 @@ STATUS deserializeSessionDescriptionInit(PCHAR sessionDescriptionJSON, UINT32 se
     jsmn_init(&parser);
 
     tokenCount = jsmn_parse(&parser, sessionDescriptionJSON, sessionDescriptionJSONLen, tokens, ARRAY_SIZE(tokens));
-    CHK(tokenCount > 1, STATUS_INVALID_API_CALL_RETURN_JSON);
-    CHK(tokens[0].type == JSMN_OBJECT, STATUS_SESSION_DESCRIPTION_INIT_NOT_OBJECT);
+    CHK(tokenCount > 1, STATUS_JSON_API_CALL_INVALID_RETURN);
+    CHK(tokens[0].type == JSMN_OBJECT, STATUS_SDP_INIT_NOT_OBJECT);
 
     for (i = 1; i < tokenCount; i += 2) {
         if (STRNCMP(SDP_TYPE_KEY, sessionDescriptionJSON + tokens[i].start, ARRAY_SIZE(SDP_TYPE_KEY) - 1) == 0) {
@@ -97,11 +97,10 @@ STATUS deserializeSessionDescriptionInit(PCHAR sessionDescriptionJSON, UINT32 se
             } else if (STRNCMP(SDP_ANSWER_VALUE, sessionDescriptionJSON + tokens[i + 1].start, ARRAY_SIZE(SDP_ANSWER_VALUE) - 1) == 0) {
                 pSessionDescriptionInit->type = SDP_TYPE_ANSWER;
             } else {
-                CHK(FALSE, STATUS_SESSION_DESCRIPTION_INIT_INVALID_TYPE);
+                CHK(FALSE, STATUS_SDP_INIT_INVALID_TYPE);
             }
         } else if (STRNCMP(SDP_KEY, sessionDescriptionJSON + tokens[i].start, ARRAY_SIZE(SDP_KEY) - 1) == 0) {
-            CHK((tokens[i + 1].end - tokens[i + 1].start) <= MAX_SESSION_DESCRIPTION_INIT_SDP_LEN,
-                STATUS_SESSION_DESCRIPTION_INIT_MAX_SDP_LEN_EXCEEDED);
+            CHK((tokens[i + 1].end - tokens[i + 1].start) <= MAX_SESSION_DESCRIPTION_INIT_SDP_LEN, STATUS_SDP_INIT_MAX_SDP_LEN_EXCEEDED);
             curr = sessionDescriptionJSON + tokens[i + 1].start;
             tail = sessionDescriptionJSON + tokens[i + 1].end;
             j = 0;
@@ -137,8 +136,8 @@ STATUS deserializeSessionDescriptionInit(PCHAR sessionDescriptionJSON, UINT32 se
         }
     }
 
-    CHK(pSessionDescriptionInit->sdp[0] != '\0', STATUS_SESSION_DESCRIPTION_INIT_MISSING_SDP);
-    CHK(pSessionDescriptionInit->type != 0, STATUS_SESSION_DESCRIPTION_INIT_MISSING_TYPE);
+    CHK(pSessionDescriptionInit->sdp[0] != '\0', STATUS_SDP_INIT_MISSING_SDP);
+    CHK(pSessionDescriptionInit->type != 0, STATUS_SDP_INIT_MISSING_TYPE);
 
 CleanUp:
 
@@ -371,8 +370,8 @@ STATUS populateSingleMediaSection(PKvsPeerConnection pKvsPeerConnection, PKvsRtp
         SPRINTF(pSdpMediaDescription->mediaName, "audio 9 UDP/TLS/RTP/SAVPF %" PRId64, payloadType);
     }
     // get the information of ice candidates.
-    CHK_STATUS(iceAgentPopulateSdpMediaDescriptionCandidates(pKvsPeerConnection->pIceAgent, pSdpMediaDescription, MAX_SDP_ATTRIBUTE_VALUE_LENGTH,
-                                                             &attributeCount));
+    CHK_STATUS(ice_agent_populateSdpMediaDescriptionCandidates(pKvsPeerConnection->pIceAgent, pSdpMediaDescription, MAX_SDP_ATTRIBUTE_VALUE_LENGTH,
+                                                               &attributeCount));
     // rtx
     if (containRtx) {
         STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "msid");
@@ -588,8 +587,8 @@ STATUS populateSessionDescriptionDataChannel(PKvsPeerConnection pKvsPeerConnecti
 
     SPRINTF(pSdpMediaDescription->mediaName, "application 9 UDP/DTLS/SCTP webrtc-datachannel");
 
-    CHK_STATUS(iceAgentPopulateSdpMediaDescriptionCandidates(pKvsPeerConnection->pIceAgent, pSdpMediaDescription, MAX_SDP_ATTRIBUTE_VALUE_LENGTH,
-                                                             &attributeCount));
+    CHK_STATUS(ice_agent_populateSdpMediaDescriptionCandidates(pKvsPeerConnection->pIceAgent, pSdpMediaDescription, MAX_SDP_ATTRIBUTE_VALUE_LENGTH,
+                                                               &attributeCount));
 
     STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtcp");
     STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "9 IN IP4 0.0.0.0");
@@ -681,7 +680,7 @@ STATUS populateSessionDescriptionMedia(PKvsPeerConnection pKvsPeerConnection, PS
     PCHAR pDtlsRole = NULL;
 
     // get the certificate.
-    CHK_STATUS(dtlsSessionGetLocalCertificateFingerprint(pKvsPeerConnection->pDtlsSession, certificateFingerprint, CERTIFICATE_FINGERPRINT_LENGTH));
+    CHK_STATUS(dtls_session_getLocalCertificateFingerprint(pKvsPeerConnection->pDtlsSession, certificateFingerprint, CERTIFICATE_FINGERPRINT_LENGTH));
 
     if (pKvsPeerConnection->isOffer) {
         pDtlsRole = DTLS_ROLE_ACTPASS;
@@ -696,7 +695,7 @@ STATUS populateSessionDescriptionMedia(PKvsPeerConnection pKvsPeerConnection, PS
         pCurNode = pCurNode->pNext;
         pKvsRtpTransceiver = (PKvsRtpTransceiver) data;
         if (pKvsRtpTransceiver != NULL) {
-            CHK(pLocalSessionDescription->mediaCount < MAX_SDP_SESSION_MEDIA_COUNT, STATUS_SESSION_DESCRIPTION_MAX_MEDIA_COUNT);
+            CHK(pLocalSessionDescription->mediaCount < MAX_SDP_SESSION_MEDIA_COUNT, STATUS_SDP_MAX_MEDIA_COUNT);
 
             // If generating answer, need to check if Local Description is present in remote -- if not, we don't need to create a local description
             // for it or else our Answer will have an extra m-line, for offer the local is the offer itself, don't care about remote
@@ -710,7 +709,7 @@ STATUS populateSessionDescriptionMedia(PKvsPeerConnection pKvsPeerConnection, PS
     }
     // setup the data channel section.
     if (pKvsPeerConnection->sctpIsEnabled) {
-        CHK(pLocalSessionDescription->mediaCount < MAX_SDP_SESSION_MEDIA_COUNT, STATUS_SESSION_DESCRIPTION_MAX_MEDIA_COUNT);
+        CHK(pLocalSessionDescription->mediaCount < MAX_SDP_SESSION_MEDIA_COUNT, STATUS_SDP_MAX_MEDIA_COUNT);
         CHK_STATUS(populateSessionDescriptionDataChannel(pKvsPeerConnection,
                                                          &(pLocalSessionDescription->mediaDescriptions[pLocalSessionDescription->mediaCount]),
                                                          certificateFingerprint, pLocalSessionDescription->mediaCount, pDtlsRole));
@@ -920,8 +919,8 @@ STATUS deserializeRtcIceCandidateInit(PCHAR pJson, UINT32 jsonLen, PRtcIceCandid
     jsmn_init(&parser);
 
     tokenCount = jsmn_parse(&parser, pJson, jsonLen, pTokens, MAX_JSON_TOKEN_COUNT);
-    CHK(tokenCount > 1, STATUS_INVALID_API_CALL_RETURN_JSON);
-    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_ICE_CANDIDATE_INIT_MALFORMED);
+    CHK(tokenCount > 1, STATUS_JSON_API_CALL_INVALID_RETURN);
+    CHK(pTokens[0].type == JSMN_OBJECT, STATUS_SDP_ICE_CANDIDATE_INIT_MALFORMED);
 
     for (i = 1; i < (tokenCount - 1); i += 2) {
         if (STRNCMP(CANDIDATE_KEY, pJson + pTokens[i].start, ARRAY_SIZE(CANDIDATE_KEY) - 1) == 0) {
@@ -929,7 +928,7 @@ STATUS deserializeRtcIceCandidateInit(PCHAR pJson, UINT32 jsonLen, PRtcIceCandid
         }
     }
 
-    CHK(pRtcIceCandidateInit->candidate[0] != '\0', STATUS_ICE_CANDIDATE_MISSING_CANDIDATE);
+    CHK(pRtcIceCandidateInit->candidate[0] != '\0', STATUS_SDP_ICE_CANDIDATE_MISSING_CANDIDATE);
 
 CleanUp:
 

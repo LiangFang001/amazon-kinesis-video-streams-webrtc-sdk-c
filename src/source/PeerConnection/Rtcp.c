@@ -1,10 +1,10 @@
 #ifdef ENABLE_STREAMING
 #define LOG_CLASS "RtcRtcp"
 
-#include "../Include_i.h"
 #include "RtcpPacket.h"
 #include "Rtp.h"
 #include "Rtcp.h"
+#include "time_port.h"
 
 // TODO handle FIR packet https://tools.ietf.org/html/rfc2032#section-5.2.1
 static STATUS onRtcpFIRPacket(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerConnection)
@@ -143,7 +143,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS onRtcpPacket(PKvsPeerConnection pKvsPeerConnection, PBYTE pBuff, UINT32 buffLen)
+STATUS rtcp_onPacket(PKvsPeerConnection pKvsPeerConnection, PBYTE pBuff, UINT32 buffLen)
 {
     STATUS retStatus = STATUS_SUCCESS;
     RtcpPacket rtcpPacket;

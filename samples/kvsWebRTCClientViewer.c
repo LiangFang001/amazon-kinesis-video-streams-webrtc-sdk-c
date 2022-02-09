@@ -88,9 +88,9 @@ INT32 main(INT32 argc, CHAR* argv[])
 
     memset(&offerSessionDescriptionInit, 0x00, SIZEOF(RtcSessionDescriptionInit));
 
-    retStatus = setLocalDescription(pSampleStreamingSession->pPeerConnection, &offerSessionDescriptionInit);
+    retStatus = peer_connection_setLocalDescription(pSampleStreamingSession->pPeerConnection, &offerSessionDescriptionInit);
     if (retStatus != STATUS_SUCCESS) {
-        printf("[KVS Viewer] setLocalDescription(): operation returned status code: 0x%08x \n", retStatus);
+        printf("[KVS Viewer] peer_connection_setLocalDescription(): operation returned status code: 0x%08x \n", retStatus);
         goto CleanUp;
     }
     printf("[KVS Viewer] Completed setting local description\n");

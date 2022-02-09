@@ -170,7 +170,7 @@ STATUS http_parser_start(HttpResponseContext** ppHttpRspCtx, PCHAR pBuf, UINT32 
     httpErrno = llhttp_execute((void*) &userParser, pBuf, (size_t) uLen);
     // #TBD, need to be fixed.
     if (httpErrno != HPE_OK && httpErrno < HPE_CB_MESSAGE_BEGIN) {
-        retStatus = STATUS_RECV_DATA_FAILED;
+        retStatus = STATUS_NET_RECV_DATA_FAILED;
     } else {
         pCtx->httpStatusCode = (UINT32)(userParser.httpParser.status_code);
         return STATUS_SUCCESS;

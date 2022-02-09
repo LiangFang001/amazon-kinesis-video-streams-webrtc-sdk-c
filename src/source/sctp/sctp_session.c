@@ -1,55 +1,31 @@
 #ifdef ENABLE_DATA_CHANNEL
-
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #define LOG_CLASS "SCTP"
-#include "../Include_i.h"
 #include "endianness.h"
-#include "Sctp.h"
+#include "sctp_session.h"
 
-/***************************************************
- *
- * Internal functionality
- *
- ****************************************************/
-static STATUS initSctpAddrConn(PSctpSession pSctpSession, struct sockaddr_conn* sconn);
-static STATUS configureSctpSocket(struct socket* socket);
-/**
- * @brief the outbound callback for the socket layer of usrsctp.
- *
- * @param[in] addr the user context.
- * @param[in] data the address of packet.
- * @param[in] length the length of packet.
- * @param[in] tos unused.
- * @param[in] set_df unused.
- *
- * @return STATUS status of execution
- */
-static INT32 onSctpOutboundPacket(PVOID, PVOID, ULONG, UINT8, UINT8);
-/**
- * @brief handle the packets of Data Channel Establishment Protocol(DCEP).
- *
- * @param[in] pSctpSession
- * @param[in] streamId
- * @param[in] data
- * @param[in] length
- *
- * @return STATUS status of execution
- */
-static STATUS handleDcepPacket(PSctpSession pSctpSession, UINT32 streamId, PBYTE data, SIZE_T length);
-/**
- * @brief the inbound callback for the socket layer of usrsctp.
- *
- * @param[in] sock unused.
- * @param[in] addr unused.
- * @param[in] data the address of packet.
- * @param[in] length the length of packet.
- * @param[in] rcv the information of scto reception.
- * @param[in] flags unused.
- * @param[in] ulp_info the user context.
- *
- * @return STATUS status of execution
- */
-static INT32 onSctpInboundPacket(struct socket*, union sctp_sockstore, PVOID, ULONG, struct sctp_rcvinfo, INT32, PVOID);
-
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 static STATUS initSctpAddrConn(PSctpSession pSctpSession, struct sockaddr_conn* sconn)
 {
     ENTERS();
@@ -103,8 +79,126 @@ CleanUp:
     LEAVES();
     return retStatus;
 }
+/**
+ * @brief the outbound callback for the socket layer of usrsctp.
+ *
+ * @param[in] addr the user context.
+ * @param[in] data the address of packet.
+ * @param[in] length the length of packet.
+ * @param[in] tos unused.
+ * @param[in] set_df unused.
+ *
+ * @return STATUS status of execution
+ */
+static INT32 onSctpOutboundPacket(PVOID addr, PVOID data, ULONG length, UINT8 tos, UINT8 set_df)
+{
+    UNUSED_PARAM(tos);
+    UNUSED_PARAM(set_df);
 
-STATUS initSctpSession()
+    PSctpSession pSctpSession = (PSctpSession) addr;
+
+    if (pSctpSession == NULL || ATOMIC_LOAD(&pSctpSession->shutdownStatus) == SCTP_SESSION_SHUTDOWN_INITIATED ||
+        pSctpSession->sctpSessionCallbacks.outboundPacketFunc == NULL) {
+        if (pSctpSession != NULL) {
+            ATOMIC_STORE(&pSctpSession->shutdownStatus, SCTP_SESSION_SHUTDOWN_COMPLETED);
+        }
+        return -1;
+    }
+
+    pSctpSession->sctpSessionCallbacks.outboundPacketFunc(pSctpSession->sctpSessionCallbacks.customData, data, length);
+
+    return 0;
+}
+/**
+ * @brief handle the packets of Data Channel Establishment Protocol(DCEP).
+ *
+ * @param[in] pSctpSession
+ * @param[in] streamId
+ * @param[in] data
+ * @param[in] length
+ *
+ * @return STATUS status of execution
+ */
+static STATUS handleDcepPacket(PSctpSession pSctpSession, UINT32 streamId, PBYTE data, SIZE_T length)
+{
+    ENTERS();
+    STATUS retStatus = STATUS_SUCCESS;
+    UINT16 labelLength = 0;
+    UINT16 protocolLength = 0;
+
+    // Assert that is DCEP of type DataChannelOpen
+    CHK(length > SCTP_DCEP_HEADER_LENGTH && data[0] == DCEP_DATA_CHANNEL_OPEN, STATUS_SUCCESS);
+
+    MEMCPY(&labelLength, data + 8, SIZEOF(UINT16));
+    MEMCPY(&protocolLength, data + 10, SIZEOF(UINT16));
+    putInt16((PINT16) &labelLength, labelLength);
+    putInt16((PINT16) &protocolLength, protocolLength);
+
+    CHK((labelLength + protocolLength + SCTP_DCEP_HEADER_LENGTH) >= length, STATUS_SCTP_INVALID_DCEP_PACKET);
+
+    pSctpSession->sctpSessionCallbacks.dataChannelOpenFunc(pSctpSession->sctpSessionCallbacks.customData, streamId, data + SCTP_DCEP_HEADER_LENGTH,
+                                                           labelLength);
+
+CleanUp:
+    LEAVES();
+    return retStatus;
+}
+/**
+ * @brief the inbound callback for the socket layer of usrsctp.
+ *
+ * @param[in] sock unused.
+ * @param[in] addr unused.
+ * @param[in] data the address of packet.
+ * @param[in] length the length of packet.
+ * @param[in] rcv the information of scto reception.
+ * @param[in] flags unused.
+ * @param[in] ulp_info the user context.
+ *
+ * @return STATUS status of execution
+ */
+static INT32 onSctpInboundPacket(struct socket* sock, union sctp_sockstore addr, PVOID data, ULONG length, struct sctp_rcvinfo rcv, INT32 flags,
+                                 PVOID ulp_info)
+{
+    UNUSED_PARAM(sock);
+    UNUSED_PARAM(addr);
+    UNUSED_PARAM(flags);
+    STATUS retStatus = STATUS_SUCCESS;
+    PSctpSession pSctpSession = (PSctpSession) ulp_info;
+    BOOL isBinary = FALSE;
+
+    rcv.rcv_ppid = ntohl(rcv.rcv_ppid);
+    switch (rcv.rcv_ppid) {
+        case SCTP_PPID_DCEP:
+            CHK_STATUS(handleDcepPacket(pSctpSession, rcv.rcv_sid, data, length));
+            break;
+        case SCTP_PPID_BINARY:
+        case SCTP_PPID_BINARY_EMPTY:
+            isBinary = TRUE;
+            // fallthrough
+        case SCTP_PPID_STRING:
+        case SCTP_PPID_STRING_EMPTY:
+            pSctpSession->sctpSessionCallbacks.dataChannelMessageFunc(pSctpSession->sctpSessionCallbacks.customData, rcv.rcv_sid, isBinary, data,
+                                                                      length);
+            break;
+        default:
+            DLOGI("Unhandled PPID on incoming SCTP message %d", rcv.rcv_ppid);
+            break;
+    }
+
+CleanUp:
+
+    /*
+     * IMPORTANT!!! The allocation is done in the sctp library using default allocator
+     * so we need to use the default free API.
+     */
+    if (data != NULL) {
+        free(data);
+    }
+
+    return 1;
+}
+
+STATUS sctp_session_init(VOID)
 {
     STATUS retStatus = STATUS_SUCCESS;
     // default port is 9899
@@ -116,7 +210,7 @@ STATUS initSctpSession()
     return retStatus;
 }
 
-VOID deinitSctpSession()
+VOID sctp_session_deinit()
 {
     // need to block until usrsctp_finish or sctp thread could be calling free objects and cause segfault
     while (usrsctp_finish() != 0) {
@@ -124,7 +218,7 @@ VOID deinitSctpSession()
     }
 }
 
-STATUS createSctpSession(PSctpSessionCallbacks pSctpSessionCallbacks, PSctpSession* ppSctpSession)
+STATUS sctp_session_create(PSctpSessionCallbacks pSctpSessionCallbacks, PSctpSession* ppSctpSession)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -166,7 +260,7 @@ STATUS createSctpSession(PSctpSessionCallbacks pSctpSessionCallbacks, PSctpSessi
 
 CleanUp:
     if (STATUS_FAILED(retStatus)) {
-        freeSctpSession(&pSctpSession);
+        sctp_session_free(&pSctpSession);
     }
 
     *ppSctpSession = pSctpSession;
@@ -175,7 +269,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeSctpSession(PSctpSession* ppSctpSession)
+STATUS sctp_session_free(PSctpSession* ppSctpSession)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -214,7 +308,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS sctpSessionWriteMessage(PSctpSession pSctpSession, UINT32 streamId, BOOL isBinary, PBYTE pMessage, UINT32 pMessageLen)
+STATUS sctp_session_sendMsg(PSctpSession pSctpSession, UINT32 streamId, BOOL isBinary, PBYTE pMessage, UINT32 pMessageLen)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -247,8 +341,26 @@ CleanUp:
     return retStatus;
 }
 
-STATUS sctpSessionWriteDcep(PSctpSession pSctpSession, UINT32 streamId, PCHAR pChannelName, UINT32 pChannelNameLen,
-                            PRtcDataChannelInit pRtcDataChannelInit)
+// https://tools.ietf.org/html/draft-ietf-rtcweb-data-protocol-09#section-5.1
+//      0                   1                   2                   3
+//      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//     |  Message Type |  Channel Type |            Priority           |
+//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//     |                    Reliability Parameter                      |
+//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//     |         Label Length          |       Protocol Length         |
+//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//     |                                                               |
+//     |                             Label                             |
+//     |                                                               |
+//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//     |                                                               |
+//     |                            Protocol                           |
+//     |                                                               |
+//     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+STATUS sctp_session_sendDcepMsg(PSctpSession pSctpSession, UINT32 streamId, PCHAR pChannelName, UINT32 pChannelNameLen,
+                                PRtcDataChannelInit pRtcDataChannelInit)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -300,27 +412,7 @@ CleanUp:
     return retStatus;
 }
 
-static INT32 onSctpOutboundPacket(PVOID addr, PVOID data, ULONG length, UINT8 tos, UINT8 set_df)
-{
-    UNUSED_PARAM(tos);
-    UNUSED_PARAM(set_df);
-
-    PSctpSession pSctpSession = (PSctpSession) addr;
-
-    if (pSctpSession == NULL || ATOMIC_LOAD(&pSctpSession->shutdownStatus) == SCTP_SESSION_SHUTDOWN_INITIATED ||
-        pSctpSession->sctpSessionCallbacks.outboundPacketFunc == NULL) {
-        if (pSctpSession != NULL) {
-            ATOMIC_STORE(&pSctpSession->shutdownStatus, SCTP_SESSION_SHUTDOWN_COMPLETED);
-        }
-        return -1;
-    }
-
-    pSctpSession->sctpSessionCallbacks.outboundPacketFunc(pSctpSession->sctpSessionCallbacks.customData, data, length);
-
-    return 0;
-}
-
-STATUS putSctpPacket(PSctpSession pSctpSession, PBYTE buf, UINT32 bufLen)
+STATUS sctp_session_putInboundPacket(PSctpSession pSctpSession, PBYTE buf, UINT32 bufLen)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -329,69 +421,5 @@ STATUS putSctpPacket(PSctpSession pSctpSession, PBYTE buf, UINT32 bufLen)
 
     LEAVES();
     return retStatus;
-}
-
-static STATUS handleDcepPacket(PSctpSession pSctpSession, UINT32 streamId, PBYTE data, SIZE_T length)
-{
-    ENTERS();
-    STATUS retStatus = STATUS_SUCCESS;
-    UINT16 labelLength = 0;
-
-    // Assert that is DCEP of type DataChannelOpen
-    CHK(length > SCTP_DCEP_HEADER_LENGTH && data[0] == DCEP_DATA_CHANNEL_OPEN, STATUS_SUCCESS);
-
-    MEMCPY(&labelLength, data + 8, SIZEOF(UINT16));
-    putInt16((PINT16) &labelLength, labelLength);
-
-    CHK((labelLength + SCTP_DCEP_HEADER_LENGTH) >= length, STATUS_SCTP_INVALID_DCEP_PACKET);
-
-    pSctpSession->sctpSessionCallbacks.dataChannelOpenFunc(pSctpSession->sctpSessionCallbacks.customData, streamId, data + SCTP_DCEP_HEADER_LENGTH,
-                                                           labelLength);
-
-CleanUp:
-    LEAVES();
-    return retStatus;
-}
-
-static INT32 onSctpInboundPacket(struct socket* sock, union sctp_sockstore addr, PVOID data, ULONG length, struct sctp_rcvinfo rcv, INT32 flags,
-                                 PVOID ulp_info)
-{
-    UNUSED_PARAM(sock);
-    UNUSED_PARAM(addr);
-    UNUSED_PARAM(flags);
-    STATUS retStatus = STATUS_SUCCESS;
-    PSctpSession pSctpSession = (PSctpSession) ulp_info;
-    BOOL isBinary = FALSE;
-
-    rcv.rcv_ppid = ntohl(rcv.rcv_ppid);
-    switch (rcv.rcv_ppid) {
-        case SCTP_PPID_DCEP:
-            CHK_STATUS(handleDcepPacket(pSctpSession, rcv.rcv_sid, data, length));
-            break;
-        case SCTP_PPID_BINARY:
-        case SCTP_PPID_BINARY_EMPTY:
-            isBinary = TRUE;
-            // fallthrough
-        case SCTP_PPID_STRING:
-        case SCTP_PPID_STRING_EMPTY:
-            pSctpSession->sctpSessionCallbacks.dataChannelMessageFunc(pSctpSession->sctpSessionCallbacks.customData, rcv.rcv_sid, isBinary, data,
-                                                                      length);
-            break;
-        default:
-            DLOGI("Unhandled PPID on incoming SCTP message %d", rcv.rcv_ppid);
-            break;
-    }
-
-CleanUp:
-
-    /*
-     * IMPORTANT!!! The allocation is done in the sctp library using default allocator
-     * so we need to use the default free API.
-     */
-    if (data != NULL) {
-        free(data);
-    }
-
-    return 1;
 }
 #endif

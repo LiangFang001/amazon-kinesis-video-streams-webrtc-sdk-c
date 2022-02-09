@@ -45,6 +45,8 @@ extern "C" {
 
 #define MAX_UDP_PACKET_SIZE 65507
 
+#define IS_IPV4_ADDR(pAddress) ((pAddress)->family == KVS_IP_FAMILY_TYPE_IPV4)
+
 typedef enum {
     KVS_SOCKET_PROTOCOL_NONE,
     KVS_SOCKET_PROTOCOL_TCP,
@@ -64,16 +66,17 @@ typedef struct {
 } KvsIpAddress, *PKvsIpAddress;
 
 /**
- * @param - PKvsIpAddress - IN/OUT - array for getLocalhostIpAddresses to store any local ips it found. The ip address and port
- *                                   will be in network byte order.
- * @param - UINT32 - IN/OUT - length of the array, upon return it will be updated to the actual number of ips in the array
+ * @brief
  *
- *@param - IceSetInterfaceFilterFunc - IN - set to custom interface filter callback
+ * @param[in, out] destIpList array for net_getLocalhostIpAddresses to store any local ips it found. The ip address and port will be in network byte
+ * order.
+ * @param[in, out] pDestIpListLen length of the array, upon return it will be updated to the actual number of ips in the array
+ * @param[in] filter set to custom interface filter callback
+ * @param[in] customData Set to custom data that can be used in the callback later
  *
- *@param - UINT64 - IN - Set to custom data that can be used in the callback later
- * @return - STATUS status of execution
+ * @return STATUS status of execution.
  */
-STATUS getLocalhostIpAddresses(PKvsIpAddress, PUINT32, IceSetInterfaceFilterFunc, UINT64);
+STATUS net_getLocalhostIpAddresses(PKvsIpAddress destIpList, PUINT32 pDestIpListLen, IceSetInterfaceFilterFunc filter, UINT64 customData);
 
 /**
  * @param[in] familyType Family for the socket. Must be one of KVS_IP_FAMILY_TYPE
@@ -83,14 +86,14 @@ STATUS getLocalhostIpAddresses(PKvsIpAddress, PUINT32, IceSetInterfaceFilterFunc
  *
  * @return - STATUS status of execution
  */
-STATUS createSocket(KVS_IP_FAMILY_TYPE familyType, KVS_SOCKET_PROTOCOL protocol, UINT32 sendBufSize, PINT32 pOutSockFd);
+STATUS net_createSocket(KVS_IP_FAMILY_TYPE familyType, KVS_SOCKET_PROTOCOL protocol, UINT32 sendBufSize, PINT32 pOutSockFd);
 
 /**
  * @param - INT32 - IN - INT32 for the socketfd
  *
  * @return - STATUS status of execution
  */
-STATUS closeSocket(INT32);
+STATUS net_closeSocket(INT32);
 
 /**
  * @param - PKvsIpAddress - IN - address for the socket to bind. PKvsIpAddress->port will be changed to the actual port number
@@ -98,7 +101,7 @@ STATUS closeSocket(INT32);
  *
  * @return - STATUS status of execution
  */
-STATUS socketBind(PKvsIpAddress, INT32);
+STATUS net_bindSocket(PKvsIpAddress, INT32);
 
 /**
  * @param - PKvsIpAddress - IN - address for the socket to connect.
@@ -106,7 +109,7 @@ STATUS socketBind(PKvsIpAddress, INT32);
  *
  * @return - STATUS status of execution
  */
-STATUS socketConnect(PKvsIpAddress, INT32);
+STATUS net_connectSocket(PKvsIpAddress, INT32);
 
 /**
  * @param - PCHAR - IN - hostname to resolve
@@ -115,23 +118,23 @@ STATUS socketConnect(PKvsIpAddress, INT32);
  *
  * @return - STATUS status of execution
  */
-STATUS getIpWithHostName(PCHAR, PKvsIpAddress);
+STATUS net_getIpByHostName(PCHAR, PKvsIpAddress);
 
-STATUS getIpAddrStr(PKvsIpAddress, PCHAR, UINT32);
+STATUS net_getIpAddrStr(PKvsIpAddress, PCHAR, UINT32);
 
-BOOL isSameIpAddress(PKvsIpAddress, PKvsIpAddress, BOOL);
+BOOL net_compareIpAddress(PKvsIpAddress, PKvsIpAddress, BOOL);
 
 /**
  * @return - INT32 error code
  */
-INT32 getErrorCode(VOID);
+INT32 net_getErrorCode(VOID);
 
 /**
  * @param - INT32 - IN - error code
  *
  * @return - PCHAR string associated with error code
  */
-PCHAR getErrorString(INT32);
+PCHAR net_getErrorString(INT32);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,16 @@
 /*
- * Main public include file
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 #ifndef __KINESIS_VIDEO_WEBRTC_CLIENT_ERROR__
 #define __KINESIS_VIDEO_WEBRTC_CLIENT_ERROR__
@@ -9,52 +20,54 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#ifndef STATUS
-#define STATUS UINT32
-#endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/common_defs.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 #define STATUS_SUCCESS      ((STATUS) 0x00000000)
 #define STATUS_FAILED(x)    (((STATUS)(x)) != STATUS_SUCCESS)
 #define STATUS_SUCCEEDED(x) (!STATUS_FAILED(x))
-
-#define STATUS_BASE                 0x00000000
-#define STATUS_COMMON_PRODUCER_BASE 0x15000000
-
-#define STATUS_MKVGEN_BASE 0x32000000
-
-#define STATUS_UTILS_BASE       0x40000000
-#define STATUS_HASH_TABLE_BASE  0x41000000
-#define STATUS_TIMER_QUEUE_BASE 0x42000000
-#define STATUS_SEMAPHORE_BASE   0x43000000
-
-#define STATUS_CLIENT_BASE         0x52000000
-#define STATUS_STATE_BASE          0x53000000
-#define STATUS_WEBRTC_BASE         0x54000000
-#define STATUS_SDP_BASE            0x55000000
-#define STATUS_STUN_BASE           0x56000000
-#define STATUS_NETWORKING_BASE     0x57000000
-#define STATUS_DTLS_BASE           0x58000000
-#define STATUS_ICE_BASE            0x59000000
-#define STATUS_SRTP_BASE           0x5A000000
-#define STATUS_RTP_BASE            0x5B000000
-#define STATUS_SIGNALING_BASE      0x5C000000
-#define STATUS_PEERCONNECTION_BASE 0x5D000000
-#define STATUS_SCTP_BASE           0x5E000000
-#define STATUS_RTCP_BASE           0x5F000000
-#define STATUS_ROLLING_BUFFER_BASE 0x60000000
-#define STATUS_AWS_SIGNER_BASE     0x61000000
-#define STATUS_JSON_BASE           0x62000000
-#define STATUS_HTTP_BASE           0x63000000
-#define STATUS_WSS_API_BASE        0x64000000
-#define STATUS_WSS_CLIENT_BASE     0x65000000
-
-/*! \addtogroup
- *
- *  @{
- */
+/******************************************************************************
+ * Error codes base
+ ******************************************************************************/
+#define STATUS_BASE                0x00000000
+#define STATUS_UTILS_BASE          0x10000000
+#define STATUS_FILE_LOGGER_BASE    0x11100000
+#define STATUS_HASH_TABLE_BASE     0x11200000
+#define STATUS_TIMER_QUEUE_BASE    0x11300000
+#define STATUS_SEMAPHORE_BASE      0x11400000
+#define STATUS_STATE_BASE          0x12000000
+#define STATUS_JSON_BASE           0x13000000
+#define STATUS_CREDENTIAL_BASE     0x14100000
+#define STATUS_AWS_SIGNER_BASE     0x14200000
+#define STATUS_NET_BASE            0x15000000
+#define STATUS_SOCKET_CONN_BASE    0x15100000
+#define STATUS_CRYPTO_BASE         0x16000000
+#define STATUS_DTLS_BASE           0x16100000
+#define STATUS_TLS_BASE            0x16200000
+#define STATUS_HTTP_BASE           0x17000000
+#define STATUS_WSS_API_BASE        0x17100000
+#define STATUS_WSS_CLIENT_BASE     0x17200000
+#define STATUS_SIGNALING_BASE      0x18000000
+#define STATUS_ICE_AGENT_BASE      0x19000000
+#define STATUS_ICE_UTILS_BASE      0x19100000
+#define STATUS_ICE_FSM_BASE        0x19200000
+#define STATUS_TURN_BASE           0x19300000
+#define STATUS_STUN_BASE           0x1A000000
+#define STATUS_RTCP_BASE           0x1B000000
+#define STATUS_ROLLING_BUFFER_BASE 0x1B100000
+#define STATUS_RTP_BASE            0x1C000000
+#define STATUS_SRTP_BASE           0x1D000000
+#define STATUS_SCTP_BASE           0x1E000000
+#define STATUS_SDP_BASE            0x1F000000
+#define STATUS_PEER_CONN_BASE      0x20000000
+/******************************************************************************
+ * Common error codes
+ ******************************************************************************/
 #define STATUS_NULL_ARG                          STATUS_BASE + 0x00000001
 #define STATUS_INVALID_ARG                       STATUS_BASE + 0x00000002
 #define STATUS_INVALID_ARG_LEN                   STATUS_BASE + 0x00000003
@@ -64,12 +77,12 @@ extern "C" {
 #define STATUS_FORMAT_ERROR                      STATUS_BASE + 0x00000007
 #define STATUS_INVALID_HANDLE_ERROR              STATUS_BASE + 0x00000008
 #define STATUS_OPEN_FILE_FAILED                  STATUS_BASE + 0x00000009
-#define STATUS_READ_FILE_FAILED                  STATUS_BASE + 0x0000000a
-#define STATUS_WRITE_TO_FILE_FAILED              STATUS_BASE + 0x0000000b
-#define STATUS_INTERNAL_ERROR                    STATUS_BASE + 0x0000000c
-#define STATUS_INVALID_OPERATION                 STATUS_BASE + 0x0000000d
-#define STATUS_NOT_IMPLEMENTED                   STATUS_BASE + 0x0000000e
-#define STATUS_OPERATION_TIMED_OUT               STATUS_BASE + 0x0000000f
+#define STATUS_READ_FILE_FAILED                  STATUS_BASE + 0x0000000A
+#define STATUS_WRITE_TO_FILE_FAILED              STATUS_BASE + 0x0000000B
+#define STATUS_INTERNAL_ERROR                    STATUS_BASE + 0x0000000C
+#define STATUS_INVALID_OPERATION                 STATUS_BASE + 0x0000000D
+#define STATUS_NOT_IMPLEMENTED                   STATUS_BASE + 0x0000000E
+#define STATUS_OPERATION_TIMED_OUT               STATUS_BASE + 0x0000000F
 #define STATUS_NOT_FOUND                         STATUS_BASE + 0x00000010
 #define STATUS_CREATE_THREAD_FAILED              STATUS_BASE + 0x00000011
 #define STATUS_THREAD_NOT_ENOUGH_RESOURCES       STATUS_BASE + 0x00000012
@@ -80,87 +93,30 @@ extern "C" {
 #define STATUS_JOIN_THREAD_FAILED                STATUS_BASE + 0x00000017
 #define STATUS_WAIT_FAILED                       STATUS_BASE + 0x00000018
 #define STATUS_CANCEL_THREAD_FAILED              STATUS_BASE + 0x00000019
-#define STATUS_THREAD_IS_NOT_JOINABLE            STATUS_BASE + 0x0000001a
-#define STATUS_DETACH_THREAD_FAILED              STATUS_BASE + 0x0000001b
-#define STATUS_THREAD_ATTR_INIT_FAILED           STATUS_BASE + 0x0000001c
-#define STATUS_THREAD_ATTR_SET_STACK_SIZE_FAILED STATUS_BASE + 0x0000001d
-#define STATUS_MEMORY_NOT_FREED                  STATUS_BASE + 0x0000001e
-/*! \addtogroup
- *
- *  @{
- */
-#define STATUS_INVALID_AWS_CREDENTIALS_VERSION              STATUS_COMMON_PRODUCER_BASE + 0x00000008
-#define STATUS_MAX_REQUEST_HEADER_COUNT                     STATUS_COMMON_PRODUCER_BASE + 0x00000009
-#define STATUS_MAX_REQUEST_HEADER_NAME_LEN                  STATUS_COMMON_PRODUCER_BASE + 0x0000000a
-#define STATUS_MAX_REQUEST_HEADER_VALUE_LEN                 STATUS_COMMON_PRODUCER_BASE + 0x0000000b
-#define STATUS_INVALID_API_CALL_RETURN_JSON                 STATUS_COMMON_PRODUCER_BASE + 0x0000000c
-#define STATUS_CURL_INIT_FAILED                             STATUS_COMMON_PRODUCER_BASE + 0x0000000d
-#define STATUS_CURL_LIBRARY_INIT_FAILED                     STATUS_COMMON_PRODUCER_BASE + 0x0000000e
-#define STATUS_HMAC_GENERATION_ERROR                        STATUS_COMMON_PRODUCER_BASE + 0x00000010
-#define STATUS_IOT_FAILED                                   STATUS_COMMON_PRODUCER_BASE + 0x00000011
-#define STATUS_MAX_ROLE_ALIAS_LEN_EXCEEDED                  STATUS_COMMON_PRODUCER_BASE + 0x00000012
-#define STATUS_INVALID_USER_AGENT_LENGTH                    STATUS_COMMON_PRODUCER_BASE + 0x00000015
-#define STATUS_IOT_EXPIRATION_OCCURS_IN_PAST                STATUS_COMMON_PRODUCER_BASE + 0x00000017
-#define STATUS_IOT_EXPIRATION_PARSING_FAILED                STATUS_COMMON_PRODUCER_BASE + 0x00000018
-#define STATUS_MAX_IOT_THING_NAME_LENGTH                    STATUS_COMMON_PRODUCER_BASE + 0x0000001e
-#define STATUS_IOT_CREATE_LWS_CONTEXT_FAILED                STATUS_COMMON_PRODUCER_BASE + 0x0000001f
-#define STATUS_INVALID_CA_CERT_PATH                         STATUS_COMMON_PRODUCER_BASE + 0x00000020
-#define STATUS_FILE_CREDENTIAL_PROVIDER_OPEN_FILE_FAILED    STATUS_COMMON_PRODUCER_BASE + 0x00000022
-#define STATUS_FILE_CREDENTIAL_PROVIDER_INVALID_FILE_LENGTH STATUS_COMMON_PRODUCER_BASE + 0x00000023
-#define STATUS_FILE_CREDENTIAL_PROVIDER_INVALID_FILE_FORMAT STATUS_COMMON_PRODUCER_BASE + 0x00000024
-/*! \addtogroup
- *
- *  @{
- */
-#define STATUS_MKV_INVALID_CLUSTER_DURATION                 STATUS_MKVGEN_BASE + 0x00000003
-#define STATUS_MKV_INVALID_CONTENT_TYPE_LENGTH              STATUS_MKVGEN_BASE + 0x00000004
-#define STATUS_MKV_NUMBER_TOO_BIG                           STATUS_MKVGEN_BASE + 0x00000005
-#define STATUS_MKV_INVALID_CODEC_ID_LENGTH                  STATUS_MKVGEN_BASE + 0x00000006
-#define STATUS_MKV_INVALID_TRACK_NAME_LENGTH                STATUS_MKVGEN_BASE + 0x00000007
-#define STATUS_MKV_INVALID_CODEC_PRIVATE_LENGTH             STATUS_MKVGEN_BASE + 0x00000008
-#define STATUS_MKV_CODEC_PRIVATE_NULL                       STATUS_MKVGEN_BASE + 0x00000009
-#define STATUS_MKV_INVALID_TIMECODE_SCALE                   STATUS_MKVGEN_BASE + 0x0000000a
-#define STATUS_MKV_MAX_FRAME_TIMECODE                       STATUS_MKVGEN_BASE + 0x0000000b
-#define STATUS_MKV_LARGE_FRAME_TIMECODE                     STATUS_MKVGEN_BASE + 0x0000000c
-#define STATUS_MKV_INVALID_ANNEXB_NALU_IN_FRAME_DATA        STATUS_MKVGEN_BASE + 0x0000000d
-#define STATUS_MKV_INVALID_AVCC_NALU_IN_FRAME_DATA          STATUS_MKVGEN_BASE + 0x0000000e
-#define STATUS_MKV_BOTH_ANNEXB_AND_AVCC_SPECIFIED           STATUS_MKVGEN_BASE + 0x0000000f
-#define STATUS_MKV_INVALID_ANNEXB_NALU_IN_CPD               STATUS_MKVGEN_BASE + 0x00000010
-#define STATUS_MKV_PTS_DTS_ARE_NOT_SAME                     STATUS_MKVGEN_BASE + 0x00000011
-#define STATUS_MKV_INVALID_H264_H265_CPD                    STATUS_MKVGEN_BASE + 0x00000012
-#define STATUS_MKV_INVALID_H264_H265_SPS_WIDTH              STATUS_MKVGEN_BASE + 0x00000013
-#define STATUS_MKV_INVALID_H264_H265_SPS_HEIGHT             STATUS_MKVGEN_BASE + 0x00000014
-#define STATUS_MKV_INVALID_H264_H265_SPS_NALU               STATUS_MKVGEN_BASE + 0x00000015
-#define STATUS_MKV_INVALID_BIH_CPD                          STATUS_MKVGEN_BASE + 0x00000016
-#define STATUS_MKV_INVALID_HEVC_NALU_COUNT                  STATUS_MKVGEN_BASE + 0x00000017
-#define STATUS_MKV_INVALID_HEVC_FORMAT                      STATUS_MKVGEN_BASE + 0x00000018
-#define STATUS_MKV_HEVC_SPS_NALU_MISSING                    STATUS_MKVGEN_BASE + 0x00000019
-#define STATUS_MKV_INVALID_HEVC_SPS_NALU_SIZE               STATUS_MKVGEN_BASE + 0x0000001a
-#define STATUS_MKV_INVALID_HEVC_SPS_CHROMA_FORMAT_IDC       STATUS_MKVGEN_BASE + 0x0000001b
-#define STATUS_MKV_INVALID_HEVC_SPS_RESERVED                STATUS_MKVGEN_BASE + 0x0000001c
-#define STATUS_MKV_MIN_ANNEX_B_CPD_SIZE                     STATUS_MKVGEN_BASE + 0x0000001d
-#define STATUS_MKV_ANNEXB_CPD_MISSING_NALUS                 STATUS_MKVGEN_BASE + 0x0000001e
-#define STATUS_MKV_INVALID_ANNEXB_CPD_NALUS                 STATUS_MKVGEN_BASE + 0x0000001f
-#define STATUS_MKV_INVALID_TAG_NAME_LENGTH                  STATUS_MKVGEN_BASE + 0x00000020
-#define STATUS_MKV_INVALID_TAG_VALUE_LENGTH                 STATUS_MKVGEN_BASE + 0x00000021
-#define STATUS_MKV_INVALID_GENERATOR_STATE_TAGS             STATUS_MKVGEN_BASE + 0x00000022
-#define STATUS_MKV_INVALID_AAC_CPD_SAMPLING_FREQUENCY_INDEX STATUS_MKVGEN_BASE + 0x00000023
-#define STATUS_MKV_INVALID_AAC_CPD_CHANNEL_CONFIG           STATUS_MKVGEN_BASE + 0x00000024
-#define STATUS_MKV_INVALID_AAC_CPD                          STATUS_MKVGEN_BASE + 0x00000025
-#define STATUS_MKV_TRACK_INFO_NOT_FOUND                     STATUS_MKVGEN_BASE + 0x00000026
-#define STATUS_MKV_INVALID_SEGMENT_UUID                     STATUS_MKVGEN_BASE + 0x00000027
-#define STATUS_MKV_INVALID_TRACK_UID                        STATUS_MKVGEN_BASE + 0x00000028
-#define STATUS_MKV_INVALID_CLIENT_ID_LENGTH                 STATUS_MKVGEN_BASE + 0x00000029
-#define STATUS_MKV_INVALID_AMS_ACM_CPD                      STATUS_MKVGEN_BASE + 0x0000002a
-#define STATUS_MKV_MISSING_SPS_FROM_H264_CPD                STATUS_MKVGEN_BASE + 0x0000002b
-#define STATUS_MKV_MISSING_PPS_FROM_H264_CPD                STATUS_MKVGEN_BASE + 0x0000002c
-/**
- * Error values
- */
-/*! \addtogroup
- *
- *  @{
- */
+#define STATUS_THREAD_IS_NOT_JOINABLE            STATUS_BASE + 0x0000001A
+#define STATUS_DETACH_THREAD_FAILED              STATUS_BASE + 0x0000001B
+#define STATUS_THREAD_ATTR_INIT_FAILED           STATUS_BASE + 0x0000001C
+#define STATUS_THREAD_ATTR_SET_STACK_SIZE_FAILED STATUS_BASE + 0x0000001D
+#define STATUS_MEMORY_NOT_FREED                  STATUS_BASE + 0x0000001E
+/******************************************************************************
+ * Credential error codes
+ ******************************************************************************/
+#define STATUS_MAX_REQUEST_HEADER_COUNT                     STATUS_CREDENTIAL_BASE + 0x00000001
+#define STATUS_MAX_REQUEST_HEADER_NAME_LEN                  STATUS_CREDENTIAL_BASE + 0x00000002
+#define STATUS_MAX_REQUEST_HEADER_VALUE_LEN                 STATUS_CREDENTIAL_BASE + 0x00000003
+#define STATUS_MAX_ROLE_ALIAS_LEN_EXCEEDED                  STATUS_CREDENTIAL_BASE + 0x00000004
+#define STATUS_MAX_IOT_THING_NAME_LENGTH                    STATUS_CREDENTIAL_BASE + 0x00000005
+#define STATUS_FILE_CREDENTIAL_PROVIDER_OPEN_FILE_FAILED    STATUS_CREDENTIAL_BASE + 0x00000006
+#define STATUS_FILE_CREDENTIAL_PROVIDER_INVALID_FILE_LENGTH STATUS_CREDENTIAL_BASE + 0x00000007
+#define STATUS_FILE_CREDENTIAL_PROVIDER_INVALID_FILE_FORMAT STATUS_CREDENTIAL_BASE + 0x00000008
+#define STATUS_INVALID_AUTH_LEN                             STATUS_CREDENTIAL_BASE + 0x00000009
+/******************************************************************************
+ * Crypto error codes
+ ******************************************************************************/
+#define STATUS_HMAC_GENERATION_ERROR STATUS_CRYPTO_BASE + 0x00000001
+/******************************************************************************
+ * Utils error codes
+ ******************************************************************************/
 #define STATUS_INVALID_BASE64_ENCODE                 STATUS_UTILS_BASE + 0x00000001
 #define STATUS_INVALID_BASE                          STATUS_UTILS_BASE + 0x00000002
 #define STATUS_INVALID_DIGIT                         STATUS_UTILS_BASE + 0x00000003
@@ -170,127 +126,69 @@ extern "C" {
 #define STATUS_PATH_TOO_LONG                         STATUS_UTILS_BASE + 0x00000007
 #define STATUS_UNKNOWN_DIR_ENTRY_TYPE                STATUS_UTILS_BASE + 0x00000008
 #define STATUS_REMOVE_DIRECTORY_FAILED               STATUS_UTILS_BASE + 0x00000009
-#define STATUS_REMOVE_FILE_FAILED                    STATUS_UTILS_BASE + 0x0000000a
-#define STATUS_REMOVE_LINK_FAILED                    STATUS_UTILS_BASE + 0x0000000b
-#define STATUS_DIRECTORY_ACCESS_DENIED               STATUS_UTILS_BASE + 0x0000000c
-#define STATUS_DIRECTORY_MISSING_PATH                STATUS_UTILS_BASE + 0x0000000d
-#define STATUS_DIRECTORY_ENTRY_STAT_ERROR            STATUS_UTILS_BASE + 0x0000000e
-#define STATUS_STRFTIME_FALIED                       STATUS_UTILS_BASE + 0x0000000f
+#define STATUS_REMOVE_FILE_FAILED                    STATUS_UTILS_BASE + 0x0000000A
+#define STATUS_REMOVE_LINK_FAILED                    STATUS_UTILS_BASE + 0x0000000B
+#define STATUS_DIRECTORY_ACCESS_DENIED               STATUS_UTILS_BASE + 0x0000000C
+#define STATUS_DIRECTORY_MISSING_PATH                STATUS_UTILS_BASE + 0x0000000D
+#define STATUS_DIRECTORY_ENTRY_STAT_ERROR            STATUS_UTILS_BASE + 0x0000000E
+#define STATUS_STRFTIME_FALIED                       STATUS_UTILS_BASE + 0x0000000F
 #define STATUS_MAX_TIMESTAMP_FORMAT_STR_LEN_EXCEEDED STATUS_UTILS_BASE + 0x00000010
 #define STATUS_UTIL_MAX_TAG_COUNT                    STATUS_UTILS_BASE + 0x00000011
 #define STATUS_UTIL_INVALID_TAG_VERSION              STATUS_UTILS_BASE + 0x00000012
 #define STATUS_UTIL_TAGS_COUNT_NON_ZERO_TAGS_NULL    STATUS_UTILS_BASE + 0x00000013
 #define STATUS_UTIL_INVALID_TAG_NAME_LEN             STATUS_UTILS_BASE + 0x00000014
 #define STATUS_UTIL_INVALID_TAG_VALUE_LEN            STATUS_UTILS_BASE + 0x00000015
-/**
- * Hash table error values starting from 0x40100000
- */
-/*! \addtogroup
- *
- *  @{
- */
+#define STATUS_INVALID_USER_AGENT_LENGTH             STATUS_UTILS_BASE + 0x00000016
+#define STATUS_IOT_EXPIRATION_OCCURS_IN_PAST         STATUS_UTILS_BASE + 0x00000017
+#define STATUS_IOT_EXPIRATION_PARSING_FAILED         STATUS_UTILS_BASE + 0x00000018
+/******************************************************************************
+ * Hash table error codes
+ ******************************************************************************/
 #define STATUS_HASH_KEY_NOT_PRESENT       STATUS_HASH_TABLE_BASE + 0x00000001
 #define STATUS_HASH_KEY_ALREADY_PRESENT   STATUS_HASH_TABLE_BASE + 0x00000002
 #define STATUS_HASH_ENTRY_ITERATION_ABORT STATUS_HASH_TABLE_BASE + 0x00000003
-/**
- * Timer queue error values starting from 0x41100000
- */
-/*! \addtogroup
- *
- *  @{
- */
+/******************************************************************************
+ * Timer queue error codes
+ ******************************************************************************/
 #define STATUS_TIMER_QUEUE_STOP_SCHEDULING STATUS_TIMER_QUEUE_BASE + 0x00000001
 #define STATUS_INVALID_TIMER_COUNT_VALUE   STATUS_TIMER_QUEUE_BASE + 0x00000002
 #define STATUS_INVALID_TIMER_PERIOD_VALUE  STATUS_TIMER_QUEUE_BASE + 0x00000003
 #define STATUS_MAX_TIMER_COUNT_REACHED     STATUS_TIMER_QUEUE_BASE + 0x00000004
 /******************************************************************************
- * Semaphore error values starting from 0x41200000
+ * Semaphore error codes
  ******************************************************************************/
-/*! \addtogroup
- *
- *  @{
- */
 #define STATUS_SEMAPHORE_OPERATION_AFTER_SHUTDOWN STATUS_SEMAPHORE_BASE + 0x00000001
 #define STATUS_SEMAPHORE_ACQUIRE_WHEN_LOCKED      STATUS_SEMAPHORE_BASE + 0x00000002
 /******************************************************************************
- * File logger error values starting from 0x41300000
+ * File logger error codes
  ******************************************************************************/
-/*! \addtogroup
- *
- *  @{
- */
-#define STATUS_FILE_LOGGER_BASE                    STATUS_UTILS_BASE + 0x01200000
-#define STATUS_FILE_LOGGER_INDEX_FILE_INVALID_SIZE STATUS_SEMAPHORE_BASE + 0x00000001
-/*! \addtogroup
- *
- *  @{
- */
-#define STATUS_SERVICE_CALL_NOT_AUTHORIZED_ERROR STATUS_CLIENT_BASE + 0x00000010
-#define STATUS_INVALID_AUTH_LEN                  STATUS_CLIENT_BASE + 0x00000018
-#define STATUS_SERVICE_CALL_TIMEOUT_ERROR        STATUS_CLIENT_BASE + 0x00000037
-/*! \addtogroup
- *
- *  @{
- */
-#define STATUS_STATE_MACHINE_INVALID_STATE   STATUS_STATE_BASE + 0x0000000e
-#define STATUS_STATE_MACHINE_STATE_NOT_FOUND STATUS_STATE_BASE + 0x00000056
-#define STATUS_STATE_MACHINE_NULL_ARG        STATUS_STATE_BASE + 0x00000057
+#define STATUS_FILE_LOGGER_INDEX_FILE_INVALID_SIZE STATUS_FILE_LOGGER_BASE + 0x00000001
 /******************************************************************************
- * Session description init related status codes
+ * State machine error codes
  ******************************************************************************/
-/*! \addtogroup SessionDescriptionInitStatusCodes
- * WEBRTC Session Description initialization related codes. Values are derived
- * from STATUS_WEBRTC_BASE (0x55000000)
- *  @{
- */
-#define STATUS_SESSION_DESCRIPTION_INIT_NOT_OBJECT                 STATUS_WEBRTC_BASE + 0x00000001
-#define STATUS_SESSION_DESCRIPTION_INIT_MISSING_SDP_OR_TYPE_MEMBER STATUS_WEBRTC_BASE + 0x00000002
-#define STATUS_SESSION_DESCRIPTION_INIT_INVALID_TYPE               STATUS_WEBRTC_BASE + 0x00000003
-#define STATUS_SESSION_DESCRIPTION_INIT_MISSING_SDP                STATUS_WEBRTC_BASE + 0x00000004
-#define STATUS_SESSION_DESCRIPTION_INIT_MISSING_TYPE               STATUS_WEBRTC_BASE + 0x00000005
-#define STATUS_SESSION_DESCRIPTION_INIT_MAX_SDP_LEN_EXCEEDED       STATUS_WEBRTC_BASE + 0x00000006
-#define STATUS_SESSION_DESCRIPTION_INVALID_SESSION_DESCRIPTION     STATUS_WEBRTC_BASE + 0x00000007
-#define STATUS_SESSION_DESCRIPTION_MISSING_ICE_VALUES              STATUS_WEBRTC_BASE + 0x00000008
-#define STATUS_SESSION_DESCRIPTION_MISSING_CERTIFICATE_FINGERPRINT STATUS_WEBRTC_BASE + 0x00000009
-#define STATUS_SESSION_DESCRIPTION_MAX_MEDIA_COUNT                 STATUS_WEBRTC_BASE + 0x0000000A
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// SDP related status codes
-/////////////////////////////////////////////////////
-/*! \addtogroup SDPStatusCodes
- * WEBRTC SDP packet related codes. Values are derived from STATUS_SDP_BASE
- * (0x56000000)
- *  @{
- */
-#define STATUS_SDP_MISSING_ITEMS                STATUS_SDP_BASE + 0x00000001
-#define STATUS_SDP_ATTRIBUTES_ERROR             STATUS_SDP_BASE + 0x00000002
-#define STATUS_SDP_BANDWIDTH_ERROR              STATUS_SDP_BASE + 0x00000003
-#define STATUS_SDP_CONNECTION_INFORMATION_ERROR STATUS_SDP_BASE + 0x00000004
-#define STATUS_SDP_EMAIL_ADDRESS_ERROR          STATUS_SDP_BASE + 0x00000005
-#define STATUS_SDP_ENCYRPTION_KEY_ERROR         STATUS_SDP_BASE + 0x00000006
-#define STATUS_SDP_INFORMATION_ERROR            STATUS_SDP_BASE + 0x00000007
-#define STATUS_SDP_MEDIA_NAME_ERROR             STATUS_SDP_BASE + 0x00000008
-#define STATUS_SDP_ORIGIN_ERROR                 STATUS_SDP_BASE + 0x00000009
-#define STATUS_SDP_PHONE_NUMBER_ERROR           STATUS_SDP_BASE + 0x0000000A
-#define STATUS_SDP_TIME_DECRYPTION_ERROR        STATUS_SDP_BASE + 0x0000000B
-#define STATUS_SDP_TIMEZONE_ERROR               STATUS_SDP_BASE + 0x0000000C
-#define STATUS_SDP_URI_ERROR                    STATUS_SDP_BASE + 0x0000000D
-#define STATUS_SDP_VERSION_ERROR                STATUS_SDP_BASE + 0x0000000E
-#define STATUS_SDP_ATTRIBUTE_MAX_EXCEEDED       STATUS_SDP_BASE + 0x0000000F
-#define STATUS_SDP_NULL_ARG                     STATUS_SDP_BASE + 0x00000010
-#define STATUS_SDP_ICE_CANDIDATE_NULL_ARG       STATUS_SDP_BASE + 0x00000011
-
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// STUN related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup STUNStatusCodes
- * WEBRTC STUN related codes. Values are derived from STATUS_STUN_BASE (0x57000000)
- *  @{
- */
+#define STATUS_STATE_MACHINE_INVALID_STATE   STATUS_STATE_BASE + 0x00000001
+#define STATUS_STATE_MACHINE_STATE_NOT_FOUND STATUS_STATE_BASE + 0x00000002
+#define STATUS_STATE_MACHINE_NULL_ARG        STATUS_STATE_BASE + 0x00000003
+/******************************************************************************
+ * Session description error codes
+ ******************************************************************************/
+#define STATUS_SDP_INIT_NOT_OBJECT                 STATUS_SDP_BASE + 0x00000001
+#define STATUS_SDP_INIT_INVALID_TYPE               STATUS_SDP_BASE + 0x00000002
+#define STATUS_SDP_INIT_MISSING_SDP                STATUS_SDP_BASE + 0x00000003
+#define STATUS_SDP_INIT_MISSING_TYPE               STATUS_SDP_BASE + 0x00000004
+#define STATUS_SDP_INIT_MAX_SDP_LEN_EXCEEDED       STATUS_SDP_BASE + 0x00000005
+#define STATUS_SDP_INVALID_SESSION_DESCRIPTION     STATUS_SDP_BASE + 0x00000006
+#define STATUS_SDP_MISSING_ICE_VALUES              STATUS_SDP_BASE + 0x00000007
+#define STATUS_SDP_MISSING_CERTIFICATE_FINGERPRINT STATUS_SDP_BASE + 0x00000008
+#define STATUS_SDP_MAX_MEDIA_COUNT                 STATUS_SDP_BASE + 0x00000009
+#define STATUS_SDP_ICE_CANDIDATE_INIT_MALFORMED    STATUS_SDP_BASE + 0x0000000A
+#define STATUS_SDP_ATTRIBUTE_MAX_EXCEEDED          STATUS_SDP_BASE + 0x0000000B
+#define STATUS_SDP_NULL_ARG                        STATUS_SDP_BASE + 0x0000000C
+#define STATUS_SDP_ICE_CANDIDATE_NULL_ARG          STATUS_SDP_BASE + 0x0000000D
+#define STATUS_SDP_ICE_CANDIDATE_MISSING_CANDIDATE STATUS_SDP_BASE + 0x0000000E
+/******************************************************************************
+ * STUN error codes
+ ******************************************************************************/
 #define STATUS_STUN_MESSAGE_INTEGRITY_NOT_LAST                     STATUS_STUN_BASE + 0x00000001
 #define STATUS_STUN_MESSAGE_INTEGRITY_SIZE_ALIGNMENT               STATUS_STUN_BASE + 0x00000002
 #define STATUS_STUN_FINGERPRINT_NOT_LAST                           STATUS_STUN_BASE + 0x00000003
@@ -319,136 +217,123 @@ extern "C" {
 #define STATUS_STUN_SERIALIZE_EMPTY_STUN_BUF                       STATUS_STUN_BASE + 0x0000001A
 #define STATUS_STUN_SERIALIZE_EMPTY_BUF_SIZE                       STATUS_STUN_BASE + 0x0000001B
 #define STATUS_STUN_SERIALIZE_INVALID_MSG_INTEGRITY                STATUS_STUN_BASE + 0x0000001C
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// Networking related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup NetworkingStatusCodes
- * WEBRTC Networking related codes. Values are derived from STATUS_NETWORKING_BASE (0x58000000)
- *  @{
- */
-#define STATUS_GET_LOCAL_IP_ADDRESSES_FAILED       STATUS_NETWORKING_BASE + 0x00000016
-#define STATUS_CREATE_UDP_SOCKET_FAILED            STATUS_NETWORKING_BASE + 0x00000017
-#define STATUS_BINDING_SOCKET_FAILED               STATUS_NETWORKING_BASE + 0x00000018
-#define STATUS_GET_PORT_NUMBER_FAILED              STATUS_NETWORKING_BASE + 0x00000019
-#define STATUS_SEND_DATA_FAILED                    STATUS_NETWORKING_BASE + 0x0000001a
-#define STATUS_RESOLVE_HOSTNAME_FAILED             STATUS_NETWORKING_BASE + 0x0000001b
-#define STATUS_HOSTNAME_NOT_FOUND                  STATUS_NETWORKING_BASE + 0x0000001c
-#define STATUS_SOCKET_CONNECT_FAILED               STATUS_NETWORKING_BASE + 0x0000001d
-#define STATUS_CREATE_SSL_FAILED                   STATUS_NETWORKING_BASE + 0x0000001e
-#define STATUS_SSL_CONNECTION_FAILED               STATUS_NETWORKING_BASE + 0x0000001f
-#define STATUS_SECURE_SOCKET_READ_FAILED           STATUS_NETWORKING_BASE + 0x00000020
-#define STATUS_SOCKET_CONNECTION_NOT_READY_TO_SEND STATUS_NETWORKING_BASE + 0x00000021
-#define STATUS_SOCKET_CONNECTION_CLOSED_ALREADY    STATUS_NETWORKING_BASE + 0x00000022
-#define STATUS_SOCKET_SET_SEND_BUFFER_SIZE_FAILED  STATUS_NETWORKING_BASE + 0x00000023
-#define STATUS_GET_SOCKET_FLAG_FAILED              STATUS_NETWORKING_BASE + 0x00000024
-#define STATUS_SET_SOCKET_FLAG_FAILED              STATUS_NETWORKING_BASE + 0x00000025
-#define STATUS_CLOSE_SOCKET_FAILED                 STATUS_NETWORKING_BASE + 0x00000026
-#define STATUS_SOCKET_INVALID_ARG                  STATUS_NETWORKING_BASE + 0x00000027
-#define STATUS_RECV_DATA_FAILED                    STATUS_NETWORKING_BASE + 0x00000028
-#define STATUS_INIT_NETWORK_FAILED                 STATUS_NETWORKING_BASE + 0x00000029
-#define STATUS_NETWORK_CONFIG_ERROR                STATUS_NETWORKING_BASE + 0x0000002A
-#define STATUS_NETWORK_SETUP_ERROR                 STATUS_NETWORKING_BASE + 0x0000002B
-#define STATUS_NETWORK_SSL_HANDSHAKE_ERROR         STATUS_NETWORKING_BASE + 0x0000002C
-#define STATUS_NETWORK_SOCKET_NOT_CONNECTED        STATUS_NETWORKING_BASE + 0x0000002D
-#define STATUS_NETWORK_NO_AVAILABLE_RECV_DATA      STATUS_NETWORKING_BASE + 0x0000002E
-#define STATUS_NETWORK_SELECT_ERROR                STATUS_NETWORKING_BASE + 0x0000002F
-
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// DTLS related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup DTLSStatusCodes
- * WEBRTC DTLS related codes. Values are derived from STATUS_DTLS_BASE (0x59000000)
- *  @{
- */
-
-#define STATUS_CERTIFICATE_GENERATION_FAILED              STATUS_DTLS_BASE + 0x00000001
-#define STATUS_SSL_CTX_CREATION_FAILED                    STATUS_DTLS_BASE + 0x00000002
-#define STATUS_SSL_REMOTE_CERTIFICATE_VERIFICATION_FAILED STATUS_DTLS_BASE + 0x00000003
-#define STATUS_SSL_PACKET_BEFORE_DTLS_READY               STATUS_DTLS_BASE + 0x00000004
-#define STATUS_SSL_UNKNOWN_SRTP_PROFILE                   STATUS_DTLS_BASE + 0x00000005
-#define STATUS_SSL_INVALID_CERTIFICATE_BITS               STATUS_DTLS_BASE + 0x00000006
-#define STATUS_RSA_CERTIFICATE_GENERATION_FAILED          STATUS_DTLS_BASE + 0x00000007
-#define STATUS_ECP_CERTIFICATE_GENERATION_FAILED          STATUS_DTLS_BASE + 0x00000008
-#define STATUS_DTLS_NULL_ARG                              STATUS_DTLS_BASE + 0x00000009
-#define STATUS_DTLS_DRBG_SEED_FAILED                      STATUS_DTLS_BASE + 0x0000000A
-#define STATUS_DTLS_RSA_GEN_KEY_FAILED                    STATUS_DTLS_BASE + 0x0000000B
-#define STATUS_DTLS_ECP_GEN_KEY_FAILED                    STATUS_DTLS_BASE + 0x0000000C
-#define STATUS_DTLS_MPI_READ_FAILED                       STATUS_DTLS_BASE + 0x0000000D
-#define STATUS_DTLS_GEN_TIME_FAILED                       STATUS_DTLS_BASE + 0x0000000E
-#define STATUS_DTLS_X509_SET_FAILED                       STATUS_DTLS_BASE + 0x0000000F
-#define STATUS_DTLS_SSL_CTX_SETUP_FAILED                  STATUS_DTLS_BASE + 0x00000010
-#define STATUS_TLS_SSL_CTX_SETUP_FAILED                   STATUS_DTLS_BASE + 0x00000011
-#define STATUS_TLS_SSL_HANDSHAKE_FAILED                   STATUS_DTLS_BASE + 0x00000012
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// ICE/TURN related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup ICEStatusCodes
- * WEBRTC ICE related codes. Values are derived from STATUS_ICE_BASE (0x5a000000)
- *  @{
- */
-
-#define STATUS_ICE_AGENT_NO_SELECTED_CANDIDATE_AVAILABLE                   STATUS_ICE_BASE + 0x00000001
-#define STATUS_ICE_CANDIDATE_STRING_MISSING_PORT                           STATUS_ICE_BASE + 0x00000002
-#define STATUS_ICE_CANDIDATE_STRING_MISSING_IP                             STATUS_ICE_BASE + 0x00000003
-#define STATUS_ICE_CANDIDATE_STRING_INVALID_IP                             STATUS_ICE_BASE + 0x00000004
-#define STATUS_ICE_CANDIDATE_STRING_IS_TCP                                 STATUS_ICE_BASE + 0x00000005
-#define STATUS_ICE_FAILED_TO_COMPUTE_MD5_FOR_LONG_TERM_CREDENTIAL          STATUS_ICE_BASE + 0x00000006
-#define STATUS_ICE_URL_INVALID_PREFIX                                      STATUS_ICE_BASE + 0x00000007
-#define STATUS_ICE_URL_TURN_MISSING_USERNAME                               STATUS_ICE_BASE + 0x00000008
-#define STATUS_ICE_URL_TURN_MISSING_CREDENTIAL                             STATUS_ICE_BASE + 0x00000009
-#define STATUS_ICE_AGENT_STATE_CHANGE_FAILED                               STATUS_ICE_BASE + 0x0000000a
-#define STATUS_ICE_NO_LOCAL_CANDIDATE_AVAILABLE_AFTER_GATHERING_TIMEOUT    STATUS_ICE_BASE + 0x0000000b
-#define STATUS_ICE_AGENT_TERMINATED_ALREADY                                STATUS_ICE_BASE + 0x0000000c
-#define STATUS_ICE_NO_CONNECTED_CANDIDATE_PAIR                             STATUS_ICE_BASE + 0x0000000d
-#define STATUS_ICE_CANDIDATE_PAIR_LIST_EMPTY                               STATUS_ICE_BASE + 0x0000000e
-#define STATUS_ICE_NOMINATED_CANDIDATE_NOT_CONNECTED                       STATUS_ICE_BASE + 0x00000010
-#define STATUS_ICE_CANDIDATE_INIT_MALFORMED                                STATUS_ICE_BASE + 0x00000011
-#define STATUS_ICE_CANDIDATE_MISSING_CANDIDATE                             STATUS_ICE_BASE + 0x00000012
-#define STATUS_ICE_FAILED_TO_NOMINATE_CANDIDATE_PAIR                       STATUS_ICE_BASE + 0x00000013
-#define STATUS_ICE_MAX_REMOTE_CANDIDATE_COUNT_EXCEEDED                     STATUS_ICE_BASE + 0x00000014
-#define STATUS_ICE_INVALID_STATE                                           STATUS_ICE_BASE + 0x0000001c
-#define STATUS_ICE_NO_LOCAL_HOST_CANDIDATE_AVAILABLE                       STATUS_ICE_BASE + 0x0000001d
-#define STATUS_ICE_NO_NOMINATED_VALID_CANDIDATE_PAIR_AVAILABLE             STATUS_ICE_BASE + 0x0000001e
-#define STATUS_TURN_CONNECTION_NO_HOST_INTERFACE_FOUND                     STATUS_ICE_BASE + 0x0000001f
-#define STATUS_TURN_CONNECTION_STATE_TRANSITION_TIMEOUT                    STATUS_ICE_BASE + 0x00000020
-#define STATUS_TURN_CONNECTION_FAILED_TO_CREATE_PERMISSION                 STATUS_ICE_BASE + 0x00000021
-#define STATUS_TURN_CONNECTION_FAILED_TO_BIND_CHANNEL                      STATUS_ICE_BASE + 0x00000022
-#define STATUS_TURN_NEW_DATA_CHANNEL_MSG_HEADER_BEFORE_PREVIOUS_MSG_FINISH STATUS_ICE_BASE + 0x00000023
-#define STATUS_TURN_MISSING_CHANNEL_DATA_HEADER                            STATUS_ICE_BASE + 0x00000024
-#define STATUS_ICE_FAILED_TO_RECOVER_FROM_DISCONNECTION                    STATUS_ICE_BASE + 0x00000025
-#define STATUS_ICE_NO_AVAILABLE_ICE_CANDIDATE_PAIR                         STATUS_ICE_BASE + 0x00000026
-#define STATUS_TURN_CONNECTION_PEER_NOT_USABLE                             STATUS_ICE_BASE + 0x00000027
-#define STATUS_ICE_SERVER_INDEX_INVALID                                    STATUS_ICE_BASE + 0x00000028
-#define STATUS_ICE_NOT_ENOUGH_MEMORY                                       STATUS_ICE_BASE + 0x00000029
-#define STATUS_ICE_NULL_ARG                                                STATUS_ICE_BASE + 0x0000002A
-#define STATUS_ICE_NULL_NOMINATED_CANDIDATE_PAIR                           STATUS_ICE_BASE + 0x0000002B
-#define STATUS_TURN_CONNECTION_CHECK_CONN_TIMEOUT                          STATUS_ICE_BASE + 0x0000002C
-#define STATUS_TURN_CONNECTION_GET_CREDENTIALS_TIMEOUT                     STATUS_ICE_BASE + 0x0000002D
-#define STATUS_TURN_CONNECTION_ALLOCATION_TIMEOUT                          STATUS_ICE_BASE + 0x0000002E
-#define STATUS_ICE_CANDIDATE_STRING_MISSING_TYPE                           STATUS_ICE_BASE + 0x0000002F
-#define STATUS_TURN_CONNECTION_CREATE_SOCKET                               STATUS_ICE_BASE + 0x00000030
-#define STATUS_TURN_FSM_REFRESH_ALLOCATION                                 STATUS_ICE_BASE + 0x00000031
-#define STATUS_ICE_EMPTY_STUN_SEND_BUF                                     STATUS_ICE_BASE + 0x00000032
-
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// SRTP related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup SRTPStatusCodes
- * WEBRTC SRTP related codes. Values are derived from STATUS_SRTP_BASE (0x5b000000)
- *  @{
- */
+#define STATUS_STUN_NULL_ARG                                       STATUS_STUN_BASE + 0x0000001D
+#define STATUS_STUN_NOT_ENOUGH_MEMORY                              STATUS_STUN_BASE + 0x0000001E
+#define STATUS_STUN_INVALID_ARG                                    STATUS_STUN_BASE + 0x0000001F
+#define STATUS_STUN_INTERNAL_ERROR                                 STATUS_STUN_BASE + 0x00000020
+/******************************************************************************
+ * Network error codes
+ ******************************************************************************/
+#define STATUS_NET_GET_LOCAL_IP_ADDRESSES_FAILED      STATUS_NET_BASE + 0x00000001
+#define STATUS_NET_CREATE_UDP_SOCKET_FAILED           STATUS_NET_BASE + 0x00000002
+#define STATUS_NET_BINDING_SOCKET_FAILED              STATUS_NET_BASE + 0x00000003
+#define STATUS_NET_GET_PORT_NUMBER_FAILED             STATUS_NET_BASE + 0x00000004
+#define STATUS_NET_SEND_DATA_FAILED                   STATUS_NET_BASE + 0x00000005
+#define STATUS_NET_RESOLVE_HOSTNAME_FAILED            STATUS_NET_BASE + 0x00000006
+#define STATUS_NET_HOSTNAME_NOT_FOUND                 STATUS_NET_BASE + 0x00000007
+#define STATUS_NET_SOCKET_CONNECT_FAILED              STATUS_NET_BASE + 0x00000008
+#define STATUS_NET_SOCKET_SET_SEND_BUFFER_SIZE_FAILED STATUS_NET_BASE + 0x00000009
+#define STATUS_NET_GET_SOCKET_FLAG_FAILED             STATUS_NET_BASE + 0x0000000A
+#define STATUS_NET_SET_SOCKET_FLAG_FAILED             STATUS_NET_BASE + 0x0000000B
+#define STATUS_NET_CLOSE_SOCKET_FAILED                STATUS_NET_BASE + 0x0000000C
+#define STATUS_NET_RECV_DATA_FAILED                   STATUS_NET_BASE + 0x0000000D
+/******************************************************************************
+ * Socket error codes
+ ******************************************************************************/
+#define STATUS_SOCKET_CONN_NULL_ARG          STATUS_SOCKET_CONN_BASE + 0x00000001
+#define STATUS_SOCKET_CONN_INVALID_ARG       STATUS_SOCKET_CONN_BASE + 0x00000002
+#define STATUS_SOCKET_CONN_NOT_ENOUGH_MEMORY STATUS_SOCKET_CONN_BASE + 0x00000003
+#define STATUS_SOCKET_CONN_INVALID_OPERATION STATUS_SOCKET_CONN_BASE + 0x00000004
+#define STATUS_SOCKET_CONN_CLOSED_ALREADY    STATUS_SOCKET_CONN_BASE + 0x00000005
+/******************************************************************************
+ * DTLS error codes
+ ******************************************************************************/
+#define STATUS_DTLS_CERTIFICATE_GENERATION_FAILED          STATUS_DTLS_BASE + 0x00000001
+#define STATUS_DTLS_SSL_CTX_CREATION_FAILED                STATUS_DTLS_BASE + 0x00000002
+#define STATUS_DTLS_REMOTE_CERTIFICATE_VERIFICATION_FAILED STATUS_DTLS_BASE + 0x00000003
+#define STATUS_DTLS_PACKET_BEFORE_DTLS_READY               STATUS_DTLS_BASE + 0x00000004
+#define STATUS_DTLS_UNKNOWN_SRTP_PROFILE                   STATUS_DTLS_BASE + 0x00000005 //!< #TBD.
+#define STATUS_DTLS_INVALID_CERTIFICATE_BITS               STATUS_DTLS_BASE + 0x00000006
+#define STATUS_DTLS_NULL_ARG                               STATUS_DTLS_BASE + 0x00000007
+#define STATUS_DTLS_DRBG_SEED_FAILED                       STATUS_DTLS_BASE + 0x00000008
+#define STATUS_DTLS_RSA_GEN_KEY_FAILED                     STATUS_DTLS_BASE + 0x00000009
+#define STATUS_DTLS_ECP_GEN_KEY_FAILED                     STATUS_DTLS_BASE + 0x0000000A
+#define STATUS_DTLS_MPI_READ_FAILED                        STATUS_DTLS_BASE + 0x0000000B
+#define STATUS_DTLS_GEN_TIME_FAILED                        STATUS_DTLS_BASE + 0x0000000C
+#define STATUS_DTLS_X509_SET_FAILED                        STATUS_DTLS_BASE + 0x0000000D
+#define STATUS_DTLS_CREATE_SSL_FAILED                      STATUS_DTLS_BASE + 0x0000000E
+/******************************************************************************
+ * TLS error codes
+ ******************************************************************************/
+#define STATUS_TLS_NULL_ARG                     STATUS_TLS_BASE + 0x00000001
+#define STATUS_TLS_NOT_ENOUGH_MEMORY            STATUS_TLS_BASE + 0x00000002
+#define STATUS_TLS_CREATE_SSL_FAILED            STATUS_TLS_BASE + 0x00000003
+#define STATUS_TLS_INVALID_CA_CERT_PATH         STATUS_TLS_BASE + 0x00000004
+#define STATUS_TLS_SSL_CTX_SETUP_FAILED         STATUS_TLS_BASE + 0x00000005
+#define STATUS_TLS_SSL_HANDSHAKE_FAILED         STATUS_TLS_BASE + 0x00000006
+#define STATUS_TLS_SSL_CTX_CREATION_FAILED      STATUS_TLS_BASE + 0x00000007
+#define STATUS_TLS_SOCKET_READ_FAILED           STATUS_TLS_BASE + 0x00000008
+#define STATUS_TLS_CONNECTION_NOT_READY_TO_SEND STATUS_TLS_BASE + 0x00000009
+/******************************************************************************
+ * ICE agent error codes
+ ******************************************************************************/
+#define STATUS_ICE_CANDIDATE_STRING_MISSING_PORT               STATUS_ICE_AGENT_BASE + 0x00000001
+#define STATUS_ICE_CANDIDATE_STRING_MISSING_IP                 STATUS_ICE_AGENT_BASE + 0x00000002
+#define STATUS_ICE_CANDIDATE_STRING_IS_TCP                     STATUS_ICE_AGENT_BASE + 0x00000003
+#define STATUS_ICE_CANDIDATE_PAIR_LIST_EMPTY                   STATUS_ICE_AGENT_BASE + 0x00000004
+#define STATUS_ICE_FAILED_TO_NOMINATE_CANDIDATE_PAIR           STATUS_ICE_AGENT_BASE + 0x00000005
+#define STATUS_ICE_MAX_REMOTE_CANDIDATE_COUNT_EXCEEDED         STATUS_ICE_AGENT_BASE + 0x00000006
+#define STATUS_ICE_NO_LOCAL_HOST_CANDIDATE_AVAILABLE           STATUS_ICE_AGENT_BASE + 0x00000007
+#define STATUS_ICE_NO_NOMINATED_VALID_CANDIDATE_PAIR_AVAILABLE STATUS_ICE_AGENT_BASE + 0x00000008
+#define STATUS_ICE_SERVER_INDEX_INVALID                        STATUS_ICE_AGENT_BASE + 0x00000009
+#define STATUS_ICE_CANDIDATE_STRING_MISSING_TYPE               STATUS_ICE_AGENT_BASE + 0x0000000A
+#define STATUS_ICE_AGENT_NULL_ARG                              STATUS_ICE_AGENT_BASE + 0x0000000B
+#define STATUS_ICE_AGENT_NOT_ENOUGH_MEMORY                     STATUS_ICE_AGENT_BASE + 0x0000000C
+#define STATUS_ICE_AGENT_INVALID_ARG                           STATUS_ICE_AGENT_BASE + 0x0000000D
+#define STATUS_ICE_AGENT_CREATE_TURN_SOCKET                    STATUS_ICE_AGENT_BASE + 0x0000000E
+#define STATUS_ICE_AGENT_MISSING_LOCAL_CANDIDATE               STATUS_ICE_AGENT_BASE + 0x0000000F
+#define STATUS_ICE_AGENT_MISSING_LOCAL_SOCKET                  STATUS_ICE_AGENT_BASE + 0x00000010
+#define STATUS_ICE_AGENT_NO_MAPPED_ADDRESS                     STATUS_ICE_AGENT_BASE + 0x00000011
+#define STATUS_ICE_AGENT_NO_CANDIDATE_PAIR                     STATUS_ICE_AGENT_BASE + 0x00000012
+#define STATUS_ICE_AGENT_NO_MATCH_TRANSACTION                  STATUS_ICE_AGENT_BASE + 0x00000013
+#define STATUS_ICE_AGENT_NO_MATCH_ATTR                         STATUS_ICE_AGENT_BASE + 0x00000014
+/******************************************************************************
+ * ICE fsm error codes
+ ******************************************************************************/
+#define STATUS_ICE_FSM_NULL_ARG                             STATUS_ICE_FSM_BASE + 0x00000001
+#define STATUS_ICE_FSM_FAILED_TO_RECOVER_FROM_DISCONNECTION STATUS_ICE_FSM_BASE + 0x00000002
+#define STATUS_ICE_FSM_NO_CONNECTED_CANDIDATE_PAIR          STATUS_ICE_FSM_BASE + 0x00000003
+#define STATUS_ICE_FSM_INVALID_STATE                        STATUS_ICE_FSM_BASE + 0x00000004
+#define STATUS_ICE_FSM_NO_AVAILABLE_ICE_CANDIDATE_PAIR      STATUS_ICE_FSM_BASE + 0x00000005
+/******************************************************************************
+ * ICE utils error codes
+ ******************************************************************************/
+#define STATUS_ICE_UTILS_URL_INVALID_PREFIX          STATUS_ICE_UTILS_BASE + 0x00000001
+#define STATUS_ICE_UTILS_URL_TURN_MISSING_USERNAME   STATUS_ICE_UTILS_BASE + 0x00000002
+#define STATUS_ICE_UTILS_URL_TURN_MISSING_CREDENTIAL STATUS_ICE_UTILS_BASE + 0x00000003
+#define STATUS_ICE_UTILS_NOT_ENOUGH_MEMORY           STATUS_ICE_UTILS_BASE + 0x00000004
+#define STATUS_ICE_UTILS_NULL_ARG                    STATUS_ICE_UTILS_BASE + 0x00000005
+#define STATUS_ICE_UTILS_EMPTY_STUN_SEND_BUF         STATUS_ICE_UTILS_BASE + 0x00000006
+/******************************************************************************
+ * TURN error codes
+ ******************************************************************************/
+#define STATUS_TURN_NULL_ARG                                               STATUS_TURN_BASE + 0x00000001
+#define STATUS_TURN_INVALID_ARG                                            STATUS_TURN_BASE + 0x00000002
+#define STATUS_TURN_NOT_ENOUGH_MEMORY                                      STATUS_TURN_BASE + 0x00000003
+#define STATUS_TURN_INVALID_OPERATION                                      STATUS_TURN_BASE + 0x00000004
+#define STATUS_TURN_PEER_NOT_USABLE                                        STATUS_TURN_BASE + 0x00000005
+#define STATUS_TURN_BUFFER_TOO_SMALL                                       STATUS_TURN_BASE + 0x00000006
+#define STATUS_TURN_CHECK_CONN_TIMEOUT                                     STATUS_TURN_BASE + 0x00000007
+#define STATUS_TURN_GET_CREDENTIALS_TIMEOUT                                STATUS_TURN_BASE + 0x00000008
+#define STATUS_TURN_ALLOCATION_TIMEOUT                                     STATUS_TURN_BASE + 0x00000009
+#define STATUS_TURN_FSM_REFRESH_ALLOCATION                                 STATUS_TURN_BASE + 0x0000000A
+#define STATUS_TURN_FAILED_TO_CREATE_PERMISSION                            STATUS_TURN_BASE + 0x0000000B
+#define STATUS_TURN_FAILED_TO_BIND_CHANNEL                                 STATUS_TURN_BASE + 0x0000000C
+#define STATUS_TURN_NEW_DATA_CHANNEL_MSG_HEADER_BEFORE_PREVIOUS_MSG_FINISH STATUS_TURN_BASE + 0x0000000D
+#define STATUS_TURN_MISSING_CHANNEL_DATA_HEADER                            STATUS_TURN_BASE + 0x0000000E
+/******************************************************************************
+ * SRTP error codes
+ ******************************************************************************/
 #define STATUS_SRTP_DECRYPT_FAILED                   STATUS_SRTP_BASE + 0x00000001
 #define STATUS_SRTP_ENCRYPT_FAILED                   STATUS_SRTP_BASE + 0x00000002
 #define STATUS_SRTP_TRANSMIT_SESSION_CREATION_FAILED STATUS_SRTP_BASE + 0x00000003
@@ -457,16 +342,9 @@ extern "C" {
 #define STATUS_SRTP_NOT_READY_YET                    STATUS_SRTP_BASE + 0x00000006
 #define STATUS_SRTCP_DECRYPT_FAILED                  STATUS_SRTP_BASE + 0x00000007
 #define STATUS_SRTCP_ENCRYPT_FAILED                  STATUS_SRTP_BASE + 0x00000008
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// RTP related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup RTPStatusCodes
- * WEBRTC RTP related codes. Values are derived from STATUS_RTP_BASE (0x5c000000)
- *  @{
- */
+/******************************************************************************
+ * RTP error codes
+ ******************************************************************************/
 #define STATUS_RTP_INPUT_PACKET_TOO_SMALL STATUS_RTP_BASE + 0x00000001
 #define STATUS_RTP_INPUT_MTU_TOO_SMALL    STATUS_RTP_BASE + 0x00000002
 #define STATUS_RTP_INVALID_NALU           STATUS_RTP_BASE + 0x00000003
@@ -474,16 +352,9 @@ extern "C" {
 #define STATUS_RTP_NULL_ARG               STATUS_RTP_BASE + 0x00000005
 #define STATUS_RTP_BUFFER_TOO_SMALL       STATUS_RTP_BASE + 0x00000006
 #define STATUS_RTP_NOT_ENOUGH_MEMORY      STATUS_RTP_BASE + 0x00000007
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// Signaling related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup SignalingStatusCodes
- * WEBRTC Signaling related codes. Values are derived from STATUS_SIGNALING_BASE (0x5d000000)
- *  @{
- */
+/******************************************************************************
+ * Signaling error codes
+ ******************************************************************************/
 #define STATUS_SIGNALING_INVALID_READY_STATE                       STATUS_SIGNALING_BASE + 0x00000001
 #define STATUS_SIGNALING_GET_TOKEN_CALL_FAILED                     STATUS_SIGNALING_BASE + 0x00000002
 #define STATUS_SIGNALING_DESCRIBE_CALL_FAILED                      STATUS_SIGNALING_BASE + 0x00000003
@@ -553,35 +424,19 @@ extern "C" {
 #define STATUS_SIGNALING_SEND_FAILED                               STATUS_SIGNALING_BASE + 0x00000043
 #define STATUS_SIGNALING_NULL_MSG                                  STATUS_SIGNALING_BASE + 0x00000044
 #define STATUS_SIGNALING_INTERNAL_ERROR                            STATUS_SIGNALING_BASE + 0x00000045
-
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// Peer connection related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup PeerConnectionStatusCodes
- * WEBRTC STUN related codes. Values are derived from STATUS_PEERCONNECTION_BASE
- * (0x5e000000)
- *  @{
- */
-#define STATUS_PEERCONNECTION_CREATE_ANSWER_WITHOUT_REMOTE_DESCRIPTION STATUS_PEERCONNECTION_BASE + 0x00000001
-#define STATUS_PEERCONNECTION_CODEC_INVALID                            STATUS_PEERCONNECTION_BASE + 0x00000002
-#define STATUS_PEERCONNECTION_CODEC_MAX_EXCEEDED                       STATUS_PEERCONNECTION_BASE + 0x00000003
-#define STATUS_PEERCONNECTION_NO_CONNECTION                            STATUS_PEERCONNECTION_BASE + 0x00000004
-#define STATUS_PEERCONNECTION_NO_SCTP_SESSION                          STATUS_PEERCONNECTION_BASE + 0x00000005
-#define STATUS_PEERCONNECTION_NO_ON_MESSAGE                            STATUS_PEERCONNECTION_BASE + 0x00000006
-#define STATUS_PEERCONNECTION_INVALID_TIMER                            STATUS_PEERCONNECTION_BASE + 0x00000007
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// SCTP related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup SCTPStatusCodes
- * WEBRTC SCTP related codes. Values are derived from STATUS_STUN_BASE (0x5f000000)
- *  @{
- */
+#define STATUS_SIGNALING_NOT_AUTHORIZED_ERROR                      STATUS_SIGNALING_BASE + 0x00000046
+#define STATUS_SIGNALING_TIMEOUT_ERROR                             STATUS_SIGNALING_BASE + 0x00000047
+/******************************************************************************
+ * Peer connection error codes
+ ******************************************************************************/
+#define STATUS_PEER_CONN_NULL_ARG                                 STATUS_PEER_CONN_BASE + 0x00000001
+#define STATUS_PEER_CONN_CREATE_ANSWER_WITHOUT_REMOTE_DESCRIPTION STATUS_PEER_CONN_BASE + 0x00000002
+#define STATUS_PEER_CONN_NO_CONNECTION                            STATUS_PEER_CONN_BASE + 0x00000003
+#define STATUS_PEER_CONN_NO_SCTP_SESSION                          STATUS_PEER_CONN_BASE + 0x00000004
+#define STATUS_PEER_CONN_NO_ON_MESSAGE                            STATUS_PEER_CONN_BASE + 0x00000005
+/******************************************************************************
+ * Sctp error codes
+ ******************************************************************************/
 #define STATUS_SCTP_SESSION_SETUP_FAILED    STATUS_SCTP_BASE + 0x00000001
 #define STATUS_SCTP_INVALID_DCEP_PACKET     STATUS_SCTP_BASE + 0x00000002
 #define STATUS_SCTP_SO_NON_BLOCKING_FAILED  STATUS_SCTP_BASE + 0x00000003
@@ -593,17 +448,9 @@ extern "C" {
 #define STATUS_SCTP_EVENT_FAILED            STATUS_SCTP_BASE + 0x00000009
 #define STATUS_SCTP_INITMSG_FAILED          STATUS_SCTP_BASE + 0x0000000A
 #define STATUS_SCTP_PEER_ADDR_PARAMS_FAILED STATUS_SCTP_BASE + 0x0000000B
-
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// RTCP related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup RTCPStatusCodes
- * WEBRTC RTCP related codes. Values are derived from STATUS_RTCP_BASE (0x60000000)
- *  @{
- */
+/******************************************************************************
+ * Rtcp error codes
+ ******************************************************************************/
 #define STATUS_RTCP_INPUT_PACKET_TOO_SMALL       STATUS_RTCP_BASE + 0x00000001
 #define STATUS_RTCP_INPUT_PACKET_INVALID_VERSION STATUS_RTCP_BASE + 0x00000002
 #define STATUS_RTCP_INPUT_PACKET_LEN_MISMATCH    STATUS_RTCP_BASE + 0x00000003
@@ -613,51 +460,22 @@ extern "C" {
 #define STATUS_RTCP_INPUT_REMB_TOO_SMALL         STATUS_RTCP_BASE + 0x00000007
 #define STATUS_RTCP_INPUT_REMB_INVALID           STATUS_RTCP_BASE + 0x00000008
 #define STATUS_RTCP_NULL_ARG                     STATUS_RTCP_BASE + 0x00000009
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// Rolling buffer related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup RollingBufferStatusCodes
- * WEBRTC Rolling Buffer related codes. Values are derived from STATUS_ROLLING_BUFFER_BASE
- * (0x61000000)
- *  @{
- */
+/******************************************************************************
+ * Rolling buffer error codes
+ ******************************************************************************/
 #define STATUS_ROLLING_BUFFER_NOT_IN_RANGE STATUS_ROLLING_BUFFER_BASE + 0x00000001
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// AWSSignerV4 related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup AWSSignerV4StatusCodes
- * WEBRTC AWSSignerV4 related codes. Values are derived from STATUS_AWS_SIGNER_BASE (0x62000000)
- *  @{
- */
+/******************************************************************************
+ * Aws signature error codes
+ ******************************************************************************/
 #define STATUS_AWS_SIGNER_FAIL_TO_CALCULATE_HASH STATUS_AWS_SIGNER_BASE + 0x00000001
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// Json related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup JsonStatusCodes
- * WEBRTC json related codes. Values are derived from STATUS_JSON_BASE (0x63000000)
- *  @{
- */
-#define STATUS_JSON_PARSE_ERROR STATUS_JSON_BASE + 0x00000001
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// http related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup httpStatusCodes
- * WEBRTC http related codes. Values are derived from STATUS_JSON_BASE (0x64000000)
- *  @{
- */
-
+/******************************************************************************
+ * Json error codes
+ ******************************************************************************/
+#define STATUS_JSON_PARSE_ERROR             STATUS_JSON_BASE + 0x00000001
+#define STATUS_JSON_API_CALL_INVALID_RETURN STATUS_JSON_BASE + 0x00000002
+/******************************************************************************
+ * Http error codes
+ ******************************************************************************/
 #define STATUS_HTTP_RES_NOT_FOUND_ERROR       STATUS_HTTP_BASE + 0x00000001
 #define STATUS_HTTP_REST_EXCEPTION_ERROR      STATUS_HTTP_BASE + 0x00000002
 #define STATUS_HTTP_REST_NOT_AUTHORIZED_ERROR STATUS_HTTP_BASE + 0x00000003
@@ -667,21 +485,17 @@ extern "C" {
 #define STATUS_HTTP_RSP_ERROR                 STATUS_HTTP_BASE + 0x00000007
 #define STATUS_HTTP_NOT_ENOUGH_MEMORY         STATUS_HTTP_BASE + 0x00000008
 #define STATUS_HTTP_BUF_OVERFLOW              STATUS_HTTP_BASE + 0x00000009
-/*!@} */
-
-/////////////////////////////////////////////////////
-/// wss related status codes
-/////////////////////////////////////////////////////
-
-/*! \addtogroup wssStatusCodes
- * WEBRTC wss related codes. Values are derived from STATUS_JSON_BASE (0x65000000)
- *  @{
- */
+#define STATUS_HTTP_IOT_FAILED                STATUS_HTTP_BASE + 0x0000000A
+/******************************************************************************
+ * Wss api error codes
+ ******************************************************************************/
 #define STATUS_WSS_API_NULL_ARG          STATUS_WSS_API_BASE + 0x00000001
 #define STATUS_WSS_API_PARSE_RSP         STATUS_WSS_API_BASE + 0x00000002
 #define STATUS_WSS_API_NOT_ENOUGH_MEMORY STATUS_WSS_API_BASE + 0x00000003
 #define STATUS_WSS_API_BUF_OVERFLOW      STATUS_WSS_API_BASE + 0x00000004
-
+/******************************************************************************
+ * Wss client error codes
+ ******************************************************************************/
 #define STATUS_WSS_CLIENT_NULL_ARG              STATUS_WSS_CLIENT_BASE + 0x00000001
 #define STATUS_WSS_CLIENT_INVALID_ARG           STATUS_WSS_CLIENT_BASE + 0x00000002
 #define STATUS_WSS_CLIENT_SEND_FAILED           STATUS_WSS_CLIENT_BASE + 0x00000003
@@ -694,9 +508,9 @@ extern "C" {
 #define STATUS_WSS_GENERATE_ACCEPT_KEY_ERROR    STATUS_WSS_CLIENT_BASE + 0x0000000A
 #define STATUS_WSS_VALIDATE_ACCEPT_KEY_ERROR    STATUS_WSS_CLIENT_BASE + 0x0000000B
 #define STATUS_WSS_GENERATE_RANDOM_NUM_ERROR    STATUS_WSS_CLIENT_BASE + 0x0000000C
-
-/*!@} */
-
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 #ifdef __cplusplus
 }
 #endif

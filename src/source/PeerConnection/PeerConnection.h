@@ -1,6 +1,17 @@
-/*******************************************
-PeerConnection internal include file
-*******************************************/
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_WEBRTC_CLIENT_PEERCONNECTION_PEERCONNECTION__
 #define __KINESIS_VIDEO_WEBRTC_CLIENT_PEERCONNECTION_PEERCONNECTION__
 
@@ -9,16 +20,22 @@ PeerConnection internal include file
 #ifdef __cplusplus
 extern "C" {
 #endif
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/error.h"
 #include "kvs/common_defs.h"
 #include "hash_table.h"
 #include "double_linked_list.h"
 #include "dtls.h"
-#include "IceAgent.h"
+#include "ice_agent.h"
 #include "network.h"
-#include "SrtpSession.h"
-#include "Sctp.h"
+#include "srtp_session.h"
+#include "sctp_session.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 #define LOCAL_ICE_UFRAG_LEN 4
 #define LOCAL_ICE_PWD_LEN   24
 #define LOCAL_CNAME_LEN     16
@@ -121,6 +138,10 @@ typedef struct {
     PHashTable unkeyedDataChannels;
 } AllocateSctpSortDataChannelsData, *PAllocateSctpSortDataChannelsData;
 #endif
+
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 STATUS onFrameReadyFunc(UINT64, UINT16, UINT16, UINT32);
 STATUS onFrameDroppedFunc(UINT64, UINT16, UINT16, UINT32);
 /**
@@ -136,10 +157,10 @@ VOID onSctpSessionOutboundPacket(UINT64, PBYTE, UINT32);
 VOID onSctpSessionDataChannelMessage(UINT64, UINT32, BOOL, PBYTE, UINT32);
 VOID onSctpSessionDataChannelOpen(UINT64, UINT32, PBYTE, UINT32);
 
-STATUS sendPacketToRtpReceiver(PKvsPeerConnection, PBYTE, UINT32);
-STATUS changePeerConnectionState(PKvsPeerConnection, RTC_PEER_CONNECTION_STATE);
+STATUS peer_connection_sendPacketToRtpReceiver(PKvsPeerConnection, PBYTE, UINT32);
+STATUS peer_connection_changeState(PKvsPeerConnection, RTC_PEER_CONNECTION_STATE);
 
-STATUS generateJSONSafeString(PCHAR, UINT32);
+STATUS json_generateSafeString(PCHAR, UINT32);
 
 #ifdef __cplusplus
 }

@@ -21,21 +21,21 @@ TEST_F(SrtpApiTest, encryptDecryptRtpPacketSuccess)
     PSrtpSession pSrtpSession;
     INT32 len = SIZEOF(SKEL_RTP_PACKET);
 
-    EXPECT_EQ(STATUS_SUCCESS, initSrtpSession(test_key, test_key, DEFAULT_TEST_PROFILE, &pSrtpSession));
+    EXPECT_EQ(STATUS_SUCCESS, srtp_session_init(test_key, test_key, DEFAULT_TEST_PROFILE, &pSrtpSession));
 
     PBYTE rtpPacket = (PBYTE) MEMCALLOC(1, SIZEOF(SKEL_RTP_PACKET) + SRTP_MAX_TRAILER_LEN);
     MEMCPY(rtpPacket, SKEL_RTP_PACKET, SIZEOF(SKEL_RTP_PACKET));
 
-    EXPECT_EQ(STATUS_SUCCESS, encryptRtpPacket(pSrtpSession, rtpPacket, &len));
+    EXPECT_EQ(STATUS_SUCCESS, srtp_session_encryptRtpPacket(pSrtpSession, rtpPacket, &len));
     EXPECT_EQ(len, SIZEOF(SKEL_RTP_PACKET) + DEFAULT_TEST_PROFILE_AUTH_TAG_SIZE);
 
-    EXPECT_EQ(STATUS_SUCCESS, decryptSrtpPacket(pSrtpSession, rtpPacket, &len));
+    EXPECT_EQ(STATUS_SUCCESS, srtp_session_decryptSrtpPacket(pSrtpSession, rtpPacket, &len));
     EXPECT_EQ(len, SIZEOF(SKEL_RTP_PACKET));
 
     MEMFREE(rtpPacket);
 
-    EXPECT_EQ(STATUS_SUCCESS, freeSrtpSession(&pSrtpSession));
-    EXPECT_EQ(STATUS_SUCCESS, freeSrtpSession(&pSrtpSession));
+    EXPECT_EQ(STATUS_SUCCESS, srtp_session_free(&pSrtpSession));
+    EXPECT_EQ(STATUS_SUCCESS, srtp_session_free(&pSrtpSession));
 }
 
 TEST_F(SrtpApiTest, encryptDecryptKeyMisMatchFails)
@@ -48,20 +48,20 @@ TEST_F(SrtpApiTest, encryptDecryptKeyMisMatchFails)
     INT32 len = SIZEOF(SKEL_RTP_PACKET);
     PSrtpSession pSrtpSession = NULL;
 
-    EXPECT_EQ(STATUS_SUCCESS, initSrtpSession(receiveKey, transmitKey, DEFAULT_TEST_PROFILE, &pSrtpSession));
+    EXPECT_EQ(STATUS_SUCCESS, srtp_session_init(receiveKey, transmitKey, DEFAULT_TEST_PROFILE, &pSrtpSession));
 
     PBYTE rtpPacket = (PBYTE) MEMCALLOC(1, SIZEOF(SKEL_RTP_PACKET) + SRTP_MAX_TRAILER_LEN);
     MEMCPY(rtpPacket, SKEL_RTP_PACKET, SIZEOF(SKEL_RTP_PACKET));
 
-    EXPECT_EQ(STATUS_SUCCESS, encryptRtpPacket(pSrtpSession, rtpPacket, &len));
+    EXPECT_EQ(STATUS_SUCCESS, srtp_session_encryptRtpPacket(pSrtpSession, rtpPacket, &len));
     EXPECT_EQ(len, SIZEOF(SKEL_RTP_PACKET) + DEFAULT_TEST_PROFILE_AUTH_TAG_SIZE);
 
-    EXPECT_NE(STATUS_SUCCESS, decryptSrtpPacket(pSrtpSession, rtpPacket, &len));
+    EXPECT_NE(STATUS_SUCCESS, srtp_session_decryptSrtpPacket(pSrtpSession, rtpPacket, &len));
 
     MEMFREE(rtpPacket);
 
-    EXPECT_EQ(STATUS_SUCCESS, freeSrtpSession(&pSrtpSession));
-    EXPECT_EQ(STATUS_SUCCESS, freeSrtpSession(&pSrtpSession));
+    EXPECT_EQ(STATUS_SUCCESS, srtp_session_free(&pSrtpSession));
+    EXPECT_EQ(STATUS_SUCCESS, srtp_session_free(&pSrtpSession));
 }
 
 TEST_F(SrtpApiTest, noSrtpKeyReturnsFailure)
@@ -72,8 +72,8 @@ TEST_F(SrtpApiTest, noSrtpKeyReturnsFailure)
 
     PSrtpSession pSrtpSession = NULL;
 
-    EXPECT_NE(STATUS_SUCCESS, initSrtpSession(receiveKey, transmitKey, DEFAULT_TEST_PROFILE, &pSrtpSession));
-    EXPECT_EQ(STATUS_SUCCESS, freeSrtpSession(&pSrtpSession));
+    EXPECT_NE(STATUS_SUCCESS, srtp_session_init(receiveKey, transmitKey, DEFAULT_TEST_PROFILE, &pSrtpSession));
+    EXPECT_EQ(STATUS_SUCCESS, srtp_session_free(&pSrtpSession));
 }
 
 } // namespace webrtcclient

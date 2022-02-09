@@ -345,7 +345,7 @@ PVOID wss_client_start(PWssClientContext pWssClientCtx)
         retval = select(nfds + 1, &rfds, NULL, NULL, &tv);
 
         if (retval == -1) {
-            DLOGE("select() failed with errno %s", getErrorString(getErrorCode()));
+            DLOGE("select() failed with errno %s", net_getErrorString(net_getErrorCode()));
             continue;
         }
 

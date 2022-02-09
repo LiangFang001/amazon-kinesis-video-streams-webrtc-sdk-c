@@ -1,8 +1,8 @@
 #define LOG_CLASS "DTLS"
-#include "../Include_i.h"
+
 #include "dtls.h"
 
-STATUS dtlsSessionOnOutBoundData(PDtlsSession pDtlsSession, UINT64 customData, DtlsSessionOutboundPacketFunc callbackFn)
+STATUS dtls_session_onOutBoundData(PDtlsSession pDtlsSession, UINT64 customData, DtlsSessionOutboundPacketFunc callbackFn)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
@@ -17,7 +17,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS dtlsSessionOnStateChange(PDtlsSession pDtlsSession, UINT64 customData, DtlsSessionOnStateChange callbackFn)
+STATUS dtls_session_onStateChange(PDtlsSession pDtlsSession, UINT64 customData, DtlsSessionOnStateChange callbackFn)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -43,7 +43,7 @@ STATUS dtlsValidateRtcCertificates(PRtcCertificate pRtcCertificates, PUINT32 pCo
     CHK(pRtcCertificates != NULL && pCount != NULL, retStatus);
 
     for (i = 0, *pCount = 0; pRtcCertificates[i].pCertificate != NULL && i < MAX_RTCCONFIGURATION_CERTIFICATES; i++) {
-        CHK(pRtcCertificates[i].privateKeySize == 0 || pRtcCertificates[i].pPrivateKey != NULL, STATUS_SSL_INVALID_CERTIFICATE_BITS);
+        CHK(pRtcCertificates[i].privateKeySize == 0 || pRtcCertificates[i].pPrivateKey != NULL, STATUS_DTLS_INVALID_CERTIFICATE_BITS);
     }
 
     *pCount = i;

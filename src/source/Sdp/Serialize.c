@@ -1,5 +1,5 @@
 #define LOG_CLASS "SDP"
-#include "../Include_i.h"
+
 #include "SessionDescription.h"
 
 STATUS serializeVersion(UINT64 version, PCHAR* ppOutputData, PUINT32 pTotalWritten, PUINT32 pBufferSize)

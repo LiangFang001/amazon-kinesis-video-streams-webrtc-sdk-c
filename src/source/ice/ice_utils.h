@@ -1,6 +1,17 @@
-/*******************************************
-Ice Utils internal include file
-*******************************************/
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_WEBRTC_ICE_UTILS__
 #define __KINESIS_VIDEO_WEBRTC_ICE_UTILS__
 
@@ -9,11 +20,16 @@ Ice Utils internal include file
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "stun.h"
 #include "network.h"
 #include "socket_connection.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 // #TBD, need to review this design.
 #define DEFAULT_MAX_STORED_TRANSACTION_ID_COUNT 20
 #define MAX_STORED_TRANSACTION_ID_COUNT         100
@@ -40,6 +56,10 @@ typedef struct {
     UINT32 transactionIdCount;
     PBYTE transactionIds; //!< the buffer of transaction.
 } TransactionIdStore, *PTransactionIdStore;
+
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 /**
  * @brief create the buffer recording the transaction id.
  *          For current design, ice agent, ice candidate pair, and turn will create one transaction id buffer.
@@ -48,11 +68,26 @@ typedef struct {
  * @param[out] ppTransactionIdStore the pointer of buffer.
  * @return STATUS status of execution.
  */
-STATUS createTransactionIdStore(UINT32, PTransactionIdStore*);
-STATUS freeTransactionIdStore(PTransactionIdStore*);
-VOID transactionIdStoreInsert(PTransactionIdStore, PBYTE);
-
-BOOL transactionIdStoreHasId(PTransactionIdStore pTransactionIdStore, PBYTE transactionId);
+STATUS transaction_id_store_create(UINT32, PTransactionIdStore*);
+STATUS transaction_id_store_free(PTransactionIdStore*);
+/**
+ * @brief
+ *
+ * @param[in] pTransactionIdStore
+ * @param[in] transactionId
+ *
+ * @return VOID
+ */
+VOID transaction_id_store_insert(PTransactionIdStore pTransactionIdStore, PBYTE transactionId);
+/**
+ * @brief
+ *
+ * @param[in] pTransactionIdStore
+ * @param[in] transactionId
+ *
+ * @return VOID
+ */
+BOOL transaction_id_store_isExisted(PTransactionIdStore pTransactionIdStore, PBYTE transactionId);
 /**
  * @brief reset the buffer of transaction id.
  *
@@ -60,7 +95,7 @@ BOOL transactionIdStoreHasId(PTransactionIdStore pTransactionIdStore, PBYTE tran
  *
  * @return STATUS status of execution.
  */
-VOID transactionIdStoreReset(PTransactionIdStore);
+VOID transaction_id_store_reset(PTransactionIdStore);
 /**
  * @brief generate the transaction id.
  *
@@ -68,12 +103,14 @@ VOID transactionIdStoreReset(PTransactionIdStore);
  * As such, the transaction ID MUST be uniformlyand randomly chosen from the interval 0 .. 2**96-1,
  * and SHOULD be cryptographically random.
  *
+ * @param[in, out] pBuffer the transaction object.
+ * @param[in] bufferLen the transaction object.
+ *
+ * @return STATUS status of execution.
  */
-STATUS iceUtilsGenerateTransactionId(PBYTE, UINT32);
-
-// Stun packaging and sending functions
+STATUS ice_utils_generateTransactionId(PBYTE pBuffer, UINT32 bufferLen);
 /**
- * @brief
+ * @brief Stun packaging and sending functions
  *
  * @param[in] pStunPacket
  * @param[in] password
@@ -83,7 +120,7 @@ STATUS iceUtilsGenerateTransactionId(PBYTE, UINT32);
  *
  * @return STATUS status of execution.
  */
-STATUS iceUtilsPackageStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, PBYTE pBuffer, PUINT32 pBufferLen);
+STATUS ice_utils_packStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, PBYTE pBuffer, PUINT32 pBufferLen);
 /**
  * @brief
  *
@@ -97,21 +134,21 @@ STATUS iceUtilsPackageStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32
  *
  * @return STATUS status of execution
  */
-STATUS iceUtilsSendStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, PKvsIpAddress pDest, PSocketConnection pSocketConnection,
-                              struct __TurnConnection* pTurnConnection, BOOL useTurn);
+STATUS ice_utils_sendStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, PKvsIpAddress pDest, PSocketConnection pSocketConnection,
+                                struct __TurnConnection* pTurnConnection, BOOL useTurn);
 /**
  * @brief   send the packet via the socket of the selected ice candidate.
  */
-STATUS iceUtilsSendData(PBYTE, UINT32, PKvsIpAddress, PSocketConnection, struct __TurnConnection*, BOOL);
+STATUS ice_utils_send(PBYTE, UINT32, PKvsIpAddress, PSocketConnection, struct __TurnConnection*, BOOL);
 
 typedef struct {
-    BOOL isTurn;
-    BOOL isSecure;
+    BOOL isTurn;   //!< is turn server or not.
+    BOOL isSecure; //!< is secure connection or not.
     CHAR url[MAX_ICE_CONFIG_URI_LEN + 1];
     KvsIpAddress ipAddress;
     CHAR username[MAX_ICE_CONFIG_USER_NAME_LEN + 1];
     CHAR credential[MAX_ICE_CONFIG_CREDENTIAL_LEN + 1];
-    KVS_SOCKET_PROTOCOL transport;
+    KVS_SOCKET_PROTOCOL transport; //!< tcp or udp.
 } IceServer, *PIceServer;
 /**
  * @brief #TBD, consider to change this api, but it is not a bottleneck.
@@ -123,7 +160,7 @@ typedef struct {
  *
  * @return STATUS status of execution.
  */
-STATUS parseIceServer(PIceServer pIceServer, PCHAR url, PCHAR username, PCHAR credential);
+STATUS ice_utils_parseIceServer(PIceServer pIceServer, PCHAR url, PCHAR username, PCHAR credential);
 
 #ifdef __cplusplus
 }

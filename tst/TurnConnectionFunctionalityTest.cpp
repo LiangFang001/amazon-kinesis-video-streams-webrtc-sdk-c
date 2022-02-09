@@ -33,7 +33,7 @@ class TurnConnectionFunctionalityTest : public WebRtcClientTestBase {
             EXPECT_EQ(STATUS_SUCCESS, signalingClientGetIceConfigInfo(mSignalingClientHandle, i, &pIceConfigInfo));
             for (j = 0; j < pIceConfigInfo->uriCount; j++) {
                 EXPECT_EQ(STATUS_SUCCESS,
-                          parseIceServer(&iceServers[uriCount++], pIceConfigInfo->uris[j], pIceConfigInfo->userName, pIceConfigInfo->password));
+                          ice_utils_parseIceServer(&iceServers[uriCount++], pIceConfigInfo->uris[j], pIceConfigInfo->userName, pIceConfigInfo->password));
             }
         }
 
@@ -47,7 +47,7 @@ class TurnConnectionFunctionalityTest : public WebRtcClientTestBase {
         EXPECT_EQ(STATUS_SUCCESS, timerQueueCreate(&timerQueueHandle));
         EXPECT_EQ(STATUS_SUCCESS, connection_listener_create(&pConnectionListener));
 
-        EXPECT_EQ(STATUS_SUCCESS, getLocalhostIpAddresses(localIpInterfaces, &localIpInterfaceCount, NULL, 0));
+        EXPECT_EQ(STATUS_SUCCESS, net_getLocalhostIpAddresses(localIpInterfaces, &localIpInterfaceCount, NULL, 0));
         for (i = 0; i < localIpInterfaceCount; ++i) {
             if (localIpInterfaces[i].family == pTurnServer->ipAddress.family && (pTurnSocketAddr == NULL || localIpInterfaces[i].isPointToPoint)) {
                 pTurnSocketAddr = &localIpInterfaces[i];
@@ -60,17 +60,17 @@ class TurnConnectionFunctionalityTest : public WebRtcClientTestBase {
             TurnConnectionFunctionalityTest* pTestBase = (TurnConnectionFunctionalityTest*) customData;
             pTestBase->turnChannelDataCount = ARRAY_SIZE(pTestBase->turnChannelData);
             EXPECT_EQ(STATUS_SUCCESS,
-                      turnConnectionIncomingDataHandler(pTestBase->pTurnConnection, pBuffer, bufferLen, pSrc, pDest, pTestBase->turnChannelData,
+                      turn_connection_handleInboundData(pTestBase->pTurnConnection, pBuffer, bufferLen, pSrc, pDest, pTestBase->turnChannelData,
                                                         &pTestBase->turnChannelDataCount));
 
             return STATUS_SUCCESS;
         };
         EXPECT_EQ(STATUS_SUCCESS,
-                  createSocketConnection((KVS_IP_FAMILY_TYPE) pTurnServer->ipAddress.family, KVS_ICE_DEFAULT_TURN_PROTOCOL, NULL,
+                  socket_connection_create((KVS_IP_FAMILY_TYPE) pTurnServer->ipAddress.family, KVS_ICE_DEFAULT_TURN_PROTOCOL, NULL,
                                          &pTurnServer->ipAddress, (UINT64) this, onDataHandler, 0, &pTurnSocket));
         EXPECT_EQ(STATUS_SUCCESS, connection_listener_add(pConnectionListener, pTurnSocket));
         ASSERT_EQ(STATUS_SUCCESS,
-                  createTurnConnection(pTurnServer, timerQueueHandle, TURN_CONNECTION_DATA_TRANSFER_MODE_DATA_CHANNEL, KVS_ICE_DEFAULT_TURN_PROTOCOL,
+                  turn_connection_create(pTurnServer, timerQueueHandle, TURN_CONNECTION_DATA_TRANSFER_MODE_DATA_CHANNEL, KVS_ICE_DEFAULT_TURN_PROTOCOL,
                                        NULL, pTurnSocket, pConnectionListener, &pTurnConnection));
         EXPECT_EQ(STATUS_SUCCESS, connection_listener_start(pConnectionListener));
     }
@@ -78,9 +78,9 @@ class TurnConnectionFunctionalityTest : public WebRtcClientTestBase {
     VOID freeTestTurnConnection()
     {
         EXPECT_TRUE(pTurnConnection != NULL);
-        EXPECT_EQ(STATUS_SUCCESS, freeTurnConnection(&pTurnConnection));
+        EXPECT_EQ(STATUS_SUCCESS, turn_connection_free(&pTurnConnection));
         EXPECT_EQ(STATUS_SUCCESS, connection_listener_free(&pConnectionListener));
-        timerQueueFree(&timerQueueHandle);
+        timer_queue_free(&timerQueueHandle);
         deinitializeSignalingClient();
     }
 };
@@ -99,10 +99,10 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionReceiveRelayedAddress)
 
     MEMSET(&relayAddress, 0x00, SIZEOF(KvsIpAddress));
 
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionStart(pTurnConnection));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_start(pTurnConnection));
 
     getRelayAddrTimeout = GETTIME() + 3 * HUNDREDS_OF_NANOS_IN_A_SECOND;
-    while ((relayAddressReceived = turnConnectionGetRelayAddress(pTurnConnection, &relayAddress)) == FALSE && GETTIME() < getRelayAddrTimeout) {
+    while ((relayAddressReceived = turn_connection_getRelayAddress(pTurnConnection, &relayAddress)) == FALSE && GETTIME() < getRelayAddrTimeout) {
         THREAD_SLEEP(HUNDREDS_OF_NANOS_IN_A_SECOND);
     }
 
@@ -136,8 +136,8 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionRefreshPermissionTest)
     turnPeerAddr.address[2] = 0x01;
     turnPeerAddr.address[3] = 0x01;
 
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionAddPeer(pTurnConnection, &turnPeerAddr));
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionStart(pTurnConnection));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_addPeer(pTurnConnection, &turnPeerAddr));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_start(pTurnConnection));
 
     // wait until channel is created
     while (!turnReady && GETTIME() < turnReadyTimeout) {
@@ -215,8 +215,8 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownCompleteBeforeTime
     turnPeerAddr.address[2] = 0x01;
     turnPeerAddr.address[3] = 0x01;
 
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionAddPeer(pTurnConnection, &turnPeerAddr));
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionStart(pTurnConnection));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_addPeer(pTurnConnection, &turnPeerAddr));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_start(pTurnConnection));
 
     // wait until channel is created
     while (!turnReady && GETTIME() < turnReadyTimeout) {
@@ -229,7 +229,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownCompleteBeforeTime
     }
 
     EXPECT_TRUE(turnReady == TRUE);
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionShutdown(pTurnConnection, KVS_ICE_TURN_CONNECTION_SHUTDOWN_TIMEOUT));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_shutdown(pTurnConnection, KVS_ICE_TURN_CONNECTION_SHUTDOWN_TIMEOUT));
 
     EXPECT_TRUE(!ATOMIC_LOAD_BOOL(&pTurnConnection->hasAllocation) || ATOMIC_LOAD_BOOL(&pTurnConnection->stopTurnConnection));
 
@@ -258,8 +258,8 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownAsync)
     turnPeerAddr.address[2] = 0x01;
     turnPeerAddr.address[3] = 0x01;
 
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionAddPeer(pTurnConnection, &turnPeerAddr));
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionStart(pTurnConnection));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_addPeer(pTurnConnection, &turnPeerAddr));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_start(pTurnConnection));
 
     // wait until channel is created
     while (!turnReady && GETTIME() < turnReadyTimeout) {
@@ -273,10 +273,10 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownAsync)
 
     EXPECT_TRUE(turnReady == TRUE);
     // return immediately
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionShutdown(pTurnConnection, 0));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_shutdown(pTurnConnection, 0));
 
     shutdownTimeout = GETTIME() + KVS_ICE_TURN_CONNECTION_SHUTDOWN_TIMEOUT;
-    while (!turnConnectionIsShutdownComplete(pTurnConnection) && GETTIME() < shutdownTimeout) {
+    while (!turn_connection_isShutdownCompleted(pTurnConnection) && GETTIME() < shutdownTimeout) {
         THREAD_SLEEP(HUNDREDS_OF_NANOS_IN_A_SECOND);
     }
 
@@ -301,7 +301,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownWithAllocationRemo
     initializeTestTurnConnection();
     pTurnSocketConnection = pTurnConnection->pControlChannel;
 
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionStart(pTurnConnection));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_start(pTurnConnection));
 
     // wait until channel is created
     while (!doneAllocate && GETTIME() < doneAllocateTimeout) {
@@ -315,10 +315,10 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownWithAllocationRemo
 
     EXPECT_TRUE(doneAllocate == TRUE);
     // return immediately
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionShutdown(pTurnConnection, 0));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_shutdown(pTurnConnection, 0));
 
     shutdownTimeout = GETTIME() + 5 * HUNDREDS_OF_NANOS_IN_A_SECOND;
-    while (!turnConnectionIsShutdownComplete(pTurnConnection) && GETTIME() < shutdownTimeout) {
+    while (!turn_connection_isShutdownCompleted(pTurnConnection) && GETTIME() < shutdownTimeout) {
         THREAD_SLEEP(HUNDREDS_OF_NANOS_IN_A_SECOND);
     }
 
@@ -361,7 +361,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownWithoutAllocationR
     initializeTestTurnConnection();
     pTurnSocketConnection = pTurnConnection->pControlChannel;
 
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionStart(pTurnConnection));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_start(pTurnConnection));
 
     // wait until get credential state
     while (!atGetCredential && GETTIME() < atGetCredentialTimeout) {
@@ -374,10 +374,10 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownWithoutAllocationR
     }
 
     // return immediately
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionShutdown(pTurnConnection, 0));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_shutdown(pTurnConnection, 0));
 
     shutdownTimeout = GETTIME() + 5 * HUNDREDS_OF_NANOS_IN_A_SECOND;
-    while (!turnConnectionIsShutdownComplete(pTurnConnection) && GETTIME() < shutdownTimeout) {
+    while (!turn_connection_isShutdownCompleted(pTurnConnection) && GETTIME() < shutdownTimeout) {
         THREAD_SLEEP(HUNDREDS_OF_NANOS_IN_A_SECOND);
     }
 
@@ -420,7 +420,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownAfterFailure)
     initializeTestTurnConnection();
     pTurnSocketConnection = pTurnConnection->pControlChannel;
 
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionStart(pTurnConnection));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_start(pTurnConnection));
 
     // wait until get credential state
     while (!atGetCredential && GETTIME() < atGetCredentialTimeout) {
@@ -438,11 +438,11 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownAfterFailure)
     MUTEX_UNLOCK(pTurnConnection->lock);
 
     shutdownTimeout = GETTIME() + 5 * HUNDREDS_OF_NANOS_IN_A_SECOND;
-    while (!turnConnectionIsShutdownComplete(pTurnConnection) && GETTIME() < shutdownTimeout) {
+    while (!turn_connection_isShutdownCompleted(pTurnConnection) && GETTIME() < shutdownTimeout) {
         THREAD_SLEEP(HUNDREDS_OF_NANOS_IN_A_SECOND);
     }
 
-    EXPECT_TRUE(turnConnectionIsShutdownComplete(pTurnConnection));
+    EXPECT_TRUE(turn_connection_isShutdownCompleted(pTurnConnection));
 
     MUTEX_LOCK(pTurnConnection->lock);
     EXPECT_TRUE(ATOMIC_LOAD_BOOL(&pTurnSocketConnection->connectionClosed));
@@ -531,8 +531,8 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionReceivePartialChannelMessa
     turnPeerAddr.address[2] = 0x01;
     turnPeerAddr.address[3] = 0x01;
 
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionAddPeer(pTurnConnection, &turnPeerAddr));
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionStart(pTurnConnection));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_addPeer(pTurnConnection, &turnPeerAddr));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_start(pTurnConnection));
 
     // wait until channel is created
     while (!turnReady && GETTIME() < turnReadyTimeout) {
@@ -549,7 +549,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionReceivePartialChannelMessa
     pCurrent = channelMsg;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              turnConnectionHandleChannelDataTcpMode(pTurnConnection, pCurrent, ARRAY_SIZE(channelMsg), &turnChannelData, &turnChannelDataCount,
+              turn_connection_handleTcpChannelData(pTurnConnection, pCurrent, ARRAY_SIZE(channelMsg), &turnChannelData, &turnChannelDataCount,
                                                      &dataLenProcessed));
     /* Only parse out single channel data message */
     EXPECT_EQ(turnChannelDataCount, 1);
@@ -558,13 +558,13 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionReceivePartialChannelMessa
     pCurrent += dataLenProcessed;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              turnConnectionHandleChannelDataTcpMode(pTurnConnection, pCurrent, 20, &turnChannelData, &turnChannelDataCount, &dataLenProcessed));
+              turn_connection_handleTcpChannelData(pTurnConnection, pCurrent, 20, &turnChannelData, &turnChannelDataCount, &dataLenProcessed));
     /* didnt parse out anything because not complete message was given */
     EXPECT_EQ(turnChannelDataCount, 0);
     pCurrent += dataLenProcessed;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              turnConnectionHandleChannelDataTcpMode(pTurnConnection, pCurrent, ARRAY_SIZE(channelMsg), &turnChannelData, &turnChannelDataCount,
+              turn_connection_handleTcpChannelData(pTurnConnection, pCurrent, ARRAY_SIZE(channelMsg), &turnChannelData, &turnChannelDataCount,
                                                      &dataLenProcessed));
     EXPECT_EQ(turnChannelDataCount, 1);
     EXPECT_EQ(turnChannelData.size, ARRAY_SIZE(channelData2) - TURN_DATA_CHANNEL_SEND_OVERHEAD);
@@ -572,7 +572,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionReceivePartialChannelMessa
     pCurrent += dataLenProcessed;
 
     EXPECT_EQ(STATUS_SUCCESS,
-              turnConnectionHandleChannelDataTcpMode(pTurnConnection, pCurrent, ARRAY_SIZE(channelMsg), &turnChannelData, &turnChannelDataCount,
+              turn_connection_handleTcpChannelData(pTurnConnection, pCurrent, ARRAY_SIZE(channelMsg), &turnChannelData, &turnChannelDataCount,
                                                      &dataLenProcessed));
     EXPECT_EQ(turnChannelDataCount, 1);
     EXPECT_EQ(turnChannelData.size, ARRAY_SIZE(channelData3) - TURN_DATA_CHANNEL_SEND_OVERHEAD);
@@ -892,8 +892,8 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionReceiveChannelDataMixedWit
     turnPeerAddr.address[2] = 0x01;
     turnPeerAddr.address[3] = 0x01;
 
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionAddPeer(pTurnConnection, &turnPeerAddr));
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionStart(pTurnConnection));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_addPeer(pTurnConnection, &turnPeerAddr));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_start(pTurnConnection));
 
     // wait until channel is created
     while (!turnReady && GETTIME() < turnReadyTimeout) {
@@ -908,7 +908,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionReceiveChannelDataMixedWit
     EXPECT_TRUE(turnReady == TRUE);
 
     EXPECT_EQ(STATUS_SUCCESS,
-              turnConnectionIncomingDataHandler(pTurnConnection, incomingData, ARRAY_SIZE(incomingData), NULL, NULL, turnChannelData,
+              turn_connection_handleInboundData(pTurnConnection, incomingData, ARRAY_SIZE(incomingData), NULL, NULL, turnChannelData,
                                                 &turnChannelDataCount));
     /* parsed out item is what we expected */
     EXPECT_EQ(turnChannelDataCount, 1);
@@ -944,8 +944,8 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionCallMultipleTurnSendDataIn
     turnPeerAddr.address[2] = 0x01;
     turnPeerAddr.address[3] = 0x01;
 
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionAddPeer(pTurnConnection, &turnPeerAddr));
-    EXPECT_EQ(STATUS_SUCCESS, turnConnectionStart(pTurnConnection));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_addPeer(pTurnConnection, &turnPeerAddr));
+    EXPECT_EQ(STATUS_SUCCESS, turn_connection_start(pTurnConnection));
 
     // wait until channel is created
     while (!turnReady && GETTIME() < turnReadyTimeout) {
@@ -965,7 +965,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionCallMultipleTurnSendDataIn
         }
         threads[i] = std::thread(
             [](PTurnConnection pTurnConnection, PBYTE pBuf, UINT32 bufLen, PKvsIpAddress pKvsIpAddress) -> void {
-                EXPECT_EQ(STATUS_SUCCESS, turnConnectionSendData(pTurnConnection, pBuf, bufLen, pKvsIpAddress));
+                EXPECT_EQ(STATUS_SUCCESS, turn_connection_send(pTurnConnection, pBuf, bufLen, pKvsIpAddress));
             },
             pTurnConnection, (PBYTE) buf[i], bufLen, &turnPeerAddr);
     }

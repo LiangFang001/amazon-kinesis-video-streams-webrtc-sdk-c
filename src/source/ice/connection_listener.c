@@ -21,8 +21,8 @@
 #include <netdb.h>
 
 #include "connection_listener.h"
-#include "IceAgent.h"
-#include "IceUtils.h"
+#include "ice_agent.h"
+#include "ice_utils.h"
 
 /******************************************************************************
  * FUNCTIONS
@@ -169,7 +169,7 @@ STATUS connection_listener_remove(PConnectionListener pConnectionListener, PSock
     locked = TRUE;
 
     // Mark socket as closed
-    CHK_STATUS(socketConnectionClosed(pSocketConnection));
+    CHK_STATUS(socket_connection_close(pSocketConnection));
 
     // Remove from the list of sockets
     for (i = 0; iterate && i < CONNECTION_LISTENER_DEFAULT_MAX_LISTENING_CONNECTION; i++) {
@@ -205,7 +205,7 @@ STATUS connection_listener_removeAll(PConnectionListener pConnectionListener)
 
     for (i = 0; i < CONNECTION_LISTENER_DEFAULT_MAX_LISTENING_CONNECTION; i++) {
         if (pConnectionListener->sockets[i] != NULL) {
-            CHK_STATUS(socketConnectionClosed(pConnectionListener->sockets[i]));
+            CHK_STATUS(socket_connection_close(pConnectionListener->sockets[i]));
             pConnectionListener->sockets[i] = NULL;
             pConnectionListener->socketCount--;
         }
@@ -287,7 +287,7 @@ PVOID connection_listener_receiveRoutine(PVOID arg)
         for (i = 0, socketCount = 0; i < CONNECTION_LISTENER_DEFAULT_MAX_LISTENING_CONNECTION; i++) {
             pSocketConnection = pConnectionListener->sockets[i];
             if (pSocketConnection != NULL) {
-                if (!socketConnectionIsClosed(pSocketConnection)) {
+                if (!socket_connection_isClosed(pSocketConnection)) {
                     MUTEX_LOCK(pSocketConnection->lock);
                     localSocket = pSocketConnection->localSocket;
                     MUTEX_UNLOCK(pSocketConnection->lock);
@@ -322,11 +322,11 @@ PVOID connection_listener_receiveRoutine(PVOID arg)
         // In case of 0 we have a timeout and should re-lock to allow for other
         // interlocking operations to proceed. A positive return means we received data
         if (retval == -1) {
-            DLOGW("select() failed with errno %s", getErrorString(getErrorCode()));
+            DLOGW("select() failed with errno %s", net_getErrorString(net_getErrorCode()));
         } else if (retval > 0) {
             for (i = 0; i < socketCount; i++) {
                 pSocketConnection = sockets[i];
-                if (!socketConnectionIsClosed(pSocketConnection)) {
+                if (!socket_connection_isClosed(pSocketConnection)) {
                     MUTEX_LOCK(pSocketConnection->lock);
                     localSocket = pSocketConnection->localSocket;
                     MUTEX_UNLOCK(pSocketConnection->lock);
@@ -337,26 +337,26 @@ PVOID connection_listener_receiveRoutine(PVOID arg)
                             readLen = recvfrom(localSocket, pConnectionListener->pBuffer, pConnectionListener->bufferLen, 0,
                                                (struct sockaddr*) &srcAddrBuff, &srcAddrBuffLen);
                             if (readLen < 0) {
-                                switch (getErrorCode()) {
+                                switch (net_getErrorCode()) {
                                     case EWOULDBLOCK:
                                         break;
                                     default:
                                         /* on any other error, close connection */
-                                        CHK_STATUS(socketConnectionClosed(pSocketConnection));
-                                        DLOGD("recvfrom() failed with errno %s for socket %d", getErrorString(getErrorCode()), localSocket);
+                                        CHK_STATUS(socket_connection_close(pSocketConnection));
+                                        DLOGD("recvfrom() failed with errno %s for socket %d", net_getErrorString(net_getErrorCode()), localSocket);
                                         break;
                                 }
 
                                 iterate = FALSE;
                             } else if (readLen == 0) {
-                                CHK_STATUS(socketConnectionClosed(pSocketConnection));
+                                CHK_STATUS(socket_connection_close(pSocketConnection));
                                 iterate = FALSE;
                             } else if (/* readLen > 0 */
                                        ATOMIC_LOAD_BOOL(&pSocketConnection->receiveData) && pSocketConnection->dataAvailableCallbackFn != NULL &&
-                                       /* data could be encrypted so they need to be decrypted through socketConnectionReadData
+                                       /* data could be encrypted so they need to be decrypted through socket_connection_read
                                         * and get the decrypted data length. */
-                                       STATUS_SUCCEEDED(socketConnectionReadData(pSocketConnection, pConnectionListener->pBuffer,
-                                                                                 pConnectionListener->bufferLen, (PUINT32) &readLen))) {
+                                       STATUS_SUCCEEDED(socket_connection_read(pSocketConnection, pConnectionListener->pBuffer,
+                                                                               pConnectionListener->bufferLen, (PUINT32) &readLen))) {
                                 if (pSocketConnection->protocol == KVS_SOCKET_PROTOCOL_UDP) {
                                     if (srcAddrBuff.ss_family == AF_INET) {
                                         srcAddr.family = KVS_IP_FAMILY_TYPE_IPV4;

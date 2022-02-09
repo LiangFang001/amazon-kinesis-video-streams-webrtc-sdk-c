@@ -26,7 +26,7 @@ extern "C" {
  * HEADERS
  ******************************************************************************/
 #include <usrsctp.h>
-
+#include "kvs/WebRTCClient.h"
 /******************************************************************************
  * DEFINITIONS
  ******************************************************************************/
@@ -95,14 +95,14 @@ typedef VOID (*SctpSessionDataChannelOpenFunc)(UINT64, UINT32, PBYTE, UINT32);
 // Argument is ChannelID and Message + Len
 typedef VOID (*SctpSessionDataChannelMessageFunc)(UINT64, UINT32, BOOL, PBYTE, UINT32);
 
-typedef struct {
+typedef struct __SctpSessionCallbacks {
     UINT64 customData;
     SctpSessionOutboundPacketFunc outboundPacketFunc; //!< the outbound callback.
     SctpSessionDataChannelOpenFunc dataChannelOpenFunc;
     SctpSessionDataChannelMessageFunc dataChannelMessageFunc;
 } SctpSessionCallbacks, *PSctpSessionCallbacks;
 
-typedef struct {
+typedef struct __SctpSession {
     volatile SIZE_T shutdownStatus;
     struct socket* socket;
     struct sctp_sendv_spa spa;
@@ -119,11 +119,11 @@ typedef struct {
  *
  * @return STATUS status of execution
  */
-STATUS initSctpSession();
+STATUS sctp_session_init(VOID);
 /**
  * @brief destroy the sctp context.
  */
-VOID deinitSctpSession();
+VOID sctp_session_deinit(VOID);
 /**
  * @brief create the context of sctp session.
  *
@@ -132,7 +132,7 @@ VOID deinitSctpSession();
  *
  * @return STATUS status of execution
  */
-STATUS createSctpSession(PSctpSessionCallbacks, PSctpSession*);
+STATUS sctp_session_create(PSctpSessionCallbacks pSctpSessionCallbacks, PSctpSession* ppSctpSession);
 /**
  * @brief free the context of sctp session.
  *
@@ -140,7 +140,7 @@ STATUS createSctpSession(PSctpSessionCallbacks, PSctpSession*);
  *
  * @return STATUS status of execution
  */
-STATUS freeSctpSession(PSctpSession*);
+STATUS sctp_session_free(PSctpSession* ppSctpSession);
 /**
  * @brief put the inbound packet into usrsctp.
  *
@@ -150,7 +150,7 @@ STATUS freeSctpSession(PSctpSession*);
  *
  * @return STATUS status of execution
  */
-STATUS putSctpPacket(PSctpSession, PBYTE, UINT32);
+STATUS sctp_session_putInboundPacket(PSctpSession pSctpSession, PBYTE buf, UINT32 bufLen);
 /**
  * @brief send the sctp messages.
  * https://tools.ietf.org/html/rfc6458#page-35
@@ -163,7 +163,7 @@ STATUS putSctpPacket(PSctpSession, PBYTE, UINT32);
  *
  * @return STATUS status of execution
  */
-STATUS sctpSessionWriteMessage(PSctpSession, UINT32, BOOL, PBYTE, UINT32);
+STATUS sctp_session_sendMsg(PSctpSession pSctpSession, UINT32 streamId, BOOL isBinary, PBYTE pMessage, UINT32 pMessageLen);
 
 // https://tools.ietf.org/html/draft-ietf-rtcweb-data-protocol-09#section-5.1
 //      0                   1                   2                   3
@@ -194,7 +194,8 @@ STATUS sctpSessionWriteMessage(PSctpSession, UINT32, BOOL, PBYTE, UINT32);
  *
  * @return STATUS status of execution
  */
-STATUS sctpSessionWriteDcep(PSctpSession, UINT32, PCHAR, UINT32, PRtcDataChannelInit);
+STATUS sctp_session_sendDcepMsg(PSctpSession pSctpSession, UINT32 streamId, PCHAR pChannelName, UINT32 pChannelNameLen,
+                                PRtcDataChannelInit pRtcDataChannelInit);
 
 #ifdef __cplusplus
 }

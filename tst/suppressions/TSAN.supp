@@ -1,6 +1,6 @@
 # Some of these suppressions are heavy handed, but can't trace them down to a single cause
-race:freeIceAgent
-race:iceAgentSendPacket
+race:ice_agent_free
+race:ice_agent_send
 race:stepIceAgentStateMachine
 
 # WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock) (pid=18891)
@@ -9,17 +9,17 @@ race:stepIceAgentStateMachine
 #   Mutex M1502 acquired here while holding mutex M1507 in main thread:
 #     #0 pthread_mutex_lock <null> (webrtc_client_test+0x0000004df310)
 #     #1 defaultLockMutex /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/Mutex.c:202 (libkvsWebrtcClient.so+0x000000060c08)
-#     #2 timerQueueAddTimer /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/TimerQueue.c:65 (libkvsWebrtcClient.so+0x00000006296b)
-#     #3 turnConnectionStart /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:740 (libkvsWebrtcClient.so+0x00000002fbc3)
+#     #2 timer_queue_addTimer /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/TimerQueue.c:65 (libkvsWebrtcClient.so+0x00000006296b)
+#     #3 turn_connection_start /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:740 (libkvsWebrtcClient.so+0x00000002fbc3)
 #     #4 com::amazonaws::kinesis::video::webrtcclient::TurnConnectionFunctionalityTest_turnConnectionRefreshPermissionTest_Test::TestBody() /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/tst/TurnConnectionFunctionalityTest.cpp:83 (webrtc_client_test+0x0000005c5da1)
 #     #5 void testing::internal::HandleSehExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) <null> (webrtc_client_test+0x000000672819)
 #
 #   Mutex M1507 acquired here while holding mutex M1502 in thread T431:
 #     #0 pthread_mutex_lock <null> (webrtc_client_test+0x0000004df310)
 #     #1 defaultLockMutex /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/Mutex.c:202 (libkvsWebrtcClient.so+0x000000060c08)
-#     #2 turnConnectionTimerCallback /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:1184 (libkvsWebrtcClient.so+0x000000032dd4)
+#     #2 turn_connection_timerCallback /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:1184 (libkvsWebrtcClient.so+0x000000032dd4)
 #     #3 timerQueueExecutor /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/TimerQueue.c:561 (libkvsWebrtcClient.so+0x000000064c61)
-deadlock:turnConnectionStart
+deadlock:turn_connection_start
 
 #  WARNING: ThreadSanitizer: data race (pid=16002)
 #    Write of size 8 at 0x7fe0a1b254a0 by thread T8 (mutexes: write M294, write M312):
@@ -27,9 +27,9 @@ deadlock:turnConnectionStart
 #      #1 generateTimestampStr /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/Time.c:19 (libkvsWebrtcClient.so+0x000000066c22)
 #      #2 addLogMetadata /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/Logger.c:41 (libkvsWebrtcClient.so+0x000000066fcf)
 #      #3 defaultLogPrint /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/Logger.c:65 (libkvsWebrtcClient.so+0x000000067236)
-#      #4 socketConnectionIsConnected /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/SocketConnection.c:312 (libkvsWebrtcClient.so+0x0000000144f8)
-#      #5 turnConnectionStepState /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:908 (libkvsWebrtcClient.so+0x000000030400)
-#      #6 turnConnectionTimerCallback /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:1274 (libkvsWebrtcClient.so+0x000000033d36)
+#      #4 socket_connection_isConnected /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/SocketConnection.c:312 (libkvsWebrtcClient.so+0x0000000144f8)
+#      #5 turn_connection_fsm_step /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:908 (libkvsWebrtcClient.so+0x000000030400)
+#      #6 turn_connection_timerCallback /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:1274 (libkvsWebrtcClient.so+0x000000033d36)
 #      #7 timerQueueExecutor /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/TimerQueue.c:561 (libkvsWebrtcClient.so+0x000000064c61)
 #
 #    Previous write of size 8 at 0x7fe0a1b254a0 by thread T10 (mutexes: write M278, write M305):
@@ -37,9 +37,9 @@ deadlock:turnConnectionStart
 #      #1 generateTimestampStr /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/Time.c:19 (libkvsWebrtcClient.so+0x000000066c22)
 #      #2 addLogMetadata /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/Logger.c:41 (libkvsWebrtcClient.so+0x000000066fcf)
 #      #3 defaultLogPrint /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/Logger.c:65 (libkvsWebrtcClient.so+0x000000067236)
-#      #4 socketConnectionIsConnected /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/SocketConnection.c:312 (libkvsWebrtcClient.so+0x0000000144f8)
-#      #5 turnConnectionStepState /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:908 (libkvsWebrtcClient.so+0x000000030400)
-#      #6 turnConnectionTimerCallback /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:1274 (libkvsWebrtcClient.so+0x000000033d36)
+#      #4 socket_connection_isConnected /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/SocketConnection.c:312 (libkvsWebrtcClient.so+0x0000000144f8)
+#      #5 turn_connection_fsm_step /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:908 (libkvsWebrtcClient.so+0x000000030400)
+#      #6 turn_connection_timerCallback /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:1274 (libkvsWebrtcClient.so+0x000000033d36)
 #      #7 timerQueueExecutor /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/TimerQueue.c:561 (libkvsWebrtcClient.so+0x000000064c61)
 race:generateTimestampStr
 
@@ -141,9 +141,9 @@ race:generateSignatureDateTime
 #  Mutex M208 acquired here while holding mutex M209 in main thread:
 #    #0 pthread_mutex_lock <null> (webrtc_client_test+0x0000004df310)
 #    #1 defaultLockMutex /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/Mutex.c:202 (libkvsWebrtcClient.so+0x000000060c08)
-#    #2 timerQueueAddTimer /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/TimerQueue.c:65 (libkvsWebrtcClient.so+0x00000006296b)
-#    #3 dtlsSessionStart /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Dtls/Dtls.c:305 (libkvsWebrtcClient.so+0x000000011540)
-#    #4 setRemoteDescription /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:738 (libkvsWebrtcClient.so+0x0000000435d4)
+#    #2 timer_queue_addTimer /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/TimerQueue.c:65 (libkvsWebrtcClient.so+0x00000006296b)
+#    #3 dtls_session_start /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Dtls/Dtls.c:305 (libkvsWebrtcClient.so+0x000000011540)
+#    #4 peer_connection_setRemoteDescription /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:738 (libkvsWebrtcClient.so+0x0000000435d4)
 #    #5 com::amazonaws::kinesis::video::webrtcclient::WebRtcClientTestBase::connectTwoPeers(RtcPeerConnection*, RtcPeerConnection*) /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/tst/WebRTCClientTestFixture.cpp:175 (webrtc_client_test+0x00000060859f)
 #    #6 com::amazonaws::kinesis::video::webrtcclient::PeerConnectionFunctionalityTest_connectTwoPeers_Test::TestBody() /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/tst/PeerConnectionFunctionalityTest.cpp:19 (webrtc_client_test+0x00000058a03b)
 #    #7 void testing::internal::HandleSehExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) <null> (webrtc_client_test+0x000000672819)
@@ -151,53 +151,53 @@ race:generateSignatureDateTime
 #  Mutex M209 acquired here while holding mutex M208 in thread T8:
 #    #0 pthread_mutex_lock <null> (webrtc_client_test+0x0000004df310)
 #    #1 defaultLockMutex /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/Mutex.c:202 (libkvsWebrtcClient.so+0x000000060c08)
-#    #2 dtlsTransmissionTimerCallback /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Dtls/Dtls.c:48 (libkvsWebrtcClient.so+0x00000000fc3f)
+#    #2 dtls_session_timerCallback /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Dtls/Dtls.c:48 (libkvsWebrtcClient.so+0x00000000fc3f)
 #    #3 timerQueueExecutor /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/TimerQueue.c:561 (libkvsWebrtcClient.so+0x000000064c61)
-deadlock:dtlsSessionStart
+deadlock:dtls_session_start
 
 # WARNING: ThreadSanitizer: data race (pid=16168)
 #   Read of size 8 at 0x7f843023d030 by main thread:
-#     #0 freeSctpSession /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Sctp/Sctp.c:134 (libkvsWebrtcClient.so+0x00000005ebea)
-#     #1 freePeerConnection /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:543 (libkvsWebrtcClient.so+0x0000000418ea)
+#     #0 sctp_session_free /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Sctp/Sctp.c:134 (libkvsWebrtcClient.so+0x00000005ebea)
+#     #1 peer_connection_free /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:543 (libkvsWebrtcClient.so+0x0000000418ea)
 #     #2 com::amazonaws::kinesis::video::webrtcclient::PeerConnectionFunctionalityTest_connectTwoPeers_Test::TestBody() /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/tst/PeerConnectionFunctionalityTest.cpp:21 (webrtc_client_test+0x00000058a1e5)
 #     #3 void testing::internal::HandleSehExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) <null> (webrtc_client_test+0x000000672819)
 #
 #   Previous write of size 8 at 0x7f843023d030 by thread T26 (mutexes: write M201):
-#     #0 createSctpSession /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Sctp/Sctp.c:120 (libkvsWebrtcClient.so+0x00000005e8b4)
-#     #1 allocateSctp /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:86 (libkvsWebrtcClient.so+0x00000003ec96)
-#     #2 onInboundPacket /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:136 (libkvsWebrtcClient.so+0x00000003f744)
-#     #3 incomingDataHandler /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/IceAgent.c:1633 (libkvsWebrtcClient.so+0x0000000185e5)
+#     #0 sctp_session_create /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Sctp/Sctp.c:120 (libkvsWebrtcClient.so+0x00000005e8b4)
+#     #1 peer_connection_allocateSctp /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:86 (libkvsWebrtcClient.so+0x00000003ec96)
+#     #2 peer_connection_onInboundPacket /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:136 (libkvsWebrtcClient.so+0x00000003f744)
+#     #3 ice_agent_handleInboundData /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/IceAgent.c:1633 (libkvsWebrtcClient.so+0x0000000185e5)
 #     #4 connection_listener_receiveRoutine /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/ConnectionListener.c:328 (libkvsWebrtcClient.so+0x0000000226b7)
-race:freeSctpSession
+race:sctp_session_free
 
 #  WARNING: ThreadSanitizer: data race (pid=16323)
 #    Atomic read of size 1 at 0x7d540001f768 by main thread (mutexes: write M178):
 #      #0 pthread_mutex_lock <null> (webrtc_client_test+0x0000004df310)
 #      #1 usrsctp_close /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/libusrsctp/build/src/project_libusrsctp/usrsctplib/user_socket.c:2193 (libusrsctp.so.1+0x0000000c0579)
-#      #2 freePeerConnection /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:543 (libkvsWebrtcClient.so+0x0000000418ea)
+#      #2 peer_connection_free /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:543 (libkvsWebrtcClient.so+0x0000000418ea)
 #      #3 com::amazonaws::kinesis::video::webrtcclient::PeerConnectionFunctionalityTest_connectTwoPeers_Test::TestBody() /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/tst/PeerConnectionFunctionalityTest.cpp:22 (webrtc_client_test+0x00000058a1f7)
 #      #4 void testing::internal::HandleSehExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) <null> (webrtc_client_test+0x000000672819)
 #
 #    Previous write of size 8 at 0x7d540001f768 by thread T27 (mutexes: write M217):
 #      #0 malloc <null> (webrtc_client_test+0x0000004d0658)
 #      #1 soalloc /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/libusrsctp/build/src/project_libusrsctp/usrsctplib/user_socket.c:217 (libusrsctp.so.1+0x0000000bd113)
-#      #2 allocateSctp /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:86 (libkvsWebrtcClient.so+0x00000003ec96)
-#      #3 onInboundPacket /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:136 (libkvsWebrtcClient.so+0x00000003f744)
-#      #4 incomingDataHandler /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/IceAgent.c:1633 (libkvsWebrtcClient.so+0x0000000185e5)
+#      #2 peer_connection_allocateSctp /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:86 (libkvsWebrtcClient.so+0x00000003ec96)
+#      #3 peer_connection_onInboundPacket /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/PeerConnection/PeerConnection.c:136 (libkvsWebrtcClient.so+0x00000003f744)
+#      #4 ice_agent_handleInboundData /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/IceAgent.c:1633 (libkvsWebrtcClient.so+0x0000000185e5)
 #      #5 connection_listener_receiveRoutine /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/ConnectionListener.c:328 (libkvsWebrtcClient.so+0x0000000226b7)
 race:usrsctp_close
 
 #  WARNING: ThreadSanitizer: data race (pid=16633)
 #    Read of size 4 at 0x7d1c00006e68 by thread T9 (mutexes: write M300, write M315):
-#      #0 socketConnectionReadData /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/SocketConnection.c:231 (libkvsWebrtcClient.so+0x000000013eb1)
+#      #0 socket_connection_read /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/SocketConnection.c:231 (libkvsWebrtcClient.so+0x000000013eb1)
 #      #1 connection_listener_receiveRoutine /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/ConnectionListener.c:303 (libkvsWebrtcClient.so+0x00000002245d)
 #
 #    Previous write of size 4 at 0x7d1c00006e68 by thread T10 (mutexes: write M294, write M312):
-#      #0 socketConnectionInitSecureConnection /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/SocketConnection.c:129 (libkvsWebrtcClient.so+0x00000001359b)
-#      #1 turnConnectionStepState /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:912 (libkvsWebrtcClient.so+0x0000000304df)
-#      #2 turnConnectionTimerCallback /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:1274 (libkvsWebrtcClient.so+0x000000033d36)
+#      #0 socket_connection_initSecureConnection /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/SocketConnection.c:129 (libkvsWebrtcClient.so+0x00000001359b)
+#      #1 turn_connection_fsm_step /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:912 (libkvsWebrtcClient.so+0x0000000304df)
+#      #2 turn_connection_timerCallback /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Ice/TurnConnection.c:1274 (libkvsWebrtcClient.so+0x000000033d36)
 #      #3 timerQueueExecutor /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/TimerQueue.c:561 (libkvsWebrtcClient.so+0x000000064c61
-race:turnConnectionStepState
+race:turn_connection_fsm_step
 
 #  WARNING: ThreadSanitizer: data race (pid=16798)
 #    Write of size 8 at 0x7d080001dc80 by thread T8 (mutexes: write M531, write M545):
@@ -327,7 +327,7 @@ race:signaling_refreshIceConfigurationCallback
 #   Mutex M730 acquired here while holding mutex M721 in main thread:
 #     #0 pthread_mutex_lock <null> (webrtc_client_test+0x0000004df310)
 #     #1 defaultLockMutex /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/Mutex.c:202 (libkvsWebrtcClient.so+0x000000060c08)
-#     #2 timerQueueAddTimer /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/TimerQueue.c:65 (libkvsWebrtcClient.so+0x00000006296b)
+#     #2 timer_queue_addTimer /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/TimerQueue.c:65 (libkvsWebrtcClient.so+0x00000006296b)
 #     #3 signaling_validateIceConfiguration /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Signaling/Signaling.c:439 (libkvsWebrtcSignalingClient.so+0x00000001cef4)
 #     #4 lwsGetIceConfig /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Signaling/LwsApiCalls.c:1106 (libkvsWebrtcSignalingClient.so+0x0000000139bf)
 #     #5 signalingFsmGetIceConfig /usr/src/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Signaling/StateMachine.c:440 (libkvsWebrtcSignalingClient.so+0x000000017d3a)
@@ -456,7 +456,7 @@ race:setInstrumentedAllocators
 #   Mutex M880307543644078960 acquired here while holding mutex M877774268853663472 in main thread:
 #     #0 pthread_mutex_lock /tmp/final/llvm.src/projects/compiler-rt/lib/tsan/../sanitizer_common/sanitizer_common_interceptors.inc:4071:3 (webrtc_client_test+0x4fcb0e)
 #     #1 defaultLockMutex /home/travis/build/awslabs/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/Mutex.c:202:5 (libkvsWebrtcClient.so+0x6b9b8)
-#     #2 timerQueueAddTimer /home/travis/build/awslabs/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/TimerQueue.c:65:5 (libkvsWebrtcClient.so+0x7059b)
+#     #2 timer_queue_addTimer /home/travis/build/awslabs/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/utils/src/TimerQueue.c:65:5 (libkvsWebrtcClient.so+0x7059b)
 #     #3 signaling_channel_getIceConfig /home/travis/build/awslabs/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Signaling/Signaling.c:980:9 (libkvsWebrtcSignalingClient.so+0x2020b)
 #     #4 signalingFsmGetIceConfig /home/travis/build/awslabs/amazon-kinesis-video-streams-webrtc-sdk-c/src/source/Signaling/StateMachine.c:536:17 (libkvsWebrtcSignalingClient.so+0x2204a)
 #     #5 stepStateMachine /home/travis/build/awslabs/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/amazon-kinesis-video-streams-pic/src/state/src/State.c:182:9 (libkvsWebrtcClient.so+0x757e5)
@@ -626,8 +626,8 @@ race:getDataChannelStats
 #    #4 handleDcepPacket Sctp.c:317 (libkvsWebrtcClient.dylib:x86_64+0x5f34a)
 #    #5 onSctpInboundPacket Sctp.c:338 (libkvsWebrtcClient.dylib:x86_64+0x5e1ba)
 #    #6 sctp_invoke_recv_callback <null> (libusrsctp.1.dylib:x86_64+0xb501a)
-#    #7 onInboundPacket PeerConnection.c:126 (libkvsWebrtcClient.dylib:x86_64+0x3b703)
-#    #8 incomingDataHandler IceAgent.c:2156 (libkvsWebrtcClient.dylib:x86_64+0x10b15)
+#    #7 peer_connection_onInboundPacket PeerConnection.c:126 (libkvsWebrtcClient.dylib:x86_64+0x3b703)
+#    #8 ice_agent_handleInboundData IceAgent.c:2156 (libkvsWebrtcClient.dylib:x86_64+0x10b15)
 #    #9 connection_listener_receiveRoutine ConnectionListener.c:380 (libkvsWebrtcClient.dylib:x86_64+0xb0cb)
 
 #  As if synchronized via sleep:
@@ -643,15 +643,15 @@ race:getDataChannelStats
 #    #2 handleDcepPacket Sctp.c:317 (libkvsWebrtcClient.dylib:x86_64+0x5f34a)
 #    #3 onSctpInboundPacket Sctp.c:338 (libkvsWebrtcClient.dylib:x86_64+0x5e1ba)
 #    #4 sctp_invoke_recv_callback <null> (libusrsctp.1.dylib:x86_64+0xb501a)
-#    #5 onInboundPacket PeerConnection.c:126 (libkvsWebrtcClient.dylib:x86_64+0x3b703)
-#    #6 incomingDataHandler IceAgent.c:2156 (libkvsWebrtcClient.dylib:x86_64+0x10b15)
+#    #5 peer_connection_onInboundPacket PeerConnection.c:126 (libkvsWebrtcClient.dylib:x86_64+0x3b703)
+#    #6 ice_agent_handleInboundData IceAgent.c:2156 (libkvsWebrtcClient.dylib:x86_64+0x10b15)
 #    #7 connection_listener_receiveRoutine ConnectionListener.c:380 (libkvsWebrtcClient.dylib:x86_64+0xb0cb)
 
 #  Thread T8 (tid=5082892, running) created by main thread at:
 #    #0 pthread_create <null> (libclang_rt.tsan_osx_dynamic.dylib:x86_64h+0x2a99d)
 #    #1 defaultCreateThread <null> (libkvsWebrtcClient.dylib:x86_64+0x73293)
-#    #2 iceAgentStartGathering IceAgent.c:537 (libkvsWebrtcClient.dylib:x86_64+0x116a9)
-#    #3 setLocalDescription PeerConnection.c:1050 (libkvsWebrtcClient.dylib:x86_64+0x423af)
+#    #2 ice_agent_gather IceAgent.c:537 (libkvsWebrtcClient.dylib:x86_64+0x116a9)
+#    #3 peer_connection_setLocalDescription PeerConnection.c:1050 (libkvsWebrtcClient.dylib:x86_64+0x423af)
 #    #4 com::amazonaws::kinesis::video::webrtcclient::WebRtcClientTestBase::connectTwoPeers(RtcPeerConnection*, RtcPeerConnection*, char*, char*) WebRTCClientTestFixture.cpp:211 (webrtc_client_test:x86_64+0x1002037b0)
 #    #5 com::amazonaws::kinesis::video::webrtcclient::DataChannelFunctionalityTest_createDataChannel_DataChannelMetricsTest_Test::TestBody() DataChannelFunctionalityTest.cpp:574 (webrtc_client_test:x86_64+0x10001c65a)
 #    #6 void testing::internal::HandleSehExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) <null> (webrtc_client_test:x86_64+0x10025b0bd)

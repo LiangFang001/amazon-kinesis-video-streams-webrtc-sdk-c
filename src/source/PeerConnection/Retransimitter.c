@@ -1,7 +1,6 @@
 #ifdef ENABLE_STREAMING
 #define LOG_CLASS "Retransmitter"
 
-#include "../Include_i.h"
 #include "RtpPacket.h"
 #include "Rtp.h"
 
@@ -88,7 +87,7 @@ STATUS resendPacketOnNack(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerCo
 
         if (pRtpPacket != NULL) {
             if (pSenderTranceiver->sender.payloadType == pSenderTranceiver->sender.rtxPayloadType) {
-                retStatus = iceAgentSendPacket(pKvsPeerConnection->pIceAgent, pRtpPacket->pRawPacket, pRtpPacket->rawPacketLength);
+                retStatus = ice_agent_send(pKvsPeerConnection->pIceAgent, pRtpPacket->pRawPacket, pRtpPacket->rawPacketLength);
             } else {
                 CHK_STATUS(constructRetransmitRtpPacketFromBytes(
                     pRtpPacket->pRawPacket, pRtpPacket->rawPacketLength, pSenderTranceiver->sender.rtxSequenceNumber,

@@ -2,42 +2,42 @@
  * Kinesis Video Tcp
  */
 #define LOG_CLASS "SocketConnection"
-#include "../Include_i.h"
+
 #include "socket_connection.h"
-#include "IceAgent.h"
+#include "ice_agent.h"
 #include <netdb.h>
 
 /// internal function prototype
-STATUS socketSendDataWithRetry(PSocketConnection pSocketConnection, PBYTE buf, UINT32 bufLen, PKvsIpAddress pDestIp, PUINT32 pBytesWritten);
+STATUS socket_connection_sendWithRetry(PSocketConnection pSocketConnection, PBYTE buf, UINT32 bufLen, PKvsIpAddress pDestIp, PUINT32 pBytesWritten);
 
-STATUS createSocketConnection(KVS_IP_FAMILY_TYPE familyType, KVS_SOCKET_PROTOCOL protocol, PKvsIpAddress pBindAddr, PKvsIpAddress pPeerIpAddr,
-                              UINT64 customData, ConnectionDataAvailableFunc dataAvailableFn, UINT32 sendBufSize,
-                              PSocketConnection* ppSocketConnection)
+STATUS socket_connection_create(KVS_IP_FAMILY_TYPE familyType, KVS_SOCKET_PROTOCOL protocol, PKvsIpAddress pBindAddr, PKvsIpAddress pPeerIpAddr,
+                                UINT64 customData, ConnectionDataAvailableFunc dataAvailableFn, UINT32 sendBufSize,
+                                PSocketConnection* ppSocketConnection)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     PSocketConnection pSocketConnection = NULL;
 
-    CHK(ppSocketConnection != NULL, STATUS_NULL_ARG);
-    CHK(protocol == KVS_SOCKET_PROTOCOL_UDP || pPeerIpAddr != NULL, STATUS_INVALID_ARG);
+    CHK(ppSocketConnection != NULL, STATUS_SOCKET_CONN_NULL_ARG);
+    CHK(protocol == KVS_SOCKET_PROTOCOL_UDP || pPeerIpAddr != NULL, STATUS_SOCKET_CONN_INVALID_ARG);
 
     pSocketConnection = (PSocketConnection) MEMCALLOC(1, SIZEOF(SocketConnection));
-    CHK(pSocketConnection != NULL, STATUS_NOT_ENOUGH_MEMORY);
+    CHK(pSocketConnection != NULL, STATUS_SOCKET_CONN_NOT_ENOUGH_MEMORY);
 
     pSocketConnection->lock = MUTEX_CREATE(FALSE);
-    CHK(pSocketConnection->lock != INVALID_MUTEX_VALUE, STATUS_INVALID_OPERATION);
+    CHK(pSocketConnection->lock != INVALID_MUTEX_VALUE, STATUS_SOCKET_CONN_INVALID_OPERATION);
 
-    CHK_STATUS(createSocket(familyType, protocol, sendBufSize, &pSocketConnection->localSocket));
+    CHK_STATUS(net_createSocket(familyType, protocol, sendBufSize, &pSocketConnection->localSocket));
     if (pBindAddr) {
-        CHK_STATUS(socketBind(pBindAddr, pSocketConnection->localSocket));
+        CHK_STATUS(net_bindSocket(pBindAddr, pSocketConnection->localSocket));
         pSocketConnection->hostIpAddr = *pBindAddr;
     }
 
-    pSocketConnection->secureConnection = FALSE;
+    pSocketConnection->bTlsSession = FALSE;
     pSocketConnection->protocol = protocol;
     if (protocol == KVS_SOCKET_PROTOCOL_TCP) {
         pSocketConnection->peerIpAddr = *pPeerIpAddr;
-        CHK_STATUS(socketConnect(pPeerIpAddr, pSocketConnection->localSocket));
+        CHK_STATUS(net_connectSocket(pPeerIpAddr, pSocketConnection->localSocket));
     }
     ATOMIC_STORE_BOOL(&pSocketConnection->connectionClosed, FALSE);
     ATOMIC_STORE_BOOL(&pSocketConnection->receiveData, FALSE);
@@ -50,7 +50,7 @@ CleanUp:
     CHK_LOG_ERR(retStatus);
 
     if (STATUS_FAILED(retStatus) && pSocketConnection != NULL) {
-        freeSocketConnection(&pSocketConnection);
+        socket_connection_free(&pSocketConnection);
         pSocketConnection = NULL;
     }
 
@@ -62,14 +62,14 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeSocketConnection(PSocketConnection* ppSocketConnection)
+STATUS socket_connection_free(PSocketConnection* ppSocketConnection)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     PSocketConnection pSocketConnection = NULL;
     UINT64 shutdownTimeout;
 
-    CHK(ppSocketConnection != NULL, STATUS_NULL_ARG);
+    CHK(ppSocketConnection != NULL, STATUS_SOCKET_CONN_NULL_ARG);
     pSocketConnection = *ppSocketConnection;
     CHK(pSocketConnection != NULL, retStatus);
     ATOMIC_STORE_BOOL(&pSocketConnection->connectionClosed, TRUE);
@@ -90,10 +90,10 @@ STATUS freeSocketConnection(PSocketConnection* ppSocketConnection)
     }
 
     if (pSocketConnection->pTlsSession != NULL) {
-        freeTlsSession(&pSocketConnection->pTlsSession);
+        tls_session_free(&pSocketConnection->pTlsSession);
     }
 
-    if (STATUS_FAILED(retStatus = closeSocket(pSocketConnection->localSocket))) {
+    if (STATUS_FAILED(retStatus = net_closeSocket(pSocketConnection->localSocket))) {
         DLOGW("Failed to close the local socket with 0x%08x", retStatus);
     }
 
@@ -106,21 +106,29 @@ CleanUp:
     LEAVES();
     return retStatus;
 }
-
-STATUS socketConnectionTlsSessionOutBoundPacket(UINT64 customData, PBYTE pBuffer, UINT32 bufferLen)
+/**
+ * @brief
+ *
+ * @param[in] customData the user data.
+ * @param[in] pBuffer the buffer address.
+ * @param[in] bufferLen the length of the buffer.
+ *
+ * @return STATUS - status of operation
+ */
+static STATUS socket_connection_tlsSessionOutboundPacket(UINT64 customData, PBYTE pBuffer, UINT32 bufferLen)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSocketConnection pSocketConnection = NULL;
-    CHK(customData != 0, STATUS_NULL_ARG);
+    CHK(customData != 0, STATUS_SOCKET_CONN_NULL_ARG);
 
     pSocketConnection = (PSocketConnection) customData;
-    CHK_STATUS(socketSendDataWithRetry(pSocketConnection, pBuffer, bufferLen, NULL, NULL));
+    CHK_STATUS(socket_connection_sendWithRetry(pSocketConnection, pBuffer, bufferLen, NULL, NULL));
 
 CleanUp:
     return retStatus;
 }
 
-VOID socketConnectionTlsSessionOnStateChange(UINT64 customData, TLS_SESSION_STATE state)
+VOID socket_connection_tlsSessionOnStateChange(UINT64 customData, TLS_SESSION_STATE state)
 {
     PSocketConnection pSocketConnection = NULL;
     if (customData == 0) {
@@ -148,59 +156,59 @@ VOID socketConnectionTlsSessionOnStateChange(UINT64 customData, TLS_SESSION_STAT
     }
 }
 
-STATUS socketConnectionInitSecureConnection(PSocketConnection pSocketConnection, BOOL isServer)
+STATUS socket_connection_initSecureConnection(PSocketConnection pSocketConnection, BOOL isServer)
 {
     ENTERS();
     TlsSessionCallbacks callbacks;
     STATUS retStatus = STATUS_SUCCESS;
 
-    CHK(pSocketConnection != NULL, STATUS_NULL_ARG);
-    CHK(pSocketConnection->pTlsSession == NULL, STATUS_INVALID_ARG);
+    CHK(pSocketConnection != NULL, STATUS_SOCKET_CONN_NULL_ARG);
+    CHK(pSocketConnection->pTlsSession == NULL, STATUS_SOCKET_CONN_INVALID_ARG);
 
     callbacks.outBoundPacketFnCustomData = callbacks.stateChangeFnCustomData = (UINT64) pSocketConnection;
-    callbacks.outboundPacketFn = socketConnectionTlsSessionOutBoundPacket;
-    callbacks.stateChangeFn = socketConnectionTlsSessionOnStateChange;
+    callbacks.outboundPacketFn = socket_connection_tlsSessionOutboundPacket;
+    callbacks.stateChangeFn = socket_connection_tlsSessionOnStateChange;
 
-    CHK_STATUS(createTlsSession(&callbacks, &pSocketConnection->pTlsSession));
-    CHK_STATUS(tlsSessionStart(pSocketConnection->pTlsSession, isServer));
-    pSocketConnection->secureConnection = TRUE;
+    CHK_STATUS(tls_session_create(&callbacks, &pSocketConnection->pTlsSession));
+    CHK_STATUS(tls_session_start(pSocketConnection->pTlsSession, isServer));
+    pSocketConnection->bTlsSession = TRUE;
 
 CleanUp:
     if (STATUS_FAILED(retStatus) && pSocketConnection->pTlsSession != NULL) {
-        freeTlsSession(&pSocketConnection->pTlsSession);
+        tls_session_free(&pSocketConnection->pTlsSession);
     }
 
     LEAVES();
     return retStatus;
 }
 
-STATUS socketConnectionSendData(PSocketConnection pSocketConnection, PBYTE pBuf, UINT32 bufLen, PKvsIpAddress pDestIp)
+STATUS socket_connection_send(PSocketConnection pSocketConnection, PBYTE pBuf, UINT32 bufLen, PKvsIpAddress pDestIp)
 {
     STATUS retStatus = STATUS_SUCCESS;
     BOOL locked = FALSE;
 
-    CHK(pSocketConnection != NULL, STATUS_NULL_ARG);
-    CHK((pSocketConnection->protocol == KVS_SOCKET_PROTOCOL_TCP || pDestIp != NULL), STATUS_INVALID_ARG);
+    CHK(pSocketConnection != NULL, STATUS_SOCKET_CONN_NULL_ARG);
+    CHK((pSocketConnection->protocol == KVS_SOCKET_PROTOCOL_TCP || pDestIp != NULL), STATUS_SOCKET_CONN_INVALID_ARG);
 
     // Using a single CHK_WARN might output too much spew in bad network conditions
     if (ATOMIC_LOAD_BOOL(&pSocketConnection->connectionClosed)) {
         DLOGD("Warning: Failed to send data. Socket closed already");
-        CHK(FALSE, STATUS_SOCKET_CONNECTION_CLOSED_ALREADY);
+        CHK(FALSE, STATUS_SOCKET_CONN_CLOSED_ALREADY);
     }
 
     MUTEX_LOCK(pSocketConnection->lock);
     locked = TRUE;
 
     /* Should have a valid buffer */
-    CHK(pBuf != NULL && bufLen > 0, STATUS_SOCKET_INVALID_ARG);
-    if (pSocketConnection->protocol == KVS_SOCKET_PROTOCOL_TCP && pSocketConnection->secureConnection) {
-        CHK_STATUS(tlsSessionPutApplicationData(pSocketConnection->pTlsSession, pBuf, bufLen));
+    CHK(pBuf != NULL && bufLen > 0, STATUS_SOCKET_CONN_INVALID_ARG);
+    if (pSocketConnection->protocol == KVS_SOCKET_PROTOCOL_TCP && pSocketConnection->bTlsSession) {
+        CHK_STATUS(tls_session_send(pSocketConnection->pTlsSession, pBuf, bufLen));
     } else if (pSocketConnection->protocol == KVS_SOCKET_PROTOCOL_TCP) {
-        CHK_STATUS(retStatus = socketSendDataWithRetry(pSocketConnection, pBuf, bufLen, NULL, NULL));
+        CHK_STATUS(retStatus = socket_connection_sendWithRetry(pSocketConnection, pBuf, bufLen, NULL, NULL));
     } else if (pSocketConnection->protocol == KVS_SOCKET_PROTOCOL_UDP) {
-        CHK_STATUS(retStatus = socketSendDataWithRetry(pSocketConnection, pBuf, bufLen, pDestIp, NULL));
+        CHK_STATUS(retStatus = socket_connection_sendWithRetry(pSocketConnection, pBuf, bufLen, pDestIp, NULL));
     } else {
-        CHECK_EXT(FALSE, "socketConnectionSendData should not reach here. Nothing is sent.");
+        CHECK_EXT(FALSE, "socket_connection_send should not reach here. Nothing is sent.");
     }
 
 CleanUp:
@@ -212,21 +220,21 @@ CleanUp:
     return retStatus;
 }
 
-STATUS socketConnectionReadData(PSocketConnection pSocketConnection, PBYTE pBuf, UINT32 bufferLen, PUINT32 pDataLen)
+STATUS socket_connection_read(PSocketConnection pSocketConnection, PBYTE pBuf, UINT32 bufferLen, PUINT32 pDataLen)
 {
     STATUS retStatus = STATUS_SUCCESS;
     BOOL locked = FALSE;
 
-    CHK(pSocketConnection != NULL && pBuf != NULL && pDataLen != NULL, STATUS_NULL_ARG);
-    CHK(bufferLen != 0, STATUS_INVALID_ARG);
+    CHK(pSocketConnection != NULL && pBuf != NULL && pDataLen != NULL, STATUS_SOCKET_CONN_NULL_ARG);
+    CHK(bufferLen != 0, STATUS_SOCKET_CONN_INVALID_ARG);
 
     MUTEX_LOCK(pSocketConnection->lock);
     locked = TRUE;
 
     // return early if connection is not secure
-    CHK(pSocketConnection->secureConnection, retStatus);
+    CHK(pSocketConnection->bTlsSession, retStatus);
 
-    CHK_STATUS(tlsSessionProcessPacket(pSocketConnection->pTlsSession, pBuf, bufferLen, pDataLen));
+    CHK_STATUS(tls_session_read(pSocketConnection->pTlsSession, pBuf, bufferLen, pDataLen));
 
 CleanUp:
 
@@ -242,17 +250,18 @@ CleanUp:
     return retStatus;
 }
 
-STATUS socketConnectionClosed(PSocketConnection pSocketConnection)
+STATUS socket_connection_close(PSocketConnection pSocketConnection)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
-    CHK(pSocketConnection != NULL, STATUS_NULL_ARG);
+    CHK(pSocketConnection != NULL, STATUS_SOCKET_CONN_NULL_ARG);
     CHK(!ATOMIC_LOAD_BOOL(&pSocketConnection->connectionClosed), retStatus);
+
     MUTEX_LOCK(pSocketConnection->lock);
     DLOGD("Close socket %d", pSocketConnection->localSocket);
     ATOMIC_STORE_BOOL(&pSocketConnection->connectionClosed, TRUE);
     if (pSocketConnection->pTlsSession != NULL) {
-        tlsSessionShutdown(pSocketConnection->pTlsSession);
+        tls_session_shutdown(pSocketConnection->pTlsSession);
     }
     MUTEX_UNLOCK(pSocketConnection->lock);
 
@@ -263,7 +272,7 @@ CleanUp:
     return retStatus;
 }
 
-BOOL socketConnectionIsClosed(PSocketConnection pSocketConnection)
+BOOL socket_connection_isClosed(PSocketConnection pSocketConnection)
 {
     if (pSocketConnection == NULL) {
         return TRUE;
@@ -272,7 +281,7 @@ BOOL socketConnectionIsClosed(PSocketConnection pSocketConnection)
     }
 }
 
-BOOL socketConnectionIsConnected(PSocketConnection pSocketConnection)
+BOOL socket_connection_isConnected(PSocketConnection pSocketConnection)
 {
     INT32 retVal;
     struct sockaddr* peerSockAddr = NULL;
@@ -303,11 +312,11 @@ BOOL socketConnectionIsConnected(PSocketConnection pSocketConnection)
     }
 
     retVal = connect(pSocketConnection->localSocket, peerSockAddr, addrLen);
-    if (retVal == 0 || getErrorCode() == EISCONN) {
+    if (retVal == 0 || net_getErrorCode() == EISCONN) {
         return TRUE;
     }
 
-    DLOGW("socket connection check failed with errno %s(%d)", getErrorString(getErrorCode()), getErrorCode());
+    DLOGW("socket connection check failed with errno %s(%d)", net_getErrorString(net_getErrorCode()), net_getErrorCode());
     return FALSE;
 }
 /**
@@ -321,11 +330,11 @@ BOOL socketConnectionIsConnected(PSocketConnection pSocketConnection)
  *
  * @return STATUS status of execution.
  */
-STATUS socketSendDataWithRetry(PSocketConnection pSocketConnection, PBYTE buf, UINT32 bufLen, PKvsIpAddress pDestIp, PUINT32 pBytesWritten)
+STATUS socket_connection_sendWithRetry(PSocketConnection pSocketConnection, PBYTE buf, UINT32 bufLen, PKvsIpAddress pDestIp, PUINT32 pBytesWritten)
 {
     STATUS retStatus = STATUS_SUCCESS;
     INT32 socketWriteAttempt = 0;
-    SSIZE_T result = 0;
+    SSIZE_T socketResult = 0;
     UINT32 bytesWritten = 0;
     INT32 errorNum = 0;
 
@@ -336,12 +345,12 @@ STATUS socketSendDataWithRetry(PSocketConnection pSocketConnection, PBYTE buf, U
     struct sockaddr_in* pIpv4Addr = NULL;
     struct sockaddr_in6* pIpv6Addr = NULL;
 
-    CHK(pSocketConnection != NULL, STATUS_NULL_ARG);
-    CHK(buf != NULL && bufLen > 0, STATUS_INVALID_ARG);
+    CHK(pSocketConnection != NULL, STATUS_SOCKET_CONN_NULL_ARG);
+    CHK(buf != NULL && bufLen > 0, STATUS_SOCKET_CONN_INVALID_ARG);
 
     if (pDestIp != NULL) {
         if (IS_IPV4_ADDR(pDestIp)) {
-            CHK(NULL != (pIpv4Addr = (struct sockaddr_in*) MEMALLOC(SIZEOF(struct sockaddr_in))), STATUS_NOT_ENOUGH_MEMORY);
+            CHK(NULL != (pIpv4Addr = (struct sockaddr_in*) MEMALLOC(SIZEOF(struct sockaddr_in))), STATUS_SOCKET_CONN_NOT_ENOUGH_MEMORY);
             addrLen = SIZEOF(struct sockaddr_in);
             MEMSET(pIpv4Addr, 0x00, SIZEOF(struct sockaddr_in));
             pIpv4Addr->sin_family = AF_INET;
@@ -350,7 +359,7 @@ STATUS socketSendDataWithRetry(PSocketConnection pSocketConnection, PBYTE buf, U
             destAddr = (struct sockaddr*) pIpv4Addr;
 
         } else {
-            CHK(NULL != (pIpv6Addr = (struct sockaddr_in6*) MEMALLOC(SIZEOF(struct sockaddr_in6))), STATUS_NOT_ENOUGH_MEMORY);
+            CHK(NULL != (pIpv6Addr = (struct sockaddr_in6*) MEMALLOC(SIZEOF(struct sockaddr_in6))), STATUS_SOCKET_CONN_NOT_ENOUGH_MEMORY);
             addrLen = SIZEOF(struct sockaddr_in6);
             MEMSET(pIpv6Addr, 0x00, SIZEOF(struct sockaddr_in6));
             pIpv6Addr->sin6_family = AF_INET6;
@@ -359,34 +368,34 @@ STATUS socketSendDataWithRetry(PSocketConnection pSocketConnection, PBYTE buf, U
             destAddr = (struct sockaddr*) pIpv6Addr;
         }
     }
-
+    // start sending the data.
     while (socketWriteAttempt < MAX_SOCKET_WRITE_RETRY && bytesWritten < bufLen) {
-        result = sendto(pSocketConnection->localSocket, buf, bufLen, NO_SIGNAL, destAddr, addrLen);
-        if (result < 0) {
-            errorNum = getErrorCode();
+        socketResult = sendto(pSocketConnection->localSocket, buf, bufLen, NO_SIGNAL, destAddr, addrLen);
+        if (socketResult < 0) {
+            errorNum = net_getErrorCode();
             if (errorNum == EAGAIN || errorNum == EWOULDBLOCK) {
                 FD_ZERO(&wfds);
                 FD_SET(pSocketConnection->localSocket, &wfds);
                 tv.tv_sec = 0;
                 tv.tv_usec = SOCKET_SEND_RETRY_TIMEOUT_MICRO_SECOND;
-                result = select(pSocketConnection->localSocket + 1, NULL, &wfds, NULL, &tv);
+                socketResult = select(pSocketConnection->localSocket + 1, NULL, &wfds, NULL, &tv);
 
-                if (result == 0) {
+                if (socketResult == 0) {
                     /* loop back and try again */
                     DLOGD("select() timed out");
-                } else if (result < 0) {
-                    DLOGD("select() failed with errno %s", getErrorString(getErrorCode()));
+                } else if (socketResult < 0) {
+                    DLOGD("select() failed with errno %s", net_getErrorString(net_getErrorCode()));
                     break;
                 }
             } else if (errorNum == EINTR) {
                 /* nothing need to be done, just retry */
             } else {
                 /* fatal error from send() */
-                DLOGD("sendto() failed with errno %s", getErrorString(errorNum));
+                DLOGD("sendto() failed with errno %s", net_getErrorString(errorNum));
                 break;
             }
         } else {
-            bytesWritten += result;
+            bytesWritten += socketResult;
         }
         socketWriteAttempt++;
     }
@@ -395,14 +404,14 @@ STATUS socketSendDataWithRetry(PSocketConnection pSocketConnection, PBYTE buf, U
         *pBytesWritten = bytesWritten;
     }
 
-    if (result < 0) {
+    if (socketResult < 0) {
         DLOGD("fail to send data and close the socket.");
         CLOSE_SOCKET_IF_CANT_RETRY(errorNum, pSocketConnection);
     }
 
     if (bytesWritten < bufLen) {
         DLOGD("Failed to send data. Bytes sent %u. Data len %u. Retry count %u", bytesWritten, bufLen, socketWriteAttempt);
-        retStatus = STATUS_SEND_DATA_FAILED;
+        retStatus = STATUS_NET_SEND_DATA_FAILED;
     }
 
 CleanUp:
@@ -412,6 +421,7 @@ CleanUp:
     if (STATUS_FAILED(retStatus)) {
         DLOGD("Warning: Send data failed with 0x%08x", retStatus);
     }
+    CHK_LOG_ERR(retStatus);
 
     return retStatus;
 }

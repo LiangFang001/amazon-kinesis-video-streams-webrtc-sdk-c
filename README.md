@@ -208,7 +208,7 @@ freeIotCredentialProvider(&pSampleConfiguration->pCredentialProvider);
 ```
 
 ## Use Pre-generated Certificates
-The certificate generating function (createCertificateAndKey) in createDtlsSession() can take between 5 - 15 seconds in low performance embedded devices, it is called for every peer connection creation when KVS WebRTC receives an offer. To avoid this extra start-up latency, certificate can be pre-generated and passed in when offer comes.
+The certificate generating function (certificate_key_create) in dtls_session_create() can take between 5 - 15 seconds in low performance embedded devices, it is called for every peer connection creation when KVS WebRTC receives an offer. To avoid this extra start-up latency, certificate can be pre-generated and passed in when offer comes.
 
 **Important Note: It is recommended to rotate the certificates often - preferably for every peer connection to avoid a compromised client weakening the security of the new connections.**
 
@@ -221,7 +221,7 @@ configuration.certificates[0].pPrivateKey = pSampleConfiguration->certificates[0
 
 where, `configuration` is of type `RtcConfiguration` in the function that calls `initializePeerConnection()`.
 
-Doing this will make sure that `createCertificateAndKey() would not execute since a certificate is already available.`
+Doing this will make sure that `certificate_key_create() would not execute since a certificate is already available.`
 ```
 
 ## DEBUG

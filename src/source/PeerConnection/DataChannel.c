@@ -4,7 +4,7 @@
 
 #include "../Include_i.h"
 #include "PeerConnection.h"
-#include "Sctp.h"
+#include "sctp_session.h"
 #include "DataChannel.h"
 
 #define DATA_ENTER()  // ENTER()
@@ -28,7 +28,7 @@ STATUS createDataChannel(PRtcPeerConnection pPeerConnection, PCHAR pDataChannelN
     CHK(pKvsPeerConnection != NULL && pDataChannelName != NULL && ppRtcDataChannel != NULL, STATUS_NULL_ARG);
 
     // Only support creating DataChannels before signaling for now
-    CHK(pKvsPeerConnection->pSctpSession == NULL, STATUS_PEERCONNECTION_NO_SCTP_SESSION);
+    CHK(pKvsPeerConnection->pSctpSession == NULL, STATUS_PEER_CONN_NO_SCTP_SESSION);
     CHK((pKvsDataChannel = (PKvsDataChannel) MEMCALLOC(1, SIZEOF(KvsDataChannel))) != NULL, STATUS_NOT_ENOUGH_MEMORY);
 
     STRNCPY(pKvsDataChannel->dataChannel.name, pDataChannelName, MAX_DATA_CHANNEL_NAME_LEN);
@@ -79,7 +79,7 @@ STATUS dataChannelSend(PRtcDataChannel pRtcDataChannel, BOOL isBinary, PBYTE pMe
 
     pSctpSession = ((PKvsPeerConnection) pKvsDataChannel->pRtcPeerConnection)->pSctpSession;
 
-    CHK_STATUS(sctpSessionWriteMessage(pSctpSession, pKvsDataChannel->channelId, isBinary, pMessage, pMessageLen));
+    CHK_STATUS(sctp_session_sendMsg(pSctpSession, pKvsDataChannel->channelId, isBinary, pMessage, pMessageLen));
 
     pKvsDataChannel->rtcDataChannelDiagnostics.messagesSent++;
     pKvsDataChannel->rtcDataChannelDiagnostics.bytesSent += pMessageLen;

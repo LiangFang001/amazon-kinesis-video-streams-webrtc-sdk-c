@@ -1,13 +1,13 @@
 #ifdef ENABLE_STREAMING
 #define LOG_CLASS "RtcRtp"
 
-#include "../Include_i.h"
 #include "SessionDescription.h"
 #include "Rtp.h"
 #include "RtpVP8Payloader.h"
 #include "RtpH264Payloader.h"
 #include "RtpOpusPayloader.h"
 #include "RtpG711Payloader.h"
+#include "time_port.h"
 
 typedef STATUS (*RtpPayloadFunc)(UINT32, PBYTE, UINT32, PBYTE, PUINT32, PUINT32, PUINT32);
 
@@ -300,9 +300,9 @@ STATUS writeFrame(PRtcRtpTransceiver pRtcRtpTransceiver, PFrame pFrame)
             CHK_STATUS(rtpRollingBufferAddRtpPacket(pKvsRtpTransceiver->sender.packetBuffer, pRtpPacket));
         }
 
-        CHK_STATUS(encryptRtpPacket(pKvsPeerConnection->pSrtpSession, rawPacket, (PINT32) &packetLen));
-        sendStatus = iceAgentSendPacket(pKvsPeerConnection->pIceAgent, rawPacket, packetLen);
-        if (sendStatus == STATUS_SEND_DATA_FAILED) {
+        CHK_STATUS(srtp_session_encryptRtpPacket(pKvsPeerConnection->pSrtpSession, rawPacket, (PINT32) &packetLen));
+        sendStatus = ice_agent_send(pKvsPeerConnection->pIceAgent, rawPacket, packetLen);
+        if (sendStatus == STATUS_NET_SEND_DATA_FAILED) {
             packetsDiscardedOnSend++;
             bytesDiscardedOnSend += packetLen - headerLen;
             // TODO is frame considered discarded when at least one of its packets is discarded or all of its packets discarded?
@@ -363,7 +363,7 @@ CleanUp:
             pKvsRtpTransceiver->outboundStats.hugeFramesSent++;
         }
     }
-    // iceAgentSendPacket tries to send packet immediately, explicitly settings totalPacketSendDelay to 0
+    // ice_agent_send tries to send packet immediately, explicitly settings totalPacketSendDelay to 0
     pKvsRtpTransceiver->outboundStats.totalPacketSendDelay = 0;
 
     pKvsRtpTransceiver->outboundStats.framesDiscardedOnSend += framesDiscardedOnSend;
@@ -395,8 +395,8 @@ STATUS writeRtpPacket(PKvsPeerConnection pKvsPeerConnection, PRtpPacket pRtpPack
     pRawPacket = MEMALLOC(pRtpPacket->rawPacketLength + SRTP_AUTH_TAG_OVERHEAD); // For SRTP authentication tag
     rawLen = pRtpPacket->rawPacketLength;
     MEMCPY(pRawPacket, pRtpPacket->pRawPacket, pRtpPacket->rawPacketLength);
-    CHK_STATUS(encryptRtpPacket(pKvsPeerConnection->pSrtpSession, pRawPacket, &rawLen));
-    CHK_STATUS(iceAgentSendPacket(pKvsPeerConnection->pIceAgent, pRawPacket, rawLen));
+    CHK_STATUS(srtp_session_encryptRtpPacket(pKvsPeerConnection->pSrtpSession, pRawPacket, &rawLen));
+    CHK_STATUS(ice_agent_send(pKvsPeerConnection->pIceAgent, pRawPacket, rawLen));
 
 CleanUp:
     if (locked) {

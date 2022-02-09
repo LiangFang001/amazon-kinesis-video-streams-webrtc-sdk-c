@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 #define LOG_CLASS "Crypto"
-#include "../Include_i.h"
+
 #include <mbedtls/x509_crt.h>
 #include "dtls.h"
 
@@ -28,16 +28,16 @@ STATUS createRtcCertificate(PRtcCertificate* ppRtcCertificate)
     CHK(NULL != (pRtcCertificate = (PRtcCertificate) MEMCALLOC(1, SIZEOF(RtcCertificate))), STATUS_NOT_ENOUGH_MEMORY);
 
 #ifdef KVS_USE_OPENSSL
-    CHK_STATUS(createCertificateAndKey(GENERATED_CERTIFICATE_BITS, FALSE, (X509**) &pRtcCertificate->pCertificate,
-                                       (EVP_PKEY**) &pRtcCertificate->pPrivateKey));
+    CHK_STATUS(certificate_key_create(GENERATED_CERTIFICATE_BITS, FALSE, (X509**) &pRtcCertificate->pCertificate,
+                                      (EVP_PKEY**) &pRtcCertificate->pPrivateKey));
 #elif KVS_USE_MBEDTLS
     // Need to allocate space for the cert and the key for mbedTLS
     CHK(NULL != (pRtcCertificate->pCertificate = (PBYTE) MEMCALLOC(1, SIZEOF(mbedtls_x509_crt))), STATUS_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pRtcCertificate->pPrivateKey = (PBYTE) MEMCALLOC(1, SIZEOF(mbedtls_pk_context))), STATUS_NOT_ENOUGH_MEMORY);
     pRtcCertificate->certificateSize = SIZEOF(mbedtls_x509_crt);
     pRtcCertificate->privateKeySize = SIZEOF(mbedtls_pk_context);
-    CHK_STATUS(createCertificateAndKey(GENERATED_CERTIFICATE_BITS, FALSE, (mbedtls_x509_crt*) pRtcCertificate->pCertificate,
-                                       (mbedtls_pk_context*) pRtcCertificate->pPrivateKey));
+    CHK_STATUS(certificate_key_create(GENERATED_CERTIFICATE_BITS, FALSE, (mbedtls_x509_crt*) pRtcCertificate->pCertificate,
+                                      (mbedtls_pk_context*) pRtcCertificate->pPrivateKey));
 #else
 #error "A Crypto implementation is required."
 #endif

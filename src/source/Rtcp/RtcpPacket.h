@@ -10,6 +10,9 @@ RTCP Packet include file
 extern "C" {
 #endif
 
+#include "kvs/error.h"
+#include "kvs/common_defs.h"
+
 #define RTCP_PACKET_LEN_OFFSET  2
 #define RTCP_PACKET_TYPE_OFFSET 1
 

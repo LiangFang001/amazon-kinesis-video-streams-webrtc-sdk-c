@@ -15,11 +15,11 @@ TEST_F(DtlsApiTest, createCertificateAndKey_Returns_Success)
     X509* pCert = NULL;
     EVP_PKEY* pKey = NULL;
 
-    EXPECT_EQ(createCertificateAndKey(GENERATED_CERTIFICATE_BITS, FALSE, &pCert, &pKey), STATUS_SUCCESS);
+    EXPECT_EQ(certificate_key_create(GENERATED_CERTIFICATE_BITS, FALSE, &pCert, &pKey), STATUS_SUCCESS);
     EXPECT_NE(pCert, nullptr);
     EXPECT_NE(pKey, nullptr);
 
-    EXPECT_EQ(freeCertificateAndKey(&pCert, &pKey), STATUS_SUCCESS);
+    EXPECT_EQ(certificate_key_free(&pCert, &pKey), STATUS_SUCCESS);
     EXPECT_EQ(pCert, nullptr);
     EXPECT_EQ(pKey, nullptr);
 }
@@ -30,13 +30,13 @@ TEST_F(DtlsApiTest, createCertificateAndKey_Returns_Success)
     mbedtls_x509_crt cert;
     mbedtls_pk_context key;
 
-    EXPECT_EQ(createCertificateAndKey(GENERATED_CERTIFICATE_BITS, FALSE, &cert, &key), STATUS_SUCCESS);
+    EXPECT_EQ(certificate_key_create(GENERATED_CERTIFICATE_BITS, FALSE, &cert, &key), STATUS_SUCCESS);
     EXPECT_NE(cert.raw.p, nullptr);
     EXPECT_NE(cert.raw.len, 0);
     EXPECT_NE(key.pk_ctx, nullptr);
     EXPECT_NE(key.pk_info, nullptr);
 
-    EXPECT_EQ(freeCertificateAndKey(&cert, &key), STATUS_SUCCESS);
+    EXPECT_EQ(certificate_key_free(&cert, &key), STATUS_SUCCESS);
     EXPECT_EQ(cert.raw.p, nullptr);
     EXPECT_EQ(cert.raw.len, 0);
     EXPECT_EQ(key.pk_ctx, nullptr);

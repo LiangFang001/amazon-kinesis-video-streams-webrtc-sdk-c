@@ -10,6 +10,10 @@ RTCP Rolling Buffer include file
 extern "C" {
 #endif
 
+#include "kvs/error.h"
+#include "kvs/common_defs.h"
+#include "kvs/platform_utils.h"
+
 typedef STATUS (*FreeDataFunc)(PUINT64);
 
 typedef struct {

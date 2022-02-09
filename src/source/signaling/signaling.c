@@ -98,7 +98,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
     while (1) {
         BaseType_t err = xQueueReceive(pSignalingClient->inboundMsqQ, &pMsg, 0xffffffffUL);
         if (err == pdPASS) {
-            DLOGD("handling wss");
+            DLOGD("handling wss msg");
             retStatus = STATUS_SUCCESS;
 
             PSignalingClient pSignalingClient = NULL;
@@ -108,7 +108,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
             pSignalingClient = pMsg->pSignalingClient;
 
             CHK(pSignalingClient != NULL, STATUS_SIGNALING_INTERNAL_ERROR);
-            DLOGD("messageType:%d", pMsg->receivedSignalingMessage.signalingMessage.messageType);
+
             switch (pMsg->receivedSignalingMessage.signalingMessage.messageType) {
                 case SIGNALING_MESSAGE_TYPE_OFFER:
                     CHK(pMsg->receivedSignalingMessage.signalingMessage.peerClientId[0] != '\0', STATUS_SIGNALING_NO_PEER_CLIENT_ID_IN_MESSAGE);

@@ -55,7 +55,6 @@ typedef struct {
  * @return STATUS status of execution
  */
 STATUS connection_listener_create(PConnectionListener*);
-
 /**
  * @brief free the ConnectionListener struct and all its resources
  *
@@ -64,7 +63,6 @@ STATUS connection_listener_create(PConnectionListener*);
  * @return STATUS status of execution
  */
 STATUS connection_listener_free(PConnectionListener* ppConnectionListener);
-
 /**
  * @brief add a new PSocketConnection to listen for incoming data
  *
@@ -74,7 +72,6 @@ STATUS connection_listener_free(PConnectionListener* ppConnectionListener);
  * @return STATUS status of execution
  */
 STATUS connection_listener_add(PConnectionListener pConnectionListener, PSocketConnection pSocketConnection);
-
 /**
  * @brief remove PSocketConnection from the list to listen for incoming data
  *
@@ -84,7 +81,6 @@ STATUS connection_listener_add(PConnectionListener pConnectionListener, PSocketC
  * @return STATUS status of execution
  */
 STATUS connection_listener_remove(PConnectionListener pConnectionListener, PSocketConnection pSocketConnection);
-
 /**
  * @brief remove all listening PSocketConnection
  *
@@ -93,7 +89,6 @@ STATUS connection_listener_remove(PConnectionListener pConnectionListener, PSock
  * @return STATUS status of execution
  */
 STATUS connection_listener_removeAll(PConnectionListener);
-
 /**
  * @brief Spin off a listener thread that listen for incoming traffic for all PSocketConnection stored in connectionList.
  * Whenever a PSocketConnection receives data, invoke ConnectionDataAvailableFunc passed in.
@@ -104,9 +99,6 @@ STATUS connection_listener_removeAll(PConnectionListener);
  */
 STATUS connection_listener_start(PConnectionListener pConnectionListener);
 
-////////////////////////////////////////////
-// internal functionalities
-////////////////////////////////////////////
 PVOID connection_listener_receiveRoutine(PVOID arg);
 
 #ifdef __cplusplus

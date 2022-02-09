@@ -231,10 +231,10 @@ STATUS http_api_createChannel(PSignalingClient pSignalingClient, PUINT32 pHttpSt
 
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, HTTP_API_SECURE_PORT));
 
-    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_SEND_DATA_FAILED);
+    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_NET_SEND_DATA_FAILED);
     CHK_STATUS(NetIo_recv(xNetIoHandle, (unsigned char*) pHttpRecvBuffer, HTTP_API_RECV_BUFFER_MAX_SIZE, &uBytesReceived));
 
-    CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
+    CHK(uBytesReceived > 0, STATUS_NET_RECV_DATA_FAILED);
 
     CHK(http_parser_start(&pHttpRspCtx, (CHAR*) pHttpRecvBuffer, (UINT32) uBytesReceived, NULL) == STATUS_SUCCESS, STATUS_HTTP_PARSER_ERROR);
 
@@ -330,10 +330,10 @@ STATUS http_api_describeChannel(PSignalingClient pSignalingClient, PUINT32 pHttp
 
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, HTTP_API_SECURE_PORT));
 
-    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_SEND_DATA_FAILED);
+    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_NET_SEND_DATA_FAILED);
     CHK_STATUS(NetIo_recv(xNetIoHandle, (unsigned char*) pHttpRecvBuffer, HTTP_API_RECV_BUFFER_MAX_SIZE, &uBytesReceived));
 
-    CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
+    CHK(uBytesReceived > 0, STATUS_NET_RECV_DATA_FAILED);
 
     CHK(http_parser_start(&pHttpRspCtx, (CHAR*) pHttpRecvBuffer, (UINT32) uBytesReceived, NULL) == STATUS_SUCCESS, STATUS_HTTP_PARSER_ERROR);
     pResponseStr = http_parser_getHttpBodyLocation(pHttpRspCtx);
@@ -432,10 +432,10 @@ STATUS http_api_getChannelEndpoint(PSignalingClient pSignalingClient, PUINT32 pH
 
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, HTTP_API_SECURE_PORT));
 
-    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_SEND_DATA_FAILED);
+    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_NET_SEND_DATA_FAILED);
     CHK_STATUS(NetIo_recv(xNetIoHandle, (unsigned char*) pHttpRecvBuffer, HTTP_API_RECV_BUFFER_MAX_SIZE, &uBytesReceived));
 
-    CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
+    CHK(uBytesReceived > 0, STATUS_NET_RECV_DATA_FAILED);
 
     CHK(http_parser_start(&pHttpRspCtx, (CHAR*) pHttpRecvBuffer, (UINT32) uBytesReceived, NULL) == STATUS_SUCCESS, STATUS_HTTP_PARSER_ERROR);
     pResponseStr = http_parser_getHttpBodyLocation(pHttpRspCtx);
@@ -534,10 +534,10 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, PUINT32 pHttpSta
 
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, HTTP_API_SECURE_PORT));
 
-    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_SEND_DATA_FAILED);
+    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_NET_SEND_DATA_FAILED);
     CHK_STATUS(NetIo_recv(xNetIoHandle, (unsigned char*) pHttpRecvBuffer, HTTP_API_RECV_BUFFER_MAX_SIZE, &uBytesReceived));
 
-    CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
+    CHK(uBytesReceived > 0, STATUS_NET_RECV_DATA_FAILED);
 
     CHK(http_parser_start(&pHttpRspCtx, (CHAR*) pHttpRecvBuffer, (UINT32) uBytesReceived, NULL) == STATUS_SUCCESS, STATUS_HTTP_PARSER_ERROR);
 
@@ -634,10 +634,10 @@ STATUS http_api_deleteChannel(PSignalingClient pSignalingClient, PUINT32 pHttpSt
 
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, HTTP_API_SECURE_PORT));
 
-    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_SEND_DATA_FAILED);
+    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_NET_SEND_DATA_FAILED);
     CHK_STATUS(NetIo_recv(xNetIoHandle, (unsigned char*) pHttpRecvBuffer, HTTP_API_RECV_BUFFER_MAX_SIZE, &uBytesReceived));
 
-    CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
+    CHK(uBytesReceived > 0, STATUS_NET_RECV_DATA_FAILED);
 
     CHK(http_parser_start(&pHttpRspCtx, (CHAR*) pHttpRecvBuffer, (UINT32) uBytesReceived, NULL) == STATUS_SUCCESS, STATUS_HTTP_PARSER_ERROR);
     uHttpStatusCode = http_parser_getHttpStatusCode(pHttpRspCtx);
@@ -711,7 +711,7 @@ STATUS http_api_getIotCredential(PIotCredentialProvider pIotCredentialProvider)
     // Create the API url
     CHK(SNPRINTF(pUrl, urlLen, "%s%s%s%c%s%s", CONTROL_PLANE_URI_PREFIX, pIotCredentialProvider->iotGetCredentialEndpoint, HTTP_API_ROLE_ALIASES, '/',
                  pIotCredentialProvider->roleAlias, HTTP_API_CREDENTIALS) > 0,
-        STATUS_IOT_FAILED);
+        STATUS_HTTP_IOT_FAILED);
 
     // Create the request info with the body
     CHK_STATUS(createRequestInfo(pUrl, pHttpBody, DEFAULT_AWS_REGION, pIotCredentialProvider->caCertPath, pIotCredentialProvider->certPath,
@@ -740,10 +740,10 @@ STATUS http_api_getIotCredential(PIotCredentialProvider pIotCredentialProvider)
     CHK_STATUS(NetIo_connectWithX509Path(xNetIoHandle, pHost, HTTP_API_SECURE_PORT, pIotCredentialProvider->caCertPath,
                                          pIotCredentialProvider->certPath, pIotCredentialProvider->privateKeyPath));
 
-    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_SEND_DATA_FAILED);
+    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_NET_SEND_DATA_FAILED);
     CHK_STATUS(NetIo_recv(xNetIoHandle, (unsigned char*) pHttpRecvBuffer, HTTP_API_RECV_BUFFER_MAX_SIZE, &uBytesReceived));
 
-    CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
+    CHK(uBytesReceived > 0, STATUS_NET_RECV_DATA_FAILED);
 
     CHK(http_parser_start(&pHttpRspCtx, (CHAR*) pHttpRecvBuffer, (UINT32) uBytesReceived, NULL) == STATUS_SUCCESS, STATUS_HTTP_PARSER_ERROR);
     pResponseStr = http_parser_getHttpBodyLocation(pHttpRspCtx);

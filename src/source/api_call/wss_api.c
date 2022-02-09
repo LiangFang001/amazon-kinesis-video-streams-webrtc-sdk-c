@@ -113,10 +113,10 @@ STATUS wss_api_connect(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCod
 
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, WSS_API_SECURE_PORT));
 
-    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_SEND_DATA_FAILED);
+    CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_NET_SEND_DATA_FAILED);
     CHK_STATUS(NetIo_recv(xNetIoHandle, (unsigned char*) pHttpRecvBuffer, WSS_API_RECV_BUFFER_MAX_SIZE, &uBytesReceived));
 
-    CHK(uBytesReceived > 0, STATUS_RECV_DATA_FAILED);
+    CHK(uBytesReceived > 0, STATUS_NET_RECV_DATA_FAILED);
 
     struct list_head* requiredHeader = MEMALLOC(sizeof(struct list_head));
     INIT_LIST_HEAD(requiredHeader);
@@ -268,7 +268,7 @@ STATUS wss_api_handleCtrlMsg(PVOID pUserData, UINT8 opcode, PCHAR pMessage, UINT
 
     CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
 
-    DLOGD("opcode:%x", opcode);
+    // DLOGD("opcode:%x", opcode);
     if (opcode == WSLAY_PONG) {
         DLOGD("<== pong, len: %ld", messageLen);
     } else if (opcode == WSLAY_PING) {

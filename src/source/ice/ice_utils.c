@@ -1,22 +1,42 @@
-/**
- * Kinesis Video Producer Ice Utils
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
  */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #define LOG_CLASS "IceUtils"
 #include "../Include_i.h"
 #include "endianness.h"
-#include "TurnConnection.h"
+#include "turn_connection.h"
 
-STATUS createTransactionIdStore(UINT32 maxIdCount, PTransactionIdStore* ppTransactionIdStore)
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+STATUS transaction_id_store_create(UINT32 maxIdCount, PTransactionIdStore* ppTransactionIdStore)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     PTransactionIdStore pTransactionIdStore = NULL;
 
-    CHK(ppTransactionIdStore != NULL, STATUS_ICE_NULL_ARG);
-    CHK(maxIdCount < MAX_STORED_TRANSACTION_ID_COUNT && maxIdCount > 0, STATUS_ICE_NULL_ARG);
+    CHK(ppTransactionIdStore != NULL, STATUS_ICE_UTILS_NULL_ARG);
+    CHK(maxIdCount < MAX_STORED_TRANSACTION_ID_COUNT && maxIdCount > 0, STATUS_ICE_UTILS_NULL_ARG);
 
     pTransactionIdStore = (PTransactionIdStore) MEMCALLOC(1, SIZEOF(TransactionIdStore) + STUN_TRANSACTION_ID_LEN * maxIdCount);
-    CHK(pTransactionIdStore != NULL, STATUS_ICE_NOT_ENOUGH_MEMORY);
+    CHK(pTransactionIdStore != NULL, STATUS_ICE_UTILS_NOT_ENOUGH_MEMORY);
 
     pTransactionIdStore->transactionIds = (PBYTE)(pTransactionIdStore + 1);
     pTransactionIdStore->maxTransactionIdsCount = maxIdCount;
@@ -36,7 +56,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeTransactionIdStore(PTransactionIdStore* ppTransactionIdStore)
+STATUS transaction_id_store_free(PTransactionIdStore* ppTransactionIdStore)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -56,7 +76,7 @@ CleanUp:
     return retStatus;
 }
 
-VOID transactionIdStoreInsert(PTransactionIdStore pTransactionIdStore, PBYTE transactionId)
+VOID transaction_id_store_insert(PTransactionIdStore pTransactionIdStore, PBYTE transactionId)
 {
     PBYTE storeLocation = NULL;
 
@@ -77,7 +97,7 @@ VOID transactionIdStoreInsert(PTransactionIdStore pTransactionIdStore, PBYTE tra
     pTransactionIdStore->transactionIdCount = MIN(pTransactionIdStore->transactionIdCount + 1, pTransactionIdStore->maxTransactionIdsCount);
 }
 
-BOOL transactionIdStoreHasId(PTransactionIdStore pTransactionIdStore, PBYTE transactionId)
+BOOL transaction_id_store_isExisted(PTransactionIdStore pTransactionIdStore, PBYTE transactionId)
 {
     BOOL idFound = FALSE;
     UINT32 i, j;
@@ -95,7 +115,7 @@ BOOL transactionIdStoreHasId(PTransactionIdStore pTransactionIdStore, PBYTE tran
     return idFound;
 }
 
-VOID transactionIdStoreReset(PTransactionIdStore pTransactionIdStore)
+VOID transaction_id_store_reset(PTransactionIdStore pTransactionIdStore)
 {
     CHECK(pTransactionIdStore != NULL);
 
@@ -104,7 +124,7 @@ VOID transactionIdStoreReset(PTransactionIdStore pTransactionIdStore)
     pTransactionIdStore->transactionIdCount = 0;
 }
 
-STATUS iceUtilsGenerateTransactionId(PBYTE pBuffer, UINT32 bufferLen)
+STATUS ice_utils_generateTransactionId(PBYTE pBuffer, UINT32 bufferLen)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 i;
@@ -121,7 +141,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS iceUtilsPackageStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, PBYTE pBuffer, PUINT32 pBufferLen)
+STATUS ice_utils_packStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, PBYTE pBuffer, PUINT32 pBufferLen)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 stunPacketSize = 0;
@@ -134,9 +154,9 @@ STATUS iceUtilsPackageStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32
         addMessageIntegrity = TRUE;
     }
 
-    CHK_STATUS(serializeStunPacket(pStunPacket, password, passwordLen, addMessageIntegrity, TRUE, NULL, &stunPacketSize));
+    CHK_STATUS(stun_serializePacket(pStunPacket, password, passwordLen, addMessageIntegrity, TRUE, NULL, &stunPacketSize));
     CHK(stunPacketSize <= *pBufferLen, STATUS_BUFFER_TOO_SMALL);
-    CHK_STATUS(serializeStunPacket(pStunPacket, password, passwordLen, addMessageIntegrity, TRUE, pBuffer, &stunPacketSize));
+    CHK_STATUS(stun_serializePacket(pStunPacket, password, passwordLen, addMessageIntegrity, TRUE, pBuffer, &stunPacketSize));
     *pBufferLen = stunPacketSize;
 
 CleanUp:
@@ -146,16 +166,16 @@ CleanUp:
     return retStatus;
 }
 
-STATUS iceUtilsSendStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, PKvsIpAddress pDest, PSocketConnection pSocketConnection,
-                              PTurnConnection pTurnConnection, BOOL useTurn)
+STATUS ice_utils_sendStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, PKvsIpAddress pDest, PSocketConnection pSocketConnection,
+                                PTurnConnection pTurnConnection, BOOL useTurn)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 stunPacketSize = STUN_PACKET_ALLOCATION_SIZE;
     PBYTE stunPacketBuffer = NULL;
     // #memory, #heap. #TBD.
-    CHK(NULL != (stunPacketBuffer = (PBYTE) MEMALLOC(STUN_PACKET_ALLOCATION_SIZE)), STATUS_ICE_EMPTY_STUN_SEND_BUF);
-    CHK_STATUS(iceUtilsPackageStunPacket(pStunPacket, password, passwordLen, stunPacketBuffer, &stunPacketSize));
-    CHK_STATUS(iceUtilsSendData(stunPacketBuffer, stunPacketSize, pDest, pSocketConnection, pTurnConnection, useTurn));
+    CHK(NULL != (stunPacketBuffer = (PBYTE) MEMALLOC(STUN_PACKET_ALLOCATION_SIZE)), STATUS_ICE_UTILS_EMPTY_STUN_SEND_BUF);
+    CHK_STATUS(ice_utils_packStunPacket(pStunPacket, password, passwordLen, stunPacketBuffer, &stunPacketSize));
+    CHK_STATUS(ice_utils_send(stunPacketBuffer, stunPacketSize, pDest, pSocketConnection, pTurnConnection, useTurn));
 
 CleanUp:
     SAFE_MEMFREE(stunPacketBuffer);
@@ -164,21 +184,22 @@ CleanUp:
     return retStatus;
 }
 
-STATUS iceUtilsSendData(PBYTE buffer, UINT32 size, PKvsIpAddress pDest, PSocketConnection pSocketConnection, PTurnConnection pTurnConnection,
-                        BOOL useTurn)
+STATUS ice_utils_send(PBYTE buffer, UINT32 size, PKvsIpAddress pDest, PSocketConnection pSocketConnection, PTurnConnection pTurnConnection,
+                      BOOL useTurn)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
     CHK((pSocketConnection != NULL && !useTurn) || (pTurnConnection != NULL && useTurn), STATUS_INVALID_ARG);
     // if you are using turn connection, you need to transfer the ip of this destination.
     if (useTurn) {
-        retStatus = turnConnectionSendData(pTurnConnection, buffer, size, pDest);
+        retStatus = turn_connection_send(pTurnConnection, buffer, size, pDest);
     } else {
-        retStatus = socketConnectionSendData(pSocketConnection, buffer, size, pDest);
+        retStatus = socket_connection_send(pSocketConnection, buffer, size, pDest);
     }
 
     // Fix-up the not-yet-ready socket
-    CHK(STATUS_SUCCEEDED(retStatus) || retStatus == STATUS_SOCKET_CONNECTION_NOT_READY_TO_SEND, retStatus);
+    // #TBD.
+    CHK(STATUS_SUCCEEDED(retStatus) || retStatus == STATUS_TLS_CONNECTION_NOT_READY_TO_SEND, retStatus);
     retStatus = STATUS_SUCCESS;
 
 CleanUp:
@@ -188,7 +209,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS parseIceServer(PIceServer pIceServer, PCHAR url, PCHAR username, PCHAR credential)
+STATUS ice_utils_parseIceServer(PIceServer pIceServer, PCHAR url, PCHAR username, PCHAR credential)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -203,8 +224,8 @@ STATUS parseIceServer(PIceServer pIceServer, PCHAR url, PCHAR username, PCHAR cr
         pIceServer->isTurn = FALSE;
     } else if (STRNCMP(ICE_URL_PREFIX_TURN, url, STRLEN(ICE_URL_PREFIX_TURN)) == 0 ||
                STRNCMP(ICE_URL_PREFIX_TURN_SECURE, url, STRLEN(ICE_URL_PREFIX_TURN_SECURE)) == 0) {
-        CHK(username != NULL && username[0] != '\0', STATUS_ICE_URL_TURN_MISSING_USERNAME);
-        CHK(credential != NULL && credential[0] != '\0', STATUS_ICE_URL_TURN_MISSING_CREDENTIAL);
+        CHK(username != NULL && username[0] != '\0', STATUS_ICE_UTILS_URL_TURN_MISSING_USERNAME);
+        CHK(credential != NULL && credential[0] != '\0', STATUS_ICE_UTILS_URL_TURN_MISSING_CREDENTIAL);
 
         // TODO after getIceServerConfig no longer give turn: ips, do TLS only for turns:
         STRNCPY(pIceServer->username, username, MAX_ICE_CONFIG_USER_NAME_LEN);
@@ -221,7 +242,7 @@ STATUS parseIceServer(PIceServer pIceServer, PCHAR url, PCHAR username, PCHAR cr
         }
 
     } else {
-        CHK(FALSE, STATUS_ICE_URL_INVALID_PREFIX);
+        CHK(FALSE, STATUS_ICE_UTILS_URL_INVALID_PREFIX);
     }
 
     if ((separator = STRCHR(urlNoPrefix, ':')) != NULL) {
@@ -235,7 +256,7 @@ STATUS parseIceServer(PIceServer pIceServer, PCHAR url, PCHAR username, PCHAR cr
         STRNCPY(pIceServer->url, urlNoPrefix, MAX_ICE_CONFIG_URI_LEN);
     }
 
-    CHK_STATUS(getIpWithHostName(pIceServer->url, &pIceServer->ipAddress));
+    CHK_STATUS(net_getIpByHostName(pIceServer->url, &pIceServer->ipAddress));
     pIceServer->ipAddress.port = (UINT16) getInt16((INT16) port);
 
 CleanUp:

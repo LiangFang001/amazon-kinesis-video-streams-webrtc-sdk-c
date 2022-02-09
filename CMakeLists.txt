@@ -286,7 +286,7 @@ file(
   GLOB
   WEBRTC_CLIENT_SOURCE_FILES
   "src/source/crypto/*.c"
-  "src/source/Ice/*.c"
+  "src/source/ice/*.c"
   "src/source/Json/*.c"
   "src/source/net/*.c"
   "src/source/PeerConnection/*.c"
@@ -294,9 +294,9 @@ file(
   "src/source/Rtp/*.c"
   "src/source/Rtp/Codecs/*.c"
   "src/source/Sdp/*.c"
-  "src/source/Srtp/*.c"
+  "src/source/srtp/*.c"
   "src/source/stun/*.c"
-  "src/source/Sctp/*.c"
+  "src/source/sctp/*.c"
   "src/source/Metrics/*.c")
 
 if (USE_OPENSSL)

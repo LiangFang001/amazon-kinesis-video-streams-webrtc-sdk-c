@@ -10,6 +10,10 @@ RTP Packet include file
 extern "C" {
 #endif
 
+#include "kvs/error.h"
+#include "kvs/common_defs.h"
+#include "kvs/platform_utils.h"
+
 #define MIN_HEADER_LENGTH 12
 #define VERSION_SHIFT     6
 #define VERSION_MASK      0x3

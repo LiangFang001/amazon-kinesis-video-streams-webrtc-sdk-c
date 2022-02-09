@@ -12,10 +12,25 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/common_defs.h"
 #include "kvs/error.h"
 #include "kvs/platform_utils.h"
 #include "timer_queue.h"
+
+/******************************************************************************
+ * DEFINITION
+ ******************************************************************************/
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+// Internal Functions
+STATUS timerQueueCreateInternal(UINT32, PTimerQueue*);
+STATUS timerQueueCreateInternalEx(UINT32, PTimerQueue*, PCHAR, UINT32);
+STATUS timerQueueFreeInternal(PTimerQueue*);
+STATUS timerQueueEvaluateNextInvocation(PTimerQueue);
 
 /**
  * Create a timer queue object
@@ -47,10 +62,7 @@ STATUS timerQueueCreate(PTIMER_QUEUE_HANDLE pHandle)
     return timerQueueCreateEx(pHandle, NULL, 0);
 }
 
-/**
- * Frees and de-allocates the hash table
- */
-STATUS timerQueueFree(PTIMER_QUEUE_HANDLE pHandle)
+STATUS timer_queue_free(PTIMER_QUEUE_HANDLE pHandle)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -72,8 +84,8 @@ CleanUp:
     return retStatus;
 }
 
-STATUS timerQueueAddTimer(TIMER_QUEUE_HANDLE handle, UINT64 start, UINT64 period, TimerCallbackFunc timerCallbackFn, UINT64 customData,
-                          PUINT32 pIndex)
+STATUS timer_queue_addTimer(TIMER_QUEUE_HANDLE handle, UINT64 start, UINT64 period, TimerCallbackFunc timerCallbackFn, UINT64 customData,
+                            PUINT32 pIndex)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -126,13 +138,12 @@ CleanUp:
     return retStatus;
 }
 
-STATUS timerQueueCancelTimer(TIMER_QUEUE_HANDLE handle, UINT32 timerId, UINT64 customData)
+STATUS timer_queue_cancelTimer(TIMER_QUEUE_HANDLE handle, UINT32 timerId, UINT64 customData)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     PTimerQueue pTimerQueue = FROM_TIMER_QUEUE_HANDLE(handle);
     BOOL locked = FALSE;
-
     CHK(pTimerQueue != NULL, STATUS_NULL_ARG);
     CHK(timerId < pTimerQueue->maxTimerCount, STATUS_INVALID_ARG);
 
@@ -169,7 +180,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS timerQueueCancelTimersWithCustomData(TIMER_QUEUE_HANDLE handle, UINT64 customData)
+STATUS timer_queue_cancelTimersByCustomData(TIMER_QUEUE_HANDLE handle, UINT64 customData)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -185,7 +196,7 @@ STATUS timerQueueCancelTimersWithCustomData(TIMER_QUEUE_HANDLE handle, UINT64 cu
     // cancel all timer with customData
     for (timerId = 0; timerId < pTimerQueue->maxTimerCount; timerId++) {
         if (pTimerQueue->pTimers[timerId].customData == customData && pTimerQueue->pTimers[timerId].timerCallbackFn != NULL) {
-            CHK_STATUS(timerQueueCancelTimer(handle, timerId, customData));
+            CHK_STATUS(timer_queue_cancelTimer(handle, timerId, customData));
         }
     }
 
@@ -215,7 +226,7 @@ STATUS timerQueueCancelAllTimers(TIMER_QUEUE_HANDLE handle)
     // cancel all timer
     for (timerId = 0; timerId < pTimerQueue->maxTimerCount; timerId++) {
         if (pTimerQueue->pTimers[timerId].timerCallbackFn != NULL) {
-            CHK_STATUS(timerQueueCancelTimer(handle, timerId, pTimerQueue->pTimers[timerId].customData));
+            CHK_STATUS(timer_queue_cancelTimer(handle, timerId, pTimerQueue->pTimers[timerId].customData));
         }
     }
 
@@ -300,7 +311,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS timerQueueUpdateTimerPeriod(TIMER_QUEUE_HANDLE handle, UINT64 customData, UINT32 timerId, UINT64 period)
+STATUS timer_queue_updateTimerPeriod(TIMER_QUEUE_HANDLE handle, UINT64 customData, UINT32 timerId, UINT64 period)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -334,7 +345,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS timerQueueShutdown(TIMER_QUEUE_HANDLE handle)
+STATUS timer_queue_shutdown(TIMER_QUEUE_HANDLE handle)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;

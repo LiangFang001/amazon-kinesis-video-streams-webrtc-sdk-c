@@ -18,6 +18,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "kvs/common_defs.h"
 /**
  * Endianness functionality
  */

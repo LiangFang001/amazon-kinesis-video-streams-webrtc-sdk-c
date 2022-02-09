@@ -117,8 +117,8 @@ STATUS handleAnswer(PSampleConfiguration pSampleConfiguration, PSampleStreamingS
 
     MEMSET(pAnswerSessionDescriptionInit, 0x00, SIZEOF(RtcSessionDescriptionInit));
 
-    CHK_STATUS(deserializeSessionDescriptionInit(pSignalingMessage->payload, pSignalingMessage->payloadLen, pAnswerSessionDescriptionInit));
-    CHK_STATUS(setRemoteDescription(pSampleStreamingSession->pPeerConnection, pAnswerSessionDescriptionInit));
+    CHK_STATUS(session_description_deserializeInit(pSignalingMessage->payload, pSignalingMessage->payloadLen, pAnswerSessionDescriptionInit));
+    CHK_STATUS(peer_connection_setRemoteDescription(pSampleStreamingSession->pPeerConnection, pAnswerSessionDescriptionInit));
 
 CleanUp:
 
@@ -140,19 +140,19 @@ STATUS handleOffer(PSampleConfiguration pSampleConfiguration, PSampleStreamingSe
     MEMSET(pOfferSessionDescriptionInit, 0x00, SIZEOF(RtcSessionDescriptionInit));
     MEMSET(&pSampleStreamingSession->answerSessionDescriptionInit, 0x00, SIZEOF(RtcSessionDescriptionInit));
 
-    CHK_STATUS(deserializeSessionDescriptionInit(pSignalingMessage->payload, pSignalingMessage->payloadLen, pOfferSessionDescriptionInit));
-    CHK_STATUS(setRemoteDescription(pSampleStreamingSession->pPeerConnection, pOfferSessionDescriptionInit));
+    CHK_STATUS(session_description_deserializeInit(pSignalingMessage->payload, pSignalingMessage->payloadLen, pOfferSessionDescriptionInit));
+    CHK_STATUS(peer_connection_setRemoteDescription(pSampleStreamingSession->pPeerConnection, pOfferSessionDescriptionInit));
     canTrickle = canTrickleIceCandidates(pSampleStreamingSession->pPeerConnection);
-    /* cannot be null after setRemoteDescription */
+    /* cannot be null after peer_connection_setRemoteDescription */
     CHECK(!NULLABLE_CHECK_EMPTY(canTrickle));
     pSampleStreamingSession->remoteCanTrickleIce = canTrickle.value;
-    CHK_STATUS(setLocalDescription(pSampleStreamingSession->pPeerConnection, &pSampleStreamingSession->answerSessionDescriptionInit));
+    CHK_STATUS(peer_connection_setLocalDescription(pSampleStreamingSession->pPeerConnection, &pSampleStreamingSession->answerSessionDescriptionInit));
 
     /*
      * If remote support trickle ice, send answer now. Otherwise answer will be sent once ice candidate gathering is complete.
      */
     if (pSampleStreamingSession->remoteCanTrickleIce) {
-        CHK_STATUS(createAnswer(pSampleStreamingSession->pPeerConnection, &pSampleStreamingSession->answerSessionDescriptionInit));
+        CHK_STATUS(peer_connection_createAnswer(pSampleStreamingSession->pPeerConnection, &pSampleStreamingSession->answerSessionDescriptionInit));
         CHK_STATUS(respondWithAnswer(pSampleStreamingSession));
         DLOGD("time taken to send answer %" PRIu64 " ms",
               (GETTIME() - pSampleStreamingSession->offerReceiveTime) / HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
@@ -168,9 +168,9 @@ STATUS handleOffer(PSampleConfiguration pSampleConfiguration, PSampleStreamingSe
             THREAD_CREATE(&pSampleConfiguration->audioSenderTid, pSampleConfiguration->audioSource, (PVOID) pSampleConfiguration);
         }
 
-        if ((retStatus = timerQueueAddTimer(pSampleConfiguration->timerQueueHandle, SAMPLE_STATS_DURATION, SAMPLE_STATS_DURATION,
-                                            getIceCandidatePairStatsCallback, (UINT64) pSampleConfiguration,
-                                            &pSampleConfiguration->iceCandidatePairStatsTimerId)) != STATUS_SUCCESS) {
+        if ((retStatus = timer_queue_addTimer(pSampleConfiguration->timerQueueHandle, SAMPLE_STATS_DURATION, SAMPLE_STATS_DURATION,
+                                              getIceCandidatePairStatsCallback, (UINT64) pSampleConfiguration,
+                                              &pSampleConfiguration->iceCandidatePairStatsTimerId)) != STATUS_SUCCESS) {
             DLOGW("Failed to add getIceCandidatePairStatsCallback to add to timer queue (code 0x%08x). Cannot pull ice candidate pair metrics "
                   "periodically",
                   retStatus);
@@ -254,7 +254,8 @@ VOID onIceCandidateHandler(UINT64 customData, PCHAR candidateJson)
         // if application is master and non-trickle ice, send answer now.
         if (pSampleStreamingSession->pSampleConfiguration->channelInfo.channelRoleType == SIGNALING_CHANNEL_ROLE_TYPE_MASTER &&
             !pSampleStreamingSession->remoteCanTrickleIce) {
-            CHK_STATUS(createAnswer(pSampleStreamingSession->pPeerConnection, &pSampleStreamingSession->answerSessionDescriptionInit));
+            CHK_STATUS(
+                peer_connection_createAnswer(pSampleStreamingSession->pPeerConnection, &pSampleStreamingSession->answerSessionDescriptionInit));
             CHK_STATUS(respondWithAnswer(pSampleStreamingSession));
             DLOGD("time taken to send answer %" PRIu64 " ms",
                   (GETTIME() - pSampleStreamingSession->offerReceiveTime) / HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
@@ -327,7 +328,7 @@ STATUS initializePeerConnection(PSampleConfiguration pSampleConfiguration, PRtcP
         }
     }
     pSampleConfiguration->iceUriCount = uriCount + 1;
-    CHK_STATUS(createPeerConnection(pConfiguration, ppRtcPeerConnection));
+    CHK_STATUS(peer_connection_create(pConfiguration, ppRtcPeerConnection));
 
 CleanUp:
     SAFE_MEMFREE(pConfiguration);
@@ -493,8 +494,8 @@ STATUS freeSampleStreamingSession(PSampleStreamingSession* ppSampleStreamingSess
     if (IS_VALID_TID_VALUE(pSampleStreamingSession->receiveAudioVideoSenderTid)) {
         THREAD_JOIN(pSampleStreamingSession->receiveAudioVideoSenderTid, NULL);
     }
-    CHK_LOG_ERR(closePeerConnection(pSampleStreamingSession->pPeerConnection));
-    CHK_LOG_ERR(freePeerConnection(&pSampleStreamingSession->pPeerConnection));
+    CHK_LOG_ERR(peer_connection_close(pSampleStreamingSession->pPeerConnection));
+    CHK_LOG_ERR(peer_connection_free(&pSampleStreamingSession->pPeerConnection));
     SAFE_MEMFREE(pSampleStreamingSession);
 
 CleanUp:
@@ -545,7 +546,7 @@ STATUS handleRemoteCandidate(PSampleStreamingSession pSampleStreamingSession, PS
     CHK(pSampleStreamingSession != NULL && pSignalingMessage != NULL, STATUS_NULL_ARG);
 
     CHK_STATUS(deserializeRtcIceCandidateInit(pSignalingMessage->payload, pSignalingMessage->payloadLen, pIceCandidate));
-    CHK_STATUS(addIceCandidate(pSampleStreamingSession->pPeerConnection, pIceCandidate->candidate));
+    CHK_STATUS(peer_connection_addIceCandidate(pSampleStreamingSession->pPeerConnection, pIceCandidate->candidate));
 
 CleanUp:
 
@@ -912,12 +913,12 @@ STATUS freeSampleConfiguration(PSampleConfiguration* ppSampleConfiguration)
     freeStaticCredentialProvider(&pSampleConfiguration->pCredentialProvider);
 
     if (pSampleConfiguration->iceCandidatePairStatsTimerId != MAX_UINT32) {
-        CHK_STATUS(timerQueueCancelTimer(pSampleConfiguration->timerQueueHandle, pSampleConfiguration->iceCandidatePairStatsTimerId,
-                                         (UINT64) pSampleConfiguration));
+        CHK_STATUS(timer_queue_cancelTimer(pSampleConfiguration->timerQueueHandle, pSampleConfiguration->iceCandidatePairStatsTimerId,
+                                           (UINT64) pSampleConfiguration));
         pSampleConfiguration->iceCandidatePairStatsTimerId = MAX_UINT32;
     }
     if (IS_VALID_TIMER_QUEUE_HANDLE(pSampleConfiguration->timerQueueHandle)) {
-        timerQueueFree(&pSampleConfiguration->timerQueueHandle);
+        timer_queue_free(&pSampleConfiguration->timerQueueHandle);
     }
 
     MEMFREE(*ppSampleConfiguration);

@@ -190,7 +190,7 @@ bool WebRtcClientTestBase::connectTwoPeers(PRtcPeerConnection offerPc, PRtcPeerC
                 [customData](std::string candidate) {
                     RtcIceCandidateInit iceCandidate;
                     EXPECT_EQ(STATUS_SUCCESS, deserializeRtcIceCandidateInit((PCHAR) candidate.c_str(), STRLEN(candidate.c_str()), &iceCandidate));
-                    EXPECT_EQ(STATUS_SUCCESS, addIceCandidate((PRtcPeerConnection) customData, iceCandidate.candidate));
+                    EXPECT_EQ(STATUS_SUCCESS, peer_connection_addIceCandidate((PRtcPeerConnection) customData, iceCandidate.candidate));
                 },
                 std::string(candidateStr))
                 .detach();
@@ -208,17 +208,17 @@ bool WebRtcClientTestBase::connectTwoPeers(PRtcPeerConnection offerPc, PRtcPeerC
     EXPECT_EQ(STATUS_SUCCESS, peerConnectionOnConnectionStateChange(answerPc, (UINT64) this->stateChangeCount, onICEConnectionStateChangeHdlr));
 
     EXPECT_EQ(STATUS_SUCCESS, createOffer(offerPc, &sdp));
-    EXPECT_EQ(STATUS_SUCCESS, setLocalDescription(offerPc, &sdp));
-    EXPECT_EQ(STATUS_SUCCESS, setRemoteDescription(answerPc, &sdp));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_setLocalDescription(offerPc, &sdp));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_setRemoteDescription(answerPc, &sdp));
 
     // Validate the cert fingerprint if we are asked to do so
     if (pOfferCertFingerprint != NULL) {
         EXPECT_NE((PCHAR) NULL, STRSTR(sdp.sdp, pOfferCertFingerprint));
     }
 
-    EXPECT_EQ(STATUS_SUCCESS, createAnswer(answerPc, &sdp));
-    EXPECT_EQ(STATUS_SUCCESS, setLocalDescription(answerPc, &sdp));
-    EXPECT_EQ(STATUS_SUCCESS, setRemoteDescription(offerPc, &sdp));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_createAnswer(answerPc, &sdp));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_setLocalDescription(answerPc, &sdp));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_setRemoteDescription(offerPc, &sdp));
 
     if (pAnswerCertFingerprint != NULL) {
         EXPECT_NE((PCHAR) NULL, STRSTR(sdp.sdp, pAnswerCertFingerprint));
@@ -241,8 +241,8 @@ void WebRtcClientTestBase::addTrackToPeerConnection(PRtcPeerConnection pRtcPeerC
 
     track->kind = kind;
     track->codec = codec;
-    EXPECT_EQ(STATUS_SUCCESS, generateJSONSafeString(track->streamId, MAX_MEDIA_STREAM_ID_LEN));
-    EXPECT_EQ(STATUS_SUCCESS, generateJSONSafeString(track->trackId, MAX_MEDIA_STREAM_ID_LEN));
+    EXPECT_EQ(STATUS_SUCCESS, json_generateSafeString(track->streamId, MAX_MEDIA_STREAM_ID_LEN));
+    EXPECT_EQ(STATUS_SUCCESS, json_generateSafeString(track->trackId, MAX_MEDIA_STREAM_ID_LEN));
 
     EXPECT_EQ(STATUS_SUCCESS, addTransceiver(pRtcPeerConnection, track, NULL, transceiver));
 }
