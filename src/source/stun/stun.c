@@ -735,6 +735,7 @@ STATUS stun_deserializePacket(PBYTE pStunBuffer, UINT32 bufferSize, PBYTE passwo
             default:
                 // Do nothing - skip and decrement the count as it will be incremented below anyway
                 attributeCount--;
+                // DLOGW("unknown stun attribute found:%x", stunAttributeHeader.type);
                 break;
         }
 
@@ -1041,6 +1042,7 @@ STATUS stun_deserializePacket(PBYTE pStunBuffer, UINT32 bufferSize, PBYTE passwo
 
             default:
                 // Skip over the unknown attributes
+                // DLOGW("unknown stun attribute:%x", pDestAttribute->type);
                 break;
         }
 

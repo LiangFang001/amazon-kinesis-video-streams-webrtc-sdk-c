@@ -25,14 +25,14 @@ extern "C" {
 
 // https://tools.ietf.org/html/rfc5389#section-15.6
 #define STUN_MAX_ERROR_PHRASE_LEN (UINT16) 128
-
 /**
+ * @brief https://datatracker.ietf.org/doc/html/rfc5389#section-6
  * Stun header structure
- * - 2 UINT16 type len
- * - 2 UINT16 packet data len
- * - 4 UINT16 magic cookie
- * - 12 UINT16 transaction id
- * - data
+ * 2 UINT16 type len
+ * 2 UINT16 packet data len
+ * 4 UINT16 magic cookie
+ * 12 UINT16 transaction id
+ * data
  */
 #define STUN_HEADER_LEN                (UINT16) 20
 #define STUN_HEADER_TYPE_LEN           (UINT16) 2
@@ -204,9 +204,9 @@ typedef enum {
     STUN_ERROR_UNAUTHORIZED = (UINT16) 401,
     STUN_ERROR_STALE_NONCE = (UINT16) 438,
 } STUN_ERROR_CODE;
-
 /**
- * STUN attribute types
+ * @brief STUN attribute types
+ *  https://www.iana.org/assignments/stun-parameters/stun-parameters.xml
  */
 typedef enum {
     STUN_ATTRIBUTE_TYPE_MAPPED_ADDRESS = (UINT16) 0x0001,
@@ -220,15 +220,9 @@ typedef enum {
     STUN_ATTRIBUTE_TYPE_ERROR_CODE = (UINT16) 0x0009,
     STUN_ATTRIBUTE_TYPE_UNKNOWN_ATTRIBUTES = (UINT16) 0x000A,
     STUN_ATTRIBUTE_TYPE_REFLECTED_FROM = (UINT16) 0x000B,
-    STUN_ATTRIBUTE_TYPE_XOR_MAPPED_ADDRESS = (UINT16) 0x0020,
-    STUN_ATTRIBUTE_TYPE_PRIORITY = (UINT16) 0x0024,      //!< https://datatracker.ietf.org/doc/html/rfc8445#section-7.1.1
-                                                         //!< https://datatracker.ietf.org/doc/html/rfc8445#section-5.1.2
-    STUN_ATTRIBUTE_TYPE_USE_CANDIDATE = (UINT16) 0x0025, //!< https://datatracker.ietf.org/doc/html/rfc8445#section-7.1.2
-    STUN_ATTRIBUTE_TYPE_FINGERPRINT = (UINT16) 0x8028,
-    STUN_ATTRIBUTE_TYPE_ICE_CONTROLLED = (UINT16) 0x8029,  //!< https://datatracker.ietf.org/doc/html/rfc8445#section-7.1.3
-    STUN_ATTRIBUTE_TYPE_ICE_CONTROLLING = (UINT16) 0x802A, //!< https://datatracker.ietf.org/doc/html/rfc8445#section-7.1.3
     STUN_ATTRIBUTE_TYPE_CHANNEL_NUMBER = (UINT16) 0x000C,
     STUN_ATTRIBUTE_TYPE_LIFETIME = (UINT16) 0x000D,
+
     STUN_ATTRIBUTE_TYPE_XOR_PEER_ADDRESS = (UINT16) 0x0012,
     STUN_ATTRIBUTE_TYPE_DATA = (UINT16) 0x0013,
     STUN_ATTRIBUTE_TYPE_REALM = (UINT16) 0x0014,
@@ -237,8 +231,30 @@ typedef enum {
     STUN_ATTRIBUTE_TYPE_EVEN_PORT = (UINT16) 0x0018,
     STUN_ATTRIBUTE_TYPE_REQUESTED_TRANSPORT = (UINT16) 0x0019,
     STUN_ATTRIBUTE_TYPE_DONT_FRAGMENT = (UINT16) 0x001A,
-    STUN_ATTRIBUTE_TYPE_RESERVATION_TOKEN = (UINT16) 0x0022,
 
+    STUN_ATTRIBUTE_TYPE_XOR_MAPPED_ADDRESS = (UINT16) 0x0020,
+    STUN_ATTRIBUTE_TYPE_RESERVATION_TOKEN = (UINT16) 0x0022,
+    STUN_ATTRIBUTE_TYPE_PRIORITY = (UINT16) 0x0024,      //!< https://datatracker.ietf.org/doc/html/rfc8445#section-7.1.1
+                                                         //!< https://datatracker.ietf.org/doc/html/rfc8445#section-5.1.2
+    STUN_ATTRIBUTE_TYPE_USE_CANDIDATE = (UINT16) 0x0025, //!< https://datatracker.ietf.org/doc/html/rfc8445#section-7.1.2
+
+    STUN_ATTRIBUTE_TYPE_SOFTWARE = (UINT16) 0x8022,
+    STUN_ATTRIBUTE_TYPE_ALTERNATE_SERVER = (UINT16) 0x8023,
+    STUN_ATTRIBUTE_TYPE_FINGERPRINT = (UINT16) 0x8028,
+    STUN_ATTRIBUTE_TYPE_ICE_CONTROLLED = (UINT16) 0x8029,  //!< https://datatracker.ietf.org/doc/html/rfc8445#section-7.1.3
+    STUN_ATTRIBUTE_TYPE_ICE_CONTROLLING = (UINT16) 0x802A, //!< https://datatracker.ietf.org/doc/html/rfc8445#section-7.1.3
+
+    // #TBD
+    STUN_ATTRIBUTE_TYPE_NOMINATION = (UINT16) 0xC001,
+    STUN_ATTRIBUTE_TYPE_GOOG_NETWORK_INFO = (UINT16) 0xC057, //!< (network-id << 16) | network-cost.
+    STUN_ATTRIBUTE_TYPE_GOOG_LAST_ICE_CHECK_RECEIVED = (UINT16) 0xC058,
+    STUN_ATTRIBUTE_TYPE_GOOG_MISC_INFO = (UINT16) 0xC059,
+    STUN_ATTRIBUTE_TYPE_GOOG_OBSOLETE_1 = (UINT16) 0xC05A,
+    STUN_ATTRIBUTE_TYPE_GOOG_CONNECTION_ID = (UINT16) 0xC05B,
+    STUN_ATTRIBUTE_TYPE_GOOG_DELTA = (UINT16) 0xC05C,
+    STUN_ATTRIBUTE_TYPE_GOOG_DELTA_ACK = (UINT16) 0xC05D,
+    STUN_ATTRIBUTE_TYPE_GOOG_MESSAGE_INTEGRITY = (UINT16) 0xC060,
+    STUN_ATTRIBUTE_TYPE_RETRANSMIT_COUNT = (UINT16) 0xFF00,
 } STUN_ATTRIBUTE_TYPE;
 /**
  * @brief
@@ -406,7 +422,18 @@ typedef struct {
  */
 STATUS stun_serializePacket(PStunPacket pStunPacket, PBYTE password, UINT32 passwordLen, BOOL generateMessageIntegrity, BOOL generateFingerprint,
                             PBYTE pBuffer, PUINT32 pSize);
-STATUS stun_deserializePacket(PBYTE, UINT32, PBYTE, UINT32, PStunPacket*);
+/**
+ * @brief
+ *
+ * @param[in] pStunBuffer
+ * @param[in] bufferSize
+ * @param[in] password
+ * @param[in] passwordLen
+ * @param[in, out] ppStunPacket
+ *
+ * @return STATUS status of execution.
+ */
+STATUS stun_deserializePacket(PBYTE pStunBuffer, UINT32 bufferSize, PBYTE password, UINT32 passwordLen, PStunPacket* ppStunPacket);
 STATUS stun_freePacket(PStunPacket*);
 /**
  * @brief create the stun packet.

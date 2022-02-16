@@ -426,7 +426,7 @@ STATUS ice_agent_addRemoteCandidate(PIceAgent pIceAgent, PCHAR pIceCandidateStri
     pIceCandidate->state = ICE_CANDIDATE_STATE_VALID;
     pIceCandidate->iceCandidateType = iceCandidateType;
     pIceCandidate->priority = priority;
-    CHK_STATUS(doubleListInsertItemHead(pIceAgent->remoteCandidates, (UINT64) pIceCandidate));
+    CHK_STATUS(doubleListInsertItemTail(pIceAgent->remoteCandidates, (UINT64) pIceCandidate));
     freeIceCandidateIfFail = FALSE;
 
     CHK_STATUS(ice_candidate_pair_create(pIceAgent, pIceCandidate, TRUE));
@@ -589,7 +589,7 @@ STATUS ice_agent_create(PCHAR username, PCHAR password, PIceAgentCallbacks pIceA
     CHK_STATUS(doubleListCreate(&pIceAgent->localCandidates));
     CHK_STATUS(doubleListCreate(&pIceAgent->remoteCandidates));
     CHK_STATUS(doubleListCreate(&pIceAgent->pIceCandidatePairs));
-    CHK_STATUS(stackQueueCreate(&pIceAgent->triggeredCheckQueue));
+    CHK_STATUS(stackQueueCreate(&pIceAgent->pTriggeredCheckQueue));
 
     // Pre-allocate stun packets
 
@@ -720,8 +720,8 @@ STATUS ice_agent_free(PIceAgent* ppIceAgent)
         CHK_LOG_ERR(doubleListFree(pIceAgent->remoteCandidates));
     }
 
-    if (pIceAgent->triggeredCheckQueue != NULL) {
-        CHK_LOG_ERR(stackQueueFree(pIceAgent->triggeredCheckQueue));
+    if (pIceAgent->pTriggeredCheckQueue != NULL) {
+        CHK_LOG_ERR(stackQueueFree(pIceAgent->pTriggeredCheckQueue));
     }
 
     if (IS_VALID_MUTEX_VALUE(pIceAgent->lock)) {
@@ -771,7 +771,7 @@ STATUS ice_agent_validateKvsRtcConfig(PKvsRtcConfiguration pKvsRtcConfiguration)
     }
 
     if (pKvsRtcConfiguration->iceConnectionCheckPollingInterval == 0) {
-        pKvsRtcConfiguration->iceConnectionCheckPollingInterval = KVS_ICE_CONNECTION_CHECK_POLLING_INTERVAL;
+        pKvsRtcConfiguration->iceConnectionCheckPollingInterval = ICE_AGENT_TIMER_TA_DEFAULT;
     }
 
     DLOGD("\n\ticeLocalCandidateGatheringTimeout: %u ms"
@@ -858,7 +858,7 @@ STATUS ice_agent_initHostCandidate(PIceAgent pIceAgent)
             MUTEX_LOCK(pIceAgent->lock);
             locked = TRUE;
 
-            CHK_STATUS(doubleListInsertItemHead(pIceAgent->localCandidates, (UINT64) pTmpIceCandidate));
+            CHK_STATUS(doubleListInsertItemTail(pIceAgent->localCandidates, (UINT64) pTmpIceCandidate));
             CHK_STATUS(ice_candidate_pair_create(pIceAgent, pTmpIceCandidate, FALSE));
 
             MUTEX_UNLOCK(pIceAgent->lock);
@@ -952,7 +952,7 @@ static STATUS ice_agent_initSrflxCandidate(PIceAgent pIceAgent)
                     MUTEX_LOCK(pIceAgent->lock);
                     locked = TRUE;
 
-                    CHK_STATUS(doubleListInsertItemHead(pIceAgent->localCandidates, (UINT64) pNewCandidate));
+                    CHK_STATUS(doubleListInsertItemTail(pIceAgent->localCandidates, (UINT64) pNewCandidate));
 
                     MUTEX_UNLOCK(pIceAgent->lock);
                     locked = FALSE;
@@ -1036,7 +1036,7 @@ static STATUS ice_agent_initRelayCandidate(PIceAgent pIceAgent, UINT32 iceServer
     MUTEX_LOCK(pIceAgent->lock);
     locked = TRUE;
 
-    CHK_STATUS(doubleListInsertItemHead(pIceAgent->localCandidates, (UINT64) pNewCandidate));
+    CHK_STATUS(doubleListInsertItemTail(pIceAgent->localCandidates, (UINT64) pNewCandidate));
     pNewCandidate = NULL;
 
     /* add existing remote candidates to turn. Need to acquire lock because remoteCandidates can be mutated by
@@ -1510,7 +1510,7 @@ STATUS ice_agent_restart(PIceAgent pIceAgent, PCHAR localIceUfrag, PCHAR localIc
      * There is no way to tell which session a remote candidate belongs to. Old ones will eventually fail the
      * connectivity test so it's ok. */
 
-    CHK_STATUS(stackQueueClear(pIceAgent->triggeredCheckQueue, FALSE));
+    CHK_STATUS(stackQueueClear(pIceAgent->pTriggeredCheckQueue, FALSE));
 
     ATOMIC_STORE_BOOL(&pIceAgent->remoteCredentialReceived, FALSE);
     ATOMIC_STORE_BOOL(&pIceAgent->agentStartGathering, FALSE);
@@ -1850,6 +1850,39 @@ CleanUp:
     return retStatus;
 }
 
+STATUS ice_candidate_pair_calculateOrdinaryCheckRto(PIceAgent pIceAgent, PINT64 pRtoSlot)
+{
+    ICE_AGENT_ENTRY();
+
+    STATUS retStatus = STATUS_SUCCESS;
+    PDoubleListNode pCurNode = NULL;
+    PIceCandidatePair pIceCandidatePair = NULL;
+    INT64 rtoSlot = 0;
+
+    CHK(pIceAgent != NULL, STATUS_ICE_AGENT_NULL_ARG);
+
+    CHK_STATUS(doubleListGetHeadNode(pIceAgent->pIceCandidatePairs, &pCurNode));
+    while (pCurNode != NULL) {
+        pIceCandidatePair = (PIceCandidatePair) pCurNode->data;
+        pCurNode = pCurNode->pNext;
+
+        switch (pIceCandidatePair->state) {
+            case ICE_CANDIDATE_PAIR_STATE_WAITING:
+            case ICE_CANDIDATE_PAIR_STATE_IN_PROGRESS:
+                rtoSlot++;
+                break;
+            default:
+                break;
+        }
+    }
+CleanUp:
+
+    CHK_LOG_ERR(retStatus);
+    *pRtoSlot = rtoSlot;
+    ICE_AGENT_LEAVE();
+    return retStatus;
+}
+
 STATUS ice_candidate_pair_create(PIceAgent pIceAgent, PIceCandidate pIceCandidate, BOOL isRemoteCandidate)
 {
     ICE_AGENT_ENTRY();
@@ -1893,7 +1926,7 @@ STATUS ice_candidate_pair_create(PIceAgent pIceAgent, PIceCandidate pIceCandidat
 
             // ensure the new pair will go through connectivity check as soon as possible
             pIceCandidatePair->state = ICE_CANDIDATE_PAIR_STATE_WAITING;
-
+            CHK_STATUS(ice_candidate_pair_calculateOrdinaryCheckRto(pIceAgent, &pIceCandidatePair->rtoSlot));
             CHK_STATUS(transaction_id_store_create(DEFAULT_MAX_STORED_TRANSACTION_ID_COUNT, &pIceCandidatePair->pTransactionIdStore));
             CHK_STATUS(hashTableCreateWithParams(ICE_HASH_TABLE_BUCKET_COUNT, ICE_HASH_TABLE_BUCKET_LENGTH, &pIceCandidatePair->requestSentTime));
 
@@ -1909,6 +1942,7 @@ STATUS ice_candidate_pair_create(PIceAgent pIceAgent, PIceCandidate pIceCandidat
             pIceCandidatePair->priority = ice_candidate_pair_computePriority(pIceCandidatePair, pIceAgent->isControlling);
             pIceCandidatePair->rtcIceCandidatePairDiagnostics.totalRoundTripTime = 0.0;
             pIceCandidatePair->rtcIceCandidatePairDiagnostics.currentRoundTripTime = 0.0;
+
             // Set data sending ICE candidate pair stats
             NULLABLE_SET_EMPTY(pIceCandidatePair->rtcIceCandidatePairDiagnostics.circuitBreakerTriggerCount);
             CHK_STATUS(ice_candidate_pair_insert(pIceAgent->pIceCandidatePairs, pIceCandidatePair));
@@ -2086,6 +2120,8 @@ STATUS ice_candidate_pair_checkConnection(PStunPacket pStunBindingRequest, PIceA
                                         (UINT32) STRLEN(pIceAgent->remotePassword) * SIZEOF(CHAR), pIceAgent, pIceCandidatePair->local,
                                         &pIceCandidatePair->remote->ipAddress));
 
+    CHK_STATUS(ice_candidate_pair_calculateOrdinaryCheckRto(pIceAgent, &pIceCandidatePair->rtoSlot));
+    pIceCandidatePair->rtoSlot = MAX(ICE_AGENT_TIMER_RTO_MAX, pIceCandidatePair->rtoSlot);
     pIceCandidatePair->rtcIceCandidatePairDiagnostics.lastRequestTimestamp = GETTIME();
     pIceCandidatePair->rtcIceCandidatePairDiagnostics.requestsSent++;
 CleanUp:
@@ -2112,29 +2148,25 @@ STATUS ice_agent_checkCandidatePairConnection(PIceAgent pIceAgent)
     MUTEX_LOCK(pIceAgent->lock);
     locked = TRUE;
 
-    CHK_STATUS(stackQueueIsEmpty(pIceAgent->triggeredCheckQueue, &triggeredCheckQueueEmpty));
-    if (!triggeredCheckQueueEmpty) {
-        // if triggeredCheckQueue is not empty, check its candidate pair first
-        stackQueueDequeue(pIceAgent->triggeredCheckQueue, &data);
-        pIceCandidatePair = (PIceCandidatePair) data;
+    CHK_STATUS(stackQueueIsEmpty(pIceAgent->pTriggeredCheckQueue, &triggeredCheckQueueEmpty));
 
+    // The original desgin of linux based webrtc sdk does not control the throughput of the outbound packets, and does not follow the rfc8445 either.
+    // triggered connectivity check.
+    if (!triggeredCheckQueueEmpty) {
+        // if pTriggeredCheckQueue is not empty, check its candidate pair first
+        stackQueueDequeue(pIceAgent->pTriggeredCheckQueue, &data);
+        pIceCandidatePair = (PIceCandidatePair) data;
         CHK_STATUS(ice_candidate_pair_checkConnection(pIceAgent->pBindingRequest, pIceAgent, pIceCandidatePair));
     } else {
+        // ordinary connectivity check.
         // the triggered queue is empty.
         CHK_STATUS(doubleListGetHeadNode(pIceAgent->pIceCandidatePairs, &pCurNode));
         while (pCurNode != NULL) {
             pIceCandidatePair = (PIceCandidatePair) pCurNode->data;
             pCurNode = pCurNode->pNext;
-
-            switch (pIceCandidatePair->state) {
-                case ICE_CANDIDATE_PAIR_STATE_WAITING:
-                    pIceCandidatePair->state = ICE_CANDIDATE_PAIR_STATE_IN_PROGRESS;
-                    // NOTE: Explicit fall-through
-                case ICE_CANDIDATE_PAIR_STATE_IN_PROGRESS:
-                    CHK_STATUS(ice_candidate_pair_checkConnection(pIceAgent->pBindingRequest, pIceAgent, pIceCandidatePair));
-                    break;
-                default:
-                    break;
+            pIceCandidatePair->rtoSlot--;
+            if (pIceCandidatePair->rtoSlot < 0) {
+                CHK_STATUS(ice_candidate_pair_checkConnection(pIceAgent->pBindingRequest, pIceAgent, pIceCandidatePair));
             }
         }
     }
@@ -2373,7 +2405,7 @@ STATUS ice_agent_handleInboundStunPacket(PIceAgent pIceAgent, PBYTE pBuffer, UIN
             // before we receive the answer.
             CHK_STATUS(
                 ice_candidate_pair_queryByLocalSocketConnectionAndRemoteAddr(pIceAgent, pSocketConnection, pSrcAddr, TRUE, &pIceCandidatePair));
-            CHK(pIceCandidatePair != NULL, retStatus);
+            CHK(pIceCandidatePair != NULL, STATUS_ICE_AGENT_NO_MATCH_ICE_CANDIDATE_PAIR);
 
             if (!pIceCandidatePair->nominated) {
                 CHK_STATUS(stun_attribute_getByType(pStunPacket, STUN_ATTRIBUTE_TYPE_USE_CANDIDATE, &pStunAttr));
@@ -2387,7 +2419,15 @@ STATUS ice_agent_handleInboundStunPacket(PIceAgent pIceAgent, PBYTE pBuffer, UIN
             // schedule a connectivity check for the pair
             if (pIceCandidatePair->state == ICE_CANDIDATE_PAIR_STATE_FROZEN || pIceCandidatePair->state == ICE_CANDIDATE_PAIR_STATE_WAITING ||
                 pIceCandidatePair->state == ICE_CANDIDATE_PAIR_STATE_IN_PROGRESS) {
-                CHK_STATUS(stackQueueEnqueue(pIceAgent->triggeredCheckQueue, (UINT64) pIceCandidatePair));
+                PIceCandidatePair pHeadPair = NULL;
+                // do not exit if there is an error.
+                stackQueuePeek(pIceAgent->pTriggeredCheckQueue, (PUINT64) &pHeadPair);
+                if (pHeadPair != NULL) {
+                    if (pHeadPair->priority < pIceCandidatePair->priority) {
+                        DLOGW("the priority of triggered check queue may be reverse.");
+                    }
+                }
+                CHK_STATUS(stackQueueEnqueue(pIceAgent->pTriggeredCheckQueue, (UINT64) pIceCandidatePair));
             }
 
             if (pIceCandidatePair == pIceAgent->pDataSendingIceCandidatePair) {
@@ -2581,7 +2621,6 @@ STATUS ice_agent_handleInboundData(UINT64 customData, PSocketConnection pSocketC
                 .packetsReceived++; // Since every byte buffer translates to a single RTP packet
         }
     } else {
-        // DLOGD("%s", __func__);
         if (ATOMIC_LOAD_BOOL(&pIceAgent->processStun)) {
             CHK_STATUS(ice_agent_handleInboundStunPacket(pIceAgent, pBuffer, bufferLen, pSocketConnection, pSrc, pDest));
         }

@@ -1123,7 +1123,7 @@ PUBLIC_API STATUS peerConnectionOnDataChannel(PRtcPeerConnection, UINT64, RtcOnD
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS peerConnectionOnConnectionStateChange(PRtcPeerConnection, UINT64, RtcOnConnectionStateChange);
+PUBLIC_API STATUS peer_connection_onConnectionStateChange(PRtcPeerConnection, UINT64, RtcOnConnectionStateChange);
 
 /**
  * Load the sdp field of PRtcSessionDescriptionInit with pending or current local session description
@@ -1278,7 +1278,7 @@ PUBLIC_API STATUS peer_connection_close(PRtcPeerConnection);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS addTransceiver(PRtcPeerConnection, PRtcMediaStreamTrack, PRtcRtpTransceiverInit, PRtcRtpTransceiver*);
+PUBLIC_API STATUS peer_connection_addTransceiver(PRtcPeerConnection, PRtcMediaStreamTrack, PRtcRtpTransceiverInit, PRtcRtpTransceiver*);
 
 /**
  * @brief Set a callback for transceiver frame

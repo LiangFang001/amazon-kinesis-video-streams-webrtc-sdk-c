@@ -18,7 +18,7 @@
 #include "logger.h"
 #include "time_port.h"
 
-static volatile SIZE_T gLoggerLogLevel = LOG_LEVEL_WARN;
+static volatile SIZE_T gLoggerLogLevel = LOG_LEVEL_DEBUG;
 
 PCHAR getLogLevelStr(UINT32 loglevel)
 {

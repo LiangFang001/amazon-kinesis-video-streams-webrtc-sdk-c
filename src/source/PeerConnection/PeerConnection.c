@@ -714,7 +714,7 @@ CleanUp:
 }
 
 #ifdef ENABLE_STREAMING
-STATUS rtcpReportsCallback(UINT32 timerId, UINT64 currentTime, UINT64 customData)
+STATUS peer_connection_rtcpReportsCallback(UINT32 timerId, UINT64 currentTime, UINT64 customData)
 {
     UNUSED_PARAM(timerId);
     STATUS retStatus = STATUS_SUCCESS;
@@ -730,7 +730,7 @@ STATUS rtcpReportsCallback(UINT32 timerId, UINT64 currentTime, UINT64 customData
     pKvsPeerConnection = pKvsRtpTransceiver->pKvsPeerConnection;
 
     ssrc = pKvsRtpTransceiver->sender.ssrc;
-    DLOGS("rtcpReportsCallback %" PRIu64 " ssrc: %u rtxssrc: %u", currentTime, ssrc, pKvsRtpTransceiver->sender.rtxSsrc);
+    DLOGS("peer_connection_rtcpReportsCallback %" PRIu64 " ssrc: %u rtxssrc: %u", currentTime, ssrc, pKvsRtpTransceiver->sender.rtxSsrc);
 
     // check if ice agent is connected, reschedule in 200msec if not
     ready = pKvsPeerConnection->pSrtpSession != NULL &&
@@ -771,7 +771,7 @@ STATUS rtcpReportsCallback(UINT32 timerId, UINT64 currentTime, UINT64 customData
     DLOGS("next sender report %u in %" PRIu64 " msec", ssrc, delay);
     // reschedule timer with 200msec +- 100ms
     CHK_STATUS(timer_queue_addTimer(pKvsPeerConnection->timerQueueHandle, delay * HUNDREDS_OF_NANOS_IN_A_MILLISECOND,
-                                    TIMER_QUEUE_SINGLE_INVOCATION_PERIOD, rtcpReportsCallback, (UINT64) pKvsRtpTransceiver,
+                                    TIMER_QUEUE_SINGLE_INVOCATION_PERIOD, peer_connection_rtcpReportsCallback, (UINT64) pKvsRtpTransceiver,
                                     &pKvsRtpTransceiver->rtcpReportsTimerId));
 
 CleanUp:
@@ -989,8 +989,8 @@ CleanUp:
 }
 #endif
 
-STATUS peerConnectionOnConnectionStateChange(PRtcPeerConnection pRtcPeerConnection, UINT64 customData,
-                                             RtcOnConnectionStateChange rtcOnConnectionStateChange)
+STATUS peer_connection_onConnectionStateChange(PRtcPeerConnection pRtcPeerConnection, UINT64 customData,
+                                               RtcOnConnectionStateChange rtcOnConnectionStateChange)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -1254,8 +1254,8 @@ CleanUp:
 }
 
 #ifdef ENABLE_STREAMING
-STATUS addTransceiver(PRtcPeerConnection pPeerConnection, PRtcMediaStreamTrack pRtcMediaStreamTrack, PRtcRtpTransceiverInit pRtcRtpTransceiverInit,
-                      PRtcRtpTransceiver* ppRtcRtpTransceiver)
+STATUS peer_connection_addTransceiver(PRtcPeerConnection pPeerConnection, PRtcMediaStreamTrack pRtcMediaStreamTrack,
+                                      PRtcRtpTransceiverInit pRtcRtpTransceiverInit, PRtcRtpTransceiver* ppRtcRtpTransceiver)
 {
     UNUSED_PARAM(pRtcRtpTransceiverInit);
     ENTERS();
@@ -1314,7 +1314,7 @@ STATUS addTransceiver(PRtcPeerConnection pPeerConnection, PRtcMediaStreamTrack p
     *ppRtcRtpTransceiver = (PRtcRtpTransceiver) pKvsRtpTransceiver;
 
     CHK_STATUS(timer_queue_addTimer(pKvsPeerConnection->timerQueueHandle, RTCP_FIRST_REPORT_DELAY, TIMER_QUEUE_SINGLE_INVOCATION_PERIOD,
-                                    rtcpReportsCallback, (UINT64) pKvsRtpTransceiver, &pKvsRtpTransceiver->rtcpReportsTimerId));
+                                    peer_connection_rtcpReportsCallback, (UINT64) pKvsRtpTransceiver, &pKvsRtpTransceiver->rtcpReportsTimerId));
 
     pKvsRtpTransceiver = NULL;
 

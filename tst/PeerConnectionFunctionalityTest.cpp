@@ -63,8 +63,8 @@ TEST_F(PeerConnectionFunctionalityTest, connectTwoPeersWithDelay)
         }
     };
 
-    EXPECT_EQ(STATUS_SUCCESS, peerConnectionOnConnectionStateChange(offerPc, (UINT64) &connectedCount, onICEConnectionStateChangeHdlr));
-    EXPECT_EQ(STATUS_SUCCESS, peerConnectionOnConnectionStateChange(answerPc, (UINT64) &connectedCount, onICEConnectionStateChangeHdlr));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_onConnectionStateChange(offerPc, (UINT64) &connectedCount, onICEConnectionStateChangeHdlr));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_onConnectionStateChange(answerPc, (UINT64) &connectedCount, onICEConnectionStateChangeHdlr));
 
     EXPECT_EQ(STATUS_SUCCESS, createOffer(offerPc, &sdp));
     EXPECT_EQ(STATUS_SUCCESS, peer_connection_setLocalDescription(offerPc, &sdp));
@@ -314,8 +314,8 @@ TEST_F(PeerConnectionFunctionalityTest, shutdownTurnDueToP2PFoundAfterTurnEstabl
         ATOMIC_INCREMENT((PSIZE_T) customData + newState);
     };
 
-    EXPECT_EQ(peerConnectionOnConnectionStateChange(offerPc, (UINT64) this->stateChangeCount, onICEConnectionStateChangeHdlr), STATUS_SUCCESS);
-    EXPECT_EQ(peerConnectionOnConnectionStateChange(answerPc, (UINT64) this->stateChangeCount, onICEConnectionStateChangeHdlr), STATUS_SUCCESS);
+    EXPECT_EQ(peer_connection_onConnectionStateChange(offerPc, (UINT64) this->stateChangeCount, onICEConnectionStateChangeHdlr), STATUS_SUCCESS);
+    EXPECT_EQ(peer_connection_onConnectionStateChange(answerPc, (UINT64) this->stateChangeCount, onICEConnectionStateChangeHdlr), STATUS_SUCCESS);
 
     // start gathering candidates
     EXPECT_EQ(peer_connection_setLocalDescription(offerPc, &sdp), STATUS_SUCCESS);

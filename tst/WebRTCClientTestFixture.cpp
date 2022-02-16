@@ -204,8 +204,8 @@ bool WebRtcClientTestBase::connectTwoPeers(PRtcPeerConnection offerPc, PRtcPeerC
         ATOMIC_INCREMENT((PSIZE_T) customData + newState);
     };
 
-    EXPECT_EQ(STATUS_SUCCESS, peerConnectionOnConnectionStateChange(offerPc, (UINT64) this->stateChangeCount, onICEConnectionStateChangeHdlr));
-    EXPECT_EQ(STATUS_SUCCESS, peerConnectionOnConnectionStateChange(answerPc, (UINT64) this->stateChangeCount, onICEConnectionStateChangeHdlr));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_onConnectionStateChange(offerPc, (UINT64) this->stateChangeCount, onICEConnectionStateChangeHdlr));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_onConnectionStateChange(answerPc, (UINT64) this->stateChangeCount, onICEConnectionStateChangeHdlr));
 
     EXPECT_EQ(STATUS_SUCCESS, createOffer(offerPc, &sdp));
     EXPECT_EQ(STATUS_SUCCESS, peer_connection_setLocalDescription(offerPc, &sdp));
@@ -244,7 +244,7 @@ void WebRtcClientTestBase::addTrackToPeerConnection(PRtcPeerConnection pRtcPeerC
     EXPECT_EQ(STATUS_SUCCESS, json_generateSafeString(track->streamId, MAX_MEDIA_STREAM_ID_LEN));
     EXPECT_EQ(STATUS_SUCCESS, json_generateSafeString(track->trackId, MAX_MEDIA_STREAM_ID_LEN));
 
-    EXPECT_EQ(STATUS_SUCCESS, addTransceiver(pRtcPeerConnection, track, NULL, transceiver));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_addTransceiver(pRtcPeerConnection, track, NULL, transceiver));
 }
 
 STATUS awaitGetIceConfigInfoCount(SIGNALING_CLIENT_HANDLE signalingClientHandle, PUINT32 pIceConfigInfoCount)

@@ -424,7 +424,7 @@ STATUS createSampleStreamingSession(PSampleConfiguration pSampleConfiguration, P
     CHK_STATUS(initializePeerConnection(pSampleConfiguration, &pSampleStreamingSession->pPeerConnection));
     CHK_STATUS(peerConnectionOnIceCandidate(pSampleStreamingSession->pPeerConnection, (UINT64) pSampleStreamingSession, onIceCandidateHandler));
     CHK_STATUS(
-        peerConnectionOnConnectionStateChange(pSampleStreamingSession->pPeerConnection, (UINT64) pSampleStreamingSession, onConnectionStateChange));
+        peer_connection_onConnectionStateChange(pSampleStreamingSession->pPeerConnection, (UINT64) pSampleStreamingSession, onConnectionStateChange));
 #ifdef ENABLE_DATA_CHANNEL
     if (pSampleConfiguration->onDataChannel != NULL) {
         CHK_STATUS(peerConnectionOnDataChannel(pSampleStreamingSession->pPeerConnection, (UINT64) pSampleStreamingSession,
@@ -442,7 +442,8 @@ STATUS createSampleStreamingSession(PSampleConfiguration pSampleConfiguration, P
     pVideoTrack->codec = RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE;
     STRCPY(pVideoTrack->streamId, "myKvsVideoStream");
     STRCPY(pVideoTrack->trackId, "myVideoTrack");
-    CHK_STATUS(addTransceiver(pSampleStreamingSession->pPeerConnection, pVideoTrack, NULL, &pSampleStreamingSession->pVideoRtcRtpTransceiver));
+    CHK_STATUS(peer_connection_addTransceiver(pSampleStreamingSession->pPeerConnection, pVideoTrack, NULL,
+                                              &pSampleStreamingSession->pVideoRtcRtpTransceiver));
 
     CHK_STATUS(transceiverOnBandwidthEstimation(pSampleStreamingSession->pVideoRtcRtpTransceiver, (UINT64) pSampleStreamingSession,
                                                 sampleBandwidthEstimationHandler));
@@ -452,7 +453,8 @@ STATUS createSampleStreamingSession(PSampleConfiguration pSampleConfiguration, P
     pAudioTrack->codec = RTC_CODEC_OPUS;
     STRCPY(pAudioTrack->streamId, "myKvsVideoStream");
     STRCPY(pAudioTrack->trackId, "myAudioTrack");
-    CHK_STATUS(addTransceiver(pSampleStreamingSession->pPeerConnection, pAudioTrack, NULL, &pSampleStreamingSession->pAudioRtcRtpTransceiver));
+    CHK_STATUS(peer_connection_addTransceiver(pSampleStreamingSession->pPeerConnection, pAudioTrack, NULL,
+                                              &pSampleStreamingSession->pAudioRtcRtpTransceiver));
 
     CHK_STATUS(transceiverOnBandwidthEstimation(pSampleStreamingSession->pAudioRtcRtpTransceiver, (UINT64) pSampleStreamingSession,
                                                 sampleBandwidthEstimationHandler));

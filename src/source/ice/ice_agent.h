@@ -53,7 +53,8 @@ extern "C" {
 #define KVS_ICE_SHORT_CHECK_DELAY                (50 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND)
 
 // Ta in https://tools.ietf.org/html/rfc8445
-#define KVS_ICE_CONNECTION_CHECK_POLLING_INTERVAL  500 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND
+#define ICE_AGENT_TIMER_TA_DEFAULT                 50 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND
+#define ICE_AGENT_TIMER_RTO_MAX                    (500 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND / ICE_AGENT_TIMER_TA_DEFAULT)
 #define KVS_ICE_STATE_READY_TIMER_POLLING_INTERVAL 1 * HUNDREDS_OF_NANOS_IN_A_SECOND
 /* Control the calling rate of iceCandidateGatheringTimerTask. Can affect STUN TURN candidate gathering time */
 #define KVS_ICE_GATHER_CANDIDATE_TIMER_POLLING_INTERVAL 50 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND
@@ -211,6 +212,7 @@ typedef struct {
     PHashTable requestSentTime; //!< for the stat
     UINT64 roundTripTime;
     UINT64 responsesReceived;
+    INT64 rtoSlot;
     RtcIceCandidatePairDiagnostics rtcIceCandidatePairDiagnostics;
 } IceCandidatePair, *PIceCandidatePair;
 
@@ -242,7 +244,7 @@ struct __IceAgent {
     // this is the connection-check requested by the remote peer.
     // https://tools.ietf.org/html/rfc5245#section-5.8
     // https://tools.ietf.org/html/rfc5245#section-7.2.1.4
-    PStackQueue triggeredCheckQueue;
+    PStackQueue pTriggeredCheckQueue;
     PDoubleList pIceCandidatePairs; //!< the ice candidate pairs.
 
     PConnectionListener pConnectionListener;

@@ -297,6 +297,8 @@ extern "C" {
 #define STATUS_ICE_AGENT_NO_CANDIDATE_PAIR                     STATUS_ICE_AGENT_BASE + 0x00000012
 #define STATUS_ICE_AGENT_NO_MATCH_TRANSACTION                  STATUS_ICE_AGENT_BASE + 0x00000013
 #define STATUS_ICE_AGENT_NO_MATCH_ATTR                         STATUS_ICE_AGENT_BASE + 0x00000014
+#define STATUS_ICE_AGENT_NO_MATCH_ICE_CANDIDATE_PAIR           STATUS_ICE_AGENT_BASE + 0x00000015
+
 /******************************************************************************
  * ICE fsm error codes
  ******************************************************************************/

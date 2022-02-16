@@ -18,17 +18,17 @@ class RtcpFunctionalityTest : public WebRtcClientTestBase {
         RtcConfiguration config{};
         EXPECT_EQ(STATUS_SUCCESS, peer_connection_create(&config, &pRtcPeerConnection));
         pKvsPeerConnection = reinterpret_cast<PKvsPeerConnection>(pRtcPeerConnection);
-        pRtcRtpTransceiver = addTransceiver(ssrc);
+        pRtcRtpTransceiver = peer_connection_addTransceiver(ssrc);
         pKvsRtpTransceiver = reinterpret_cast<PKvsRtpTransceiver>(pRtcRtpTransceiver);
         return STATUS_SUCCESS;
     }
 
-    PRtcRtpTransceiver addTransceiver(UINT32 ssrc)
+    PRtcRtpTransceiver peer_connection_addTransceiver(UINT32 ssrc)
     {
         RtcMediaStreamTrack track{};
         track.codec = RTC_CODEC_VP8;
         PRtcRtpTransceiver out = nullptr;
-        EXPECT_EQ(STATUS_SUCCESS, ::addTransceiver(pRtcPeerConnection, &track, nullptr, &out));
+        EXPECT_EQ(STATUS_SUCCESS, ::peer_connection_addTransceiver(pRtcPeerConnection, &track, nullptr, &out));
         ((PKvsRtpTransceiver) out)->sender.ssrc = ssrc;
         return out;
     }
@@ -192,7 +192,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpPacketCompoundSenderReport)
 
     //added two transceivers to test correct transceiver stats in getRtpRemoteInboundStats
     initTransceiver(4242); // fake transceiver
-    auto t = addTransceiver(1577872978); // real transceiver
+    auto t = peer_connection_addTransceiver(1577872978); // real transceiver
 
     EXPECT_EQ(STATUS_SUCCESS, rtcp_onPacket(pKvsPeerConnection, rawpacket, rawpacketSize));
 
@@ -260,7 +260,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpRembCalled)
 
     EXPECT_EQ(STATUS_SUCCESS, setRtcpPacketFromBytes(multipleSSRC, ARRAY_SIZE(multipleSSRC), &rtcpPacket));
     initTransceiver(0x42424242);
-    PRtcRtpTransceiver transceiver43 = addTransceiver(0x43);
+    PRtcRtpTransceiver transceiver43 = peer_connection_addTransceiver(0x43);
 
     BOOL onBandwidthCalled42 = FALSE;
     BOOL onBandwidthCalled43 = FALSE;
