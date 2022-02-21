@@ -60,9 +60,9 @@ STATUS resendPacketOnNack(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerCo
     CHK(pKvsPeerConnection != NULL && pRtcpPacket != NULL, STATUS_NULL_ARG);
     CHK_STATUS(rtcpNackListGet(pRtcpPacket->payload, pRtcpPacket->payloadLength, &senderSsrc, &receiverSsrc, NULL, &filledLen));
 
-    tmpStatus = findTransceiverBySsrc(pKvsPeerConnection, &pSenderTranceiver, receiverSsrc);
+    tmpStatus = rtp_transceiver_findBySsrc(pKvsPeerConnection, &pSenderTranceiver, receiverSsrc);
     if (STATUS_NOT_FOUND == tmpStatus) {
-        CHK_STATUS_ERR(findTransceiverBySsrc(pKvsPeerConnection, &pSenderTranceiver, senderSsrc), STATUS_RTCP_INPUT_SSRC_INVALID,
+        CHK_STATUS_ERR(rtp_transceiver_findBySsrc(pKvsPeerConnection, &pSenderTranceiver, senderSsrc), STATUS_RTCP_INPUT_SSRC_INVALID,
                        "Receiving NACK for non existing ssrcs: senderSsrc %lu receiverSsrc %lu", senderSsrc, receiverSsrc);
     }
     CHK_STATUS(tmpStatus);
@@ -78,10 +78,10 @@ STATUS resendPacketOnNack(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerCo
     CHK_STATUS(rtcpNackListGet(pRtcpPacket->payload, pRtcpPacket->payloadLength, &senderSsrc, &receiverSsrc, pRetransmitter->sequenceNumberList,
                                &filledLen));
     validIndexListLen = pRetransmitter->validIndexListLen;
-    CHK_STATUS(rtpRollingBufferGetValidSeqIndexList(pSenderTranceiver->sender.packetBuffer, pRetransmitter->sequenceNumberList, filledLen,
-                                                    pRetransmitter->validIndexList, &validIndexListLen));
+    CHK_STATUS(rtp_rolling_buffer_getValidSeqIndexList(pSenderTranceiver->sender.packetBuffer, pRetransmitter->sequenceNumberList, filledLen,
+                                                       pRetransmitter->validIndexList, &validIndexListLen));
     for (index = 0; index < validIndexListLen; index++) {
-        retStatus = rollingBufferExtractData(pSenderTranceiver->sender.packetBuffer->pRollingBuffer, pRetransmitter->validIndexList[index], &item);
+        retStatus = rolling_buffer_extractData(pSenderTranceiver->sender.packetBuffer->pRollingBuffer, pRetransmitter->validIndexList[index], &item);
         pRtpPacket = (PRtpPacket) item;
         CHK(retStatus == STATUS_SUCCESS, retStatus);
 
@@ -93,7 +93,7 @@ STATUS resendPacketOnNack(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerCo
                     pRtpPacket->pRawPacket, pRtpPacket->rawPacketLength, pSenderTranceiver->sender.rtxSequenceNumber,
                     pSenderTranceiver->sender.rtxPayloadType, pSenderTranceiver->sender.rtxSsrc, &pRtxRtpPacket));
                 pSenderTranceiver->sender.rtxSequenceNumber++;
-                retStatus = writeRtpPacket(pKvsPeerConnection, pRtxRtpPacket);
+                retStatus = rtp_writePacket(pKvsPeerConnection, pRtxRtpPacket);
             }
             // resendPacket
             if (STATUS_SUCCEEDED(retStatus)) {
@@ -105,7 +105,7 @@ STATUS resendPacketOnNack(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerCo
             }
             // putBackPacketToRollingBuffer
             retStatus =
-                rollingBufferInsertData(pSenderTranceiver->sender.packetBuffer->pRollingBuffer, pRetransmitter->sequenceNumberList[index], item);
+                rolling_buffer_insertData(pSenderTranceiver->sender.packetBuffer->pRollingBuffer, pRetransmitter->sequenceNumberList[index], item);
             CHK(retStatus == STATUS_SUCCESS || retStatus == STATUS_ROLLING_BUFFER_NOT_IN_RANGE, retStatus);
 
             // free the packet if it is not in the valid range any more

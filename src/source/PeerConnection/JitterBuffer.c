@@ -3,8 +3,8 @@
 
 #include "JitterBuffer.h"
 
-STATUS createJitterBuffer(FrameReadyFunc onFrameReadyFunc, FrameDroppedFunc onFrameDroppedFunc, DepayRtpPayloadFunc depayRtpPayloadFunc,
-                          UINT32 maxLatency, UINT32 clockRate, UINT64 customData, PJitterBuffer* ppJitterBuffer)
+STATUS jitter_buffer_create(FrameReadyFunc onFrameReadyFunc, FrameDroppedFunc onFrameDroppedFunc, DepayRtpPayloadFunc depayRtpPayloadFunc,
+                            UINT32 maxLatency, UINT32 clockRate, UINT64 customData, PJitterBuffer* ppJitterBuffer)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -38,7 +38,7 @@ STATUS createJitterBuffer(FrameReadyFunc onFrameReadyFunc, FrameDroppedFunc onFr
 
 CleanUp:
     if (STATUS_FAILED(retStatus) && pJitterBuffer != NULL) {
-        freeJitterBuffer(&pJitterBuffer);
+        jitter_buffer_free(&pJitterBuffer);
         pJitterBuffer = NULL;
     }
 
@@ -50,7 +50,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeJitterBuffer(PJitterBuffer* ppJitterBuffer)
+STATUS jitter_buffer_free(PJitterBuffer* ppJitterBuffer)
 {
     ENTERS();
 
@@ -58,7 +58,7 @@ STATUS freeJitterBuffer(PJitterBuffer* ppJitterBuffer)
     PJitterBuffer pJitterBuffer = NULL;
 
     CHK(ppJitterBuffer != NULL, STATUS_NULL_ARG);
-    // freeJitterBuffer is idempotent
+    // jitter_buffer_free is idempotent
     CHK(*ppJitterBuffer != NULL, retStatus);
 
     pJitterBuffer = *ppJitterBuffer;

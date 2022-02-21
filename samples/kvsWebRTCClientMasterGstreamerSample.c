@@ -77,10 +77,10 @@ GstFlowReturn on_new_sample(GstElement* sink, gpointer data, UINT64 trackid)
                 frame.decodingTs = frame.presentationTs;
                 pSampleStreamingSession->videoTimestamp += SAMPLE_VIDEO_FRAME_DURATION; // assume video fps is 30
             }
-            status = writeFrame(pRtcRtpTransceiver, &frame);
+            status = rtp_writeFrame(pRtcRtpTransceiver, &frame);
             if (status != STATUS_SRTP_NOT_READY_YET && status != STATUS_SUCCESS) {
 #ifdef VERBOSE
-                printf("writeFrame() failed with 0x%08x", status);
+                printf("rtp_writeFrame() failed with 0x%08x", status);
 #endif
             }
         }
@@ -294,7 +294,7 @@ PVOID receiveGstreamerAudioVideo(PVOID args)
         goto CleanUp;
     }
 
-    transceiverOnFrame(pSampleStreamingSession->pAudioRtcRtpTransceiver, (UINT64) appsrcAudio, onGstAudioFrameReady);
+    rtp_transceiver_onFrame(pSampleStreamingSession->pAudioRtcRtpTransceiver, (UINT64) appsrcAudio, onGstAudioFrameReady);
 
     retStatus = streamingSessionOnShutdown(pSampleStreamingSession, (UINT64) appsrcAudio, onSampleStreamingSessionShutdown);
     if (retStatus != STATUS_SUCCESS) {
@@ -415,9 +415,9 @@ INT32 main(INT32 argc, CHAR* argv[])
 
     strcpy(pSampleConfiguration->clientInfo.clientId, SAMPLE_MASTER_CLIENT_ID);
 
-    retStatus = signalingClientCreate(&pSampleConfiguration->clientInfo, &pSampleConfiguration->channelInfo,
-                                          &pSampleConfiguration->signalingClientCallbacks, pSampleConfiguration->pCredentialProvider,
-                                          &pSampleConfiguration->signalingClientHandle);
+    retStatus =
+        signalingClientCreate(&pSampleConfiguration->clientInfo, &pSampleConfiguration->channelInfo, &pSampleConfiguration->signalingClientCallbacks,
+                              pSampleConfiguration->pCredentialProvider, &pSampleConfiguration->signalingClientHandle);
     if (retStatus != STATUS_SUCCESS) {
         printf("[KVS GStreamer Master] signalingClientCreate(): operation returned status code: 0x%08x \n", retStatus);
     }

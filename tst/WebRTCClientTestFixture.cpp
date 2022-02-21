@@ -123,7 +123,7 @@ VOID WebRtcClientTestBase::initializeJitterBuffer(UINT32 expectedFrameCount, UIN
 {
     UINT32 i, timestamp;
     EXPECT_EQ(STATUS_SUCCESS,
-              createJitterBuffer(testFrameReadyFunc, testFrameDroppedFunc, testDepayRtpFunc, DEFAULT_JITTER_BUFFER_MAX_LATENCY,
+              jitter_buffer_create(testFrameReadyFunc, testFrameDroppedFunc, testDepayRtpFunc, DEFAULT_JITTER_BUFFER_MAX_LATENCY,
                                  TEST_JITTER_BUFFER_CLOCK_RATE, (UINT64) this, &mJitterBuffer));
     mExpectedFrameCount = expectedFrameCount;
     mFrame = NULL;
@@ -157,7 +157,7 @@ VOID WebRtcClientTestBase::setPayloadToFree()
 VOID WebRtcClientTestBase::clearJitterBufferForTest()
 {
     UINT32 i;
-    EXPECT_EQ(STATUS_SUCCESS, freeJitterBuffer(&mJitterBuffer));
+    EXPECT_EQ(STATUS_SUCCESS, jitter_buffer_free(&mJitterBuffer));
     if (mExpectedFrameCount > 0) {
         for (i = 0; i < mExpectedFrameCount; i++) {
             MEMFREE(mPExpectedFrameArr[i]);
@@ -237,7 +237,7 @@ void WebRtcClientTestBase::addTrackToPeerConnection(PRtcPeerConnection pRtcPeerC
 {
     MEMSET(track, 0x00, SIZEOF(RtcMediaStreamTrack));
 
-    EXPECT_EQ(STATUS_SUCCESS, addSupportedCodec(pRtcPeerConnection, codec));
+    EXPECT_EQ(STATUS_SUCCESS, peer_connection_addSupportedCodec(pRtcPeerConnection, codec));
 
     track->kind = kind;
     track->codec = codec;

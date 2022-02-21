@@ -434,8 +434,9 @@ STATUS createSampleStreamingSession(PSampleConfiguration pSampleConfiguration, P
 
     // Declare that we support H264,Profile=42E01F,level-asymmetry-allowed=1,packetization-mode=1 and Opus
 #ifdef ENABLE_STREAMING
-    CHK_STATUS(addSupportedCodec(pSampleStreamingSession->pPeerConnection, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE));
-    CHK_STATUS(addSupportedCodec(pSampleStreamingSession->pPeerConnection, RTC_CODEC_OPUS));
+    CHK_STATUS(peer_connection_addSupportedCodec(pSampleStreamingSession->pPeerConnection,
+                                                 RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE));
+    CHK_STATUS(peer_connection_addSupportedCodec(pSampleStreamingSession->pPeerConnection, RTC_CODEC_OPUS));
 
     // Add a SendRecv Transceiver of type video
     pVideoTrack->kind = MEDIA_STREAM_TRACK_KIND_VIDEO;
@@ -445,8 +446,8 @@ STATUS createSampleStreamingSession(PSampleConfiguration pSampleConfiguration, P
     CHK_STATUS(peer_connection_addTransceiver(pSampleStreamingSession->pPeerConnection, pVideoTrack, NULL,
                                               &pSampleStreamingSession->pVideoRtcRtpTransceiver));
 
-    CHK_STATUS(transceiverOnBandwidthEstimation(pSampleStreamingSession->pVideoRtcRtpTransceiver, (UINT64) pSampleStreamingSession,
-                                                sampleBandwidthEstimationHandler));
+    CHK_STATUS(rtp_transceiver_onBandwidthEstimation(pSampleStreamingSession->pVideoRtcRtpTransceiver, (UINT64) pSampleStreamingSession,
+                                                     sampleBandwidthEstimationHandler));
 
     // Add a SendRecv Transceiver of type video
     pAudioTrack->kind = MEDIA_STREAM_TRACK_KIND_AUDIO;
@@ -456,8 +457,8 @@ STATUS createSampleStreamingSession(PSampleConfiguration pSampleConfiguration, P
     CHK_STATUS(peer_connection_addTransceiver(pSampleStreamingSession->pPeerConnection, pAudioTrack, NULL,
                                               &pSampleStreamingSession->pAudioRtcRtpTransceiver));
 
-    CHK_STATUS(transceiverOnBandwidthEstimation(pSampleStreamingSession->pAudioRtcRtpTransceiver, (UINT64) pSampleStreamingSession,
-                                                sampleBandwidthEstimationHandler));
+    CHK_STATUS(rtp_transceiver_onBandwidthEstimation(pSampleStreamingSession->pAudioRtcRtpTransceiver, (UINT64) pSampleStreamingSession,
+                                                     sampleBandwidthEstimationHandler));
 #endif
     pSampleStreamingSession->firstFrame = TRUE;
     pSampleStreamingSession->startUpLatency = 0;

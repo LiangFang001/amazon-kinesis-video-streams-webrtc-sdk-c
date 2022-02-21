@@ -1,3 +1,17 @@
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_WEBRTC_CLIENT_PEERCONNECTION_RTP__
 #define __KINESIS_VIDEO_WEBRTC_CLIENT_PEERCONNECTION_RTP__
 
@@ -6,17 +20,22 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "RtpPacket.h"
 #include "RtpRollingBuffer.h"
 #include "JitterBuffer.h"
 #include "PeerConnection.h"
 #include "Retransmitter.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 // Default MTU comes from libwebrtc
 // https://groups.google.com/forum/#!topic/discuss-webrtc/gH5ysR3SoZI
 #define DEFAULT_MTU_SIZE                           1200
-#define DEFAULT_ROLLING_BUFFER_DURATION_IN_SECONDS 1 //3
+#define DEFAULT_ROLLING_BUFFER_DURATION_IN_SECONDS 1                 // 3
 #define HIGHEST_EXPECTED_BIT_RATE                  (2 * 1024 * 1024) //(10 * 1024 * 1024)
 #define DEFAULT_SEQ_NUM_BUFFER_SIZE                1000
 #define DEFAULT_VALID_INDEX_BUFFER_SIZE            1000
@@ -76,19 +95,21 @@ typedef struct {
     RtcRemoteInboundRtpStreamStats remoteInboundStats;
     RtcInboundRtpStreamStats inboundStats;
 } KvsRtpTransceiver, *PKvsRtpTransceiver;
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+STATUS rtp_createTransceiver(RTC_RTP_TRANSCEIVER_DIRECTION, PKvsPeerConnection, UINT32, UINT32, PRtcMediaStreamTrack, PJitterBuffer, RTC_CODEC,
+                             PKvsRtpTransceiver*);
+STATUS rtp_transceiver_free(PKvsRtpTransceiver*);
 
-STATUS createKvsRtpTransceiver(RTC_RTP_TRANSCEIVER_DIRECTION, PKvsPeerConnection, UINT32, UINT32, PRtcMediaStreamTrack, PJitterBuffer, RTC_CODEC,
-                               PKvsRtpTransceiver*);
-STATUS freeKvsRtpTransceiver(PKvsRtpTransceiver*);
-
-STATUS kvsRtpTransceiverSetJitterBuffer(PKvsRtpTransceiver, PJitterBuffer);
+STATUS rtp_transceiver_setJitterBuffer(PKvsRtpTransceiver, PJitterBuffer);
 
 #define CONVERT_TIMESTAMP_TO_RTP(clockRate, pts) (pts * clockRate / HUNDREDS_OF_NANOS_IN_A_SECOND)
 
-STATUS writeRtpPacket(PKvsPeerConnection pKvsPeerConnection, PRtpPacket pRtpPacket);
+STATUS rtp_writePacket(PKvsPeerConnection pKvsPeerConnection, PRtpPacket pRtpPacket);
 
-STATUS hasTransceiverWithSsrc(PKvsPeerConnection pKvsPeerConnection, UINT32 ssrc);
-STATUS findTransceiverBySsrc(PKvsPeerConnection pKvsPeerConnection, PKvsRtpTransceiver* ppTransceiver, UINT32 ssrc);
+STATUS rtp_findTransceiverByssrc(PKvsPeerConnection pKvsPeerConnection, UINT32 ssrc);
+STATUS rtp_transceiver_findBySsrc(PKvsPeerConnection pKvsPeerConnection, PKvsRtpTransceiver* ppTransceiver, UINT32 ssrc);
 
 #ifdef __cplusplus
 }

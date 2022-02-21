@@ -33,13 +33,13 @@ typedef struct {
 
 #define ROLLING_BUFFER_MAP_INDEX(pRollingBuffer, index) ((index) % (pRollingBuffer)->capacity)
 
-STATUS createRollingBuffer(UINT32, FreeDataFunc, PRollingBuffer*);
-STATUS freeRollingBuffer(PRollingBuffer*);
-STATUS rollingBufferAppendData(PRollingBuffer, UINT64, PUINT64);
-STATUS rollingBufferInsertData(PRollingBuffer, UINT64, UINT64);
-STATUS rollingBufferExtractData(PRollingBuffer, UINT64, PUINT64);
-STATUS rollingBufferGetSize(PRollingBuffer, PUINT32);
-STATUS rollingBufferIsEmpty(PRollingBuffer, PBOOL);
+STATUS rolling_buffer_create(UINT32, FreeDataFunc, PRollingBuffer*);
+STATUS rolling_buffer_free(PRollingBuffer*);
+STATUS rolling_buffer_appendData(PRollingBuffer, UINT64, PUINT64);
+STATUS rolling_buffer_insertData(PRollingBuffer, UINT64, UINT64);
+STATUS rolling_buffer_extractData(PRollingBuffer, UINT64, PUINT64);
+STATUS rolling_buffer_getSize(PRollingBuffer, PUINT32);
+STATUS rolling_buffer_isEmpty(PRollingBuffer, PBOOL);
 
 #ifdef __cplusplus
 }

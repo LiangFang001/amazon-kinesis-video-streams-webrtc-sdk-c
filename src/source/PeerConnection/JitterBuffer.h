@@ -65,8 +65,8 @@ typedef struct __JitterBuffer {
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-STATUS createJitterBuffer(FrameReadyFunc, FrameDroppedFunc, DepayRtpPayloadFunc, UINT32, UINT32, UINT64, PJitterBuffer*);
-STATUS freeJitterBuffer(PJitterBuffer*);
+STATUS jitter_buffer_create(FrameReadyFunc, FrameDroppedFunc, DepayRtpPayloadFunc, UINT32, UINT32, UINT64, PJitterBuffer*);
+STATUS jitter_buffer_free(PJitterBuffer*);
 STATUS jitterBufferPush(PJitterBuffer, PRtpPacket, PBOOL);
 STATUS jitterBufferPop(PJitterBuffer, BOOL);
 STATUS jitterBufferDropBufferData(PJitterBuffer, UINT16, UINT16, UINT32);

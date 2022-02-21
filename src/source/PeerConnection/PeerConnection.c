@@ -442,7 +442,7 @@ STATUS onFrameDroppedFunc(UINT64 customData, UINT16 startIndex, UINT16 endIndex,
     UINT64 hashValue = 0;
     PRtpPacket pPacket = NULL;
     PKvsRtpTransceiver pTransceiver = (PKvsRtpTransceiver) customData;
-    DLOGW("Frame with timestamp %ld is dropped!", timestamp);
+    DLOGW("Frame with timestamp %u is dropped!", timestamp);
     CHK(pTransceiver != NULL, STATUS_PEER_CONN_NULL_ARG);
     retStatus = hashTableGet(pTransceiver->pJitterBuffer->pPkgBufferHashTable, startIndex, &hashValue);
     pPacket = (PRtpPacket) hashValue;
@@ -712,8 +712,18 @@ CleanUp:
     PC_LEAVES();
     return retStatus;
 }
-
-#ifdef ENABLE_STREAMING
+//#TBD
+//#ifdef ENABLE_STREAMING
+#if 1
+/**
+ * @brief
+ *
+ * @param[in] timerId
+ * @param[in] currentTime
+ * @param[in] customData
+ *
+ * @return STATUS status of execution.
+ */
 STATUS peer_connection_rtcpReportsCallback(UINT32 timerId, UINT64 currentTime, UINT64 customData)
 {
     UNUSED_PARAM(timerId);
@@ -892,7 +902,7 @@ STATUS peer_connection_free(PRtcPeerConnection* ppPeerConnection)
     CHK_LOG_ERR(doubleListGetHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
     while (pCurNode != NULL) {
         CHK_LOG_ERR(doubleListGetNodeData(pCurNode, &item));
-        CHK_LOG_ERR(freeKvsRtpTransceiver((PKvsRtpTransceiver*) &item));
+        CHK_LOG_ERR(rtp_transceiver_free((PKvsRtpTransceiver*) &item));
 
         pCurNode = pCurNode->pNext;
     }
@@ -1252,8 +1262,9 @@ CleanUp:
     LEAVES();
     return retStatus;
 }
-
-#ifdef ENABLE_STREAMING
+//#TBD
+//#ifdef ENABLE_STREAMING
+#if 1
 STATUS peer_connection_addTransceiver(PRtcPeerConnection pPeerConnection, PRtcMediaStreamTrack pRtcMediaStreamTrack,
                                       PRtcRtpTransceiverInit pRtcRtpTransceiverInit, PRtcRtpTransceiver* ppRtcRtpTransceiver)
 {
@@ -1301,11 +1312,11 @@ STATUS peer_connection_addTransceiver(PRtcPeerConnection pPeerConnection, PRtcMe
     }
 
     // TODO: Add ssrc duplicate detection here not only relying on RAND()
-    CHK_STATUS(createKvsRtpTransceiver(direction, pKvsPeerConnection, ssrc, rtxSsrc, pRtcMediaStreamTrack, NULL, pRtcMediaStreamTrack->codec,
-                                       &pKvsRtpTransceiver));
-    CHK_STATUS(createJitterBuffer(onFrameReadyFunc, onFrameDroppedFunc, depayFunc, DEFAULT_JITTER_BUFFER_MAX_LATENCY, clockRate,
-                                  (UINT64) pKvsRtpTransceiver, &pJitterBuffer));
-    CHK_STATUS(kvsRtpTransceiverSetJitterBuffer(pKvsRtpTransceiver, pJitterBuffer));
+    CHK_STATUS(rtp_createTransceiver(direction, pKvsPeerConnection, ssrc, rtxSsrc, pRtcMediaStreamTrack, NULL, pRtcMediaStreamTrack->codec,
+                                     &pKvsRtpTransceiver));
+    CHK_STATUS(jitter_buffer_create(onFrameReadyFunc, onFrameDroppedFunc, depayFunc, DEFAULT_JITTER_BUFFER_MAX_LATENCY, clockRate,
+                                    (UINT64) pKvsRtpTransceiver, &pJitterBuffer));
+    CHK_STATUS(rtp_transceiver_setJitterBuffer(pKvsRtpTransceiver, pJitterBuffer));
 
     // after pKvsRtpTransceiver is successfully created, jitterBuffer will be freed by pKvsRtpTransceiver.
     pJitterBuffer = NULL;
@@ -1321,11 +1332,11 @@ STATUS peer_connection_addTransceiver(PRtcPeerConnection pPeerConnection, PRtcMe
 CleanUp:
 
     if (pJitterBuffer != NULL) {
-        freeJitterBuffer(&pJitterBuffer);
+        jitter_buffer_free(&pJitterBuffer);
     }
 
     if (pKvsRtpTransceiver != NULL) {
-        freeKvsRtpTransceiver(&pKvsRtpTransceiver);
+        rtp_transceiver_free(&pKvsRtpTransceiver);
     }
 
     LEAVES();
@@ -1341,7 +1352,7 @@ CleanUp:
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-STATUS addSupportedCodec(PRtcPeerConnection pPeerConnection, RTC_CODEC rtcCodec)
+STATUS peer_connection_addSupportedCodec(PRtcPeerConnection pPeerConnection, RTC_CODEC rtcCodec)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;

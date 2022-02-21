@@ -20,13 +20,15 @@ extern "C" {
 #endif
 #include "kvs/common_defs.h"
 /**
- * Updates a CRC32 checksum
- * @UINT32 - IN - initial checksum result from previous update; for the first call, it should be 0.
- * @PBYTE - IN - buffer used to compute checksum
- * @UINT32 - IN - number of bytes to use from buffer
- * @return - UINT32 crc32 checksum
+ * @brief Updates a CRC32 checksum
+ *
+ * @param[in] start initial checksum result from previous update; for the first call, it should be 0.
+ * @param[in] pBuffer buffer used to compute checksum.
+ * @param[in] len number of bytes to use from buffer.
+ *
+ * @return UINT32 crc32 checksum.
  */
-UINT32 updateCrc32(UINT32, PBYTE, UINT32);
+UINT32 updateCrc32(UINT32 start, PBYTE pBuffer, UINT32 len);
 
 /**
  * @PBYTE - IN - buffer used to compute checksum

@@ -1,4 +1,23 @@
-#ifdef ENABLE_STREAMING
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+//#TBD
+//#ifdef ENABLE_STREAMING
+#if 1
 #define LOG_CLASS "RtcRtp"
 
 #include "SessionDescription.h"
@@ -9,11 +28,16 @@
 #include "RtpG711Payloader.h"
 #include "time_port.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 typedef STATUS (*RtpPayloadFunc)(UINT32, PBYTE, UINT32, PBYTE, PUINT32, PUINT32, PUINT32);
-
-STATUS createKvsRtpTransceiver(RTC_RTP_TRANSCEIVER_DIRECTION direction, PKvsPeerConnection pKvsPeerConnection, UINT32 ssrc, UINT32 rtxSsrc,
-                               PRtcMediaStreamTrack pRtcMediaStreamTrack, PJitterBuffer pJitterBuffer, RTC_CODEC rtcCodec,
-                               PKvsRtpTransceiver* ppKvsRtpTransceiver)
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+STATUS rtp_createTransceiver(RTC_RTP_TRANSCEIVER_DIRECTION direction, PKvsPeerConnection pKvsPeerConnection, UINT32 ssrc, UINT32 rtxSsrc,
+                             PRtcMediaStreamTrack pRtcMediaStreamTrack, PJitterBuffer pJitterBuffer, RTC_CODEC rtcCodec,
+                             PKvsRtpTransceiver* ppKvsRtpTransceiver)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PKvsRtpTransceiver pKvsRtpTransceiver = NULL;
@@ -46,7 +70,7 @@ STATUS createKvsRtpTransceiver(RTC_RTP_TRANSCEIVER_DIRECTION direction, PKvsPeer
 CleanUp:
 
     if (STATUS_FAILED(retStatus)) {
-        freeKvsRtpTransceiver(&pKvsRtpTransceiver);
+        rtp_transceiver_free(&pKvsRtpTransceiver);
     }
 
     if (ppKvsRtpTransceiver != NULL) {
@@ -56,13 +80,13 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeTransceiver(PRtcRtpTransceiver* pRtcRtpTransceiver)
+STATUS rtp_freeTransceiver(PRtcRtpTransceiver* pRtcRtpTransceiver)
 {
     UNUSED_PARAM(pRtcRtpTransceiver);
     return STATUS_NOT_IMPLEMENTED;
 }
 
-STATUS freeKvsRtpTransceiver(PKvsRtpTransceiver* ppKvsRtpTransceiver)
+STATUS rtp_transceiver_free(PKvsRtpTransceiver* ppKvsRtpTransceiver)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PKvsRtpTransceiver pKvsRtpTransceiver = NULL;
@@ -73,11 +97,11 @@ STATUS freeKvsRtpTransceiver(PKvsRtpTransceiver* ppKvsRtpTransceiver)
     CHK(pKvsRtpTransceiver != NULL, retStatus);
 
     if (pKvsRtpTransceiver->pJitterBuffer != NULL) {
-        freeJitterBuffer(&pKvsRtpTransceiver->pJitterBuffer);
+        jitter_buffer_free(&pKvsRtpTransceiver->pJitterBuffer);
     }
 
     if (pKvsRtpTransceiver->sender.packetBuffer != NULL) {
-        freeRtpRollingBuffer(&pKvsRtpTransceiver->sender.packetBuffer);
+        rtp_rolling_buffer_free(&pKvsRtpTransceiver->sender.packetBuffer);
     }
 
     if (pKvsRtpTransceiver->sender.retransmitter != NULL) {
@@ -98,7 +122,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS kvsRtpTransceiverSetJitterBuffer(PKvsRtpTransceiver pKvsRtpTransceiver, PJitterBuffer pJitterBuffer)
+STATUS rtp_transceiver_setJitterBuffer(PKvsRtpTransceiver pKvsRtpTransceiver, PJitterBuffer pJitterBuffer)
 {
     STATUS retStatus = STATUS_SUCCESS;
     CHK(pKvsRtpTransceiver != NULL && pJitterBuffer != NULL, STATUS_NULL_ARG);
@@ -110,7 +134,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS transceiverOnFrame(PRtcRtpTransceiver pRtcRtpTransceiver, UINT64 customData, RtcOnFrame rtcOnFrame)
+STATUS rtp_transceiver_onFrame(PRtcRtpTransceiver pRtcRtpTransceiver, UINT64 customData, RtcOnFrame rtcOnFrame)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -127,7 +151,8 @@ CleanUp:
     return retStatus;
 }
 
-STATUS transceiverOnBandwidthEstimation(PRtcRtpTransceiver pRtcRtpTransceiver, UINT64 customData, RtcOnBandwidthEstimation rtcOnBandwidthEstimation)
+STATUS rtp_transceiver_onBandwidthEstimation(PRtcRtpTransceiver pRtcRtpTransceiver, UINT64 customData,
+                                             RtcOnBandwidthEstimation rtcOnBandwidthEstimation)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -144,7 +169,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS transceiverOnPictureLoss(PRtcRtpTransceiver pRtcRtpTransceiver, UINT64 customData, RtcOnPictureLoss onPictureLoss)
+STATUS rtp_transceiver_onPictureLoss(PRtcRtpTransceiver pRtcRtpTransceiver, UINT64 customData, RtcOnPictureLoss onPictureLoss)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -161,7 +186,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS updateEncoderStats(PRtcRtpTransceiver pRtcRtpTransceiver, PRtcEncoderStats encoderStats)
+STATUS rtp_transceiver_updateEncoderStats(PRtcRtpTransceiver pRtcRtpTransceiver, PRtcEncoderStats encoderStats)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PKvsRtpTransceiver pKvsRtpTransceiver = (PKvsRtpTransceiver) pRtcRtpTransceiver;
@@ -188,7 +213,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS writeFrame(PRtcRtpTransceiver pRtcRtpTransceiver, PFrame pFrame)
+STATUS rtp_writeFrame(PRtcRtpTransceiver pRtcRtpTransceiver, PFrame pFrame)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PKvsPeerConnection pKvsPeerConnection = NULL;
@@ -297,7 +322,7 @@ STATUS writeFrame(PRtcRtpTransceiver pRtcRtpTransceiver, PFrame pFrame)
         if (!bufferAfterEncrypt) {
             pRtpPacket->pRawPacket = rawPacket;
             pRtpPacket->rawPacketLength = packetLen;
-            CHK_STATUS(rtpRollingBufferAddRtpPacket(pKvsRtpTransceiver->sender.packetBuffer, pRtpPacket));
+            CHK_STATUS(rtp_rolling_buffer_addRtpPacket(pKvsRtpTransceiver->sender.packetBuffer, pRtpPacket));
         }
 
         CHK_STATUS(srtp_session_encryptRtpPacket(pKvsPeerConnection->pSrtpSession, rawPacket, (PINT32) &packetLen));
@@ -314,7 +339,7 @@ STATUS writeFrame(PRtcRtpTransceiver pRtcRtpTransceiver, PFrame pFrame)
         if (bufferAfterEncrypt) {
             pRtpPacket->pRawPacket = rawPacket;
             pRtpPacket->rawPacketLength = packetLen;
-            CHK_STATUS(rtpRollingBufferAddRtpPacket(pKvsRtpTransceiver->sender.packetBuffer, pRtpPacket));
+            CHK_STATUS(rtp_rolling_buffer_addRtpPacket(pKvsRtpTransceiver->sender.packetBuffer, pRtpPacket));
         }
 
         // https://tools.ietf.org/html/rfc3550#section-6.4.1
@@ -380,7 +405,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS writeRtpPacket(PKvsPeerConnection pKvsPeerConnection, PRtpPacket pRtpPacket)
+STATUS rtp_writePacket(PKvsPeerConnection pKvsPeerConnection, PRtpPacket pRtpPacket)
 {
     STATUS retStatus = STATUS_SUCCESS;
     BOOL locked = FALSE;
@@ -407,13 +432,13 @@ CleanUp:
     return retStatus;
 }
 
-STATUS hasTransceiverWithSsrc(PKvsPeerConnection pKvsPeerConnection, UINT32 ssrc)
+STATUS rtp_findTransceiverByssrc(PKvsPeerConnection pKvsPeerConnection, UINT32 ssrc)
 {
     PKvsRtpTransceiver p = NULL;
-    return findTransceiverBySsrc(pKvsPeerConnection, &p, ssrc);
+    return rtp_transceiver_findBySsrc(pKvsPeerConnection, &p, ssrc);
 }
 
-STATUS findTransceiverBySsrc(PKvsPeerConnection pKvsPeerConnection, PKvsRtpTransceiver* ppTransceiver, UINT32 ssrc)
+STATUS rtp_transceiver_findBySsrc(PKvsPeerConnection pKvsPeerConnection, PKvsRtpTransceiver* ppTransceiver, UINT32 ssrc)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PDoubleListNode pCurNode = NULL;

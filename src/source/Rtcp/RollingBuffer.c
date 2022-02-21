@@ -2,7 +2,7 @@
 
 #include "RollingBuffer.h"
 
-STATUS createRollingBuffer(UINT32 capacity, FreeDataFunc freeDataFunc, PRollingBuffer* ppRollingBuffer)
+STATUS rolling_buffer_create(UINT32 capacity, FreeDataFunc freeDataFunc, PRollingBuffer* ppRollingBuffer)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -22,7 +22,7 @@ STATUS createRollingBuffer(UINT32 capacity, FreeDataFunc freeDataFunc, PRollingB
 
 CleanUp:
     if (STATUS_FAILED(retStatus) && pRollingBuffer != NULL) {
-        freeRollingBuffer(&pRollingBuffer);
+        rolling_buffer_free(&pRollingBuffer);
         pRollingBuffer = NULL;
     }
 
@@ -33,7 +33,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeRollingBuffer(PRollingBuffer* ppRollingBuffer)
+STATUS rolling_buffer_free(PRollingBuffer* ppRollingBuffer)
 {
     ENTERS();
     PRollingBuffer pRollingBuffer = NULL;
@@ -44,7 +44,7 @@ STATUS freeRollingBuffer(PRollingBuffer* ppRollingBuffer)
     CHK(ppRollingBuffer != NULL, STATUS_NULL_ARG);
 
     pRollingBuffer = *ppRollingBuffer;
-    // freeRollingBuffer is idempotent
+    // rolling_buffer_free is idempotent
     CHK(pRollingBuffer != NULL, retStatus);
 
     MUTEX_LOCK(pRollingBuffer->lock);
@@ -66,7 +66,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS rollingBufferAppendData(PRollingBuffer pRollingBuffer, UINT64 data, PUINT64 pIndex)
+STATUS rolling_buffer_appendData(PRollingBuffer pRollingBuffer, UINT64 data, PUINT64 pIndex)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -110,7 +110,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS rollingBufferInsertData(PRollingBuffer pRollingBuffer, UINT64 index, UINT64 data)
+STATUS rolling_buffer_insertData(PRollingBuffer pRollingBuffer, UINT64 index, UINT64 data)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -138,7 +138,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS rollingBufferExtractData(PRollingBuffer pRollingBuffer, UINT64 index, PUINT64 pData)
+STATUS rolling_buffer_extractData(PRollingBuffer pRollingBuffer, UINT64 index, PUINT64 pData)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -165,7 +165,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS rollingBufferGetSize(PRollingBuffer pRollingBuffer, PUINT32 pSize)
+STATUS rolling_buffer_getSize(PRollingBuffer pRollingBuffer, PUINT32 pSize)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -179,7 +179,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS rollingBufferIsEmpty(PRollingBuffer pRollingBuffer, PBOOL pIsEmpty)
+STATUS rolling_buffer_isEmpty(PRollingBuffer pRollingBuffer, PBOOL pIsEmpty)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;

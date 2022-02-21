@@ -1289,7 +1289,7 @@ PUBLIC_API STATUS peer_connection_addTransceiver(PRtcPeerConnection, PRtcMediaSt
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS transceiverOnFrame(PRtcRtpTransceiver, UINT64, RtcOnFrame);
+PUBLIC_API STATUS rtp_transceiver_onFrame(PRtcRtpTransceiver, UINT64, RtcOnFrame);
 
 /**
  * @brief Set a callback for bandwidth estimation results
@@ -1300,7 +1300,7 @@ PUBLIC_API STATUS transceiverOnFrame(PRtcRtpTransceiver, UINT64, RtcOnFrame);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS transceiverOnBandwidthEstimation(PRtcRtpTransceiver, UINT64, RtcOnBandwidthEstimation);
+PUBLIC_API STATUS rtp_transceiver_onBandwidthEstimation(PRtcRtpTransceiver, UINT64, RtcOnBandwidthEstimation);
 
 /**
  * @brief Set a callback for picture loss packet (PLI)
@@ -1311,7 +1311,7 @@ PUBLIC_API STATUS transceiverOnBandwidthEstimation(PRtcRtpTransceiver, UINT64, R
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS transceiverOnPictureLoss(PRtcRtpTransceiver, UINT64, RtcOnPictureLoss);
+PUBLIC_API STATUS rtp_transceiver_onPictureLoss(PRtcRtpTransceiver, UINT64, RtcOnPictureLoss);
 
 /**
  * @brief Frees the previously created transceiver object
@@ -1323,7 +1323,7 @@ PUBLIC_API STATUS transceiverOnPictureLoss(PRtcRtpTransceiver, UINT64, RtcOnPict
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS freeTransceiver(PRtcRtpTransceiver*);
+PUBLIC_API STATUS rtp_freeTransceiver(PRtcRtpTransceiver*);
 
 /**
  * @brief Initializes global state needed for all RtcPeerConnections. It must only be called once
@@ -1349,7 +1349,7 @@ PUBLIC_API STATUS deinitKvsWebRtc(VOID);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS addSupportedCodec(PRtcPeerConnection, RTC_CODEC);
+PUBLIC_API STATUS peer_connection_addSupportedCodec(PRtcPeerConnection, RTC_CODEC);
 
 /**
  * @brief Packetizes and sends media via the configuration specified by the RtcRtpTransceiver
@@ -1359,14 +1359,14 @@ PUBLIC_API STATUS addSupportedCodec(PRtcPeerConnection, RTC_CODEC);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS writeFrame(PRtcRtpTransceiver, PFrame);
+PUBLIC_API STATUS rtp_writeFrame(PRtcRtpTransceiver, PFrame);
 
 /** @brief call this function to update stats which depend on external encoder
  *  @param[in] PRtcRtpTransceiver transceiver for which encoder stats will be updated
  *  @param[in] PRtcEncoderStats populated in the application layer which is then consumed as part
  *  of outgoingRtpStats
  */
-PUBLIC_API STATUS updateEncoderStats(PRtcRtpTransceiver, PRtcEncoderStats);
+PUBLIC_API STATUS rtp_transceiver_updateEncoderStats(PRtcRtpTransceiver, PRtcEncoderStats);
 
 /**
  * @brief Provides a remote candidate to the ICE Agent.

@@ -246,20 +246,20 @@ PVOID sendVideoPackets(PVOID args)
 
         MUTEX_LOCK(pSampleConfiguration->streamingSessionListReadLock);
         for (i = 0; i < pSampleConfiguration->streamingSessionCount; ++i) {
-            status = writeFrame(pSampleConfiguration->sampleStreamingSessionList[i]->pVideoRtcRtpTransceiver, &frame);
+            status = rtp_writeFrame(pSampleConfiguration->sampleStreamingSessionList[i]->pVideoRtcRtpTransceiver, &frame);
             encoderStats.encodeTimeMsec = 4; // update encode time to an arbitrary number to demonstrate stats update
-            updateEncoderStats(pSampleConfiguration->sampleStreamingSessionList[i]->pVideoRtcRtpTransceiver, &encoderStats);
+            rtp_transceiver_updateEncoderStats(pSampleConfiguration->sampleStreamingSessionList[i]->pVideoRtcRtpTransceiver, &encoderStats);
             if (status != STATUS_SRTP_NOT_READY_YET) {
                 if (status != STATUS_SUCCESS) {
 #ifdef VERBOSE
-                    printf("writeFrame() failed with 0x%08x\n", status);
+                    printf("rtp_writeFrame() failed with 0x%08x\n", status);
 #endif
                 }
             }
         }
         MUTEX_UNLOCK(pSampleConfiguration->streamingSessionListReadLock);
 
-        // Adjust sleep in the case the sleep itself and writeFrame take longer than expected. Since sleep makes sure that the thread
+        // Adjust sleep in the case the sleep itself and rtp_writeFrame take longer than expected. Since sleep makes sure that the thread
         // will be paused at least until the given amount, we can assume that there's no too early frame scenario.
         // Also, it's very unlikely to have a delay greater than SAMPLE_VIDEO_FRAME_DURATION, so the logic assumes that this is always
         // true for simplicity.
@@ -323,11 +323,11 @@ PVOID sendAudioPackets(PVOID args)
 
         MUTEX_LOCK(pSampleConfiguration->streamingSessionListReadLock);
         for (i = 0; i < pSampleConfiguration->streamingSessionCount; ++i) {
-            status = writeFrame(pSampleConfiguration->sampleStreamingSessionList[i]->pAudioRtcRtpTransceiver, &frame);
+            status = rtp_writeFrame(pSampleConfiguration->sampleStreamingSessionList[i]->pAudioRtcRtpTransceiver, &frame);
             if (status != STATUS_SRTP_NOT_READY_YET) {
                 if (status != STATUS_SUCCESS) {
 #ifdef VERBOSE
-                    printf("writeFrame() failed with 0x%08x\n", status);
+                    printf("rtp_writeFrame() failed with 0x%08x\n", status);
 #endif
                 }
             }
@@ -350,9 +350,9 @@ PVOID sampleReceiveVideoFrame(PVOID args)
         goto CleanUp;
     }
 
-    retStatus = transceiverOnFrame(pSampleStreamingSession->pVideoRtcRtpTransceiver, (UINT64) pSampleStreamingSession, sampleFrameHandler);
+    retStatus = rtp_transceiver_onFrame(pSampleStreamingSession->pVideoRtcRtpTransceiver, (UINT64) pSampleStreamingSession, sampleFrameHandler);
     if (retStatus != STATUS_SUCCESS) {
-        printf("[KVS Master] transceiverOnFrame(): operation returned status code: 0x%08x \n", retStatus);
+        printf("[KVS Master] rtp_transceiver_onFrame(): operation returned status code: 0x%08x \n", retStatus);
         goto CleanUp;
     }
 

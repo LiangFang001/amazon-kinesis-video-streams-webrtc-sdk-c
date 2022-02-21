@@ -15,7 +15,7 @@ static STATUS onRtcpFIRPacket(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPe
 
     CHK(pKvsPeerConnection != NULL && pRtcpPacket != NULL, STATUS_NULL_ARG);
     mediaSSRC = getUnalignedInt32BigEndian((pRtcpPacket->payload + (SIZEOF(UINT32))));
-    if (STATUS_SUCCEEDED(findTransceiverBySsrc(pKvsPeerConnection, &pTransceiver, mediaSSRC))) {
+    if (STATUS_SUCCEEDED(rtp_transceiver_findBySsrc(pKvsPeerConnection, &pTransceiver, mediaSSRC))) {
         MUTEX_LOCK(pTransceiver->statsLock);
         pTransceiver->outboundStats.firCount++;
         MUTEX_UNLOCK(pTransceiver->statsLock);
@@ -40,7 +40,7 @@ static STATUS onRtcpSLIPacket(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPe
 
     CHK(pKvsPeerConnection != NULL && pRtcpPacket != NULL, STATUS_NULL_ARG);
     mediaSSRC = getUnalignedInt32BigEndian((pRtcpPacket->payload + (SIZEOF(UINT32))));
-    if (STATUS_SUCCEEDED(findTransceiverBySsrc(pKvsPeerConnection, &pTransceiver, mediaSSRC))) {
+    if (STATUS_SUCCEEDED(rtp_transceiver_findBySsrc(pKvsPeerConnection, &pTransceiver, mediaSSRC))) {
         MUTEX_LOCK(pTransceiver->statsLock);
         pTransceiver->outboundStats.sliCount++;
         MUTEX_UNLOCK(pTransceiver->statsLock);
@@ -69,7 +69,7 @@ static STATUS onRtcpSenderReport(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKv
     }
 
     senderSSRC = getUnalignedInt32BigEndian(pRtcpPacket->payload);
-    if (STATUS_SUCCEEDED(findTransceiverBySsrc(pKvsPeerConnection, &pTransceiver, senderSSRC))) {
+    if (STATUS_SUCCEEDED(rtp_transceiver_findBySsrc(pKvsPeerConnection, &pTransceiver, senderSSRC))) {
         UINT64 ntpTime = getUnalignedInt64BigEndian(pRtcpPacket->payload + 4);
         UINT32 rtpTs = getUnalignedInt32BigEndian(pRtcpPacket->payload + 12);
         UINT32 packetCnt = getUnalignedInt32BigEndian(pRtcpPacket->payload + 16);
@@ -103,7 +103,7 @@ static STATUS onRtcpReceiverReport(PRtcpPacket pRtcpPacket, PKvsPeerConnection p
     senderSSRC = getUnalignedInt32BigEndian(pRtcpPacket->payload);
     ssrc1 = getUnalignedInt32BigEndian(pRtcpPacket->payload + 4);
 
-    if (STATUS_FAILED(findTransceiverBySsrc(pKvsPeerConnection, &pTransceiver, ssrc1))) {
+    if (STATUS_FAILED(rtp_transceiver_findBySsrc(pKvsPeerConnection, &pTransceiver, ssrc1))) {
         DLOGW("Received receiver report for non existing ssrc: %u", ssrc1);
         return STATUS_SUCCESS; // not really an error ?
     }
@@ -215,7 +215,7 @@ STATUS onRtcpRembPacket(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerConn
 
     for (i = 0; i < ssrcListLen; i++) {
         pTransceiver = NULL;
-        if (STATUS_FAILED(findTransceiverBySsrc(pKvsPeerConnection, &pTransceiver, ssrcList[i]))) {
+        if (STATUS_FAILED(rtp_transceiver_findBySsrc(pKvsPeerConnection, &pTransceiver, ssrcList[i]))) {
             DLOGW("Received REMB for non existing ssrcs: ssrc %lu", ssrcList[i]);
         }
         if (pTransceiver != NULL && pTransceiver->onBandwidthEstimation != NULL) {
@@ -237,7 +237,7 @@ STATUS onRtcpPLIPacket(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerConne
     CHK(pKvsPeerConnection != NULL && pRtcpPacket != NULL, STATUS_NULL_ARG);
     mediaSSRC = getUnalignedInt32BigEndian((pRtcpPacket->payload + (SIZEOF(UINT32))));
 
-    CHK_STATUS_ERR(findTransceiverBySsrc(pKvsPeerConnection, &pTransceiver, mediaSSRC), STATUS_RTCP_INPUT_SSRC_INVALID,
+    CHK_STATUS_ERR(rtp_transceiver_findBySsrc(pKvsPeerConnection, &pTransceiver, mediaSSRC), STATUS_RTCP_INPUT_SSRC_INVALID,
                    "Received PLI for non existing ssrc: %u", mediaSSRC);
 
     MUTEX_LOCK(pTransceiver->statsLock);

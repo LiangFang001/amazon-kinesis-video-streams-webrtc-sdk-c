@@ -154,13 +154,13 @@ TEST_F(RtcpFunctionalityTest, onRtcpPacketCompoundNack)
     BYTE validRtcpPacket[] = {0x81, 0xcd, 0x00, 0x03, 0x2c, 0xd1, 0xa0, 0xde, 0x00, 0x00, 0xab, 0xe0, 0x00, 0x00, 0x00, 0x00};
     initTransceiver(44000);
     ASSERT_EQ(STATUS_SUCCESS,
-              createRtpRollingBuffer(DEFAULT_ROLLING_BUFFER_DURATION_IN_SECONDS * HIGHEST_EXPECTED_BIT_RATE / 8 / DEFAULT_MTU_SIZE,
+              rtp_rolling_buffer_create(DEFAULT_ROLLING_BUFFER_DURATION_IN_SECONDS * HIGHEST_EXPECTED_BIT_RATE / 8 / DEFAULT_MTU_SIZE,
                                      &pKvsRtpTransceiver->sender.packetBuffer));
     ASSERT_EQ(STATUS_SUCCESS,
               createRetransmitter(DEFAULT_SEQ_NUM_BUFFER_SIZE, DEFAULT_VALID_INDEX_BUFFER_SIZE, &pKvsRtpTransceiver->sender.retransmitter));
     ASSERT_EQ(STATUS_SUCCESS, createRtpPacketWithSeqNum(0, &pRtpPacket));
 
-    ASSERT_EQ(STATUS_SUCCESS, rtpRollingBufferAddRtpPacket(pKvsRtpTransceiver->sender.packetBuffer, pRtpPacket));
+    ASSERT_EQ(STATUS_SUCCESS, rtp_rolling_buffer_addRtpPacket(pKvsRtpTransceiver->sender.packetBuffer, pRtpPacket));
     ASSERT_EQ(STATUS_SUCCESS, rtcp_onPacket(pKvsPeerConnection, validRtcpPacket, SIZEOF(validRtcpPacket)));
     RtcOutboundRtpStreamStats  stats{};
     getRtpOutboundStats(pRtcPeerConnection, nullptr, &stats);
@@ -265,8 +265,8 @@ TEST_F(RtcpFunctionalityTest, onRtcpRembCalled)
     BOOL onBandwidthCalled42 = FALSE;
     BOOL onBandwidthCalled43 = FALSE;
     auto callback = [](UINT64 called, DOUBLE /*unused*/) { *((BOOL*) called) = TRUE; };
-    transceiverOnBandwidthEstimation(pRtcRtpTransceiver, reinterpret_cast<UINT64>(&onBandwidthCalled42), callback);
-    transceiverOnBandwidthEstimation(transceiver43, reinterpret_cast<UINT64>(&onBandwidthCalled43), callback);
+    rtp_transceiver_onBandwidthEstimation(pRtcRtpTransceiver, reinterpret_cast<UINT64>(&onBandwidthCalled42), callback);
+    rtp_transceiver_onBandwidthEstimation(transceiver43, reinterpret_cast<UINT64>(&onBandwidthCalled43), callback);
 
     onRtcpRembPacket(&rtcpPacket, pKvsPeerConnection);
     ASSERT_TRUE(onBandwidthCalled42);

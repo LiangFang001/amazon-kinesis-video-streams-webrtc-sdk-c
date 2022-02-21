@@ -132,7 +132,7 @@ STATUS getRtpRemoteInboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTr
         CHK(pKvsRtpTransceiver != NULL, STATUS_NOT_FOUND);
     }
     // check if specified transceiver belongs to this connection
-    CHK_STATUS(hasTransceiverWithSsrc(pKvsPeerConnection, pKvsRtpTransceiver->sender.ssrc));
+    CHK_STATUS(rtp_findTransceiverByssrc(pKvsPeerConnection, pKvsRtpTransceiver->sender.ssrc));
     MUTEX_LOCK(pKvsRtpTransceiver->statsLock);
     *pRtcRemoteInboundRtpStreamStats = pKvsRtpTransceiver->remoteInboundStats;
     MUTEX_UNLOCK(pKvsRtpTransceiver->statsLock);
@@ -158,7 +158,7 @@ STATUS getRtpOutboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTransce
         CHK(pKvsRtpTransceiver != NULL, STATUS_NOT_FOUND);
     }
     // check if specified transceiver belongs to this connection
-    CHK_STATUS(hasTransceiverWithSsrc(pKvsPeerConnection, pKvsRtpTransceiver->sender.ssrc));
+    CHK_STATUS(rtp_findTransceiverByssrc(pKvsPeerConnection, pKvsRtpTransceiver->sender.ssrc));
     MUTEX_LOCK(pKvsRtpTransceiver->statsLock);
     *pRtcOutboundRtpStreamStats = pKvsRtpTransceiver->outboundStats;
     MUTEX_UNLOCK(pKvsRtpTransceiver->statsLock);
@@ -183,7 +183,7 @@ STATUS getRtpInboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTranscei
         CHK(pKvsRtpTransceiver != NULL, STATUS_NOT_FOUND);
     }
     // check if specified transceiver belongs to this connection
-    CHK_STATUS(hasTransceiverWithSsrc(pKvsPeerConnection, pKvsRtpTransceiver->jitterBufferSsrc));
+    CHK_STATUS(rtp_findTransceiverByssrc(pKvsPeerConnection, pKvsRtpTransceiver->jitterBufferSsrc));
     MUTEX_LOCK(pKvsRtpTransceiver->statsLock);
     *pRtcInboundRtpStreamStats = pKvsRtpTransceiver->inboundStats;
     MUTEX_UNLOCK(pKvsRtpTransceiver->statsLock);

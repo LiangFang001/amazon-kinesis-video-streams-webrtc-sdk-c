@@ -499,12 +499,12 @@ TEST_F(PeerConnectionFunctionalityTest, exchangeMedia)
         UNUSED_PARAM(pFrame);
         ATOMIC_STORE((PSIZE_T) customData, 1);
     };
-    EXPECT_EQ(transceiverOnFrame(answerVideoTransceiver, (UINT64) &seenVideo, onFrameHandler), STATUS_SUCCESS);
+    EXPECT_EQ(rtp_transceiver_onFrame(answerVideoTransceiver, (UINT64) &seenVideo, onFrameHandler), STATUS_SUCCESS);
 
     EXPECT_EQ(connectTwoPeers(offerPc, answerPc), TRUE);
 
     for (auto i = 0; i <= 1000 && ATOMIC_LOAD(&seenVideo) != 1; i++) {
-        EXPECT_EQ(writeFrame(offerVideoTransceiver, &videoFrame), STATUS_SUCCESS);
+        EXPECT_EQ(rtp_writeFrame(offerVideoTransceiver, &videoFrame), STATUS_SUCCESS);
         videoFrame.presentationTs += (HUNDREDS_OF_NANOS_IN_A_SECOND / 25);
 
         THREAD_SLEEP(HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
@@ -576,12 +576,12 @@ TEST_F(PeerConnectionFunctionalityTest, exchangeMediaRSA)
         UNUSED_PARAM(pFrame);
         ATOMIC_STORE((PSIZE_T) customData, 1);
     };
-    EXPECT_EQ(transceiverOnFrame(answerVideoTransceiver, (UINT64) &seenVideo, onFrameHandler), STATUS_SUCCESS);
+    EXPECT_EQ(rtp_transceiver_onFrame(answerVideoTransceiver, (UINT64) &seenVideo, onFrameHandler), STATUS_SUCCESS);
 
     EXPECT_EQ(connectTwoPeers(offerPc, answerPc), TRUE);
 
     for (auto i = 0; i <= 1000 && ATOMIC_LOAD(&seenVideo) != 1; i++) {
-        EXPECT_EQ(writeFrame(offerVideoTransceiver, &videoFrame), STATUS_SUCCESS);
+        EXPECT_EQ(rtp_writeFrame(offerVideoTransceiver, &videoFrame), STATUS_SUCCESS);
         videoFrame.presentationTs += (HUNDREDS_OF_NANOS_IN_A_SECOND / 25);
 
         THREAD_SLEEP(HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
@@ -758,8 +758,8 @@ TEST_F(PeerConnectionFunctionalityTest, DISABLED_exchangeMediaThroughTurnRandomS
                 UNUSED_PARAM(pFrame);
                 ATOMIC_STORE_BOOL((PSIZE_T) customData, TRUE);
             };
-            EXPECT_EQ(transceiverOnFrame(offerVideoTransceiver, (UINT64) &offerSeenVideo, onFrameHandler), STATUS_SUCCESS);
-            EXPECT_EQ(transceiverOnFrame(answerVideoTransceiver, (UINT64) &answerSeenVideo, onFrameHandler), STATUS_SUCCESS);
+            EXPECT_EQ(rtp_transceiver_onFrame(offerVideoTransceiver, (UINT64) &offerSeenVideo, onFrameHandler), STATUS_SUCCESS);
+            EXPECT_EQ(rtp_transceiver_onFrame(answerVideoTransceiver, (UINT64) &answerSeenVideo, onFrameHandler), STATUS_SUCCESS);
 
             MEMSET(stateChangeCount, 0x00, SIZEOF(stateChangeCount));
             EXPECT_EQ(connectTwoPeers(offerPc, answerPc), TRUE);
@@ -769,7 +769,7 @@ TEST_F(PeerConnectionFunctionalityTest, DISABLED_exchangeMediaThroughTurnRandomS
 
             auto sendVideoWorker = [](PRtcRtpTransceiver pRtcRtpTransceiver, Frame frame, PSIZE_T pTerminationFlag) -> void {
                 while (!ATOMIC_LOAD_BOOL(pTerminationFlag)) {
-                    EXPECT_EQ(writeFrame(pRtcRtpTransceiver, &frame), STATUS_SUCCESS);
+                    EXPECT_EQ(rtp_writeFrame(pRtcRtpTransceiver, &frame), STATUS_SUCCESS);
                     // frame was copied by value
                     frame.presentationTs += (HUNDREDS_OF_NANOS_IN_A_SECOND / 25);
 

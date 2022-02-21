@@ -19,11 +19,11 @@ typedef struct {
     UINT64 lastIndex;
 } RtpRollingBuffer, *PRtpRollingBuffer;
 
-STATUS createRtpRollingBuffer(UINT32, PRtpRollingBuffer*);
-STATUS freeRtpRollingBuffer(PRtpRollingBuffer*);
-STATUS freeRtpRollingBufferData(PUINT64);
-STATUS rtpRollingBufferAddRtpPacket(PRtpRollingBuffer, PRtpPacket);
-STATUS rtpRollingBufferGetValidSeqIndexList(PRtpRollingBuffer, PUINT16, UINT32, PUINT64, PUINT32);
+STATUS rtp_rolling_buffer_create(UINT32, PRtpRollingBuffer*);
+STATUS rtp_rolling_buffer_free(PRtpRollingBuffer*);
+STATUS rtp_rolling_buffer_freeData(PUINT64);
+STATUS rtp_rolling_buffer_addRtpPacket(PRtpRollingBuffer, PRtpPacket);
+STATUS rtp_rolling_buffer_getValidSeqIndexList(PRtpRollingBuffer, PUINT16, UINT32, PUINT64, PUINT32);
 
 #ifdef __cplusplus
 }

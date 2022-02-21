@@ -329,7 +329,7 @@ STATUS ice_agent_free(PIceAgent* ppIceAgent);
  *
  * @return STATUS status of execution
  */
-STATUS ice_agent_addRemoteCandidate(PIceAgent, PCHAR);
+STATUS ice_agent_addRemoteCandidate(PIceAgent pIceAgent, PCHAR pIceCandidateString);
 
 /**
  * @brief Initiates stun communication with remote candidates.
@@ -339,7 +339,7 @@ STATUS ice_agent_addRemoteCandidate(PIceAgent, PCHAR);
  * @param[in] PCHAR remote password
  * @param[in] BOOL is controlling agent
  *
- * @return STATUS status of execution
+ * @return STATUS status of execution.
  */
 STATUS ice_agent_start(PIceAgent, PCHAR, PCHAR, BOOL);
 

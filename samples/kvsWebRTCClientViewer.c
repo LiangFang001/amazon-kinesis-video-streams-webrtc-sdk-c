@@ -95,9 +95,9 @@ INT32 main(INT32 argc, CHAR* argv[])
     }
     printf("[KVS Viewer] Completed setting local description\n");
 #ifdef ENABLE_STREAMING
-    retStatus = transceiverOnFrame(pSampleStreamingSession->pAudioRtcRtpTransceiver, (UINT64) pSampleStreamingSession, sampleFrameHandler);
+    retStatus = rtp_transceiver_onFrame(pSampleStreamingSession->pAudioRtcRtpTransceiver, (UINT64) pSampleStreamingSession, sampleFrameHandler);
     if (retStatus != STATUS_SUCCESS) {
-        printf("[KVS Viewer] transceiverOnFrame(): operation returned status code: 0x%08x \n", retStatus);
+        printf("[KVS Viewer] rtp_transceiver_onFrame(): operation returned status code: 0x%08x \n", retStatus);
         goto CleanUp;
     }
 #endif
