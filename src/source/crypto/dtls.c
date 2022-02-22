@@ -54,7 +54,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS dtlsSessionChangeState(PDtlsSession pDtlsSession, RTC_DTLS_TRANSPORT_STATE newState)
+STATUS dtls_session_changeState(PDtlsSession pDtlsSession, RTC_DTLS_TRANSPORT_STATE newState)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;

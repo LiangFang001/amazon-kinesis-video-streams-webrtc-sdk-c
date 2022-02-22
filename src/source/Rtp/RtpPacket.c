@@ -3,9 +3,9 @@
 #include "endianness.h"
 #include "RtpPacket.h"
 
-STATUS createRtpPacket(UINT8 version, BOOL padding, BOOL extension, UINT8 csrcCount, BOOL marker, UINT8 payloadType, UINT16 sequenceNumber,
-                       UINT32 timestamp, UINT32 ssrc, PUINT32 csrcArray, UINT16 extensionProfile, UINT32 extensionLength, PBYTE extensionPayload,
-                       PBYTE payload, UINT32 payloadLength, PRtpPacket* ppRtpPacket)
+STATUS rtp_packet_create(UINT8 version, BOOL padding, BOOL extension, UINT8 csrcCount, BOOL marker, UINT8 payloadType, UINT16 sequenceNumber,
+                         UINT32 timestamp, UINT32 ssrc, PUINT32 csrcArray, UINT16 extensionProfile, UINT32 extensionLength, PBYTE extensionPayload,
+                         PBYTE payload, UINT32 payloadLength, PRtpPacket* ppRtpPacket)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -18,7 +18,7 @@ STATUS createRtpPacket(UINT8 version, BOOL padding, BOOL extension, UINT8 csrcCo
 
 CleanUp:
     if (STATUS_FAILED(retStatus) && pRtpPacket != NULL) {
-        freeRtpPacket(&pRtpPacket);
+        rtp_packet_free(&pRtpPacket);
         pRtpPacket = NULL;
     }
 
@@ -64,7 +64,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeRtpPacket(PRtpPacket* ppRtpPacket)
+STATUS rtp_packet_free(PRtpPacket* ppRtpPacket)
 {
     ENTERS();
 
@@ -98,7 +98,7 @@ STATUS createRtpPacketFromBytes(PBYTE rawPacket, UINT32 packetLength, PRtpPacket
 CleanUp:
 
     if (STATUS_FAILED(retStatus) && pRtpPacket != NULL) {
-        freeRtpPacket(&pRtpPacket);
+        rtp_packet_free(&pRtpPacket);
         pRtpPacket = NULL;
     }
 
@@ -145,7 +145,7 @@ CleanUp:
     SAFE_MEMFREE(pPayload);
     if (STATUS_FAILED(retStatus) && pRtpPacket != NULL) {
         SAFE_MEMFREE(pRtpPacket->pRawPacket);
-        freeRtpPacket(&pRtpPacket);
+        rtp_packet_free(&pRtpPacket);
         pRtpPacket = NULL;
     }
 

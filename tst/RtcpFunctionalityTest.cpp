@@ -168,7 +168,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpPacketCompoundNack)
     ASSERT_EQ(1, stats.retransmittedPacketsSent);
     ASSERT_EQ(10, stats.retransmittedBytesSent);
     peer_connection_free(&pRtcPeerConnection);
-    freeRtpPacket(&pRtpPacket);
+    rtp_packet_free(&pRtpPacket);
 }
 
 TEST_F(RtcpFunctionalityTest, onRtcpPacketCompound)

@@ -190,7 +190,7 @@ STATUS dtls_session_onStateChange(PDtlsSession, UINT64, DtlsSessionOnStateChange
 
 /******** Internal Functions **********/
 STATUS dtlsValidateRtcCertificates(PRtcCertificate, PUINT32);
-STATUS dtlsSessionChangeState(PDtlsSession, RTC_DTLS_TRANSPORT_STATE);
+STATUS dtls_session_changeState(PDtlsSession, RTC_DTLS_TRANSPORT_STATE);
 
 #ifdef KVS_USE_OPENSSL
 STATUS dtlsCheckOutgoingDataBuffer(PDtlsSession);

@@ -27,8 +27,8 @@
 /******************************************************************************
  * DEFINITION
  ******************************************************************************/
-#define WSS_API_ENTER() DLOGD("%s enter", __func__);
-#define WSS_API_EXIT()  DLOGD("%s exit", __func__);
+#define WSS_API_ENTER() // DLOGD("%s enter", __func__);
+#define WSS_API_EXIT()  // DLOGD("%s exit", __func__);
 
 #define WSS_API_SECURE_PORT                "443"
 #define WSS_API_CONNECTION_TIMEOUT         (2 * HUNDREDS_OF_NANOS_IN_A_SECOND)
@@ -270,9 +270,9 @@ STATUS wss_api_handleCtrlMsg(PVOID pUserData, UINT8 opcode, PCHAR pMessage, UINT
 
     // DLOGD("opcode:%x", opcode);
     if (opcode == WSLAY_PONG) {
-        DLOGD("<== pong, len: %ld", messageLen);
+        DLOGD("<== wss pong");
     } else if (opcode == WSLAY_PING) {
-        DLOGD("<== ping, len: %ld", messageLen);
+        DLOGV("<== wss ping, len: %ld", messageLen);
     } else if (opcode == WSLAY_CONNECTION_CLOSE) {
         DLOGD("<== connection close, len: %ld, reason:%s", messageLen, pMessage);
         pCurPtr = pMessage == NULL ? "(None)" : (PCHAR) pMessage;

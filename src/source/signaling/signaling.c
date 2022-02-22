@@ -94,7 +94,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
     PSignalingMessageWrapper pMsg;
     BOOL connected;
     BOOL exit = FALSE;
-
+    DLOGD("The thread of handling msg is up");
     while (1) {
         BaseType_t err = xQueueReceive(pSignalingClient->inboundMsqQ, &pMsg, 0xffffffffUL);
         if (err == pdPASS) {
@@ -171,6 +171,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
                     CHK(FALSE, retStatus);
                     break;
                 default:
+                    DLOGW("Unknown wss msg:%d", pMsg->receivedSignalingMessage.signalingMessage.messageType);
                     break;
             }
 
@@ -185,8 +186,9 @@ static PVOID signaling_handleMsg(PVOID pArgs)
         }
     }
 
-    DLOGW("wss dispatcher exits.");
+    DLOGW("Wss dispatcher exits.");
     if (pSignalingClient->inboundMsqQ != NULL) {
+        DLOGD("Delete the queue of msg");
         vQueueDelete(pSignalingClient->inboundMsqQ);
         pSignalingClient->inboundMsqQ = NULL;
     }
@@ -212,9 +214,10 @@ static STATUS signaling_dispatchMsg(PVOID pMessage)
     ATOMIC_INCREMENT(&pSignalingClient->diagnostics.numberOfMessagesReceived);
 
     if (pSignalingClient->dispatchMsgTid == INVALID_TID_VALUE) {
+        DLOGD("Create new queue to handle msg.");
         pSignalingClient->inboundMsqQ = xQueueCreate(WSS_INBOUND_MSGQ_LENGTH, SIZEOF(PSignalingMessageWrapper));
         CHK(pSignalingClient->inboundMsqQ != NULL, STATUS_SIGNALING_CREATE_MSGQ_FAILED);
-
+        DLOGD("Create new thread to handle msg.");
         CHK(THREAD_CREATE_EX(&pSignalingClient->dispatchMsgTid, WSS_DISPATCH_THREAD_NAME, WSS_DISPATCH_THREAD_SIZE, signaling_handleMsg,
                              (PVOID) pSignalingClient) == STATUS_SUCCESS,
             STATUS_SIGNALING_CREATE_DISPATCHER_FAILED);
@@ -223,7 +226,7 @@ static STATUS signaling_dispatchMsg(PVOID pMessage)
 
     if (pSignalingClient->inboundMsqQ != NULL) {
         UBaseType_t num = uxQueueSpacesAvailable(pSignalingClient->inboundMsqQ);
-        DLOGD("unhandled num in q: %d", WSS_INBOUND_MSGQ_LENGTH - num);
+        DLOGD("Unhandled num in q: %d", WSS_INBOUND_MSGQ_LENGTH - num);
         CHK(xQueueSend(pSignalingClient->inboundMsqQ, &pMsg, 0) == pdPASS, STATUS_SIGNALING_DISPATCH_FAILED);
     }
 
@@ -366,7 +369,9 @@ STATUS signaling_free(PSignalingClient* ppSignalingClient)
 
     // #TBD, need to add cancel code.
     if (IS_VALID_TID_VALUE(pSignalingClient->dispatchMsgTid)) {
+        DLOGD("Cancel the thread to handle msg.");
         THREAD_CANCEL(pSignalingClient->dispatchMsgTid);
+
         pSignalingClient->dispatchMsgTid = INVALID_TID_VALUE;
     }
 

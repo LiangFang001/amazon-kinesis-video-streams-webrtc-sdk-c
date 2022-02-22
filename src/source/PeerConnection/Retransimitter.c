@@ -111,13 +111,13 @@ STATUS resendPacketOnNack(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerCo
             // free the packet if it is not in the valid range any more
             if (retStatus == STATUS_ROLLING_BUFFER_NOT_IN_RANGE) {
                 DLOGS("Retransmit STATUS_ROLLING_BUFFER_NOT_IN_RANGE free %lu by self", pRtpPacket->header.sequenceNumber);
-                freeRtpPacket(&pRtpPacket);
+                rtp_packet_free(&pRtpPacket);
                 retStatus = STATUS_SUCCESS;
             } else {
                 DLOGS("Retransmit add back to rolling %lu", pRtpPacket->header.sequenceNumber);
             }
 
-            freeRtpPacket(&pRtxRtpPacket);
+            rtp_packet_free(&pRtxRtpPacket);
             pRtpPacket = NULL;
         }
     }
@@ -132,7 +132,7 @@ CleanUp:
     CHK_LOG_ERR(retStatus);
     if (pRtpPacket != NULL) {
         // free the packet as it is not put back into rolling buffer
-        freeRtpPacket(&pRtpPacket);
+        rtp_packet_free(&pRtpPacket);
         pRtpPacket = NULL;
     }
 

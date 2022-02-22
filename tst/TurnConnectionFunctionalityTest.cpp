@@ -143,7 +143,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionRefreshPermissionTest)
     while (!turnReady && GETTIME() < turnReadyTimeout) {
         THREAD_SLEEP(100 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
         MUTEX_LOCK(pTurnConnection->lock);
-        if (pTurnConnection->state == TURN_STATE_READY) {
+        if (pTurnConnection->turnFsmState == TURN_STATE_READY) {
             turnReady = TRUE;
         }
         MUTEX_UNLOCK(pTurnConnection->lock);
@@ -161,7 +161,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionRefreshPermissionTest)
 
     // verify we are no longer in ready state.
     MUTEX_LOCK(pTurnConnection->lock);
-    EXPECT_TRUE(pTurnConnection->state != TURN_STATE_READY);
+    EXPECT_TRUE(pTurnConnection->turnFsmState != TURN_STATE_READY);
     MUTEX_UNLOCK(pTurnConnection->lock);
 
     turnReady = FALSE;
@@ -170,7 +170,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionRefreshPermissionTest)
     while (!turnReady && GETTIME() < turnReadyTimeout) {
         THREAD_SLEEP(100 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
         MUTEX_LOCK(pTurnConnection->lock);
-        if (pTurnConnection->state == TURN_STATE_READY) {
+        if (pTurnConnection->turnFsmState == TURN_STATE_READY) {
             turnReady = TRUE;
         }
         MUTEX_UNLOCK(pTurnConnection->lock);
@@ -222,7 +222,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownCompleteBeforeTime
     while (!turnReady && GETTIME() < turnReadyTimeout) {
         THREAD_SLEEP(100 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
         MUTEX_LOCK(pTurnConnection->lock);
-        if (pTurnConnection->state == TURN_STATE_READY) {
+        if (pTurnConnection->turnFsmState == TURN_STATE_READY) {
             turnReady = TRUE;
         }
         MUTEX_UNLOCK(pTurnConnection->lock);
@@ -265,7 +265,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownAsync)
     while (!turnReady && GETTIME() < turnReadyTimeout) {
         THREAD_SLEEP(100 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
         MUTEX_LOCK(pTurnConnection->lock);
-        if (pTurnConnection->state == TURN_STATE_READY) {
+        if (pTurnConnection->turnFsmState == TURN_STATE_READY) {
             turnReady = TRUE;
         }
         MUTEX_UNLOCK(pTurnConnection->lock);
@@ -307,7 +307,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownWithAllocationRemo
     while (!doneAllocate && GETTIME() < doneAllocateTimeout) {
         THREAD_SLEEP(100 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
         MUTEX_LOCK(pTurnConnection->lock);
-        if (pTurnConnection->state == TURN_STATE_CREATE_PERMISSION) {
+        if (pTurnConnection->turnFsmState == TURN_STATE_CREATE_PERMISSION) {
             doneAllocate = TRUE;
         }
         MUTEX_UNLOCK(pTurnConnection->lock);
@@ -367,7 +367,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownWithoutAllocationR
     while (!atGetCredential && GETTIME() < atGetCredentialTimeout) {
         THREAD_SLEEP(10 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
         MUTEX_LOCK(pTurnConnection->lock);
-        if (pTurnConnection->state == TURN_STATE_GET_CREDENTIALS) {
+        if (pTurnConnection->turnFsmState == TURN_STATE_GET_CREDENTIALS) {
             atGetCredential = TRUE;
         }
         MUTEX_UNLOCK(pTurnConnection->lock);
@@ -426,14 +426,14 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionShutdownAfterFailure)
     while (!atGetCredential && GETTIME() < atGetCredentialTimeout) {
         THREAD_SLEEP(10 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
         MUTEX_LOCK(pTurnConnection->lock);
-        if (pTurnConnection->state == TURN_STATE_GET_CREDENTIALS) {
+        if (pTurnConnection->turnFsmState == TURN_STATE_GET_CREDENTIALS) {
             atGetCredential = TRUE;
         }
         MUTEX_UNLOCK(pTurnConnection->lock);
     }
 
     MUTEX_LOCK(pTurnConnection->lock);
-    pTurnConnection->state = TURN_STATE_FAILED;
+    pTurnConnection->turnFsmState = TURN_STATE_FAILED;
     pTurnConnection->errorStatus = STATUS_INVALID_OPERATION;
     MUTEX_UNLOCK(pTurnConnection->lock);
 
@@ -538,7 +538,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionReceivePartialChannelMessa
     while (!turnReady && GETTIME() < turnReadyTimeout) {
         THREAD_SLEEP(100 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
         MUTEX_LOCK(pTurnConnection->lock);
-        if (pTurnConnection->state == TURN_STATE_READY) {
+        if (pTurnConnection->turnFsmState == TURN_STATE_READY) {
             turnReady = TRUE;
         }
         MUTEX_UNLOCK(pTurnConnection->lock);
@@ -899,7 +899,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionReceiveChannelDataMixedWit
     while (!turnReady && GETTIME() < turnReadyTimeout) {
         THREAD_SLEEP(100 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
         MUTEX_LOCK(pTurnConnection->lock);
-        if (pTurnConnection->state == TURN_STATE_READY) {
+        if (pTurnConnection->turnFsmState == TURN_STATE_READY) {
             turnReady = TRUE;
         }
         MUTEX_UNLOCK(pTurnConnection->lock);
@@ -951,7 +951,7 @@ TEST_F(TurnConnectionFunctionalityTest, turnConnectionCallMultipleTurnSendDataIn
     while (!turnReady && GETTIME() < turnReadyTimeout) {
         THREAD_SLEEP(100 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
         MUTEX_LOCK(pTurnConnection->lock);
-        if (pTurnConnection->state == TURN_STATE_READY) {
+        if (pTurnConnection->turnFsmState == TURN_STATE_READY) {
             turnReady = TRUE;
         }
         MUTEX_UNLOCK(pTurnConnection->lock);

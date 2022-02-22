@@ -53,7 +53,7 @@ STATUS dtls_session_timerCallback(UINT32 timerID, UINT64 currentTime, UINT64 cus
     CHK_STATUS(dtlsCheckOutgoingDataBuffer(pDtlsSession));
 
     if (SSL_is_init_finished(pDtlsSession->pSsl)) {
-        CHK_STATUS(dtlsSessionChangeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CONNECTED));
+        CHK_STATUS(dtls_session_changeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CONNECTED));
         ATOMIC_STORE_BOOL(&pDtlsSession->sslInitFinished, TRUE);
         CHK(FALSE, STATUS_TIMER_QUEUE_STOP_SCHEDULING);
     }
@@ -365,7 +365,7 @@ STATUS dtls_session_start(PDtlsSession pDtlsSession, BOOL isServer)
     MUTEX_LOCK(pDtlsSession->sslLock);
     locked = TRUE;
 
-    CHK_STATUS(dtlsSessionChangeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CONNECTING));
+    CHK_STATUS(dtls_session_changeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CONNECTING));
 
     /* Need to set isStarted to TRUE after acquiring the lock to make sure dtls_session_read
      * dont proceed before dtls_session_start finish */
@@ -471,7 +471,7 @@ STATUS dtls_session_read(PDtlsSession pDtlsSession, PBYTE pData, PINT32 pDataLen
 
     if (isClosed) {
         ATOMIC_STORE_BOOL(&pDtlsSession->shutdown, TRUE);
-        CHK_STATUS(dtlsSessionChangeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CLOSED));
+        CHK_STATUS(dtls_session_changeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CLOSED));
     }
 
 CleanUp:
@@ -542,7 +542,7 @@ STATUS dtls_session_shutdown(PDtlsSession pDtlsSession)
     SSL_shutdown(pDtlsSession->pSsl);
     ATOMIC_STORE_BOOL(&pDtlsSession->shutdown, TRUE);
     CHK_STATUS(dtlsCheckOutgoingDataBuffer(pDtlsSession));
-    CHK_STATUS(dtlsSessionChangeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CLOSED));
+    CHK_STATUS(dtls_session_changeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CLOSED));
 
 CleanUp:
 
@@ -699,7 +699,7 @@ CleanUp:
     }
 
     if (retStatus == STATUS_DTLS_REMOTE_CERTIFICATE_VERIFICATION_FAILED) {
-        dtlsSessionChangeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_FAILED);
+        dtls_session_changeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_FAILED);
     }
 
     if (locked) {

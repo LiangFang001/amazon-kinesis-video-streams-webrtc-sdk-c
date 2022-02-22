@@ -67,7 +67,7 @@ STATUS rtp_rolling_buffer_freeData(PUINT64 pData)
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     CHK(pData != NULL, STATUS_NULL_ARG);
-    CHK_STATUS(freeRtpPacket((PRtpPacket*) pData));
+    CHK_STATUS(rtp_packet_free((PRtpPacket*) pData));
 CleanUp:
     LEAVES();
     return retStatus;

@@ -136,7 +136,7 @@ STATUS net_getLocalhostIpAddresses(PKvsIpAddress destIpList, PUINT32 pDestIpList
     destIpList[ipCount].family = KVS_IP_FAMILY_TYPE_IPV4;
     destIpList[ipCount].port = 0;
     MEMCPY(destIpList[ipCount].address, ameba_get_ip(), IPV4_ADDRESS_LENGTH);
-    DLOGD("Acquried IP: %d:%d:%d:%d", destIpList[ipCount].address[0], destIpList[ipCount].address[1], destIpList[ipCount].address[2],
+    DLOGD("Acquried IP: %d.%d.%d.%d", destIpList[ipCount].address[0], destIpList[ipCount].address[1], destIpList[ipCount].address[2],
           destIpList[ipCount].address[3]);
     ipCount++;
 #endif
@@ -471,6 +471,9 @@ PCHAR net_getErrorString(INT32 error)
 #else
 PCHAR net_getErrorString(INT32 error)
 {
+    if (error != 0) {
+        DLOGD("net error code:%d.", error);
+    }
     return strerror(error);
 }
 #endif

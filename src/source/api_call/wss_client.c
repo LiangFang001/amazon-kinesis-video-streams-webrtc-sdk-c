@@ -268,7 +268,7 @@ STATUS wss_client_sendPing(PWssClientContext pWssClientCtx)
     MEMSET(&arg, 0, sizeof(arg));
     arg.opcode = WSLAY_PING;
     arg.msg_length = 0;
-    DLOGD("ping ==>");
+    DLOGD("wss ping ==>");
     return wss_client_send(pWssClientCtx, &arg);
 }
 

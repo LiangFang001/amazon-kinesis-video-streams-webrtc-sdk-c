@@ -163,7 +163,8 @@ struct __TurnConnection {
     PSocketConnection pControlChannel; //!< the socket hanlder of this turn connection.
 
     TurnPeer turnPeerList[DEFAULT_TURN_MAX_PEER_COUNT]; //!< #TBD, need to review this. it should be reduced.
-    UINT32 turnPeerCount;                               //!< the number of remote candidates for this turn connection.
+                                                        //!< remote peers(remote ice candidates) for this turn connection.
+    UINT32 turnPeerCount;                               //!< the number of remote peers(remote ice candidates) for this turn connection.
 
     TIMER_QUEUE_HANDLE timerQueueHandle;
 
@@ -173,7 +174,7 @@ struct __TurnConnection {
     MUTEX sendLock;
     CVAR freeAllocationCvar;
 
-    TURN_CONNECTION_STATE state; //!< the state of turn fsm.
+    TURN_CONNECTION_STATE turnFsmState; //!< the state of turn fsm.
 
     UINT64 stateTimeoutTime;
 

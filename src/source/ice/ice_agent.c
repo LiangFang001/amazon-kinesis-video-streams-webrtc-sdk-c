@@ -727,7 +727,6 @@ STATUS ice_agent_free(PIceAgent* ppIceAgent)
     if (IS_VALID_MUTEX_VALUE(pIceAgent->lock)) {
         MUTEX_FREE(pIceAgent->lock);
     }
-
     state_machine_free(pIceAgent->pStateMachine);
 
     if (pIceAgent->pBindingIndication != NULL) {
@@ -741,7 +740,6 @@ STATUS ice_agent_free(PIceAgent* ppIceAgent)
     if (pIceAgent->pStunBindingRequestTransactionIdStore != NULL) {
         transaction_id_store_free(&pIceAgent->pStunBindingRequestTransactionIdStore);
     }
-
     MEMFREE(pIceAgent);
 
     *ppIceAgent = NULL;

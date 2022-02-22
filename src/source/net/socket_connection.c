@@ -96,7 +96,6 @@ STATUS socket_connection_free(PSocketConnection* ppSocketConnection)
     if (STATUS_FAILED(retStatus = net_closeSocket(pSocketConnection->localSocket))) {
         DLOGW("Failed to close the local socket with 0x%08x", retStatus);
     }
-
     MEMFREE(pSocketConnection);
 
     *ppSocketConnection = NULL;
@@ -313,6 +312,9 @@ BOOL socket_connection_isConnected(PSocketConnection pSocketConnection)
 
     retVal = connect(pSocketConnection->localSocket, peerSockAddr, addrLen);
     if (retVal == 0 || net_getErrorCode() == EISCONN) {
+        if (net_getErrorCode() == EISCONN) {
+            DLOGD("this socket is already connected.");
+        }
         return TRUE;
     }
 

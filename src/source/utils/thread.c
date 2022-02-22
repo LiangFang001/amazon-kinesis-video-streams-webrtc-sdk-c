@@ -246,17 +246,19 @@ PUBLIC_API STATUS defaultCreateThreadExPri(PTID pThreadId, PCHAR threadName, UIN
     }
 #endif
 
-    if(threadSize == 0){
+    if (threadSize == 0) {
         pthread_attr_setstacksize(pAttr, DEFAULT_THREAD_SIZE);
-    }else{
+    } else {
         pthread_attr_setstacksize(pAttr, threadSize);
     }
 
-    if(prio != 0){
-        int rs = pthread_attr_getschedparam(pAttr,&param);
+    if (prio != 0) {
+        int rs = pthread_attr_getschedparam(pAttr, &param);
         param.sched_priority = prio;
-        rs = pthread_attr_setschedparam(pAttr,&param);
+        rs = pthread_attr_setschedparam(pAttr, &param);
     }
+
+    pthread_attr_setdetachstate(pAttr, PTHREAD_CREATE_JOINABLE);
 
     result = pthread_create(&threadId, pAttr, start, args);
 

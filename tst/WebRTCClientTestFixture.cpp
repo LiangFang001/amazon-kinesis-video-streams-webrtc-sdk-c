@@ -21,7 +21,7 @@ STATUS createRtpPacketWithSeqNum(UINT16 seqNum, PRtpPacket *ppRtpPacket) {
     BYTE payload[10];
     PRtpPacket pRtpPacket = NULL;
 
-    CHK_STATUS(createRtpPacket(2, FALSE, FALSE, 0, FALSE,
+    CHK_STATUS(rtp_packet_create(2, FALSE, FALSE, 0, FALSE,
                                96, seqNum, 100, 0x1234ABCD, NULL, 0, 0, NULL, payload, 10, &pRtpPacket));
     *ppRtpPacket = pRtpPacket;
 
@@ -142,7 +142,7 @@ VOID WebRtcClientTestBase::initializeJitterBuffer(UINT32 expectedFrameCount, UIN
     // Assume timestamp is on time unit ms for test
     for (i = 0, timestamp = 0; i < rtpPacketCount; i++, timestamp += 200) {
         EXPECT_EQ(STATUS_SUCCESS,
-                  createRtpPacket(2, FALSE, FALSE, 0, FALSE, 96, i, timestamp, 0x1234ABCD, NULL, 0, 0, NULL, NULL, 0, mPRtpPackets + i));
+                  rtp_packet_create(2, FALSE, FALSE, 0, FALSE, 96, i, timestamp, 0x1234ABCD, NULL, 0, 0, NULL, NULL, 0, mPRtpPackets + i));
     }
 }
 

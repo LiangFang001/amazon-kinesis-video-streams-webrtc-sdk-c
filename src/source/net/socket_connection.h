@@ -55,8 +55,8 @@ struct __SocketConnection {
     KvsIpAddress peerIpAddr;
     KvsIpAddress hostIpAddr;
 
-    BOOL bTlsSession; //!< indicate this socket connectino is secure or not.
-    PTlsSession pTlsSession;
+    BOOL bTlsSession;        //!< indicate this socket connectino is secure or not.
+    PTlsSession pTlsSession; //!< the context of the tls session.
 
     MUTEX lock;
 

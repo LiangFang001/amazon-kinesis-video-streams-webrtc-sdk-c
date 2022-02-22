@@ -77,12 +77,10 @@ STATUS connection_listener_free(PConnectionListener* ppConnectionListener)
     pConnectionListener = *ppConnectionListener;
 
     ATOMIC_STORE_BOOL(&pConnectionListener->terminate, TRUE);
-
     if (IS_VALID_MUTEX_VALUE(pConnectionListener->lock)) {
         // Try to await for the thread to finish up
         // NOTE: As TID is not atomic we need to wrap the read in locks
         timeToWait = GETTIME() + CONNECTION_LISTENER_SHUTDOWN_TIMEOUT;
-
         do {
             MUTEX_LOCK(pConnectionListener->lock);
             threadId = pConnectionListener->receiveDataRoutine;
@@ -96,7 +94,6 @@ STATUS connection_listener_free(PConnectionListener* ppConnectionListener)
                 THREAD_SLEEP(KVS_ICE_SHORT_CHECK_DELAY);
             }
         } while (!threadTerminated && GETTIME() < timeToWait);
-
         if (!threadTerminated) {
             DLOGW("Connection listener handler thread shutdown timed out");
         }

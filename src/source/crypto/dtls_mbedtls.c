@@ -204,7 +204,7 @@ STATUS dtls_session_timerCallback(UINT32 timerID, UINT64 currentTime, UINT64 cus
     switch (handshakeStatus) {
         case 0:
             // success.
-            CHK_STATUS(dtlsSessionChangeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CONNECTED));
+            CHK_STATUS(dtls_session_changeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CONNECTED));
             CHK(FALSE, STATUS_TIMER_QUEUE_STOP_SCHEDULING);
             break;
         case MBEDTLS_ERR_SSL_WANT_READ:
@@ -215,7 +215,7 @@ STATUS dtls_session_timerCallback(UINT32 timerID, UINT64 currentTime, UINT64 cus
             break;
         default:
             LOG_MBEDTLS_ERROR("mbedtls_ssl_handshake", handshakeStatus);
-            CHK_STATUS(dtlsSessionChangeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_FAILED));
+            CHK_STATUS(dtls_session_changeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_FAILED));
             CHK(FALSE, STATUS_TIMER_QUEUE_STOP_SCHEDULING);
             break;
     }
@@ -265,7 +265,7 @@ STATUS dtls_session_start(PDtlsSession pDtlsSession, BOOL isServer)
     // Need to set isStarted to TRUE after acquiring the lock to make sure dtls_session_read
     // dont proceed before dtls_session_start finish
     ATOMIC_STORE_BOOL(&pDtlsSession->isStarted, TRUE);
-    CHK_STATUS(dtlsSessionChangeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CONNECTING));
+    CHK_STATUS(dtls_session_changeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CONNECTING));
 
     // Initialize ssl config
     CHK(mbedtls_ssl_config_defaults(&pDtlsSession->sslCtxConfig, isServer ? MBEDTLS_SSL_IS_SERVER : MBEDTLS_SSL_IS_CLIENT,
@@ -362,7 +362,7 @@ STATUS dtls_session_read(PDtlsSession pDtlsSession, PBYTE pData, PINT32 pDataLen
     }
 
     if (pDtlsSession->sslCtx.state == MBEDTLS_SSL_HANDSHAKE_OVER) {
-        CHK_STATUS(dtlsSessionChangeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CONNECTED));
+        CHK_STATUS(dtls_session_changeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CONNECTED));
     }
 
 CleanUp:
@@ -540,7 +540,7 @@ STATUS dtls_session_shutdown(PDtlsSession pDtlsSession)
     }
 
     ATOMIC_STORE_BOOL(&pDtlsSession->shutdown, TRUE);
-    CHK_STATUS(dtlsSessionChangeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CLOSED));
+    CHK_STATUS(dtls_session_changeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CLOSED));
 
 CleanUp:
 

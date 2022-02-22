@@ -197,9 +197,8 @@ typedef enum {
      (getInt16(*(PINT16) pPacketBuffer) == STUN_PACKET_TYPE_CREATE_PERMISSION_ERROR_RESPONSE) ||                                                     \
      (getInt16(*(PINT16) pPacketBuffer) == STUN_PACKET_TYPE_CHANNEL_BIND_ERROR_RESPONSE))
 
-/**
- * STUN error codes
- */
+#define STUN_PACKET_GET_TYPE(pPacketBuffer) getInt16(*(PINT16) pPacketBuffer)
+
 typedef enum {
     STUN_ERROR_UNAUTHORIZED = (UINT16) 401,
     STUN_ERROR_STALE_NONCE = (UINT16) 438,

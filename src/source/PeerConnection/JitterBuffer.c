@@ -104,7 +104,7 @@ STATUS jitterBufferPush(PJitterBuffer pJitterBuffer, PRtpPacket pRtpPacket, PBOO
         pCurPacket = (PRtpPacket) hashValue;
         // remove the old sequence number.
         if (STATUS_SUCCEEDED(status) && pCurPacket != NULL) {
-            freeRtpPacket(&pCurPacket);
+            rtp_packet_free(&pCurPacket);
             CHK_STATUS(hashTableRemove(pJitterBuffer->pPkgBufferHashTable, pRtpPacket->header.sequenceNumber));
         }
         // push the new sequence number.
@@ -113,7 +113,7 @@ STATUS jitterBufferPush(PJitterBuffer pJitterBuffer, PRtpPacket pRtpPacket, PBOO
         DLOGS("jitterBufferPush get packet timestamp %lu seqNum %lu", pRtpPacket->header.timestamp, pRtpPacket->header.sequenceNumber);
     } else {
         // Free the packet if it is out of range, jitter buffer need to own the packet and do free
-        freeRtpPacket(&pRtpPacket);
+        rtp_packet_free(&pRtpPacket);
         if (pPacketDiscarded != NULL) {
             *pPacketDiscarded = TRUE;
         }
@@ -257,7 +257,7 @@ STATUS jitterBufferDropBufferData(PJitterBuffer pJitterBuffer, UINT16 startIndex
         if (hasEntry) {
             CHK_STATUS(hashTableGet(pJitterBuffer->pPkgBufferHashTable, index, &hashValue));
             pCurPacket = (PRtpPacket) hashValue;
-            freeRtpPacket(&pCurPacket);
+            rtp_packet_free(&pCurPacket);
             CHK_STATUS(hashTableRemove(pJitterBuffer->pPkgBufferHashTable, index));
         }
     }

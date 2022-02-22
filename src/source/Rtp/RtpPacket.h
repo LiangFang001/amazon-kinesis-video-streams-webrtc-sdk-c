@@ -1,6 +1,17 @@
-/*******************************************
-RTP Packet include file
-*******************************************/
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_WEBRTC_CLIENT_RTP_RTPPACKET_H
 #define __KINESIS_VIDEO_WEBRTC_CLIENT_RTP_RTPPACKET_H
 
@@ -9,11 +20,15 @@ RTP Packet include file
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/error.h"
 #include "kvs/common_defs.h"
 #include "kvs/platform_utils.h"
-
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 #define MIN_HEADER_LENGTH 12
 #define VERSION_SHIFT     6
 #define VERSION_MASK      0x3
@@ -96,9 +111,12 @@ struct __RtpPacket {
 };
 typedef RtpPacket* PRtpPacket;
 
-STATUS createRtpPacket(UINT8, BOOL, BOOL, UINT8, BOOL, UINT8, UINT16, UINT32, UINT32, PUINT32, UINT16, UINT32, PBYTE, PBYTE, UINT32, PRtpPacket*);
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+STATUS rtp_packet_create(UINT8, BOOL, BOOL, UINT8, BOOL, UINT8, UINT16, UINT32, UINT32, PUINT32, UINT16, UINT32, PBYTE, PBYTE, UINT32, PRtpPacket*);
 STATUS setRtpPacket(UINT8, BOOL, BOOL, UINT8, BOOL, UINT8, UINT16, UINT32, UINT32, PUINT32, UINT16, UINT32, PBYTE, PBYTE, UINT32, PRtpPacket);
-STATUS freeRtpPacket(PRtpPacket*);
+STATUS rtp_packet_free(PRtpPacket*);
 STATUS createRtpPacketFromBytes(PBYTE, UINT32, PRtpPacket*);
 STATUS constructRetransmitRtpPacketFromBytes(PBYTE, UINT32, UINT16, UINT8, UINT32, PRtpPacket*);
 STATUS setRtpPacketFromBytes(PBYTE, UINT32, PRtpPacket);

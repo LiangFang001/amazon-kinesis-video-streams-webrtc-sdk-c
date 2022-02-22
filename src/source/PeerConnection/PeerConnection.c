@@ -326,7 +326,7 @@ CleanUp:
     }
     if (!ownedByJitterBuffer) {
         SAFE_MEMFREE(pPayload);
-        freeRtpPacket(&pRtpPacket);
+        rtp_packet_free(&pRtpPacket);
         CHK_LOG_ERR(retStatus);
     }
     PC_LEAVE();
