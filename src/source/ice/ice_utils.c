@@ -135,7 +135,6 @@ STATUS ice_utils_generateTransactionId(PBYTE pBuffer, UINT32 bufferLen)
     for (i = 0; i < STUN_TRANSACTION_ID_LEN; ++i) {
         pBuffer[i] = ((BYTE)(RAND() % 0x100));
     }
-
 CleanUp:
 
     return retStatus;

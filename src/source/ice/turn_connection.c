@@ -90,6 +90,7 @@ static STATUS turn_connection_handleInboundStun(PTurnConnection pTurnConnection,
     currentTime = GETTIME();
     // only handling STUN response
     stunPacketType = (UINT16) getInt16(*((PUINT16) pBuffer));
+
     switch (stunPacketType) {
         case STUN_PACKET_TYPE_ALLOCATE_SUCCESS_RESPONSE:
             /* If shutdown has been initiated, ignore the allocation response */
@@ -735,7 +736,9 @@ static STATUS turn_connection_fsmTimerCallback(UINT32 timerId, UINT64 currentTim
                                                               ARRAY_SIZE(pTurnConnection->longTermKey), &pTurnConnection->turnServer.ipAddress,
                                                               pTurnConnection->pControlChannel, NULL, FALSE);
                         if (STATUS_SUCCEEDED(sendStatus)) {
-                            pTurnPeer->rto = curTime + MAX(500 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND, pTurnConnection->turnPeerCount*50*HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
+                            pTurnPeer->rto = curTime +
+                                MAX(500 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND,
+                                    pTurnConnection->turnPeerCount * 50 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
                         }
                     }
 
@@ -1140,7 +1143,7 @@ STATUS turn_connection_addPeer(PTurnConnection pTurnConnection, PKvsIpAddress pP
     pTurnPeer->channelNumber = (UINT16) pTurnConnection->turnPeerCount + TURN_CHANNEL_BIND_CHANNEL_NUMBER_BASE;
     pTurnPeer->permissionExpirationTime = INVALID_TIMESTAMP_VALUE;
     pTurnPeer->ready = FALSE;
-    pTurnPeer->rto = GETTIME() + (pTurnConnection->turnPeerCount-1)*50*HUNDREDS_OF_NANOS_IN_A_MILLISECOND;
+    pTurnPeer->rto = GETTIME() + (pTurnConnection->turnPeerCount - 1) * 50 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND;
     //#TBD.
     CHK_STATUS(stun_xorIpAddress(&pTurnPeer->xorAddress, NULL)); /* only work for IPv4 for now */
     CHK_STATUS(transaction_id_store_create(DEFAULT_MAX_STORED_TRANSACTION_ID_COUNT, &pTurnPeer->pTransactionIdStore));

@@ -333,6 +333,7 @@ PVOID connection_listener_receiveRoutine(PVOID arg)
                         while (iterate) {
                             readLen = recvfrom(localSocket, pConnectionListener->pBuffer, pConnectionListener->bufferLen, 0,
                                                (struct sockaddr*) &srcAddrBuff, &srcAddrBuffLen);
+
                             if (readLen < 0) {
                                 switch (net_getErrorCode()) {
                                     case EWOULDBLOCK:
@@ -378,6 +379,8 @@ PVOID connection_listener_receiveRoutine(PVOID arg)
                                     pSocketConnection->dataAvailableCallbackFn(pSocketConnection->dataAvailableCallbackCustomData, pSocketConnection,
                                                                                pConnectionListener->pBuffer, (UINT32) readLen, pSrcAddr,
                                                                                NULL); // no dest information available right now.
+                                    //#TBD.
+                                    iterate = FALSE;
                                 }
                             }
 

@@ -127,7 +127,7 @@ extern "C" {
     "}"
 
 /** #TBD, need to add the code of initialization. */
-#define WSS_INBOUND_MSGQ_LENGTH 32
+#define WSS_INBOUND_MSGQ_LENGTH 64
 
 /******************************************************************************
  * TYPE DEFINITION

@@ -1669,12 +1669,10 @@ STATUS ice_agent_setupFsmConnected(PIceAgent pIceAgent)
         if (IS_CANN_PAIR_SENDING_FROM_RELAYED(pLastDataSendingIceCandidatePair)) {
             CHK_STATUS(turn_connection_shutdown(pLastDataSendingIceCandidatePair->local->pTurnConnection, KVS_ICE_TURN_CONNECTION_SHUTDOWN_TIMEOUT));
             CHK_STATUS(turn_connection_free(&pLastDataSendingIceCandidatePair->local->pTurnConnection));
-
         } else {
             CHK_STATUS(connection_listener_remove(pIceAgent->pConnectionListener, pLastDataSendingIceCandidatePair->local->pSocketConnection));
             CHK_STATUS(socket_connection_free(&pLastDataSendingIceCandidatePair->local->pSocketConnection));
         }
-
         MEMFREE(pLastDataSendingIceCandidatePair->local);
         CHK_STATUS(ice_candidate_pair_free(&pLastDataSendingIceCandidatePair));
     }
