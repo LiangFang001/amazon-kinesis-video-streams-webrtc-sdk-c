@@ -8,10 +8,10 @@ STATUS dtls_session_onOutBoundData(PDtlsSession pDtlsSession, UINT64 customData,
 
     CHK(pDtlsSession != NULL && callbackFn != NULL, STATUS_DTLS_NULL_ARG);
 
-    MUTEX_LOCK(pDtlsSession->sslLock);
+    MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
     pDtlsSession->dtlsSessionCallbacks.outboundPacketFn = callbackFn;
     pDtlsSession->dtlsSessionCallbacks.outBoundPacketFnCustomData = customData;
-    MUTEX_UNLOCK(pDtlsSession->sslLock);
+    MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
 
 CleanUp:
     return retStatus;
@@ -24,10 +24,10 @@ STATUS dtls_session_onStateChange(PDtlsSession pDtlsSession, UINT64 customData, 
 
     CHK(pDtlsSession != NULL && callbackFn != NULL, STATUS_DTLS_NULL_ARG);
 
-    MUTEX_LOCK(pDtlsSession->sslLock);
+    MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
     pDtlsSession->dtlsSessionCallbacks.stateChangeFn = callbackFn;
     pDtlsSession->dtlsSessionCallbacks.stateChangeFnCustomData = customData;
-    MUTEX_UNLOCK(pDtlsSession->sslLock);
+    MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
 
 CleanUp:
     LEAVES();

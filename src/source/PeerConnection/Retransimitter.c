@@ -89,7 +89,7 @@ STATUS resendPacketOnNack(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerCo
             if (pSenderTranceiver->sender.payloadType == pSenderTranceiver->sender.rtxPayloadType) {
                 retStatus = ice_agent_send(pKvsPeerConnection->pIceAgent, pRtpPacket->pRawPacket, pRtpPacket->rawPacketLength);
             } else {
-                CHK_STATUS(constructRetransmitRtpPacketFromBytes(
+                CHK_STATUS(rtp_packet_constructRetransmitPacketFromBytes(
                     pRtpPacket->pRawPacket, pRtpPacket->rawPacketLength, pSenderTranceiver->sender.rtxSequenceNumber,
                     pSenderTranceiver->sender.rtxPayloadType, pSenderTranceiver->sender.rtxSsrc, &pRtxRtpPacket));
                 pSenderTranceiver->sender.rtxSequenceNumber++;

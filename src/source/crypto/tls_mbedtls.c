@@ -17,7 +17,7 @@ STATUS tls_session_create(PTlsSessionCallbacks pCallbacks, PTlsSession* ppTlsSes
     pTlsSession = (PTlsSession) MEMCALLOC(1, SIZEOF(TlsSession));
     CHK(pTlsSession != NULL, STATUS_TLS_NOT_ENOUGH_MEMORY);
 
-    CHK_STATUS(createIOBuffer(DEFAULT_MTU_SIZE, &pTlsSession->pReadBuffer));
+    CHK_STATUS(io_buffer_create(DEFAULT_MTU_SIZE, &pTlsSession->pReadBuffer));
     pTlsSession->callbacks = *pCallbacks;
     pTlsSession->state = TLS_SESSION_STATE_NEW;
 
@@ -60,7 +60,7 @@ STATUS tls_session_free(PTlsSession* ppTlsSession)
     mbedtls_ssl_config_free(&pTlsSession->sslCtxConfig);
     mbedtls_ssl_free(&pTlsSession->sslCtx);
 
-    freeIOBuffer(&pTlsSession->pReadBuffer);
+    io_buffer_free(&pTlsSession->pReadBuffer);
     retStatus = tls_session_shutdown(pTlsSession);
     SAFE_MEMFREE(*ppTlsSession);
 
@@ -94,7 +94,7 @@ INT32 tls_session_recvCallback(PVOID customData, unsigned char* buf, ULONG len)
     pBuffer = pTlsSession->pReadBuffer;
 
     if (pBuffer->off < pBuffer->len) {
-        retStatus = ioBufferRead(pBuffer, buf, len, &readBytes);
+        retStatus = io_buffer_read(pBuffer, buf, len, &readBytes);
     }
 
 CleanUp:
@@ -150,7 +150,7 @@ STATUS tls_session_read(PTlsSession pTlsSession, PBYTE pData, UINT32 bufferLen, 
     CHK(pTlsSession->state != TLS_SESSION_STATE_CLOSED, STATUS_SOCKET_CONN_CLOSED_ALREADY);
 
     pReadBuffer = pTlsSession->pReadBuffer;
-    CHK_STATUS(ioBufferWrite(pReadBuffer, pData, *pDataLen));
+    CHK_STATUS(io_buffer_write(pReadBuffer, pData, *pDataLen));
 
     // read application data
     while (iterate && pReadBuffer->off < pReadBuffer->len && bufferLen > 0) {

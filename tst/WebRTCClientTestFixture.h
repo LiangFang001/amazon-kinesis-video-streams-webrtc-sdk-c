@@ -107,7 +107,7 @@ class WebRtcClientTestBase : public ::testing::Test {
         }
 
         retStatus = signalingClientCreate(&clientInfo, &channelInfo, &signalingClientCallbacks,
-                                              pCredentialProvider != NULL ? pCredentialProvider : mTestCredentialProvider, &mSignalingClientHandle);
+                                          pCredentialProvider != NULL ? pCredentialProvider : mTestCredentialProvider, &mSignalingClientHandle);
 
         if (mAccessKeyIdSet) {
             EXPECT_EQ(STATUS_SUCCESS, retStatus);
@@ -142,7 +142,7 @@ class WebRtcClientTestBase : public ::testing::Test {
             base->mFrame = NULL;
         }
         base->mFrame = (PBYTE) MEMALLOC(frameSize);
-        EXPECT_EQ(STATUS_SUCCESS, jitterBufferFillFrameData(base->mJitterBuffer, base->mFrame, frameSize, &filledSize, startIndex, endIndex));
+        EXPECT_EQ(STATUS_SUCCESS, jitter_buffer_fillFrameData(base->mJitterBuffer, base->mFrame, frameSize, &filledSize, startIndex, endIndex));
         EXPECT_EQ(frameSize, filledSize);
         EXPECT_EQ(0, MEMCMP(base->mPExpectedFrameArr[base->mReadyFrameIndex], base->mFrame, frameSize));
         base->mReadyFrameIndex++;

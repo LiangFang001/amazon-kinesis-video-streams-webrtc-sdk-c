@@ -1,8 +1,30 @@
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #define LOG_CLASS "IOBuffer"
-
 #include "io_buffer.h"
 
-STATUS createIOBuffer(UINT32 initialCap, PIOBuffer* ppBuffer)
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+STATUS io_buffer_create(UINT32 initialCap, PIOBuffer* ppBuffer)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PIOBuffer pBuffer = NULL;
@@ -21,13 +43,13 @@ STATUS createIOBuffer(UINT32 initialCap, PIOBuffer* ppBuffer)
 CleanUp:
 
     if (STATUS_FAILED(retStatus) && pBuffer != NULL) {
-        freeIOBuffer(&pBuffer);
+        io_buffer_free(&pBuffer);
     }
 
     return retStatus;
 }
 
-STATUS freeIOBuffer(PIOBuffer* ppBuffer)
+STATUS io_buffer_free(PIOBuffer* ppBuffer)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PIOBuffer pBuffer;
@@ -45,7 +67,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS ioBufferReset(PIOBuffer pBuffer)
+STATUS io_buffer_reset(PIOBuffer pBuffer)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
@@ -59,7 +81,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS ioBufferWrite(PIOBuffer pBuffer, PBYTE pData, UINT32 dataLen)
+STATUS io_buffer_write(PIOBuffer pBuffer, PBYTE pData, UINT32 dataLen)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 freeSpace;
@@ -83,7 +105,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS ioBufferRead(PIOBuffer pBuffer, PBYTE pData, UINT32 bufferLen, PUINT32 pDataLen)
+STATUS io_buffer_read(PIOBuffer pBuffer, PBYTE pData, UINT32 bufferLen, PUINT32 pDataLen)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 dataLen;
@@ -96,7 +118,7 @@ STATUS ioBufferRead(PIOBuffer pBuffer, PBYTE pData, UINT32 bufferLen, PUINT32 pD
     pBuffer->off += dataLen;
 
     if (pBuffer->off == pBuffer->len) {
-        ioBufferReset(pBuffer);
+        io_buffer_reset(pBuffer);
     }
 
     *pDataLen = dataLen;

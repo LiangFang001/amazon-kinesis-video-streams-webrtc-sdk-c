@@ -1100,7 +1100,7 @@ PUBLIC_API STATUS peer_connection_free(PRtcPeerConnection* ppPeerConnection);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS peerConnectionOnIceCandidate(PRtcPeerConnection, UINT64, RtcOnIceCandidate);
+PUBLIC_API STATUS peer_connection_onIceCandidate(PRtcPeerConnection, UINT64, RtcOnIceCandidate);
 
 #ifdef ENABLE_DATA_CHANNEL
 /**
@@ -1112,7 +1112,7 @@ PUBLIC_API STATUS peerConnectionOnIceCandidate(PRtcPeerConnection, UINT64, RtcOn
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS peerConnectionOnDataChannel(PRtcPeerConnection, UINT64, RtcOnDataChannel);
+PUBLIC_API STATUS peer_connection_onDataChannel(PRtcPeerConnection, UINT64, RtcOnDataChannel);
 #endif
 /**
  * Set a callback for connection state change

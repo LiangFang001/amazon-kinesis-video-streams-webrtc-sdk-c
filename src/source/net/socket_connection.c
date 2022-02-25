@@ -400,6 +400,9 @@ STATUS socket_connection_sendWithRetry(PSocketConnection pSocketConnection, PBYT
             bytesWritten += socketResult;
         }
         socketWriteAttempt++;
+        if (socketWriteAttempt > 1) {
+            DLOGD("sendto retry: %d/%d", socketWriteAttempt, MAX_SOCKET_WRITE_RETRY);
+        }
     }
 
     if (pBytesWritten != NULL) {

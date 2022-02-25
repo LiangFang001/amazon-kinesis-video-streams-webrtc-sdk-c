@@ -115,14 +115,23 @@ typedef RtpPacket* PRtpPacket;
  * FUNCTIONS
  ******************************************************************************/
 STATUS rtp_packet_create(UINT8, BOOL, BOOL, UINT8, BOOL, UINT8, UINT16, UINT32, UINT32, PUINT32, UINT16, UINT32, PBYTE, PBYTE, UINT32, PRtpPacket*);
-STATUS setRtpPacket(UINT8, BOOL, BOOL, UINT8, BOOL, UINT8, UINT16, UINT32, UINT32, PUINT32, UINT16, UINT32, PBYTE, PBYTE, UINT32, PRtpPacket);
+STATUS rtp_packet_set(UINT8, BOOL, BOOL, UINT8, BOOL, UINT8, UINT16, UINT32, UINT32, PUINT32, UINT16, UINT32, PBYTE, PBYTE, UINT32, PRtpPacket);
 STATUS rtp_packet_free(PRtpPacket*);
-STATUS createRtpPacketFromBytes(PBYTE, UINT32, PRtpPacket*);
-STATUS constructRetransmitRtpPacketFromBytes(PBYTE, UINT32, UINT16, UINT8, UINT32, PRtpPacket*);
-STATUS setRtpPacketFromBytes(PBYTE, UINT32, PRtpPacket);
-STATUS createBytesFromRtpPacket(PRtpPacket, PBYTE, PUINT32);
-STATUS setBytesFromRtpPacket(PRtpPacket, PBYTE, UINT32);
-STATUS constructRtpPackets(PPayloadArray, UINT8, UINT16, UINT32, UINT32, PRtpPacket, UINT32);
+/**
+ * @brief send packets to the corresponding rtp receiver.
+ *
+ * @param[in] pKvsPeerConnection the user context.
+ * @param[in] pBuffer the address of packet.
+ * @param[in, out] bufferLen the length of packet.
+ *
+ * @return STATUS status of execution
+ */
+STATUS rtp_packet_createFromBytes(PBYTE, UINT32, PRtpPacket*);
+STATUS rtp_packet_constructRetransmitPacketFromBytes(PBYTE, UINT32, UINT16, UINT8, UINT32, PRtpPacket*);
+STATUS rtp_packet_setPacketFromBytes(PBYTE, UINT32, PRtpPacket);
+STATUS rtp_packet_createBytesFromPacket(PRtpPacket, PBYTE, PUINT32);
+STATUS rtp_packet_setBytesFromPacket(PRtpPacket, PBYTE, UINT32);
+STATUS rtp_packet_constructPackets(PPayloadArray, UINT8, UINT16, UINT32, UINT32, PRtpPacket, UINT32);
 
 #ifdef __cplusplus
 }

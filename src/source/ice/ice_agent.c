@@ -440,7 +440,7 @@ STATUS ice_agent_addRemoteCandidate(PIceAgent pIceAgent, PCHAR pIceCandidateStri
         pLocalIceCandidate = (PIceCandidate) pCurNode->data;
         pCurNode = pCurNode->pNext;
 
-        if (pLocalIceCandidate->iceCandidateType == ICE_CANDIDATE_TYPE_RELAYED) {
+        if (pLocalIceCandidate->iceCandidateType == ICE_CANDIDATE_TYPE_RELAYED && IS_IPV4_ADDR(&candidateIpAddr)) {
             CHK_STATUS(turn_connection_addPeer(pLocalIceCandidate->pTurnConnection, &pIceCandidate->ipAddress));
         }
     }

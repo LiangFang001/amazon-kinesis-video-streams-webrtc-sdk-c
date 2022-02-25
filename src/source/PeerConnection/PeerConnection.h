@@ -142,8 +142,8 @@ typedef struct {
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-STATUS onFrameReadyFunc(UINT64, UINT16, UINT16, UINT32);
-STATUS onFrameDroppedFunc(UINT64, UINT16, UINT16, UINT32);
+STATUS peer_connection_onFrameReadyFunc(UINT64, UINT16, UINT16, UINT32);
+STATUS peer_connection_onFrameDroppedFunc(UINT64 customData, UINT16 startIndex, UINT16 endIndex, UINT32 timestamp);
 /**
  * @brief the callback for dtls socket layer.
  *
@@ -156,8 +156,16 @@ STATUS onFrameDroppedFunc(UINT64, UINT16, UINT16, UINT32);
 VOID onSctpSessionOutboundPacket(UINT64, PBYTE, UINT32);
 VOID onSctpSessionDataChannelMessage(UINT64, UINT32, BOOL, PBYTE, UINT32);
 VOID onSctpSessionDataChannelOpen(UINT64, UINT32, PBYTE, UINT32);
-
-STATUS peer_connection_sendPacketToRtpReceiver(PKvsPeerConnection, PBYTE, UINT32);
+/**
+ * @brief send packets to the corresponding rtp receiver.
+ *
+ * @param[in] pKvsPeerConnection the user context.
+ * @param[in] pBuffer the address of packet.
+ * @param[in] bufferLen the length of packet.
+ *
+ * @return STATUS status of execution
+ */
+STATUS peer_connection_sendPacketToRtpReceiver(PKvsPeerConnection pKvsPeerConnection, PBYTE pBuffer, UINT32 bufferLen);
 STATUS peer_connection_changeState(PKvsPeerConnection, RTC_PEER_CONNECTION_STATE);
 
 STATUS json_generateSafeString(PCHAR, UINT32);

@@ -39,7 +39,7 @@ extern "C" {
 /**
  * Default timer queue max timer count
  */
-#define DEFAULT_TIMER_QUEUE_TIMER_COUNT 8
+#define DEFAULT_TIMER_QUEUE_TIMER_COUNT 16
 
 /**
  * Sentinel value to specify no periodic invocation

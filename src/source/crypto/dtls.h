@@ -115,7 +115,7 @@ struct __DtlsSession {
     UINT32 timerId;
     UINT64 dtlsSessionStartTime;
     RTC_DTLS_TRANSPORT_STATE state;
-    MUTEX sslLock;
+    MUTEX nestedDtlsLock;
 
 #ifdef KVS_USE_OPENSSL
     volatile ATOMIC_BOOL sslInitFinished;

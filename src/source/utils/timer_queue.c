@@ -100,7 +100,7 @@ STATUS timer_queue_addTimer(TIMER_QUEUE_HANDLE handle, UINT64 start, UINT64 peri
     MUTEX_LOCK(pTimerQueue->executorLock);
     locked = TRUE;
 
-    CHK(pTimerQueue->activeTimerCount < pTimerQueue->maxTimerCount, STATUS_MAX_TIMER_COUNT_REACHED);
+    CHK_WARN(pTimerQueue->activeTimerCount < pTimerQueue->maxTimerCount, STATUS_MAX_TIMER_COUNT_REACHED, "reach the limit of timer");
 
     // Get an available index
     for (i = 0; i < pTimerQueue->maxTimerCount && pTimerEntry == NULL; i++) {

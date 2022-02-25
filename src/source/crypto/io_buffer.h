@@ -39,11 +39,11 @@ struct __IOBuffer {
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-STATUS createIOBuffer(UINT32, PIOBuffer*);
-STATUS freeIOBuffer(PIOBuffer*);
-STATUS ioBufferReset(PIOBuffer);
-STATUS ioBufferWrite(PIOBuffer, PBYTE, UINT32);
-STATUS ioBufferRead(PIOBuffer, PBYTE, UINT32, PUINT32);
+STATUS io_buffer_create(UINT32, PIOBuffer*);
+STATUS io_buffer_free(PIOBuffer*);
+STATUS io_buffer_reset(PIOBuffer);
+STATUS io_buffer_write(PIOBuffer, PBYTE, UINT32);
+STATUS io_buffer_read(PIOBuffer, PBYTE, UINT32, PUINT32);
 
 #ifdef __cplusplus
 }

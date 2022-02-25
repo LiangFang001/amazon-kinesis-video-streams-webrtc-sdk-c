@@ -13,8 +13,8 @@ STATUS rtp_packet_create(UINT8 version, BOOL padding, BOOL extension, UINT8 csrc
     CHK(pRtpPacket != NULL, STATUS_NOT_ENOUGH_MEMORY);
     pRtpPacket->pRawPacket = NULL;
     pRtpPacket->rawPacketLength = 0;
-    CHK_STATUS(setRtpPacket(version, padding, extension, csrcCount, marker, payloadType, sequenceNumber, timestamp, ssrc, csrcArray, extensionProfile,
-                            extensionLength, extensionPayload, payload, payloadLength, pRtpPacket));
+    CHK_STATUS(rtp_packet_set(version, padding, extension, csrcCount, marker, payloadType, sequenceNumber, timestamp, ssrc, csrcArray,
+                              extensionProfile, extensionLength, extensionPayload, payload, payloadLength, pRtpPacket));
 
 CleanUp:
     if (STATUS_FAILED(retStatus) && pRtpPacket != NULL) {
@@ -29,9 +29,9 @@ CleanUp:
     return retStatus;
 }
 
-STATUS setRtpPacket(UINT8 version, BOOL padding, BOOL extension, UINT8 csrcCount, BOOL marker, UINT8 payloadType, UINT16 sequenceNumber,
-                    UINT32 timestamp, UINT32 ssrc, PUINT32 csrcArray, UINT16 extensionProfile, UINT32 extensionLength, PBYTE extensionPayload,
-                    PBYTE payload, UINT32 payloadLength, PRtpPacket pRtpPacket)
+STATUS rtp_packet_set(UINT8 version, BOOL padding, BOOL extension, UINT8 csrcCount, BOOL marker, UINT8 payloadType, UINT16 sequenceNumber,
+                      UINT32 timestamp, UINT32 ssrc, PUINT32 csrcArray, UINT16 extensionProfile, UINT32 extensionLength, PBYTE extensionPayload,
+                      PBYTE payload, UINT32 payloadLength, PRtpPacket pRtpPacket)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -85,7 +85,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS createRtpPacketFromBytes(PBYTE rawPacket, UINT32 packetLength, PRtpPacket* ppRtpPacket)
+STATUS rtp_packet_createFromBytes(PBYTE rawPacket, UINT32 packetLength, PRtpPacket* ppRtpPacket)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -93,7 +93,7 @@ STATUS createRtpPacketFromBytes(PBYTE rawPacket, UINT32 packetLength, PRtpPacket
     CHK(pRtpPacket != NULL, STATUS_NOT_ENOUGH_MEMORY);
     pRtpPacket->pRawPacket = rawPacket;
     pRtpPacket->rawPacketLength = packetLength;
-    CHK_STATUS(setRtpPacketFromBytes(rawPacket, packetLength, pRtpPacket));
+    CHK_STATUS(rtp_packet_setPacketFromBytes(rawPacket, packetLength, pRtpPacket));
 
 CleanUp:
 
@@ -112,8 +112,8 @@ CleanUp:
     return retStatus;
 }
 
-STATUS constructRetransmitRtpPacketFromBytes(PBYTE rawPacket, UINT32 packetLength, UINT16 sequenceNum, UINT8 payloadType, UINT32 ssrc,
-                                             PRtpPacket* ppRtpPacket)
+STATUS rtp_packet_constructRetransmitPacketFromBytes(PBYTE rawPacket, UINT32 packetLength, UINT16 sequenceNum, UINT8 payloadType, UINT32 ssrc,
+                                                     PRtpPacket* ppRtpPacket)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -121,7 +121,7 @@ STATUS constructRetransmitRtpPacketFromBytes(PBYTE rawPacket, UINT32 packetLengt
     PRtpPacket pRtpPacket = (PRtpPacket) MEMALLOC(SIZEOF(RtpPacket));
 
     CHK(pRtpPacket != NULL, STATUS_NOT_ENOUGH_MEMORY);
-    CHK_STATUS(setRtpPacketFromBytes(rawPacket, packetLength, pRtpPacket));
+    CHK_STATUS(rtp_packet_setPacketFromBytes(rawPacket, packetLength, pRtpPacket));
     pPayload = (PBYTE) MEMALLOC(pRtpPacket->payloadLength + SIZEOF(UINT16));
     CHK(pPayload != NULL, STATUS_NOT_ENOUGH_MEMORY);
     // Retransmission payload header is OSN original sequence number
@@ -136,9 +136,9 @@ STATUS constructRetransmitRtpPacketFromBytes(PBYTE rawPacket, UINT32 packetLengt
     pRtpPacket->header.padding = FALSE;
     pRtpPacket->pRawPacket = NULL;
 
-    CHK_STATUS(createBytesFromRtpPacket(pRtpPacket, NULL, &pRtpPacket->rawPacketLength));
+    CHK_STATUS(rtp_packet_createBytesFromPacket(pRtpPacket, NULL, &pRtpPacket->rawPacketLength));
     CHK(NULL != (pRtpPacket->pRawPacket = (PBYTE) MEMALLOC(pRtpPacket->rawPacketLength)), STATUS_NOT_ENOUGH_MEMORY);
-    CHK_STATUS(createBytesFromRtpPacket(pRtpPacket, pRtpPacket->pRawPacket, &pRtpPacket->rawPacketLength));
+    CHK_STATUS(rtp_packet_createBytesFromPacket(pRtpPacket, pRtpPacket->pRawPacket, &pRtpPacket->rawPacketLength));
     pRtpPacket->payload = pRtpPacket->pRawPacket + RTP_GET_RAW_PACKET_SIZE(pRtpPacket) - pRtpPacket->payloadLength;
 
 CleanUp:
@@ -156,7 +156,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS setRtpPacketFromBytes(PBYTE rawPacket, UINT32 packetLength, PRtpPacket pRtpPacket)
+STATUS rtp_packet_setPacketFromBytes(PBYTE rawPacket, UINT32 packetLength, PRtpPacket pRtpPacket)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -204,15 +204,15 @@ STATUS setRtpPacketFromBytes(PBYTE rawPacket, UINT32 packetLength, PRtpPacket pR
         currOffset += extensionLength;
     }
 
-    CHK_STATUS(setRtpPacket(version, padding, extension, csrcCount, marker, payloadType, sequenceNumber, timestamp, ssrc, csrcArray, extensionProfile,
-                            extensionLength, extensionPayload, rawPacket + currOffset, packetLength - currOffset, pRtpPacket));
+    CHK_STATUS(rtp_packet_set(version, padding, extension, csrcCount, marker, payloadType, sequenceNumber, timestamp, ssrc, csrcArray,
+                              extensionProfile, extensionLength, extensionPayload, rawPacket + currOffset, packetLength - currOffset, pRtpPacket));
 
 CleanUp:
     LEAVES();
     return retStatus;
 }
 
-STATUS createBytesFromRtpPacket(PRtpPacket pRtpPacket, PBYTE pRawPacket, PUINT32 pPacketLength)
+STATUS rtp_packet_createBytesFromPacket(PRtpPacket pRtpPacket, PBYTE pRawPacket, PUINT32 pPacketLength)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -228,7 +228,7 @@ STATUS createBytesFromRtpPacket(PRtpPacket pRtpPacket, PBYTE pRawPacket, PUINT32
     // Otherwise, check if the specified size is enough
     CHK(*pPacketLength >= packetLength, STATUS_RTP_NOT_ENOUGH_MEMORY);
 
-    CHK_STATUS(setBytesFromRtpPacket(pRtpPacket, pRawPacket, packetLength));
+    CHK_STATUS(rtp_packet_setBytesFromPacket(pRtpPacket, pRawPacket, packetLength));
 
 CleanUp:
 
@@ -240,7 +240,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS setBytesFromRtpPacket(PRtpPacket pRtpPacket, PBYTE pRawPacket, UINT32 packetLength)
+STATUS rtp_packet_setBytesFromPacket(PRtpPacket pRtpPacket, PBYTE pRawPacket, UINT32 packetLength)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -319,8 +319,8 @@ CleanUp:
     return retStatus;
 }
 
-STATUS constructRtpPackets(PPayloadArray pPayloadArray, UINT8 payloadType, UINT16 startSequenceNumber, UINT32 timestamp, UINT32 ssrc,
-                           PRtpPacket pPackets, UINT32 packetCount)
+STATUS rtp_packet_constructPackets(PPayloadArray pPayloadArray, UINT8 payloadType, UINT16 startSequenceNumber, UINT32 timestamp, UINT32 ssrc,
+                                   PRtpPacket pPackets, UINT32 packetCount)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -335,8 +335,8 @@ STATUS constructRtpPackets(PPayloadArray pPayloadArray, UINT8 payloadType, UINT1
 
     curPtrInPayload = pPayloadArray->payloadBuffer;
     for (i = 0, curPtrInPayloadSubLen = pPayloadArray->payloadSubLength; i < pPayloadArray->payloadSubLenSize; i++, curPtrInPayloadSubLen++) {
-        CHK_STATUS(setRtpPacket(2, FALSE, FALSE, 0, i == pPayloadArray->payloadSubLenSize - 1, payloadType, sequenceNumber, timestamp, ssrc, NULL, 0,
-                                0, NULL, curPtrInPayload, *curPtrInPayloadSubLen, pPackets + i));
+        CHK_STATUS(rtp_packet_set(2, FALSE, FALSE, 0, i == pPayloadArray->payloadSubLenSize - 1, payloadType, sequenceNumber, timestamp, ssrc, NULL,
+                                  0, 0, NULL, curPtrInPayload, *curPtrInPayloadSubLen, pPackets + i));
 
         sequenceNumber = GET_UINT16_SEQ_NUM(sequenceNumber + 1);
 

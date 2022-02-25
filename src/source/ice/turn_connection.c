@@ -81,7 +81,7 @@ static STATUS turn_connection_handleInboundStun(PTurnConnection pTurnConnection,
     UINT32 i;
 
     CHK(pTurnConnection != NULL, STATUS_TURN_NULL_ARG);
-    CHK(pBuffer != NULL && bufferLen > 0, STATUS_TURN_INVALID_ARG);
+    CHK(pBuffer != NULL && bufferLen > 0, STATUS_TURN_INVALID_INBOUND_STUN_BUF);
     CHK(IS_STUN_PACKET(pBuffer) && !STUN_PACKET_IS_TYPE_ERROR(pBuffer), retStatus);
 
     MUTEX_LOCK(pTurnConnection->lock);
@@ -90,7 +90,6 @@ static STATUS turn_connection_handleInboundStun(PTurnConnection pTurnConnection,
     currentTime = GETTIME();
     // only handling STUN response
     stunPacketType = (UINT16) getInt16(*((PUINT16) pBuffer));
-
     switch (stunPacketType) {
         case STUN_PACKET_TYPE_ALLOCATE_SUCCESS_RESPONSE:
             /* If shutdown has been initiated, ignore the allocation response */
@@ -228,9 +227,9 @@ static STATUS turn_connection_handleInboundStunError(PTurnConnection pTurnConnec
     UINT32 i;
 
     CHK(pTurnConnection != NULL, STATUS_TURN_NULL_ARG);
-    CHK(pBuffer != NULL && bufferLen > 0, STATUS_TURN_INVALID_ARG);
+    CHK(pBuffer != NULL && bufferLen > 0, STATUS_TURN_INVALID_INBOUND_STUN_ERROR_BUF);
     CHK(STUN_PACKET_IS_TYPE_ERROR(pBuffer), retStatus);
-    DLOGD("stun error packet type:%d", STUN_PACKET_GET_TYPE(pBuffer));
+    DLOGD("stun error packet type:0x%x", STUN_PACKET_GET_TYPE(pBuffer));
 
     MUTEX_LOCK(pTurnConnection->lock);
     locked = TRUE;
@@ -296,6 +295,12 @@ static STATUS turn_connection_handleInboundStunError(PTurnConnection pTurnConnec
             CHK_STATUS(turn_connection_updateNonce(pTurnConnection));
             break;
 
+        case STUN_PACKET_TYPE_BINDING_RESPONSE_ERROR:
+        case STUN_PACKET_TYPE_SHARED_SECRET_ERROR_RESPONSE:
+        case STUN_PACKET_TYPE_ALLOCATE_ERROR_RESPONSE:
+        case STUN_PACKET_TYPE_REFRESH_ERROR_RESPONSE:
+        case STUN_PACKET_TYPE_CREATE_PERMISSION_ERROR_RESPONSE:
+        case STUN_PACKET_TYPE_CHANNEL_BIND_ERROR_RESPONSE:
         default:
             /* Remove peer for any other error */
             DLOGW("Received STUN error response. Error type: 0x%02x, Error Code: %u. attribute len %u, Error detail: %s.", stunPacketType,
@@ -366,7 +371,7 @@ static STATUS turn_connection_handleTcpChannelData(PTurnConnection pTurnConnecti
     PTurnPeer pTurnPeer = NULL;
 
     CHK(pTurnConnection != NULL && pChannelData != NULL && pTurnChannelDataCount != NULL && pProcessedDataLen != NULL, STATUS_TURN_NULL_ARG);
-    CHK(pBuffer != NULL && bufferLen > 0, STATUS_TURN_INVALID_ARG);
+    CHK(pBuffer != NULL && bufferLen > 0, STATUS_TURN_INVALID_TCP_CHANNEL_BUF);
 
     pCurPos = pBuffer;
     remainingBufLen = bufferLen;
@@ -480,7 +485,7 @@ static STATUS turn_connection_handleChannelData(PTurnConnection pTurnConnection,
     PTurnPeer pTurnPeer = NULL;
 
     CHK(pTurnConnection != NULL && pChannelData != NULL && pChannelDataCount != NULL && pProcessedDataLen != NULL, STATUS_TURN_NULL_ARG);
-    CHK(pBuffer != NULL && bufferLen > 0, STATUS_TURN_INVALID_ARG);
+    CHK(pBuffer != NULL && bufferLen > 0, STATUS_TURN_INVALID_CHANNEL_BUF);
 
     MUTEX_LOCK(pTurnConnection->lock);
     locked = TRUE;
@@ -668,7 +673,7 @@ static VOID turn_connection_throwFatalError(PTurnConnection pTurnConnection, STA
  *
  * @return STATUS status of execution.
  */
-static STATUS turn_connection_timerCallback(UINT32 timerId, UINT64 currentTime, UINT64 customData)
+static STATUS turn_connection_fsmTimerCallback(UINT32 timerId, UINT64 currentTime, UINT64 customData)
 {
     UNUSED_PARAM(timerId);
     UNUSED_PARAM(currentTime);
@@ -683,14 +688,15 @@ static STATUS turn_connection_timerCallback(UINT32 timerId, UINT64 currentTime, 
 
     CHK(pTurnConnection != NULL, STATUS_TURN_NULL_ARG);
 
-    MUTEX_LOCK(pTurnConnection->lock);
+    // MUTEX_LOCK(pTurnConnection->lock);
+    CHK_WARN(MUTEX_WAITLOCK(pTurnConnection->lock, 50 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND) == TRUE, STATUS_TURN_ACQUIRE_MUTEX,
+             "turn_connection_fsmTimerCallback failed");
     locked = TRUE;
 
     switch (pTurnConnection->turnFsmState) {
         case TURN_STATE_GET_CREDENTIALS:
             // do not have information of the crendential, so leave the password as blank.
             // when you receive 401 response, you can retrieve the information from it.
-
             sendStatus = ice_utils_sendStunPacket(pTurnConnection->pTurnPacket, NULL, 0, &pTurnConnection->turnServer.ipAddress,
                                                   pTurnConnection->pControlChannel, NULL, FALSE);
             break;
@@ -711,20 +717,28 @@ static STATUS turn_connection_timerCallback(UINT32 timerId, UINT64 currentTime, 
                 // send the create-permission packets.
                 if (pTurnPeer->connectionState == TURN_PEER_CONN_STATE_CREATE_PERMISSION) {
                     // update peer address;
-                    CHK_STATUS(stun_attribute_getByType(pTurnConnection->pTurnCreatePermissionPacket, STUN_ATTRIBUTE_TYPE_XOR_PEER_ADDRESS,
-                                                        (PStunAttributeHeader*) &pStunAttributeAddress));
-                    CHK_WARN(pStunAttributeAddress != NULL, STATUS_INTERNAL_ERROR, "xor peer address attribute not found");
-                    pStunAttributeAddress->address = pTurnPeer->address;
+                    UINT64 curTime = GETTIME();
+                    if (curTime > pTurnPeer->rto) {
+                        CHK_STATUS(stun_attribute_getByType(pTurnConnection->pTurnCreatePermissionPacket, STUN_ATTRIBUTE_TYPE_XOR_PEER_ADDRESS,
+                                                            (PStunAttributeHeader*) &pStunAttributeAddress));
+                        CHK_WARN(pStunAttributeAddress != NULL, STATUS_INTERNAL_ERROR, "xor peer address attribute not found");
+                        pStunAttributeAddress->address = pTurnPeer->address;
 
-                    CHK_STATUS(ice_utils_generateTransactionId(pTurnConnection->pTurnCreatePermissionPacket->header.transactionId,
-                                                               ARRAY_SIZE(pTurnConnection->pTurnCreatePermissionPacket->header.transactionId)));
+                        CHK_STATUS(ice_utils_generateTransactionId(pTurnConnection->pTurnCreatePermissionPacket->header.transactionId,
+                                                                   ARRAY_SIZE(pTurnConnection->pTurnCreatePermissionPacket->header.transactionId)));
 
-                    CHK(pTurnPeer->pTransactionIdStore != NULL, STATUS_TURN_INVALID_OPERATION);
-                    transaction_id_store_insert(pTurnPeer->pTransactionIdStore, pTurnConnection->pTurnCreatePermissionPacket->header.transactionId);
-                    // send the packet of create-permission.
-                    sendStatus = ice_utils_sendStunPacket(pTurnConnection->pTurnCreatePermissionPacket, pTurnConnection->longTermKey,
-                                                          ARRAY_SIZE(pTurnConnection->longTermKey), &pTurnConnection->turnServer.ipAddress,
-                                                          pTurnConnection->pControlChannel, NULL, FALSE);
+                        CHK(pTurnPeer->pTransactionIdStore != NULL, STATUS_TURN_INVALID_OPERATION);
+                        transaction_id_store_insert(pTurnPeer->pTransactionIdStore,
+                                                    pTurnConnection->pTurnCreatePermissionPacket->header.transactionId);
+                        // send the packet of create-permission.
+                        sendStatus = ice_utils_sendStunPacket(pTurnConnection->pTurnCreatePermissionPacket, pTurnConnection->longTermKey,
+                                                              ARRAY_SIZE(pTurnConnection->longTermKey), &pTurnConnection->turnServer.ipAddress,
+                                                              pTurnConnection->pControlChannel, NULL, FALSE);
+                        if (STATUS_SUCCEEDED(sendStatus)) {
+                            pTurnPeer->rto = curTime + MAX(500 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND, pTurnConnection->turnPeerCount*50*HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
+                        }
+                    }
+
                     // send bind-channel packets.
                 } else if (pTurnPeer->connectionState == TURN_PEER_CONN_STATE_BIND_CHANNEL) {
                     // update peer address;
@@ -755,6 +769,7 @@ static STATUS turn_connection_timerCallback(UINT32 timerId, UINT64 currentTime, 
 
         case TURN_STATE_CLEAN_UP:
             if (ATOMIC_LOAD_BOOL(&pTurnConnection->hasAllocation)) {
+                DLOGD("send the deallocation packet");
                 CHK_STATUS(stun_attribute_getByType(pTurnConnection->pTurnAllocationRefreshPacket, STUN_ATTRIBUTE_TYPE_LIFETIME,
                                                     (PStunAttributeHeader*) &pStunAttributeLifetime));
                 CHK(pStunAttributeLifetime != NULL, STATUS_INTERNAL_ERROR);
@@ -823,8 +838,8 @@ static STATUS turn_connection_getLongTermKey(PCHAR username, PCHAR realm, PCHAR 
     CHAR stringBuffer[STUN_MAX_USERNAME_LEN + MAX_ICE_CONFIG_CREDENTIAL_LEN + STUN_MAX_REALM_LEN + 2]; // 2 for two ":" between each value
 
     CHK(username != NULL && realm != NULL && password != NULL && pBuffer != NULL, STATUS_TURN_NULL_ARG);
-    CHK(username[0] != '\0' && realm[0] != '\0' && password[0] != '\0' && bufferLen >= KVS_MD5_DIGEST_LENGTH, STATUS_TURN_INVALID_ARG);
-    CHK((STRLEN(username) + STRLEN(realm) + STRLEN(password)) <= ARRAY_SIZE(stringBuffer) - 2, STATUS_TURN_INVALID_ARG);
+    CHK(username[0] != '\0' && realm[0] != '\0' && password[0] != '\0' && bufferLen >= KVS_MD5_DIGEST_LENGTH, STATUS_TURN_INVALID_LONG_TERM_KEY_ARG);
+    CHK((STRLEN(username) + STRLEN(realm) + STRLEN(password)) <= ARRAY_SIZE(stringBuffer) - 2, STATUS_TURN_INVALID_LONG_TERM_KEY_ARG);
 
     SPRINTF(stringBuffer, "%s:%s:%s", username, realm, password);
 
@@ -856,7 +871,7 @@ static STATUS turn_connection_packAllocationRequest(PCHAR username, PCHAR realm,
 
     CHK(ppStunPacket != NULL, STATUS_TURN_NULL_ARG);
     CHK((username == NULL && realm == NULL && nonce == NULL) || (username != NULL && realm != NULL && nonce != NULL && nonceLen > 0),
-        STATUS_TURN_INVALID_ARG);
+        STATUS_TURN_INVALID_PACK_ALLOCATION_ARG);
 
     CHK_STATUS(stun_createPacket(STUN_PACKET_TYPE_ALLOCATE, NULL, &pTurnAllocateRequest));
     CHK_STATUS(stun_attribute_appendLifetime(pTurnAllocateRequest, lifetime));
@@ -918,10 +933,10 @@ STATUS turn_connection_create(PIceServer pTurnServer, TIMER_QUEUE_HANDLE timerQu
     PTurnConnection pTurnConnection = NULL;
 
     CHK(pTurnServer != NULL && ppTurnConnection != NULL && pTurnSocket != NULL, STATUS_TURN_NULL_ARG);
-    CHK(IS_VALID_TIMER_QUEUE_HANDLE(timerQueueHandle), STATUS_TURN_INVALID_ARG);
+    CHK(IS_VALID_TIMER_QUEUE_HANDLE(timerQueueHandle), STATUS_TURN_INVALID_TIMER_ARG);
     CHK(pTurnServer->isTurn && !IS_EMPTY_STRING(pTurnServer->url) && !IS_EMPTY_STRING(pTurnServer->credential) &&
             !IS_EMPTY_STRING(pTurnServer->username),
-        STATUS_TURN_INVALID_ARG);
+        STATUS_TURN_INVALID_SERVER_ARG);
 
     // #TBD, #heap, #memory.
     pTurnConnection = (PTurnConnection) MEMCALLOC(
@@ -1106,7 +1121,7 @@ STATUS turn_connection_addPeer(PTurnConnection pTurnConnection, PKvsIpAddress pP
     BOOL locked = FALSE;
 
     CHK(pTurnConnection != NULL && pPeerAddress != NULL, STATUS_TURN_NULL_ARG);
-    CHK(pTurnConnection->turnServer.ipAddress.family == pPeerAddress->family, STATUS_TURN_INVALID_ARG);
+    CHK(pTurnConnection->turnServer.ipAddress.family == pPeerAddress->family, STATUS_TURN_MISMATCH_IP_FAMIILY);
     CHK_WARN(IS_IPV4_ADDR(pPeerAddress), retStatus, "Drop IPv6 turn peer because only IPv4 turn peer is supported right now");
 
     MUTEX_LOCK(pTurnConnection->lock);
@@ -1125,7 +1140,8 @@ STATUS turn_connection_addPeer(PTurnConnection pTurnConnection, PKvsIpAddress pP
     pTurnPeer->channelNumber = (UINT16) pTurnConnection->turnPeerCount + TURN_CHANNEL_BIND_CHANNEL_NUMBER_BASE;
     pTurnPeer->permissionExpirationTime = INVALID_TIMESTAMP_VALUE;
     pTurnPeer->ready = FALSE;
-
+    pTurnPeer->rto = GETTIME() + (pTurnConnection->turnPeerCount-1)*50*HUNDREDS_OF_NANOS_IN_A_MILLISECOND;
+    //#TBD.
     CHK_STATUS(stun_xorIpAddress(&pTurnPeer->xorAddress, NULL)); /* only work for IPv4 for now */
     CHK_STATUS(transaction_id_store_create(DEFAULT_MAX_STORED_TRANSACTION_ID_COUNT, &pTurnPeer->pTransactionIdStore));
     pTurnPeer = NULL;
@@ -1155,7 +1171,7 @@ STATUS turn_connection_send(PTurnConnection pTurnConnection, PBYTE pBuf, UINT32 
     BOOL sendLocked = FALSE;
 
     CHK(pTurnConnection != NULL && pDestIp != NULL, STATUS_TURN_NULL_ARG);
-    CHK(pBuf != NULL && bufLen > 0, STATUS_TURN_INVALID_ARG);
+    CHK(pBuf != NULL && bufLen > 0, STATUS_TURN_INVALID_SEND_BUF_ARG);
 
     MUTEX_LOCK(pTurnConnection->lock);
     locked = TRUE;
@@ -1171,6 +1187,7 @@ STATUS turn_connection_send(PTurnConnection pTurnConnection, PBYTE pBuf, UINT32 
     pSendPeer = turn_connection_getPeerByIp(pTurnConnection, pDestIp);
 
     CHK_STATUS(net_getIpAddrStr(pDestIp, ipAddrStr, ARRAY_SIZE(ipAddrStr)));
+
     if (pSendPeer == NULL) {
         DLOGV("Unable to send data through turn because peer with address %s:%u is not found", ipAddrStr, KVS_GET_IP_ADDRESS_PORT(pDestIp));
         CHK(FALSE, retStatus);
@@ -1253,7 +1270,7 @@ STATUS turn_connection_start(PTurnConnection pTurnConnection)
 
     /* schedule the timer, which will drive the state machine. */
     CHK_STATUS(timer_queue_addTimer(pTurnConnection->timerQueueHandle, KVS_ICE_DEFAULT_TIMER_START_DELAY, pTurnConnection->currentTimerCallingPeriod,
-                                    turn_connection_timerCallback, (UINT64) pTurnConnection, (PUINT32) &timerCallbackId));
+                                    turn_connection_fsmTimerCallback, (UINT64) pTurnConnection, (PUINT32) &timerCallbackId));
 
     ATOMIC_STORE(&pTurnConnection->timerCallbackId, timerCallbackId);
 
@@ -1278,7 +1295,7 @@ STATUS turn_connection_fsm_step(PTurnConnection pTurnConnection)
     TURN_CONNECTION_STATE previousState = TURN_STATE_NEW;
     BOOL refreshPeerPermission = FALSE;
     UINT32 i = 0;
-
+    UINT64 curTime = GETTIME();
     CHK(pTurnConnection != NULL, STATUS_TURN_NULL_ARG);
 
     previousState = pTurnConnection->turnFsmState;

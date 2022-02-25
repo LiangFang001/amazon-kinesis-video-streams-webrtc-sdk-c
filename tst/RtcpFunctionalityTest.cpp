@@ -34,7 +34,7 @@ class RtcpFunctionalityTest : public WebRtcClientTestBase {
     }
 };
 
-TEST_F(RtcpFunctionalityTest, setRtpPacketFromBytes)
+TEST_F(RtcpFunctionalityTest, rtp_packet_setPacketFromBytes)
 {
     RtcpPacket rtcpPacket;
 

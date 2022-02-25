@@ -47,10 +47,10 @@ extern "C" {
 
 // turn state timeouts
 #define DEFAULT_TURN_SOCKET_CONNECT_TIMEOUT    (5 * HUNDREDS_OF_NANOS_IN_A_SECOND)
-#define DEFAULT_TURN_GET_CREDENTIAL_TIMEOUT    (5 * HUNDREDS_OF_NANOS_IN_A_SECOND)
-#define DEFAULT_TURN_ALLOCATION_TIMEOUT        (5 * HUNDREDS_OF_NANOS_IN_A_SECOND)  //!< 5 sec
-#define DEFAULT_TURN_CREATE_PERMISSION_TIMEOUT (2 * HUNDREDS_OF_NANOS_IN_A_SECOND)  //!< 2 sec
-#define DEFAULT_TURN_BIND_CHANNEL_TIMEOUT      (3 * HUNDREDS_OF_NANOS_IN_A_SECOND)  //!< 3 sec
+#define DEFAULT_TURN_GET_CREDENTIAL_TIMEOUT    (10 * HUNDREDS_OF_NANOS_IN_A_SECOND)
+#define DEFAULT_TURN_ALLOCATION_TIMEOUT        (10 * HUNDREDS_OF_NANOS_IN_A_SECOND) //!< 5 sec
+#define DEFAULT_TURN_CREATE_PERMISSION_TIMEOUT (10 * HUNDREDS_OF_NANOS_IN_A_SECOND) //!< 2 sec
+#define DEFAULT_TURN_BIND_CHANNEL_TIMEOUT      (10 * HUNDREDS_OF_NANOS_IN_A_SECOND) //!< 3 sec
 #define DEFAULT_TURN_CLEAN_UP_TIMEOUT          (10 * HUNDREDS_OF_NANOS_IN_A_SECOND) //!< 10 sec
 
 // #TBD, It is suggested that the client refresh the allocation roughly 1 minute before it expires.
@@ -142,6 +142,7 @@ typedef struct {
     UINT16 channelNumber;
     UINT64 permissionExpirationTime;
     BOOL ready;
+    UINT64 rto;
 } TurnPeer, *PTurnPeer;
 
 typedef struct __TurnConnection TurnConnection;

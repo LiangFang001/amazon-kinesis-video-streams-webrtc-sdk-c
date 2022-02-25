@@ -21,7 +21,7 @@ TEST_F(RtpFunctionalityTest, packetUnderflow)
     MEMSET(&rtpPacket, 0x00, SIZEOF(RtpPacket));
 
     for (auto i = 0; i <= 12; i++) {
-        ASSERT_EQ(setRtpPacketFromBytes(rawPacket, SIZEOF(rawPacket), &rtpPacket), STATUS_RTP_INPUT_PACKET_TOO_SMALL);
+        ASSERT_EQ(rtp_packet_setPacketFromBytes(rawPacket, SIZEOF(rawPacket), &rtpPacket), STATUS_RTP_INPUT_PACKET_TOO_SMALL);
     }
 }
 
@@ -46,17 +46,17 @@ TEST_F(RtpFunctionalityTest, marshallUnmarshallGettingSameData)
 
     SRAND(GETTIME());
     EXPECT_EQ(STATUS_SUCCESS,
-              constructRtpPackets(&payloadArray, 8, 1, 1324857487, 0x1234ABCD, (PRtpPacket) packetList, payloadArray.payloadSubLenSize));
+              rtp_packet_constructPackets(&payloadArray, 8, 1, 1324857487, 0x1234ABCD, (PRtpPacket) packetList, payloadArray.payloadSubLenSize));
 
     EXPECT_NE(NULL, (UINT64) packetList);
 
     for (i = 0; i < payloadArray.payloadSubLenSize; i++) {
         pRtpPacket = packetList + i;
 
-        EXPECT_EQ(STATUS_SUCCESS, createBytesFromRtpPacket(pRtpPacket, NULL, &packetLen));
+        EXPECT_EQ(STATUS_SUCCESS, rtp_packet_createBytesFromPacket(pRtpPacket, NULL, &packetLen));
         EXPECT_TRUE(NULL != (rawPacket = (PBYTE) MEMALLOC(packetLen)));
-        EXPECT_EQ(STATUS_SUCCESS, createBytesFromRtpPacket(pRtpPacket, rawPacket, &packetLen));
-        EXPECT_EQ(STATUS_SUCCESS, createRtpPacketFromBytes(rawPacket, packetLen, &pNewRtpPacket));
+        EXPECT_EQ(STATUS_SUCCESS, rtp_packet_createBytesFromPacket(pRtpPacket, rawPacket, &packetLen));
+        EXPECT_EQ(STATUS_SUCCESS, rtp_packet_createFromBytes(rawPacket, packetLen, &pNewRtpPacket));
         // Verify the extracted header is the same as original header
         EXPECT_EQ(pRtpPacket->header.version, pNewRtpPacket->header.version);
         EXPECT_EQ(pRtpPacket->header.sequenceNumber, pNewRtpPacket->header.sequenceNumber);
@@ -138,16 +138,16 @@ TEST_F(RtpFunctionalityTest, marshallUnmarshallH264Data)
         EXPECT_LT(0, payloadArray.payloadSubLenSize);
         pPacketList = (PRtpPacket) MEMALLOC(payloadArray.payloadSubLenSize * SIZEOF(RtpPacket));
 
-        constructRtpPackets(&payloadArray, 96, seqNum, (UINT32)((curTime - startTimeStamp) / HUNDREDS_OF_NANOS_IN_A_MILLISECOND), 0x1234ABCD,
+        rtp_packet_constructPackets(&payloadArray, 96, seqNum, (UINT32)((curTime - startTimeStamp) / HUNDREDS_OF_NANOS_IN_A_MILLISECOND), 0x1234ABCD,
                             pPacketList, payloadArray.payloadSubLenSize);
 
         seqNum = GET_UINT16_SEQ_NUM(seqNum + payloadArray.payloadSubLenSize);
 
         for (i = 0; i < payloadArray.payloadSubLenSize; i++) {
             pRtpPacket = pPacketList + i;
-            EXPECT_EQ(STATUS_SUCCESS, createBytesFromRtpPacket(pRtpPacket, NULL, &packetLen));
+            EXPECT_EQ(STATUS_SUCCESS, rtp_packet_createBytesFromPacket(pRtpPacket, NULL, &packetLen));
             EXPECT_TRUE(NULL != (rawPacket = (PBYTE) MEMALLOC(packetLen)));
-            EXPECT_EQ(STATUS_SUCCESS, createBytesFromRtpPacket(pRtpPacket, rawPacket, &packetLen));
+            EXPECT_EQ(STATUS_SUCCESS, rtp_packet_createBytesFromPacket(pRtpPacket, rawPacket, &packetLen));
 
             MEMFREE(rawPacket);
             rawPacket = NULL;

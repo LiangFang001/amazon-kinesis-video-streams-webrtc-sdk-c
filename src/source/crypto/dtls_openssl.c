@@ -46,7 +46,7 @@ STATUS dtls_session_timerCallback(UINT32 timerID, UINT64 currentTime, UINT64 cus
 
     MEMSET(&timeout, 0x00, SIZEOF(struct timeval));
 
-    MUTEX_LOCK(pDtlsSession->sslLock);
+    MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
     locked = TRUE;
 
     /* In case we need to initiate the handshake */
@@ -80,7 +80,7 @@ STATUS dtls_session_timerCallback(UINT32 timerID, UINT64 currentTime, UINT64 cus
 CleanUp:
 
     if (locked) {
-        MUTEX_UNLOCK(pDtlsSession->sslLock);
+        MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
     }
 
     return retStatus;
@@ -283,7 +283,7 @@ STATUS dtls_session_create(PDtlsSessionCallbacks pDtlsSessionCallbacks, TIMER_QU
 
     pDtlsSession->timerQueueHandle = timerQueueHandle;
     pDtlsSession->timerId = MAX_UINT32;
-    pDtlsSession->sslLock = MUTEX_CREATE(TRUE);
+    pDtlsSession->nestedDtlsLock = MUTEX_CREATE(TRUE);
     pDtlsSession->state = RTC_DTLS_TRANSPORT_STATE_NEW;
     ATOMIC_STORE_BOOL(&pDtlsSession->isStarted, FALSE);
     ATOMIC_STORE_BOOL(&pDtlsSession->sslInitFinished, FALSE);
@@ -362,7 +362,7 @@ STATUS dtls_session_start(PDtlsSession pDtlsSession, BOOL isServer)
     CHK(pDtlsSession != NULL && pDtlsSession != NULL, STATUS_DTLS_NULL_ARG);
     CHK(!ATOMIC_LOAD_BOOL(&pDtlsSession->isStarted), retStatus);
 
-    MUTEX_LOCK(pDtlsSession->sslLock);
+    MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
     locked = TRUE;
 
     CHK_STATUS(dtls_session_changeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CONNECTING));
@@ -390,7 +390,7 @@ CleanUp:
     CHK_LOG_ERR(retStatus);
 
     if (locked) {
-        MUTEX_UNLOCK(pDtlsSession->sslLock);
+        MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
     }
 
     LEAVES();
@@ -419,8 +419,8 @@ STATUS dtls_session_free(PDtlsSession* ppDtlsSession)
     if (pDtlsSession->pSslCtx != NULL) {
         SSL_free(pDtlsSession->pSsl);
     }
-    if (IS_VALID_MUTEX_VALUE(pDtlsSession->sslLock)) {
-        MUTEX_FREE(pDtlsSession->sslLock);
+    if (IS_VALID_MUTEX_VALUE(pDtlsSession->nestedDtlsLock)) {
+        MUTEX_FREE(pDtlsSession->nestedDtlsLock);
     }
 
     SAFE_MEMFREE(pDtlsSession);
@@ -443,7 +443,7 @@ STATUS dtls_session_read(PDtlsSession pDtlsSession, PBYTE pData, PINT32 pDataLen
     CHK(pDtlsSession != NULL && pDtlsSession != NULL && pDataLen != NULL, STATUS_DTLS_NULL_ARG);
     CHK(ATOMIC_LOAD_BOOL(&pDtlsSession->isStarted), STATUS_DTLS_PACKET_BEFORE_DTLS_READY);
 
-    MUTEX_LOCK(pDtlsSession->sslLock);
+    MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
     locked = TRUE;
 
     sslRet = BIO_write(SSL_get_rbio(pDtlsSession->pSsl), pData, *pDataLen);
@@ -483,7 +483,7 @@ CleanUp:
     }
 
     if (locked) {
-        MUTEX_UNLOCK(pDtlsSession->sslLock);
+        MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
     }
 
     LEAVES();
@@ -501,7 +501,7 @@ STATUS dtls_session_send(PDtlsSession pDtlsSession, PBYTE pData, INT32 dataLen)
     BOOL locked = FALSE;
 
     CHK(pDtlsSession != NULL && pData != NULL, STATUS_DTLS_NULL_ARG);
-    MUTEX_LOCK(pDtlsSession->sslLock);
+    MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
     locked = TRUE;
     CHK(!ATOMIC_LOAD_BOOL(&pDtlsSession->shutdown), retStatus);
 
@@ -519,7 +519,7 @@ STATUS dtls_session_send(PDtlsSession pDtlsSession, PBYTE pData, INT32 dataLen)
 
 CleanUp:
     if (locked) {
-        MUTEX_UNLOCK(pDtlsSession->sslLock);
+        MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
     }
 
     LEAVES();
@@ -533,7 +533,7 @@ STATUS dtls_session_shutdown(PDtlsSession pDtlsSession)
 
     CHK(pDtlsSession != NULL, STATUS_DTLS_NULL_ARG);
 
-    MUTEX_LOCK(pDtlsSession->sslLock);
+    MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
     locked = TRUE;
 
     CHK(!ATOMIC_LOAD_BOOL(&pDtlsSession->shutdown), retStatus);
@@ -547,7 +547,7 @@ STATUS dtls_session_shutdown(PDtlsSession pDtlsSession)
 CleanUp:
 
     if (locked) {
-        MUTEX_UNLOCK(pDtlsSession->sslLock);
+        MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
     }
 
     return retStatus;
@@ -588,14 +588,14 @@ STATUS dtls_session_isInitFinished(PDtlsSession pDtlsSession, PBOOL pIsConnected
 
     CHK(pDtlsSession != NULL && pIsConnected != NULL, STATUS_DTLS_NULL_ARG);
 
-    MUTEX_LOCK(pDtlsSession->sslLock);
+    MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
     locked = TRUE;
 
     *pIsConnected = SSL_is_init_finished(pDtlsSession->pSsl);
 
 CleanUp:
     if (locked) {
-        MUTEX_UNLOCK(pDtlsSession->sslLock);
+        MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
     }
 
     LEAVES();
@@ -612,7 +612,7 @@ STATUS dtls_session_populateKeyingMaterial(PDtlsSession pDtlsSession, PDtlsKeyin
 
     CHK(pDtlsSession != NULL && pDtlsKeyingMaterial != NULL, STATUS_DTLS_NULL_ARG);
 
-    MUTEX_LOCK(pDtlsSession->sslLock);
+    MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
     locked = TRUE;
 
     CHK(SSL_export_keying_material(pDtlsSession->pSsl, keyingMaterialBuffer, SIZEOF(keyingMaterialBuffer), KEYING_EXTRACTOR_LABEL,
@@ -643,7 +643,7 @@ STATUS dtls_session_populateKeyingMaterial(PDtlsSession pDtlsSession, PDtlsKeyin
 
 CleanUp:
     if (locked) {
-        MUTEX_UNLOCK(pDtlsSession->sslLock);
+        MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
     }
 
     LEAVES();
@@ -660,7 +660,7 @@ STATUS dtls_session_getLocalCertificateFingerprint(PDtlsSession pDtlsSession, PC
     CHK(pDtlsSession != NULL && pBuff != NULL, STATUS_DTLS_NULL_ARG);
     CHK(buffLen >= CERTIFICATE_FINGERPRINT_LENGTH, STATUS_INVALID_ARG_LEN);
 
-    MUTEX_LOCK(pDtlsSession->sslLock);
+    MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
     locked = TRUE;
 
     // Use the 0th certificate for now
@@ -668,7 +668,7 @@ STATUS dtls_session_getLocalCertificateFingerprint(PDtlsSession pDtlsSession, PC
 
 CleanUp:
     if (locked) {
-        MUTEX_UNLOCK(pDtlsSession->sslLock);
+        MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
     }
 
     LEAVES();
@@ -685,7 +685,7 @@ STATUS dtls_session_verifyRemoteCertificateFingerprint(PDtlsSession pDtlsSession
 
     CHK(pDtlsSession != NULL && pExpectedFingerprint != NULL, STATUS_DTLS_NULL_ARG);
 
-    MUTEX_LOCK(pDtlsSession->sslLock);
+    MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
     locked = TRUE;
 
     CHK((pRemoteCertificate = SSL_get_peer_certificate(pDtlsSession->pSsl)) != NULL, STATUS_INTERNAL_ERROR);
@@ -703,7 +703,7 @@ CleanUp:
     }
 
     if (locked) {
-        MUTEX_UNLOCK(pDtlsSession->sslLock);
+        MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
     }
 
     LEAVES();

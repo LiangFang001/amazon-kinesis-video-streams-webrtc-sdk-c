@@ -333,6 +333,17 @@ extern "C" {
 #define STATUS_TURN_FAILED_TO_BIND_CHANNEL                                 STATUS_TURN_BASE + 0x0000000C
 #define STATUS_TURN_NEW_DATA_CHANNEL_MSG_HEADER_BEFORE_PREVIOUS_MSG_FINISH STATUS_TURN_BASE + 0x0000000D
 #define STATUS_TURN_MISSING_CHANNEL_DATA_HEADER                            STATUS_TURN_BASE + 0x0000000E
+#define STATUS_TURN_MISMATCH_IP_FAMIILY                                    STATUS_TURN_BASE + 0x0000000F
+#define STATUS_TURN_INVALID_INBOUND_STUN_BUF                               STATUS_TURN_BASE + 0x00000010
+#define STATUS_TURN_INVALID_INBOUND_STUN_ERROR_BUF                         STATUS_TURN_BASE + 0x00000011
+#define STATUS_TURN_INVALID_CHANNEL_BUF                                    STATUS_TURN_BASE + 0x00000012
+#define STATUS_TURN_INVALID_TCP_CHANNEL_BUF                                STATUS_TURN_BASE + 0x00000013
+#define STATUS_TURN_INVALID_LONG_TERM_KEY_ARG                              STATUS_TURN_BASE + 0x00000014
+#define STATUS_TURN_INVALID_PACK_ALLOCATION_ARG                            STATUS_TURN_BASE + 0x00000015
+#define STATUS_TURN_INVALID_TIMER_ARG                                      STATUS_TURN_BASE + 0x00000016
+#define STATUS_TURN_INVALID_SERVER_ARG                                     STATUS_TURN_BASE + 0x00000017
+#define STATUS_TURN_INVALID_SEND_BUF_ARG                                   STATUS_TURN_BASE + 0x00000018
+#define STATUS_TURN_ACQUIRE_MUTEX                                          STATUS_TURN_BASE + 0x00000019
 /******************************************************************************
  * SRTP error codes
  ******************************************************************************/
@@ -436,6 +447,7 @@ extern "C" {
 #define STATUS_PEER_CONN_NO_CONNECTION                            STATUS_PEER_CONN_BASE + 0x00000003
 #define STATUS_PEER_CONN_NO_SCTP_SESSION                          STATUS_PEER_CONN_BASE + 0x00000004
 #define STATUS_PEER_CONN_NO_ON_MESSAGE                            STATUS_PEER_CONN_BASE + 0x00000005
+#define STATUS_PEER_CONN_NOT_ENOUGH_MEMORY                        STATUS_PEER_CONN_BASE + 0x00000006
 /******************************************************************************
  * Sctp error codes
  ******************************************************************************/

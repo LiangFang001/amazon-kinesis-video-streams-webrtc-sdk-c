@@ -63,8 +63,8 @@ STATUS jitter_buffer_free(PJitterBuffer* ppJitterBuffer)
 
     pJitterBuffer = *ppJitterBuffer;
 
-    jitterBufferPop(pJitterBuffer, TRUE);
-    jitterBufferDropBufferData(pJitterBuffer, 0, MAX_SEQUENCE_NUM, 0);
+    jitter_buffer_pop(pJitterBuffer, TRUE);
+    jitter_buffer_dropBufferData(pJitterBuffer, 0, MAX_SEQUENCE_NUM, 0);
     hashTableFree(pJitterBuffer->pPkgBufferHashTable);
 
     MEMFREE(*ppJitterBuffer);
@@ -76,7 +76,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS jitterBufferPush(PJitterBuffer pJitterBuffer, PRtpPacket pRtpPacket, PBOOL pPacketDiscarded)
+STATUS jitter_buffer_push(PJitterBuffer pJitterBuffer, PRtpPacket pRtpPacket, PBOOL pPacketDiscarded)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS, status = STATUS_SUCCESS;
@@ -110,7 +110,7 @@ STATUS jitterBufferPush(PJitterBuffer pJitterBuffer, PRtpPacket pRtpPacket, PBOO
         // push the new sequence number.
         CHK_STATUS(hashTablePut(pJitterBuffer->pPkgBufferHashTable, pRtpPacket->header.sequenceNumber, (UINT64) pRtpPacket));
         pJitterBuffer->lastPopTimestamp = MIN(pJitterBuffer->lastPopTimestamp, pRtpPacket->header.timestamp);
-        DLOGS("jitterBufferPush get packet timestamp %lu seqNum %lu", pRtpPacket->header.timestamp, pRtpPacket->header.sequenceNumber);
+        DLOGS("jitter_buffer_push get packet timestamp %lu seqNum %lu", pRtpPacket->header.timestamp, pRtpPacket->header.sequenceNumber);
     } else {
         // Free the packet if it is out of range, jitter buffer need to own the packet and do free
         rtp_packet_free(&pRtpPacket);
@@ -119,7 +119,7 @@ STATUS jitterBufferPush(PJitterBuffer pJitterBuffer, PRtpPacket pRtpPacket, PBOO
         }
     }
 
-    CHK_STATUS(jitterBufferPop(pJitterBuffer, FALSE));
+    CHK_STATUS(jitter_buffer_pop(pJitterBuffer, FALSE));
 
 CleanUp:
 
@@ -129,7 +129,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS jitterBufferPop(PJitterBuffer pJitterBuffer, BOOL bufferClosed)
+STATUS jitter_buffer_pop(PJitterBuffer pJitterBuffer, BOOL bufferClosed)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -176,13 +176,13 @@ STATUS jitterBufferPop(PJitterBuffer pJitterBuffer, BOOL bufferClosed)
                     if (containStartForEarliestFrame && isFrameDataContinuous) {
                         // TODO: if switch to curBuffer, need to carefully calculate ptr of UINT16_DEC(index) as it is a circulate buffer
                         CHK_STATUS(pJitterBuffer->onFrameReadyFn(pJitterBuffer->customData, startDropIndex, UINT16_DEC(index), curFrameSize));
-                        CHK_STATUS(jitterBufferDropBufferData(pJitterBuffer, startDropIndex, UINT16_DEC(index), curTimestamp));
+                        CHK_STATUS(jitter_buffer_dropBufferData(pJitterBuffer, startDropIndex, UINT16_DEC(index), curTimestamp));
                         curFrameSize = 0;
                         containStartForEarliestFrame = FALSE;
                     } else {
                         CHK_STATUS(pJitterBuffer->onFrameDroppedFn(pJitterBuffer->customData, startDropIndex, UINT16_DEC(index),
                                                                    pJitterBuffer->lastPopTimestamp));
-                        CHK_STATUS(jitterBufferDropBufferData(pJitterBuffer, startDropIndex, UINT16_DEC(index), curTimestamp));
+                        CHK_STATUS(jitter_buffer_dropBufferData(pJitterBuffer, startDropIndex, UINT16_DEC(index), curTimestamp));
                         curFrameSize = 0;
                         isFrameDataContinuous = TRUE;
                     }
@@ -193,7 +193,7 @@ STATUS jitterBufferPop(PJitterBuffer pJitterBuffer, BOOL bufferClosed)
                         if (isFrameDataContinuous) {
                             // TODO: if switch to curBuffer, need to carefully calculate ptr of UINT16_DEC(index) as it is a circulate buffer
                             CHK_STATUS(pJitterBuffer->onFrameReadyFn(pJitterBuffer->customData, startDropIndex, UINT16_DEC(index), curFrameSize));
-                            CHK_STATUS(jitterBufferDropBufferData(pJitterBuffer, startDropIndex, UINT16_DEC(index), curTimestamp));
+                            CHK_STATUS(jitter_buffer_dropBufferData(pJitterBuffer, startDropIndex, UINT16_DEC(index), curTimestamp));
                             startDropIndex = index;
                             curFrameSize = 0;
                         }
@@ -227,11 +227,11 @@ STATUS jitterBufferPop(PJitterBuffer pJitterBuffer, BOOL bufferClosed)
         // There is no NULL between startIndex and lastNonNullIndex
         if (UINT16_DEC(index) == lastNonNullIndex) {
             CHK_STATUS(pJitterBuffer->onFrameReadyFn(pJitterBuffer->customData, startDropIndex, lastNonNullIndex, curFrameSize));
-            CHK_STATUS(jitterBufferDropBufferData(pJitterBuffer, startDropIndex, lastNonNullIndex, pJitterBuffer->lastPopTimestamp));
+            CHK_STATUS(jitter_buffer_dropBufferData(pJitterBuffer, startDropIndex, lastNonNullIndex, pJitterBuffer->lastPopTimestamp));
         } else {
             CHK_STATUS(
                 pJitterBuffer->onFrameDroppedFn(pJitterBuffer->customData, startDropIndex, UINT16_DEC(index), pJitterBuffer->lastPopTimestamp));
-            CHK_STATUS(jitterBufferDropBufferData(pJitterBuffer, startDropIndex, lastNonNullIndex, pJitterBuffer->lastPopTimestamp));
+            CHK_STATUS(jitter_buffer_dropBufferData(pJitterBuffer, startDropIndex, lastNonNullIndex, pJitterBuffer->lastPopTimestamp));
         }
     }
 
@@ -242,7 +242,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS jitterBufferDropBufferData(PJitterBuffer pJitterBuffer, UINT16 startIndex, UINT16 endIndex, UINT32 nextTimestamp)
+STATUS jitter_buffer_dropBufferData(PJitterBuffer pJitterBuffer, UINT16 startIndex, UINT16 endIndex, UINT32 nextTimestamp)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -271,7 +271,8 @@ CleanUp:
     return retStatus;
 }
 
-STATUS jitterBufferFillFrameData(PJitterBuffer pJitterBuffer, PBYTE pFrame, UINT32 frameSize, PUINT32 pFilledSize, UINT16 startIndex, UINT16 endIndex)
+STATUS jitter_buffer_fillFrameData(PJitterBuffer pJitterBuffer, PBYTE pFrame, UINT32 frameSize, PUINT32 pFilledSize, UINT16 startIndex,
+                                   UINT16 endIndex)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;

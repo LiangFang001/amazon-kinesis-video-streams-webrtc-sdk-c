@@ -56,7 +56,7 @@ STATUS peer_connection_allocateSrtp(PKvsPeerConnection pKvsPeerConnection)
     STATUS retStatus = STATUS_SUCCESS;
     BOOL locked = FALSE;
 
-    CHK(NULL != (pDtlsKeyingMaterial = (PDtlsKeyingMaterial) MEMALLOC(SIZEOF(DtlsKeyingMaterial))), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pDtlsKeyingMaterial = (PDtlsKeyingMaterial) MEMALLOC(SIZEOF(DtlsKeyingMaterial))), STATUS_PEER_CONN_NOT_ENOUGH_MEMORY);
     MEMSET(pDtlsKeyingMaterial, 0, SIZEOF(DtlsKeyingMaterial));
 
     CHK(pKvsPeerConnection != NULL, STATUS_SUCCESS);
@@ -281,9 +281,9 @@ STATUS peer_connection_sendPacketToRtpReceiver(PKvsPeerConnection pKvsPeerConnec
                 CHK(FALSE, STATUS_SUCCESS);
             }
             now = GETTIME();
-            CHK(NULL != (pPayload = (PBYTE) MEMALLOC(bufferLen)), STATUS_NOT_ENOUGH_MEMORY);
+            CHK(NULL != (pPayload = (PBYTE) MEMALLOC(bufferLen)), STATUS_PEER_CONN_NOT_ENOUGH_MEMORY);
             MEMCPY(pPayload, pBuffer, bufferLen);
-            CHK_STATUS(createRtpPacketFromBytes(pPayload, bufferLen, &pRtpPacket));
+            CHK_STATUS(rtp_packet_createFromBytes(pPayload, bufferLen, &pRtpPacket));
             pRtpPacket->receivedTime = now;
 
             // https://tools.ietf.org/html/rfc3550#section-6.4.1
@@ -297,7 +297,7 @@ STATUS peer_connection_sendPacketToRtpReceiver(PKvsPeerConnection pKvsPeerConnec
             delta = transit - pTransceiver->pJitterBuffer->transit;
             pTransceiver->pJitterBuffer->transit = transit;
             pTransceiver->pJitterBuffer->jitter += (1. / 16.) * ((DOUBLE) ABS(delta) - pTransceiver->pJitterBuffer->jitter);
-            CHK_STATUS(jitterBufferPush(pTransceiver->pJitterBuffer, pRtpPacket, &discarded));
+            CHK_STATUS(jitter_buffer_push(pTransceiver->pJitterBuffer, pRtpPacket, &discarded));
             if (discarded) {
                 packetsDiscarded++;
             }
@@ -375,7 +375,7 @@ CleanUp:
 }
 
 #ifdef ENABLE_STREAMING
-STATUS onFrameReadyFunc(UINT64 customData, UINT16 startIndex, UINT16 endIndex, UINT32 frameSize)
+STATUS peer_connection_onFrameReadyFunc(UINT64 customData, UINT16 startIndex, UINT16 endIndex, UINT32 frameSize)
 {
     PC_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
@@ -410,10 +410,10 @@ STATUS onFrameReadyFunc(UINT64 customData, UINT16 startIndex, UINT16 endIndex, U
         MEMFREE(pTransceiver->peerFrameBuffer);
         pTransceiver->peerFrameBufferSize = (UINT32)(frameSize * PEER_FRAME_BUFFER_SIZE_INCREMENT_FACTOR);
         pTransceiver->peerFrameBuffer = (PBYTE) MEMALLOC(pTransceiver->peerFrameBufferSize);
-        CHK(pTransceiver->peerFrameBuffer != NULL, STATUS_NOT_ENOUGH_MEMORY);
+        CHK(pTransceiver->peerFrameBuffer != NULL, STATUS_PEER_CONN_NOT_ENOUGH_MEMORY);
     }
 
-    CHK_STATUS(jitterBufferFillFrameData(pTransceiver->pJitterBuffer, pTransceiver->peerFrameBuffer, frameSize, &filledSize, startIndex, endIndex));
+    CHK_STATUS(jitter_buffer_fillFrameData(pTransceiver->pJitterBuffer, pTransceiver->peerFrameBuffer, frameSize, &filledSize, startIndex, endIndex));
     CHK(frameSize == filledSize, STATUS_INVALID_ARG_LEN);
 
     frame.version = FRAME_CURRENT_VERSION;
@@ -434,7 +434,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS onFrameDroppedFunc(UINT64 customData, UINT16 startIndex, UINT16 endIndex, UINT32 timestamp)
+STATUS peer_connection_onFrameDroppedFunc(UINT64 customData, UINT16 startIndex, UINT16 endIndex, UINT32 timestamp)
 {
     PC_ENTER();
     UNUSED_PARAM(endIndex);
@@ -442,8 +442,10 @@ STATUS onFrameDroppedFunc(UINT64 customData, UINT16 startIndex, UINT16 endIndex,
     UINT64 hashValue = 0;
     PRtpPacket pPacket = NULL;
     PKvsRtpTransceiver pTransceiver = (PKvsRtpTransceiver) customData;
+
     DLOGW("Frame with timestamp %u is dropped!", timestamp);
     CHK(pTransceiver != NULL, STATUS_PEER_CONN_NULL_ARG);
+
     retStatus = hashTableGet(pTransceiver->pJitterBuffer->pPkgBufferHashTable, startIndex, &hashValue);
     pPacket = (PRtpPacket) hashValue;
     if (retStatus == STATUS_SUCCESS || retStatus == STATUS_HASH_KEY_NOT_PRESENT) {
@@ -451,6 +453,7 @@ STATUS onFrameDroppedFunc(UINT64 customData, UINT16 startIndex, UINT16 endIndex,
     } else {
         CHK(FALSE, retStatus);
     }
+
     // TODO: handle multi-packet frames
     CHK(pPacket != NULL, STATUS_PEER_CONN_NULL_ARG);
     MUTEX_LOCK(pTransceiver->statsLock);
@@ -635,7 +638,7 @@ VOID onSctpSessionDataChannelOpen(UINT64 customData, UINT32 channelId, PBYTE pNa
     CHK(pKvsPeerConnection != NULL && pKvsPeerConnection->onDataChannel != NULL, STATUS_PEER_CONN_NULL_ARG);
 
     pKvsDataChannel = (PKvsDataChannel) MEMCALLOC(1, SIZEOF(KvsDataChannel));
-    CHK(pKvsDataChannel != NULL, STATUS_NOT_ENOUGH_MEMORY);
+    CHK(pKvsDataChannel != NULL, STATUS_PEER_CONN_NOT_ENOUGH_MEMORY);
 
     STRNCPY(pKvsDataChannel->dataChannel.name, (PCHAR) pName, nameLen);
     pKvsDataChannel->dataChannel.id = channelId;
@@ -763,7 +766,7 @@ STATUS peer_connection_rtcpReportsCallback(UINT32 timerId, UINT64 currentTime, U
         // srtp_protect_rtcp() in srtp_session_encryptRtcpPacket() assumes memory availability to write 10 bytes of authentication tag and
         // SRTP_MAX_TRAILER_LEN + 4 following the actual rtcp Packet payload
         allocSize = packetLen + SRTP_AUTH_TAG_OVERHEAD + SRTP_MAX_TRAILER_LEN + 4;
-        CHK(NULL != (rawPacket = (PBYTE) MEMALLOC(allocSize)), STATUS_NOT_ENOUGH_MEMORY);
+        CHK(NULL != (rawPacket = (PBYTE) MEMALLOC(allocSize)), STATUS_PEER_CONN_NOT_ENOUGH_MEMORY);
         rawPacket[0] = RTCP_PACKET_VERSION_VAL << 6;
         rawPacket[RTCP_PACKET_TYPE_OFFSET] = RTCP_PACKET_TYPE_SENDER_REPORT;
         putUnalignedInt16BigEndian(rawPacket + RTCP_PACKET_LEN_OFFSET,
@@ -806,7 +809,7 @@ STATUS peer_connection_create(PRtcConfiguration pConfiguration, PRtcPeerConnecti
     MEMSET(&dtlsSessionCallbacks, 0, SIZEOF(DtlsSessionCallbacks));
 
     pKvsPeerConnection = (PKvsPeerConnection) MEMCALLOC(1, SIZEOF(KvsPeerConnection));
-    CHK(pKvsPeerConnection != NULL, STATUS_NOT_ENOUGH_MEMORY);
+    CHK(pKvsPeerConnection != NULL, STATUS_PEER_CONN_NOT_ENOUGH_MEMORY);
 
     CHK_STATUS(timerQueueCreateEx(&pKvsPeerConnection->timerQueueHandle, PEER_TIMER_NAME, PEER_TIMER_SIZE));
 
@@ -948,7 +951,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS peerConnectionOnIceCandidate(PRtcPeerConnection pRtcPeerConnection, UINT64 customData, RtcOnIceCandidate rtcOnIceCandidate)
+STATUS peer_connection_onIceCandidate(PRtcPeerConnection pRtcPeerConnection, UINT64 customData, RtcOnIceCandidate rtcOnIceCandidate)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -973,7 +976,7 @@ CleanUp:
     return retStatus;
 }
 #ifdef ENABLE_DATA_CHANNEL
-STATUS peerConnectionOnDataChannel(PRtcPeerConnection pRtcPeerConnection, UINT64 customData, RtcOnDataChannel rtcOnDataChannel)
+STATUS peer_connection_onDataChannel(PRtcPeerConnection pRtcPeerConnection, UINT64 customData, RtcOnDataChannel rtcOnDataChannel)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -1035,7 +1038,7 @@ STATUS peerConnectionGetLocalDescription(PRtcPeerConnection pRtcPeerConnection, 
 
     CHK(pRtcPeerConnection != NULL && pRtcSessionDescriptionInit != NULL, STATUS_PEER_CONN_NULL_ARG);
 
-    CHK(NULL != (pSessionDescription = (PSessionDescription) MEMCALLOC(1, SIZEOF(SessionDescription))), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pSessionDescription = (PSessionDescription) MEMCALLOC(1, SIZEOF(SessionDescription))), STATUS_PEER_CONN_NOT_ENOUGH_MEMORY);
 
     if (pKvsPeerConnection->isOffer) {
         pRtcSessionDescriptionInit->type = SDP_TYPE_OFFER;
@@ -1045,7 +1048,7 @@ STATUS peerConnectionGetLocalDescription(PRtcPeerConnection pRtcPeerConnection, 
 
     CHK_STATUS(populateSessionDescription(pKvsPeerConnection, &(pKvsPeerConnection->remoteSessionDescription), pSessionDescription));
     CHK_STATUS(serializeSessionDescription(pSessionDescription, NULL, &serializeLen));
-    CHK(serializeLen <= MAX_SESSION_DESCRIPTION_INIT_SDP_LEN, STATUS_NOT_ENOUGH_MEMORY);
+    CHK(serializeLen <= MAX_SESSION_DESCRIPTION_INIT_SDP_LEN, STATUS_PEER_CONN_NOT_ENOUGH_MEMORY);
 
     CHK_STATUS(serializeSessionDescription(pSessionDescription, pRtcSessionDescriptionInit->sdp, &serializeLen));
 
@@ -1069,12 +1072,12 @@ STATUS peerConnectionGetCurrentLocalDescription(PRtcPeerConnection pRtcPeerConne
     // do nothing if remote session description hasn't been received
     CHK(pKvsPeerConnection->remoteSessionDescription.sessionName[0] != '\0', retStatus);
 
-    CHK(NULL != (pSessionDescription = (PSessionDescription) MEMCALLOC(1, SIZEOF(SessionDescription))), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pSessionDescription = (PSessionDescription) MEMCALLOC(1, SIZEOF(SessionDescription))), STATUS_PEER_CONN_NOT_ENOUGH_MEMORY);
 
     CHK_STATUS(populateSessionDescription(pKvsPeerConnection, &(pKvsPeerConnection->remoteSessionDescription), pSessionDescription));
 
     CHK_STATUS(serializeSessionDescription(pSessionDescription, NULL, &serializeLen));
-    CHK(serializeLen <= MAX_SESSION_DESCRIPTION_INIT_SDP_LEN, STATUS_NOT_ENOUGH_MEMORY);
+    CHK(serializeLen <= MAX_SESSION_DESCRIPTION_INIT_SDP_LEN, STATUS_PEER_CONN_NOT_ENOUGH_MEMORY);
 
     CHK_STATUS(serializeSessionDescription(pSessionDescription, pRtcSessionDescriptionInit->sdp, &serializeLen));
 
@@ -1197,7 +1200,7 @@ STATUS createOffer(PRtcPeerConnection pPeerConnection, PRtcSessionDescriptionIni
     CHK(pKvsPeerConnection != NULL && pSessionDescriptionInit != NULL, STATUS_PEER_CONN_NULL_ARG);
 
     // SessionDescription is large enough structure to not define on the stack and use heap memory
-    CHK(NULL != (pSessionDescription = (PSessionDescription) MEMCALLOC(1, SIZEOF(SessionDescription))), STATUS_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pSessionDescription = (PSessionDescription) MEMCALLOC(1, SIZEOF(SessionDescription))), STATUS_PEER_CONN_NOT_ENOUGH_MEMORY);
     pSessionDescriptionInit->type = SDP_TYPE_OFFER;
     pKvsPeerConnection->isOffer = TRUE;
 
@@ -1210,7 +1213,7 @@ STATUS createOffer(PRtcPeerConnection pPeerConnection, PRtcSessionDescriptionIni
 
     CHK_STATUS(populateSessionDescription(pKvsPeerConnection, &(pKvsPeerConnection->remoteSessionDescription), pSessionDescription));
     CHK_STATUS(serializeSessionDescription(pSessionDescription, NULL, &serializeLen));
-    CHK(serializeLen <= MAX_SESSION_DESCRIPTION_INIT_SDP_LEN, STATUS_NOT_ENOUGH_MEMORY);
+    CHK(serializeLen <= MAX_SESSION_DESCRIPTION_INIT_SDP_LEN, STATUS_PEER_CONN_NOT_ENOUGH_MEMORY);
 
     CHK_STATUS(serializeSessionDescription(pSessionDescription, pSessionDescriptionInit->sdp, &serializeLen));
 
@@ -1314,8 +1317,8 @@ STATUS peer_connection_addTransceiver(PRtcPeerConnection pPeerConnection, PRtcMe
     // TODO: Add ssrc duplicate detection here not only relying on RAND()
     CHK_STATUS(rtp_createTransceiver(direction, pKvsPeerConnection, ssrc, rtxSsrc, pRtcMediaStreamTrack, NULL, pRtcMediaStreamTrack->codec,
                                      &pKvsRtpTransceiver));
-    CHK_STATUS(jitter_buffer_create(onFrameReadyFunc, onFrameDroppedFunc, depayFunc, DEFAULT_JITTER_BUFFER_MAX_LATENCY, clockRate,
-                                    (UINT64) pKvsRtpTransceiver, &pJitterBuffer));
+    CHK_STATUS(jitter_buffer_create(peer_connection_onFrameReadyFunc, peer_connection_onFrameDroppedFunc, depayFunc,
+                                    DEFAULT_JITTER_BUFFER_MAX_LATENCY, clockRate, (UINT64) pKvsRtpTransceiver, &pJitterBuffer));
     CHK_STATUS(rtp_transceiver_setJitterBuffer(pKvsRtpTransceiver, pJitterBuffer));
 
     // after pKvsRtpTransceiver is successfully created, jitterBuffer will be freed by pKvsRtpTransceiver.

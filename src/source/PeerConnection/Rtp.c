@@ -303,8 +303,8 @@ STATUS rtp_writeFrame(PRtcRtpTransceiver pRtcRtpTransceiver, PFrame pFrame)
                               &(pPayloadArray->payloadLength), pPayloadArray->payloadSubLength, &(pPayloadArray->payloadSubLenSize)));
     pPacketList = (PRtpPacket) MEMALLOC(pPayloadArray->payloadSubLenSize * SIZEOF(RtpPacket));
 
-    CHK_STATUS(constructRtpPackets(pPayloadArray, pKvsRtpTransceiver->sender.payloadType, pKvsRtpTransceiver->sender.sequenceNumber, rtpTimestamp,
-                                   pKvsRtpTransceiver->sender.ssrc, pPacketList, pPayloadArray->payloadSubLenSize));
+    CHK_STATUS(rtp_packet_constructPackets(pPayloadArray, pKvsRtpTransceiver->sender.payloadType, pKvsRtpTransceiver->sender.sequenceNumber,
+                                           rtpTimestamp, pKvsRtpTransceiver->sender.ssrc, pPacketList, pPayloadArray->payloadSubLenSize));
     pKvsRtpTransceiver->sender.sequenceNumber = GET_UINT16_SEQ_NUM(pKvsRtpTransceiver->sender.sequenceNumber + pPayloadArray->payloadSubLenSize);
 
     bufferAfterEncrypt = (pKvsRtpTransceiver->sender.payloadType == pKvsRtpTransceiver->sender.rtxPayloadType);
@@ -312,12 +312,12 @@ STATUS rtp_writeFrame(PRtcRtpTransceiver pRtcRtpTransceiver, PFrame pFrame)
         pRtpPacket = pPacketList + i;
 
         // Get the required size first
-        CHK_STATUS(createBytesFromRtpPacket(pRtpPacket, NULL, &packetLen));
+        CHK_STATUS(rtp_packet_createBytesFromPacket(pRtpPacket, NULL, &packetLen));
 
         // Account for SRTP authentication tag
         allocSize = packetLen + SRTP_AUTH_TAG_OVERHEAD;
         CHK(NULL != (rawPacket = (PBYTE) MEMALLOC(allocSize)), STATUS_NOT_ENOUGH_MEMORY);
-        CHK_STATUS(createBytesFromRtpPacket(pRtpPacket, rawPacket, &packetLen));
+        CHK_STATUS(rtp_packet_createBytesFromPacket(pRtpPacket, rawPacket, &packetLen));
 
         if (!bufferAfterEncrypt) {
             pRtpPacket->pRawPacket = rawPacket;
