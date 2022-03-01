@@ -105,7 +105,7 @@ STATUS rtp_transceiver_free(PKvsRtpTransceiver* ppKvsRtpTransceiver)
     }
 
     if (pKvsRtpTransceiver->sender.retransmitter != NULL) {
-        freeRetransmitter(&pKvsRtpTransceiver->sender.retransmitter);
+        retransmitter_free(&pKvsRtpTransceiver->sender.retransmitter);
     }
     MUTEX_FREE(pKvsRtpTransceiver->statsLock);
 

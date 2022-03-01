@@ -42,18 +42,18 @@ TEST_F(RtcpFunctionalityTest, rtp_packet_setPacketFromBytes)
 
     // Assert that we don't parse buffers that aren't even large enough
     BYTE headerTooSmall[] = {0x00, 0x00, 0x00};
-    EXPECT_EQ(STATUS_RTCP_INPUT_PACKET_TOO_SMALL, setRtcpPacketFromBytes(headerTooSmall, SIZEOF(headerTooSmall), &rtcpPacket));
+    EXPECT_EQ(STATUS_RTCP_INPUT_PACKET_TOO_SMALL, rtcp_packet_setFromBytes(headerTooSmall, SIZEOF(headerTooSmall), &rtcpPacket));
 
     // Assert that we check version field
     BYTE invalidVersionValue[] = {0x01, 0xcd, 0x00, 0x03, 0x2c, 0xd1, 0xa0, 0xde, 0x00, 0x00, 0xab, 0xe0, 0x00, 0xa4, 0x00, 0x00};
-    EXPECT_EQ(STATUS_RTCP_INPUT_PACKET_INVALID_VERSION, setRtcpPacketFromBytes(invalidVersionValue, SIZEOF(invalidVersionValue), &rtcpPacket));
+    EXPECT_EQ(STATUS_RTCP_INPUT_PACKET_INVALID_VERSION, rtcp_packet_setFromBytes(invalidVersionValue, SIZEOF(invalidVersionValue), &rtcpPacket));
 
     // Assert that we check the length field
     BYTE invalidLengthValue[] = {0x81, 0xcd, 0x00, 0x00, 0x2c, 0xd1, 0xa0, 0xde, 0x00, 0x00, 0xab, 0xe0, 0x00, 0xa4, 0x00, 0x00};
-    EXPECT_EQ(STATUS_SUCCESS, setRtcpPacketFromBytes(invalidLengthValue, SIZEOF(invalidLengthValue), &rtcpPacket));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_setFromBytes(invalidLengthValue, SIZEOF(invalidLengthValue), &rtcpPacket));
 
     BYTE validRtcpPacket[] = {0x81, 0xcd, 0x00, 0x03, 0x2c, 0xd1, 0xa0, 0xde, 0x00, 0x00, 0xab, 0xe0, 0x00, 0xa4, 0x00, 0x00};
-    EXPECT_EQ(STATUS_SUCCESS, setRtcpPacketFromBytes(validRtcpPacket, SIZEOF(validRtcpPacket), &rtcpPacket));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_setFromBytes(validRtcpPacket, SIZEOF(validRtcpPacket), &rtcpPacket));
 
     EXPECT_EQ(rtcpPacket.header.packetType, RTCP_PACKET_TYPE_GENERIC_RTP_FEEDBACK);
     EXPECT_EQ(rtcpPacket.header.receptionReportCount, RTCP_FEEDBACK_MESSAGE_TYPE_NACK);
@@ -73,45 +73,45 @@ TEST_F(RtcpFunctionalityTest, setRtpPacketFromBytesCompound)
                              0x52, 0x45, 0x4d, 0x42, 0x02, 0x12, 0x2d, 0x97, 0x0c, 0xef, 0x37, 0x0d, 0x2d, 0x07, 0x3d, 0x1d};
 
     auto currentOffset = 0;
-    EXPECT_EQ(STATUS_SUCCESS, setRtcpPacketFromBytes(compoundPacket + currentOffset, SIZEOF(compoundPacket) - currentOffset, &rtcpPacket));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_setFromBytes(compoundPacket + currentOffset, SIZEOF(compoundPacket) - currentOffset, &rtcpPacket));
     EXPECT_EQ(rtcpPacket.header.packetType, RTCP_PACKET_TYPE_SENDER_REPORT);
 
     currentOffset += (rtcpPacket.payloadLength + RTCP_PACKET_HEADER_LEN);
-    EXPECT_EQ(STATUS_SUCCESS, setRtcpPacketFromBytes(compoundPacket + currentOffset, SIZEOF(compoundPacket) - currentOffset, &rtcpPacket));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_setFromBytes(compoundPacket + currentOffset, SIZEOF(compoundPacket) - currentOffset, &rtcpPacket));
     EXPECT_EQ(rtcpPacket.header.packetType, RTCP_PACKET_TYPE_SOURCE_DESCRIPTION);
 
     currentOffset += (rtcpPacket.payloadLength + RTCP_PACKET_HEADER_LEN);
-    EXPECT_EQ(STATUS_SUCCESS, setRtcpPacketFromBytes(compoundPacket + currentOffset, SIZEOF(compoundPacket) - currentOffset, &rtcpPacket));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_setFromBytes(compoundPacket + currentOffset, SIZEOF(compoundPacket) - currentOffset, &rtcpPacket));
     EXPECT_EQ(rtcpPacket.header.packetType, RTCP_PACKET_TYPE_PAYLOAD_SPECIFIC_FEEDBACK);
 
     currentOffset += (rtcpPacket.payloadLength + RTCP_PACKET_HEADER_LEN);
     ASSERT_EQ(currentOffset, SIZEOF(compoundPacket));
 }
 
-TEST_F(RtcpFunctionalityTest, rtcpNackListGet)
+TEST_F(RtcpFunctionalityTest, rtcp_packet_getNackList)
 {
     UINT32 senderSsrc = 0, receiverSsrc = 0, ssrcListLen = 0;
 
     // Assert that NACK list meets the minimum length requirement
     BYTE nackListTooSmall[] = {0x00, 0x00, 0x00};
     EXPECT_EQ(STATUS_RTCP_INPUT_NACK_LIST_INVALID,
-              rtcpNackListGet(nackListTooSmall, SIZEOF(nackListTooSmall), &senderSsrc, &receiverSsrc, NULL, &ssrcListLen));
+              rtcp_packet_getNackList(nackListTooSmall, SIZEOF(nackListTooSmall), &senderSsrc, &receiverSsrc, NULL, &ssrcListLen));
 
     BYTE nackListMalformed[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     EXPECT_EQ(STATUS_RTCP_INPUT_NACK_LIST_INVALID,
-              rtcpNackListGet(nackListMalformed, SIZEOF(nackListMalformed), &senderSsrc, &receiverSsrc, NULL, &ssrcListLen));
+              rtcp_packet_getNackList(nackListMalformed, SIZEOF(nackListMalformed), &senderSsrc, &receiverSsrc, NULL, &ssrcListLen));
 
     BYTE nackListSsrcOnly[] = {0x2c, 0xd1, 0xa0, 0xde, 0x00, 0x00, 0xab, 0xe0};
-    EXPECT_EQ(STATUS_SUCCESS, rtcpNackListGet(nackListSsrcOnly, SIZEOF(nackListSsrcOnly), &senderSsrc, &receiverSsrc, NULL, &ssrcListLen));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_getNackList(nackListSsrcOnly, SIZEOF(nackListSsrcOnly), &senderSsrc, &receiverSsrc, NULL, &ssrcListLen));
 
     EXPECT_EQ(senderSsrc, 0x2cd1a0de);
     EXPECT_EQ(receiverSsrc, 0x0000abe0);
 
     BYTE singlePID[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0xa8, 0x00, 0x00};
-    EXPECT_EQ(STATUS_SUCCESS, rtcpNackListGet(singlePID, SIZEOF(singlePID), &senderSsrc, &receiverSsrc, NULL, &ssrcListLen));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_getNackList(singlePID, SIZEOF(singlePID), &senderSsrc, &receiverSsrc, NULL, &ssrcListLen));
 
     std::unique_ptr<UINT16[]> singlePIDBuffer(new UINT16[ssrcListLen]);
-    EXPECT_EQ(STATUS_SUCCESS, rtcpNackListGet(singlePID, SIZEOF(singlePID), &senderSsrc, &receiverSsrc, singlePIDBuffer.get(), &ssrcListLen));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_getNackList(singlePID, SIZEOF(singlePID), &senderSsrc, &receiverSsrc, singlePIDBuffer.get(), &ssrcListLen));
 
     EXPECT_EQ(ssrcListLen, 1);
     EXPECT_EQ(singlePIDBuffer[0], 3240);
@@ -122,10 +122,10 @@ TEST_F(RtcpFunctionalityTest, rtcpNackListBLP)
     UINT32 senderSsrc = 0, receiverSsrc = 0, ssrcListLen = 0;
 
     BYTE singleBLP[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0xa8, 0x00, 0x04};
-    EXPECT_EQ(STATUS_SUCCESS, rtcpNackListGet(singleBLP, SIZEOF(singleBLP), &senderSsrc, &receiverSsrc, NULL, &ssrcListLen));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_getNackList(singleBLP, SIZEOF(singleBLP), &senderSsrc, &receiverSsrc, NULL, &ssrcListLen));
 
     std::unique_ptr<UINT16[]> singleBLPBuffer(new UINT16[ssrcListLen]);
-    EXPECT_EQ(STATUS_SUCCESS, rtcpNackListGet(singleBLP, SIZEOF(singleBLP), &senderSsrc, &receiverSsrc, singleBLPBuffer.get(), &ssrcListLen));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_getNackList(singleBLP, SIZEOF(singleBLP), &senderSsrc, &receiverSsrc, singleBLPBuffer.get(), &ssrcListLen));
 
     EXPECT_EQ(ssrcListLen, 2);
     EXPECT_EQ(singleBLPBuffer[0], 3240);
@@ -137,10 +137,10 @@ TEST_F(RtcpFunctionalityTest, rtcpNackListCompound)
     UINT32 senderSsrc = 0, receiverSsrc = 0, ssrcListLen = 0;
 
     BYTE compound[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0xa8, 0x00, 0x00, 0x0c, 0xff, 0x00, 0x00};
-    EXPECT_EQ(STATUS_SUCCESS, rtcpNackListGet(compound, SIZEOF(compound), &senderSsrc, &receiverSsrc, NULL, &ssrcListLen));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_getNackList(compound, SIZEOF(compound), &senderSsrc, &receiverSsrc, NULL, &ssrcListLen));
 
     std::unique_ptr<UINT16[]> compoundBuffer(new UINT16[ssrcListLen]);
-    EXPECT_EQ(STATUS_SUCCESS, rtcpNackListGet(compound, SIZEOF(compound), &senderSsrc, &receiverSsrc, compoundBuffer.get(), &ssrcListLen));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_getNackList(compound, SIZEOF(compound), &senderSsrc, &receiverSsrc, compoundBuffer.get(), &ssrcListLen));
 
     EXPECT_EQ(ssrcListLen, 2);
     EXPECT_EQ(compoundBuffer[0], 3240);
@@ -157,7 +157,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpPacketCompoundNack)
               rtp_rolling_buffer_create(DEFAULT_ROLLING_BUFFER_DURATION_IN_SECONDS * HIGHEST_EXPECTED_BIT_RATE / 8 / DEFAULT_MTU_SIZE,
                                      &pKvsRtpTransceiver->sender.packetBuffer));
     ASSERT_EQ(STATUS_SUCCESS,
-              createRetransmitter(DEFAULT_SEQ_NUM_BUFFER_SIZE, DEFAULT_VALID_INDEX_BUFFER_SIZE, &pKvsRtpTransceiver->sender.retransmitter));
+              retransmitter_create(DEFAULT_SEQ_NUM_BUFFER_SIZE, DEFAULT_VALID_INDEX_BUFFER_SIZE, &pKvsRtpTransceiver->sender.retransmitter));
     ASSERT_EQ(STATUS_SUCCESS, createRtpPacketWithSeqNum(0, &pRtpPacket));
 
     ASSERT_EQ(STATUS_SUCCESS, rtp_rolling_buffer_addRtpPacket(pKvsRtpTransceiver->sender.packetBuffer, pRtpPacket));
@@ -207,7 +207,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpPacketCompoundSenderReport)
     peer_connection_free(&pRtcPeerConnection);
 }
 
-TEST_F(RtcpFunctionalityTest, rembValueGet)
+TEST_F(RtcpFunctionalityTest, rtcp_packet_getRembValue)
 {
     BYTE rawRtcpPacket[] = {0x8f, 0xce, 0x00, 0x05, 0x61, 0x7a, 0x37, 0x43, 0x00, 0x00, 0x00, 0x00,
                             0x52, 0x45, 0x4d, 0x42, 0x01, 0x12, 0x46, 0x73, 0x6c, 0x76, 0xe8, 0x55};
@@ -215,30 +215,30 @@ TEST_F(RtcpFunctionalityTest, rembValueGet)
 
     MEMSET(&rtcpPacket, 0x00, SIZEOF(RtcpPacket));
 
-    EXPECT_EQ(STATUS_SUCCESS, setRtcpPacketFromBytes(rawRtcpPacket, SIZEOF(rawRtcpPacket), &rtcpPacket));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_setFromBytes(rawRtcpPacket, SIZEOF(rawRtcpPacket), &rtcpPacket));
     EXPECT_EQ(rtcpPacket.header.packetType, RTCP_PACKET_TYPE_PAYLOAD_SPECIFIC_FEEDBACK);
     EXPECT_EQ(rtcpPacket.header.receptionReportCount, RTCP_FEEDBACK_MESSAGE_TYPE_APPLICATION_LAYER_FEEDBACK);
 
     BYTE bufferTooSmall[] = {0x00, 0x00, 0x00};
-    EXPECT_EQ(STATUS_RTCP_INPUT_REMB_TOO_SMALL, isRembPacket(bufferTooSmall, SIZEOF(bufferTooSmall)));
+    EXPECT_EQ(STATUS_RTCP_INPUT_REMB_TOO_SMALL, rtcp_packet_isRemb(bufferTooSmall, SIZEOF(bufferTooSmall)));
 
     BYTE bufferNoUniqueIdentifier[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    EXPECT_EQ(STATUS_RTCP_INPUT_REMB_INVALID, isRembPacket(bufferNoUniqueIdentifier, SIZEOF(bufferNoUniqueIdentifier)));
+    EXPECT_EQ(STATUS_RTCP_INPUT_REMB_INVALID, rtcp_packet_isRemb(bufferNoUniqueIdentifier, SIZEOF(bufferNoUniqueIdentifier)));
 
     UINT8 ssrcListLen = 0;
     DOUBLE maximumBitRate = 0;
     UINT32 ssrcList[5];
 
     BYTE singleSSRC[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x52, 0x45, 0x4d, 0x42, 0x01, 0x12, 0x76, 0x28, 0x6c, 0x76, 0xe8, 0x55};
-    EXPECT_EQ(STATUS_SUCCESS, rembValueGet(singleSSRC, SIZEOF(singleSSRC), &maximumBitRate, ssrcList, &ssrcListLen));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_getRembValue(singleSSRC, SIZEOF(singleSSRC), &maximumBitRate, ssrcList, &ssrcListLen));
     EXPECT_EQ(ssrcListLen, 1);
     EXPECT_EQ(maximumBitRate, 2581120.0);
     EXPECT_EQ(ssrcList[0], 0x6c76e855);
 
     BYTE multipleSSRC[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x52, 0x45, 0x4d, 0x42,
                            0x02, 0x12, 0x76, 0x28, 0x6c, 0x76, 0xe8, 0x55, 0x42, 0x42, 0x42, 0x42};
-    EXPECT_EQ(STATUS_SUCCESS, rembValueGet(multipleSSRC, SIZEOF(multipleSSRC), &maximumBitRate, ssrcList, &ssrcListLen));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_getRembValue(multipleSSRC, SIZEOF(multipleSSRC), &maximumBitRate, ssrcList, &ssrcListLen));
     EXPECT_EQ(ssrcListLen, 2);
     EXPECT_EQ(maximumBitRate, 2581120.0);
     EXPECT_EQ(ssrcList[0], 0x6c76e855);
@@ -246,7 +246,7 @@ TEST_F(RtcpFunctionalityTest, rembValueGet)
 
     BYTE invalidSSRCLength[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x52, 0x45,
                                 0x4d, 0x42, 0xFF, 0x12, 0x76, 0x28, 0x6c, 0x76, 0xe8, 0x55};
-    EXPECT_EQ(STATUS_RTCP_INPUT_REMB_INVALID, rembValueGet(invalidSSRCLength, SIZEOF(invalidSSRCLength), &maximumBitRate, ssrcList, &ssrcListLen));
+    EXPECT_EQ(STATUS_RTCP_INPUT_REMB_INVALID, rtcp_packet_getRembValue(invalidSSRCLength, SIZEOF(invalidSSRCLength), &maximumBitRate, ssrcList, &ssrcListLen));
 }
 
 TEST_F(RtcpFunctionalityTest, onRtcpRembCalled)
@@ -258,7 +258,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpRembCalled)
     BYTE multipleSSRC[] = {0x80, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x52, 0x45,
                            0x4d, 0x42, 0x02, 0x12, 0x76, 0x28, 0x6c, 0x76, 0xe8, 0x55, 0x42, 0x42, 0x42, 0x42};
 
-    EXPECT_EQ(STATUS_SUCCESS, setRtcpPacketFromBytes(multipleSSRC, ARRAY_SIZE(multipleSSRC), &rtcpPacket));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_setFromBytes(multipleSSRC, ARRAY_SIZE(multipleSSRC), &rtcpPacket));
     initTransceiver(0x42424242);
     PRtcRtpTransceiver transceiver43 = peer_connection_addTransceiver(0x43);
 
@@ -268,7 +268,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpRembCalled)
     rtp_transceiver_onBandwidthEstimation(pRtcRtpTransceiver, reinterpret_cast<UINT64>(&onBandwidthCalled42), callback);
     rtp_transceiver_onBandwidthEstimation(transceiver43, reinterpret_cast<UINT64>(&onBandwidthCalled43), callback);
 
-    onRtcpRembPacket(&rtcpPacket, pKvsPeerConnection);
+    rtcp_onRembPacket(&rtcpPacket, pKvsPeerConnection);
     ASSERT_TRUE(onBandwidthCalled42);
     ASSERT_FALSE(onBandwidthCalled43);
     peer_connection_free(&pRtcPeerConnection);
@@ -284,11 +284,11 @@ TEST_F(RtcpFunctionalityTest, onpli)
     pKvsRtpTransceiver->onPictureLossCustomData = (UINT64) &on_picture_loss_called;
     pKvsRtpTransceiver->onPictureLoss = [](UINT64 customData) -> void { *(PBOOL) customData = TRUE; };
 
-    EXPECT_EQ(STATUS_SUCCESS, setRtcpPacketFromBytes(rawRtcpPacket, SIZEOF(rawRtcpPacket), &rtcpPacket));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_setFromBytes(rawRtcpPacket, SIZEOF(rawRtcpPacket), &rtcpPacket));
     ASSERT_TRUE(rtcpPacket.header.packetType == RTCP_PACKET_TYPE_PAYLOAD_SPECIFIC_FEEDBACK &&
                 rtcpPacket.header.receptionReportCount == RTCP_PSFB_PLI);
 
-    onRtcpPLIPacket(&rtcpPacket, pKvsPeerConnection);
+    rtcp_onPLIPacket(&rtcpPacket, pKvsPeerConnection);
     ASSERT_TRUE(on_picture_loss_called);
     RtcOutboundRtpStreamStats stats{};
     EXPECT_EQ(STATUS_SUCCESS, getRtpOutboundStats(pRtcPeerConnection, nullptr, &stats));

@@ -239,7 +239,7 @@ TEST_F(SdpApiTest, setTransceiverPayloadTypes_NoRtxType)
     hashTableFree(pCodecTable);
     hashTableFree(pRtxTable);
     rtp_rolling_buffer_free(&transceiver.sender.packetBuffer);
-    freeRetransmitter(&transceiver.sender.retransmitter);
+    retransmitter_free(&transceiver.sender.retransmitter);
     doubleListFree(pTransceivers);
 }
 
@@ -267,7 +267,7 @@ TEST_F(SdpApiTest, setTransceiverPayloadTypes_HasRtxType)
     hashTableFree(pCodecTable);
     hashTableFree(pRtxTable);
     rtp_rolling_buffer_free(&transceiver.sender.packetBuffer);
-    freeRetransmitter(&transceiver.sender.retransmitter);
+    retransmitter_free(&transceiver.sender.retransmitter);
     doubleListFree(pTransceivers);
 }
 

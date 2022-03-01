@@ -2594,7 +2594,7 @@ STATUS ice_agent_handleInboundData(UINT64 customData, PSocketConnection pSocketC
     locked = TRUE;
 
     pIceAgent->lastDataReceivedTime = GETTIME();
-    // DLOGD("%s", __func__);
+
     // for stun packets, first 8 bytes are 4 byte type and length, then 4 byte magic byte
     if ((bufferLen < 8 || !IS_STUN_PACKET(pBuffer)) && pIceAgent->iceAgentCallbacks.inboundPacketFn != NULL) {
         // release lock early

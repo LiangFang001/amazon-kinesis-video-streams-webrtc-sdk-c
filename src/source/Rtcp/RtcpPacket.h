@@ -1,6 +1,17 @@
-/*******************************************
-RTCP Packet include file
-*******************************************/
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_WEBRTC_CLIENT_RTCP_RTCPPACKET_H
 #define __KINESIS_VIDEO_WEBRTC_CLIENT_RTCP_RTCPPACKET_H
 
@@ -9,10 +20,15 @@ RTCP Packet include file
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/error.h"
 #include "kvs/common_defs.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 #define RTCP_PACKET_LEN_OFFSET  2
 #define RTCP_PACKET_TYPE_OFFSET 1
 
@@ -50,21 +66,27 @@ extern "C" {
 #define RTCP_FIRST_REPORT_DELAY (3 * HUNDREDS_OF_NANOS_IN_A_SECOND)
 
 typedef enum {
-    RTCP_PACKET_TYPE_FIR = 192,                // https://tools.ietf.org/html/rfc2032#section-5.2.1
-    RTCP_PACKET_TYPE_SENDER_REPORT = 200,      //!<  SR: Sender Report RTCP Packet, https://datatracker.ietf.org/doc/html/rfc3550#section-6.4.1
-    RTCP_PACKET_TYPE_RECEIVER_REPORT = 201,    //!< RR: Receiver Report RTCP Packet, https://tools.ietf.org/html/rfc3550#section-6.4.2
-    RTCP_PACKET_TYPE_SOURCE_DESCRIPTION = 202, //!< SDES: Source Description RTCP Packet, https://datatracker.ietf.org/doc/html/rfc3550#section-6.5
-    RTCP_PACKET_TYPE_BYTE = 203,               //!< BYE: Goodbye RTCP Packet, https://datatracker.ietf.org/doc/html/rfc3550#section-6.6
-    RTCP_PACKET_TYPE_APP = 204,                //!< APP: Application-Defined RTCP Packet, https://datatracker.ietf.org/doc/html/rfc3550#section-6.7
-    RTCP_PACKET_TYPE_GENERIC_RTP_FEEDBACK = 205,
-    RTCP_PACKET_TYPE_PAYLOAD_SPECIFIC_FEEDBACK = 206,
+    RTCP_PACKET_TYPE_FIR = 192,                  // https://tools.ietf.org/html/rfc2032#section-5.2.1
+    RTCP_PACKET_TYPE_SENDER_REPORT = 200,        //!< SR: Sender Report RTCP Packet, https://datatracker.ietf.org/doc/html/rfc3550#section-6.4.1
+    RTCP_PACKET_TYPE_RECEIVER_REPORT = 201,      //!< RR: Receiver Report RTCP Packet, https://tools.ietf.org/html/rfc3550#section-6.4.2
+    RTCP_PACKET_TYPE_SOURCE_DESCRIPTION = 202,   //!< SDES: Source Description RTCP Packet, https://datatracker.ietf.org/doc/html/rfc3550#section-6.5
+    RTCP_PACKET_TYPE_BYTE = 203,                 //!< BYE: Goodbye RTCP Packet, https://datatracker.ietf.org/doc/html/rfc3550#section-6.6
+    RTCP_PACKET_TYPE_APP = 204,                  //!< APP: Application-Defined RTCP Packet, https://datatracker.ietf.org/doc/html/rfc3550#section-6.7
+    RTCP_PACKET_TYPE_GENERIC_RTP_FEEDBACK = 205, //!< Generic RTP Feedback.
+    RTCP_PACKET_TYPE_PAYLOAD_SPECIFIC_FEEDBACK = 206, //!< Payload-specific Feedback, PSFB.
 } RTCP_PACKET_TYPE;
-
+/**
+ * @brief https://tools.ietf.org/html/rfc4585
+ */
 typedef enum {
-    RTCP_FEEDBACK_MESSAGE_TYPE_NACK = 1,
-    RTCP_PSFB_PLI = 1, // https://tools.ietf.org/html/rfc4585#section-6.3
-    RTCP_PSFB_SLI = 2, // https://tools.ietf.org/html/rfc4585#section-6.3.2
-    RTCP_FEEDBACK_MESSAGE_TYPE_APPLICATION_LAYER_FEEDBACK = 15,
+    // RTPFB
+    RTCP_FEEDBACK_MESSAGE_TYPE_NACK = 1,       //!< Generic negative acknowledgement
+    RTCP_FEEDBACK_MESSAGE_TYPE_EXTENSION = 31, //!< Generic negative acknowledgement
+    // PSFB
+    RTCP_PSFB_PLI = 1,                                          //!< Picture Loss Indication, https://tools.ietf.org/html/rfc4585#section-6.3
+    RTCP_PSFB_SLI = 2,                                          //!< Slice Loss Indication, https://tools.ietf.org/html/rfc4585#section-6.3.2
+    RTCP_PSFB_RPSI = 3,                                         //!< Reference Picture Selection Indication
+    RTCP_FEEDBACK_MESSAGE_TYPE_APPLICATION_LAYER_FEEDBACK = 15, //!< Application Layer Feedback, AFB.
 } RTCP_FEEDBACK_MESSAGE_TYPE;
 
 /*
@@ -91,16 +113,19 @@ typedef struct {
     UINT32 payloadLength;
 } RtcpPacket, *PRtcpPacket;
 
-STATUS setRtcpPacketFromBytes(PBYTE, UINT32, PRtcpPacket);
-STATUS rtcpNackListGet(PBYTE, UINT32, PUINT32, PUINT32, PUINT16, PUINT32);
-STATUS rembValueGet(PBYTE, UINT32, PDOUBLE, PUINT32, PUINT8);
-STATUS isRembPacket(PBYTE, UINT32);
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+STATUS rtcp_packet_setFromBytes(PBYTE, UINT32, PRtcpPacket);
+STATUS rtcp_packet_getNackList(PBYTE, UINT32, PUINT32, PUINT32, PUINT16, PUINT32);
+STATUS rtcp_packet_getRembValue(PBYTE, UINT32, PDOUBLE, PUINT32, PUINT8);
+STATUS rtcp_packet_isRemb(PBYTE, UINT32);
 
 #define NTP_OFFSET    2208988800ULL
 #define NTP_TIMESCALE 4294967296ULL
 
 // converts 100ns precision time to ntp time
-UINT64 convertTimestampToNTP(UINT64 time100ns);
+UINT64 rtcp_packet_convertTimestampToNTP(UINT64 time100ns);
 
 #define DLSR_TIMESCALE 65536
 

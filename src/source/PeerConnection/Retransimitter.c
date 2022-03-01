@@ -1,10 +1,34 @@
-#ifdef ENABLE_STREAMING
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+//#ifdef ENABLE_STREAMING
+#if 1
 #define LOG_CLASS "Retransmitter"
 
 #include "RtpPacket.h"
 #include "Rtp.h"
 
-STATUS createRetransmitter(UINT32 seqNumListLen, UINT32 validIndexListLen, PRetransmitter* ppRetransmitter)
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+STATUS retransmitter_create(UINT32 seqNumListLen, UINT32 validIndexListLen, PRetransmitter* ppRetransmitter)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -17,7 +41,7 @@ STATUS createRetransmitter(UINT32 seqNumListLen, UINT32 validIndexListLen, PRetr
 
 CleanUp:
     if (STATUS_FAILED(retStatus) && pRetransmitter != NULL) {
-        freeRetransmitter(&pRetransmitter);
+        retransmitter_free(&pRetransmitter);
         pRetransmitter = NULL;
     }
     if (ppRetransmitter != NULL) {
@@ -27,7 +51,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeRetransmitter(PRetransmitter* ppRetransmitter)
+STATUS retransmitter_free(PRetransmitter* ppRetransmitter)
 {
     ENTERS();
 
@@ -42,7 +66,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS resendPacketOnNack(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerConnection)
+STATUS retransmitter_resendPacketOnNack(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerConnection)
 {
     ENTERS();
 
@@ -58,7 +82,7 @@ STATUS resendPacketOnNack(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerCo
     UINT32 retransmittedPacketsSent = 0, retransmittedBytesSent = 0, nackCount = 0;
 
     CHK(pKvsPeerConnection != NULL && pRtcpPacket != NULL, STATUS_NULL_ARG);
-    CHK_STATUS(rtcpNackListGet(pRtcpPacket->payload, pRtcpPacket->payloadLength, &senderSsrc, &receiverSsrc, NULL, &filledLen));
+    CHK_STATUS(rtcp_packet_getNackList(pRtcpPacket->payload, pRtcpPacket->payloadLength, &senderSsrc, &receiverSsrc, NULL, &filledLen));
 
     tmpStatus = rtp_transceiver_findBySsrc(pKvsPeerConnection, &pSenderTranceiver, receiverSsrc);
     if (STATUS_NOT_FOUND == tmpStatus) {
@@ -75,8 +99,8 @@ STATUS resendPacketOnNack(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerCo
             "Sender re-transmitter is not created successfully for an existing ssrcs: senderSsrc %lu receiverSsrc %lu", senderSsrc, receiverSsrc);
 
     filledLen = pRetransmitter->seqNumListLen;
-    CHK_STATUS(rtcpNackListGet(pRtcpPacket->payload, pRtcpPacket->payloadLength, &senderSsrc, &receiverSsrc, pRetransmitter->sequenceNumberList,
-                               &filledLen));
+    CHK_STATUS(rtcp_packet_getNackList(pRtcpPacket->payload, pRtcpPacket->payloadLength, &senderSsrc, &receiverSsrc,
+                                       pRetransmitter->sequenceNumberList, &filledLen));
     validIndexListLen = pRetransmitter->validIndexListLen;
     CHK_STATUS(rtp_rolling_buffer_getValidSeqIndexList(pSenderTranceiver->sender.packetBuffer, pRetransmitter->sequenceNumberList, filledLen,
                                                        pRetransmitter->validIndexList, &validIndexListLen));

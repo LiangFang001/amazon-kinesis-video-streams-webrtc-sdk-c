@@ -230,7 +230,9 @@ VOID peer_connection_onInboundPacket(UINT64 customData, PBYTE buff, UINT32 buffL
     }
 #ifdef ENABLE_STREAMING
     else if ((buff[0] > 127 && buff[0] < 192) && (pKvsPeerConnection->pSrtpSession != NULL)) {
+
         if (buff[1] >= 192 && buff[1] <= 223) {
+            // rtcp
             if (STATUS_FAILED(retStatus = srtp_session_decryptSrtcpPacket(pKvsPeerConnection->pSrtpSession, buff, &signedBuffLen))) {
                 DLOGW("srtp_session_decryptSrtcpPacket failed with 0x%08x", retStatus);
                 CHK(FALSE, STATUS_SUCCESS);
@@ -238,10 +240,14 @@ VOID peer_connection_onInboundPacket(UINT64 customData, PBYTE buff, UINT32 buffL
 
             CHK_STATUS(rtcp_onPacket(pKvsPeerConnection, buff, signedBuffLen));
         } else {
+            // rtp
             CHK_STATUS(peer_connection_sendPacketToRtpReceiver(pKvsPeerConnection, buff, signedBuffLen));
         }
     }
 #endif
+    else {
+        DLOGW("unhandled pc inbound packet.");
+    }
 CleanUp:
     PC_LEAVE();
     CHK_LOG_ERR(retStatus);
@@ -753,7 +759,7 @@ STATUS peer_connection_rtcpReportsCallback(UINT32 timerId, UINT64 currentTime, U
     } else {
         // create rtcp sender report packet
         // https://tools.ietf.org/html/rfc3550#section-6.4.1
-        ntpTime = convertTimestampToNTP(currentTime);
+        ntpTime = rtcp_packet_convertTimestampToNTP(currentTime);
         rtpTime = pKvsRtpTransceiver->sender.rtpTimeOffset +
             CONVERT_TIMESTAMP_TO_RTP(pKvsRtpTransceiver->pJitterBuffer->clockRate, currentTime - pKvsRtpTransceiver->sender.firstFrameWallClockTime);
         MUTEX_LOCK(pKvsRtpTransceiver->statsLock);
