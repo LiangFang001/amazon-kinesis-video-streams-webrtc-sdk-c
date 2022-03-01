@@ -242,10 +242,10 @@ CleanUp:
     return retStatus;
 }
 
-PVOID connection_listener_receiveRoutine(PVOID arg)
+PVOID connection_listener_receiveRoutine(PVOID pArg)
 {
     STATUS retStatus = STATUS_SUCCESS;
-    PConnectionListener pConnectionListener = (PConnectionListener) arg;
+    PConnectionListener pConnectionListener = (PConnectionListener) pArg;
     PSocketConnection pSocketConnection;
     BOOL iterate = TRUE;
     PSocketConnection sockets[CONNECTION_LISTENER_DEFAULT_MAX_LISTENING_CONNECTION];
@@ -380,7 +380,7 @@ PVOID connection_listener_receiveRoutine(PVOID arg)
                                                                                pConnectionListener->pBuffer, (UINT32) readLen, pSrcAddr,
                                                                                NULL); // no dest information available right now.
                                     //#TBD.
-                                    iterate = FALSE;
+                                    // iterate = FALSE;
                                 }
                             }
 

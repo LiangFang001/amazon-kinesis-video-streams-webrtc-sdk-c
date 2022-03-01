@@ -98,8 +98,14 @@ STATUS connection_listener_removeAll(PConnectionListener);
  * @return STATUS status of execution
  */
 STATUS connection_listener_start(PConnectionListener pConnectionListener);
-
-PVOID connection_listener_receiveRoutine(PVOID arg);
+/**
+ * @brief
+ *
+ * @param[in] pConnectionListener the ConnectionListener struct to use
+ *
+ * @return STATUS status of execution
+ */
+PVOID connection_listener_receiveRoutine(PVOID pArg);
 
 #ifdef __cplusplus
 }

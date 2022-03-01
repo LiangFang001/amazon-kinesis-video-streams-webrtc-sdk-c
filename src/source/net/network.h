@@ -1,6 +1,17 @@
-/*******************************************
-HostInfo internal include file
-*******************************************/
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_WEBRTC_CLIENT_NETWORK__
 #define __KINESIS_VIDEO_WEBRTC_CLIENT_NETWORK__
 
@@ -77,14 +88,15 @@ typedef struct {
  * @return STATUS status of execution.
  */
 STATUS net_getLocalhostIpAddresses(PKvsIpAddress destIpList, PUINT32 pDestIpListLen, IceSetInterfaceFilterFunc filter, UINT64 customData);
-
 /**
+ * @brief
+ *
  * @param[in] familyType Family for the socket. Must be one of KVS_IP_FAMILY_TYPE
  * @param[in] protocol either tcp or udp
  * @param[in] sendBufSize send buffer size in bytes
  * @param[in] pOutSockFd for the socketfd
  *
- * @return - STATUS status of execution
+ * @return STATUS status of execution.
  */
 STATUS net_createSocket(KVS_IP_FAMILY_TYPE familyType, KVS_SOCKET_PROTOCOL protocol, UINT32 sendBufSize, PINT32 pOutSockFd);
 
