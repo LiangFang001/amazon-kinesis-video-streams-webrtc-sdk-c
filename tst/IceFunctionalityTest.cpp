@@ -676,7 +676,7 @@ TEST_F(IceFunctionalityTest, IceAgentCandidateGatheringTest)
     EXPECT_EQ(STATUS_SUCCESS, json_generateSafeString(localIceUfrag, LOCAL_ICE_UFRAG_LEN));
     EXPECT_EQ(STATUS_SUCCESS, json_generateSafeString(localIcePwd, LOCAL_ICE_PWD_LEN));
     EXPECT_EQ(STATUS_SUCCESS, connection_listener_create(&pConnectionListener));
-    EXPECT_EQ(STATUS_SUCCESS, timerQueueCreate(&timerQueueHandle));
+    EXPECT_EQ(STATUS_SUCCESS, timer_queue_create(&timerQueueHandle));
     EXPECT_EQ(STATUS_SUCCESS,
               ice_agent_create(localIceUfrag, localIcePwd, &iceAgentCallbacks, &configuration, timerQueueHandle, pConnectionListener, &pIceAgent));
 

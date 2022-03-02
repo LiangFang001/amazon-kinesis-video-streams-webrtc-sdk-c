@@ -658,7 +658,7 @@ typedef BOOL (*tryLockMutex)(MUTEX);
 typedef BOOL (*waitLockMutex)(MUTEX, UINT64);
 typedef VOID (*freeMutex)(MUTEX);
 typedef STATUS (*createThread)(PTID, startRoutine, PVOID);
-typedef STATUS (*createThreadEx)(PTID, PCHAR threadName, UINT32 threadSize, startRoutine, PVOID);
+typedef STATUS (*createThreadEx)(PTID, PCHAR, UINT32, BOOL, startRoutine, PVOID);
 typedef STATUS (*joinThread)(TID, PVOID*);
 typedef VOID (*threadSleep)(UINT64);
 typedef VOID (*threadSleepUntil)(UINT64);

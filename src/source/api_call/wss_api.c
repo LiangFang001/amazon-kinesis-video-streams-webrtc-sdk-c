@@ -152,9 +152,8 @@ STATUS wss_api_connect(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCod
 
         wss_client_create(&pWssClientCtx, xNetIoHandle, pSignalingClient, wss_api_handleDataMsg, wss_api_handleCtrlMsg, wss_api_handleDisconnection);
         pSignalingClient->pWssContext = pWssClientCtx;
-        CHK_STATUS(THREAD_CREATE_EX(&pWssClientCtx->listenerTid, WSS_LISTENER_THREAD_NAME, WSS_LISTENER_THREAD_SIZE, wss_client_start,
+        CHK_STATUS(THREAD_CREATE_EX(&pWssClientCtx->listenerTid, WSS_LISTENER_THREAD_NAME, WSS_LISTENER_THREAD_SIZE, FALSE, wss_client_start,
                                     (PVOID) pWssClientCtx));
-        CHK_STATUS(THREAD_DETACH(pWssClientCtx->listenerTid));
 
         uHttpStatusCode = HTTP_STATUS_OK;
     }

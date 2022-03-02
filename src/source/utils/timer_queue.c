@@ -27,15 +27,12 @@
  * FUNCTIONS
  ******************************************************************************/
 // Internal Functions
-STATUS timerQueueCreateInternal(UINT32, PTimerQueue*);
-STATUS timerQueueCreateInternalEx(UINT32, PTimerQueue*, PCHAR, UINT32);
-STATUS timerQueueFreeInternal(PTimerQueue*);
-STATUS timerQueueEvaluateNextInvocation(PTimerQueue);
+STATUS priv_timer_queue_createInternal(UINT32, PTimerQueue*);
+STATUS priv_timer_queue_createInternalEx(UINT32, PTimerQueue*, PCHAR, UINT32);
+STATUS priv_timer_queue_freeInternal(PTimerQueue*);
+STATUS priv_timer_queue_evaluateNextInvocation(PTimerQueue);
 
-/**
- * Create a timer queue object
- */
-STATUS timerQueueCreateEx(PTIMER_QUEUE_HANDLE pHandle, PCHAR timerName, UINT32 threadSize)
+STATUS timer_queue_createEx(PTIMER_QUEUE_HANDLE pHandle, PCHAR timerName, UINT32 threadSize)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -43,23 +40,23 @@ STATUS timerQueueCreateEx(PTIMER_QUEUE_HANDLE pHandle, PCHAR timerName, UINT32 t
 
     CHK(pHandle != NULL, STATUS_NULL_ARG);
 
-    CHK_STATUS(timerQueueCreateInternalEx(DEFAULT_TIMER_QUEUE_TIMER_COUNT, &pTimerQueue, timerName, threadSize));
+    CHK_STATUS(priv_timer_queue_createInternalEx(DEFAULT_TIMER_QUEUE_TIMER_COUNT, &pTimerQueue, timerName, threadSize));
 
     *pHandle = TO_TIMER_QUEUE_HANDLE(pTimerQueue);
 
 CleanUp:
 
     if (STATUS_FAILED(retStatus)) {
-        timerQueueFreeInternal(&pTimerQueue);
+        priv_timer_queue_freeInternal(&pTimerQueue);
     }
 
     LEAVES();
     return retStatus;
 }
 
-STATUS timerQueueCreate(PTIMER_QUEUE_HANDLE pHandle)
+STATUS timer_queue_create(PTIMER_QUEUE_HANDLE pHandle)
 {
-    return timerQueueCreateEx(pHandle, NULL, 0);
+    return timer_queue_createEx(pHandle, NULL, 0);
 }
 
 STATUS timer_queue_free(PTIMER_QUEUE_HANDLE pHandle)
@@ -73,7 +70,7 @@ STATUS timer_queue_free(PTIMER_QUEUE_HANDLE pHandle)
     // Get the client handle
     pTimerQueue = FROM_TIMER_QUEUE_HANDLE(*pHandle);
 
-    CHK_STATUS(timerQueueFreeInternal(&pTimerQueue));
+    CHK_STATUS(priv_timer_queue_freeInternal(&pTimerQueue));
 
     // Set the handle pointer to invalid
     *pHandle = INVALID_TIMER_QUEUE_HANDLE_VALUE;
@@ -164,7 +161,7 @@ STATUS timer_queue_cancelTimer(TIMER_QUEUE_HANDLE handle, UINT32 timerId, UINT64
     // Check if the next invocation needs to change
     if (pTimerQueue->pTimers[timerId].invokeTime == pTimerQueue->invokeTime) {
         // Re-evaluate the new invocation
-        CHK_STATUS(timerQueueEvaluateNextInvocation(pTimerQueue));
+        CHK_STATUS(priv_timer_queue_evaluateNextInvocation(pTimerQueue));
 
         // Signal the executor to wake up and re-evaluate
         CVAR_SIGNAL(pTimerQueue->executorCvar);
@@ -210,7 +207,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS timerQueueCancelAllTimers(TIMER_QUEUE_HANDLE handle)
+STATUS timer_queue_cancelAllTimers(TIMER_QUEUE_HANDLE handle)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -240,7 +237,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS timerQueueGetTimerCount(TIMER_QUEUE_HANDLE handle, PUINT32 pTimerCount)
+STATUS timer_queue_getTimerCount(TIMER_QUEUE_HANDLE handle, PUINT32 pTimerCount)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -264,7 +261,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS timerQueueGetTimersWithCustomData(TIMER_QUEUE_HANDLE handle, UINT64 customData, PUINT32 pTimerIdCount, PUINT32 pTimerIdsBuffer)
+STATUS timer_queue_getTimersByCustomData(TIMER_QUEUE_HANDLE handle, UINT64 customData, PUINT32 pTimerIdCount, PUINT32 pTimerIdsBuffer)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -332,7 +329,7 @@ STATUS timer_queue_updateTimerPeriod(TIMER_QUEUE_HANDLE handle, UINT64 customDat
     pTimerQueue->pTimers[timerId].period = period;
     // take effect immediately
     pTimerQueue->pTimers[timerId].invokeTime = GETTIME() + period;
-    CHK_STATUS(timerQueueEvaluateNextInvocation(pTimerQueue));
+    CHK_STATUS(priv_timer_queue_evaluateNextInvocation(pTimerQueue));
     CVAR_SIGNAL(pTimerQueue->executorCvar);
 
 CleanUp:
@@ -365,7 +362,7 @@ CleanUp:
 /////////////////////////////////////////////////////////////////////////////////
 // Internal operations
 /////////////////////////////////////////////////////////////////////////////////
-STATUS timerQueueCreateInternalEx(UINT32 maxTimers, PTimerQueue* ppTimerQueue, PCHAR timerName, UINT32 threadSize)
+STATUS priv_timer_queue_createInternalEx(UINT32 maxTimers, PTimerQueue* ppTimerQueue, PCHAR timerName, UINT32 threadSize)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -411,9 +408,7 @@ STATUS timerQueueCreateInternalEx(UINT32 maxTimers, PTimerQueue* ppTimerQueue, P
     locked = TRUE;
 
     // Create the executor thread
-    CHK_STATUS(THREAD_CREATE_EX(&threadId, timerName, threadSize, timerQueueExecutor, (PVOID) pTimerQueue));
-
-    CHK_STATUS(THREAD_DETACH(threadId));
+    CHK_STATUS(THREAD_CREATE_EX(&threadId, timerName, threadSize, FALSE, timer_queue_executor, (PVOID) pTimerQueue));
 
     pTimerQueue->executorTid = threadId;
 
@@ -430,7 +425,7 @@ CleanUp:
     }
 
     if (STATUS_FAILED(retStatus)) {
-        timerQueueFreeInternal(&pTimerQueue);
+        priv_timer_queue_freeInternal(&pTimerQueue);
     }
 
     if (ppTimerQueue != NULL) {
@@ -441,12 +436,12 @@ CleanUp:
     return retStatus;
 }
 
-STATUS timerQueueCreateInternal(UINT32 maxTimers, PTimerQueue* ppTimerQueue)
+STATUS priv_timer_queue_createInternal(UINT32 maxTimers, PTimerQueue* ppTimerQueue)
 {
-    return timerQueueCreateInternalEx(maxTimers, ppTimerQueue, NULL, 0);
+    return priv_timer_queue_createInternalEx(maxTimers, ppTimerQueue, NULL, 0);
 }
 
-STATUS timerQueueFreeInternal(PTimerQueue* ppTimerQueue)
+STATUS priv_timer_queue_freeInternal(PTimerQueue* ppTimerQueue)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -529,7 +524,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS timerQueueEvaluateNextInvocation(PTimerQueue pTimerQueue)
+STATUS priv_timer_queue_evaluateNextInvocation(PTimerQueue pTimerQueue)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT64 invokeTime = MAX_UINT64;
@@ -555,11 +550,11 @@ CleanUp:
     return retStatus;
 }
 
-PVOID timerQueueExecutor(PVOID args)
+PVOID timer_queue_executor(PVOID pArgs)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
-    PTimerQueue pTimerQueue = (PTimerQueue) args;
+    PTimerQueue pTimerQueue = (PTimerQueue) pArgs;
     UINT64 curTime;
     UINT32 i, index, removeCount;
     BOOL locked = FALSE;
@@ -623,7 +618,7 @@ PVOID timerQueueExecutor(PVOID args)
             pTimerQueue->activeTimerCount -= removeCount;
 
             // Re-evaluate again
-            CHK_STATUS(timerQueueEvaluateNextInvocation(pTimerQueue));
+            CHK_STATUS(priv_timer_queue_evaluateNextInvocation(pTimerQueue));
         }
     }
 
@@ -646,6 +641,7 @@ CleanUp:
         CVAR_SIGNAL(pTimerQueue->exitCvar);
         MUTEX_UNLOCK(pTimerQueue->exitLock);
     }
+
     THREAD_EXIT(NULL);
     LEAVES();
     return (PVOID)(ULONG_PTR) retStatus;

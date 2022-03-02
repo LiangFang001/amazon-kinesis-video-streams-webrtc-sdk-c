@@ -44,7 +44,7 @@ class TurnConnectionFunctionalityTest : public WebRtcClientTestBase {
         }
 
         EXPECT_TRUE(pTurnServer != NULL);
-        EXPECT_EQ(STATUS_SUCCESS, timerQueueCreate(&timerQueueHandle));
+        EXPECT_EQ(STATUS_SUCCESS, timer_queue_create(&timerQueueHandle));
         EXPECT_EQ(STATUS_SUCCESS, connection_listener_create(&pConnectionListener));
 
         EXPECT_EQ(STATUS_SUCCESS, net_getLocalhostIpAddresses(localIpInterfaces, &localIpInterfaceCount, NULL, 0));

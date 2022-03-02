@@ -150,9 +150,6 @@ CleanUp:
 UINT32 totalNum = 0;
 UINT32 successNum = 0;
 
-UINT32 totalDetachNum = 0;
-UINT32 successDetachNum = 0;
-
 PUBLIC_API STATUS defaultGetThreadName(TID thread, PCHAR name, UINT32 len)
 {
     UINT32 retValue = STATUS_SUCCESS;
@@ -187,7 +184,8 @@ PUBLIC_API TID defaultGetThreadId()
     return (TID) pthread_self();
 }
 
-PUBLIC_API STATUS defaultCreateThreadExPri(PTID pThreadId, PCHAR threadName, UINT32 prio, UINT32 threadSize, startRoutine start, PVOID args)
+PUBLIC_API STATUS defaultCreateThreadExPri(PTID pThreadId, PCHAR threadName, UINT32 prio, UINT32 threadSize, BOOL joinable, startRoutine start,
+                                           PVOID args)
 {
     STATUS retStatus = STATUS_SUCCESS;
     pthread_t threadId;
@@ -257,8 +255,11 @@ PUBLIC_API STATUS defaultCreateThreadExPri(PTID pThreadId, PCHAR threadName, UIN
         param.sched_priority = prio;
         rs = pthread_attr_setschedparam(pAttr, &param);
     }
-
-    pthread_attr_setdetachstate(pAttr, PTHREAD_CREATE_JOINABLE);
+    if (joinable == TRUE) {
+        pthread_attr_setdetachstate(pAttr, PTHREAD_CREATE_JOINABLE);
+    } else {
+        pthread_attr_setdetachstate(pAttr, PTHREAD_CREATE_DETACHED);
+    }
 
     result = pthread_create(&threadId, pAttr, start, args);
 
@@ -299,14 +300,14 @@ CleanUp:
     return retStatus;
 }
 
-PUBLIC_API STATUS defaultCreateThreadEx(PTID pThreadId, PCHAR threadName, UINT32 threadSize, startRoutine start, PVOID args)
+PUBLIC_API STATUS defaultCreateThreadEx(PTID pThreadId, PCHAR threadName, UINT32 threadSize, BOOL joinable, startRoutine start, PVOID args)
 {
-    return defaultCreateThreadExPri(pThreadId, NULL, 1, threadSize, start, args);
+    return defaultCreateThreadExPri(pThreadId, threadName, 1, threadSize, joinable, start, args);
 }
 
 PUBLIC_API STATUS defaultCreateThread(PTID pThreadId, startRoutine start, PVOID args)
 {
-    return defaultCreateThreadExPri(pThreadId, NULL, 1, 0, start, args);
+    return defaultCreateThreadExPri(pThreadId, NULL, 1, 0, TRUE, start, args);
 }
 
 PUBLIC_API STATUS defaultJoinThread(TID threadId, PVOID* retVal)
@@ -408,7 +409,7 @@ CleanUp:
 PUBLIC_API STATUS defaultDetachThread(TID threadId)
 {
     STATUS retStatus = STATUS_SUCCESS;
-    return retStatus;
+
     INT32 detachResult = pthread_detach((pthread_t) threadId);
 
     switch (detachResult) {
@@ -424,10 +425,8 @@ PUBLIC_API STATUS defaultDetachThread(TID threadId)
             CHK(FALSE, STATUS_DETACH_THREAD_FAILED);
     }
 
-    successDetachNum++;
 CleanUp:
-    totalDetachNum++;
-    DLOGD("pthread_detach(%d/%d)", successDetachNum, totalDetachNum);
+
     return retStatus;
 }
 

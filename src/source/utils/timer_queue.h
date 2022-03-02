@@ -95,7 +95,7 @@ typedef STATUS (*TimerCallbackFunc)(UINT32, UINT64, UINT64);
 /**
  * Timer entry structure definition
  */
-typedef struct {
+typedef struct __TimerEntry {
     UINT64 period;
     UINT64 invokeTime;
     UINT64 customData;
@@ -105,7 +105,7 @@ typedef struct {
 /**
  * Internal timer queue definition
  */
-typedef struct {
+typedef struct __TimerQueue {
     volatile TID executorTid;
     volatile ATOMIC_BOOL shutdown;
     volatile ATOMIC_BOOL terminated;
@@ -129,43 +129,58 @@ typedef struct {
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-
-// Executor routine
-PVOID timerQueueExecutor(PVOID);
-
 /**
- * @param - PTIMER_QUEUE_HANDLE - OUT - Timer queue handle
+ * @brief Executor routine.
  *
- * @return  - STATUS code of the execution
+ * @param[in] pArgs the argument of the timer queue.
+ *
+ * @return PVOID status of execution.
  */
-STATUS timerQueueCreate(PTIMER_QUEUE_HANDLE);
-STATUS timerQueueCreateEx(PTIMER_QUEUE_HANDLE, PCHAR, UINT32);
+PVOID timer_queue_executor(PVOID pArgs);
+/**
+ * @brief create the timer queue.
+ *
+ * @param[in, out] pHandle the handle of the timer queue.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS timer_queue_create(PTIMER_QUEUE_HANDLE pHandle);
+/**
+ * @brief create the timer queue.
+ *
+ * @param[in, out] pHandle the handle of the timer queue.
+ * @param[in] timerName the thread name of the timer queue.
+ * @param[in] threadSize the thread size of the timer queue.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS timer_queue_createEx(PTIMER_QUEUE_HANDLE pHandle, PCHAR timerName, UINT32 threadSize);
 /**
  * @brief Frees the Timer queue object
  *
  * NOTE: The call is idempotent.
  *
- * @param[in, out] PTIMER_QUEUE_HANDLE Timer queue handle to free
+ * @param[in, out] pHandle Timer queue handle to free
  *
  * @return STATUS code of the execution.
  */
-STATUS timer_queue_free(PTIMER_QUEUE_HANDLE);
-
+STATUS timer_queue_free(PTIMER_QUEUE_HANDLE pHandle);
 /**
  * @brief Add timer to the timer queue.
  *
  * NOTE: The timer period value of TIMER_QUEUE_SINGLE_INVOCATION_PERIOD will schedule the call only once
  *
- * @param[in] TIMER_QUEUE_HANDLE Timer queue handle
- * @param[in] UINT64 Start duration in 100ns at which to start the first time
- * @param[in] UINT64 Timer period value in 100ns to schedule the callback
- * @param[in] TimerCallbackFunc Callback to call for the timer
- * @param[in] UINT64 Timer callback function custom data
- * @param[in] PUINT32 Created timers ID
+ * @param[in] handle Timer queue handle
+ * @param[in] start Start duration in 100ns at which to start the first time
+ * @param[in] period Timer period value in 100ns to schedule the callback
+ * @param[in] timerCallbackFn Callback to call for the timer
+ * @param[in] customData Timer callback function custom data
+ * @param[in] pIndex Created timers ID
  *
  * @return STATUS code of the execution.
  */
-STATUS timer_queue_addTimer(TIMER_QUEUE_HANDLE, UINT64, UINT64, TimerCallbackFunc, UINT64, PUINT32);
+STATUS timer_queue_addTimer(TIMER_QUEUE_HANDLE handle, UINT64 start, UINT64 period, TimerCallbackFunc timerCallbackFn, UINT64 customData,
+                            PUINT32 pIndex);
 /**
  * @brief Cancel the timer. customData is needed to handle case when user 1 add timer and then the timer
  * get cancelled because the callback returned STATUS_TIMER_QUEUE_STOP_SCHEDULING. Then user 2 add
@@ -196,7 +211,7 @@ STATUS timer_queue_cancelTimersByCustomData(TIMER_QUEUE_HANDLE, UINT64);
  *
  * @return - STATUS code of the execution
  */
-STATUS timerQueueCancelAllTimers(TIMER_QUEUE_HANDLE);
+STATUS timer_queue_cancelAllTimers(TIMER_QUEUE_HANDLE);
 
 /*
  * Get active timer count
@@ -206,7 +221,7 @@ STATUS timerQueueCancelAllTimers(TIMER_QUEUE_HANDLE);
  *
  * @return - STATUS code of the execution
  */
-STATUS timerQueueGetTimerCount(TIMER_QUEUE_HANDLE, PUINT32);
+STATUS timer_queue_getTimerCount(TIMER_QUEUE_HANDLE, PUINT32);
 
 /*
  * Get timer ids with custom data
@@ -218,7 +233,7 @@ STATUS timerQueueGetTimerCount(TIMER_QUEUE_HANDLE, PUINT32);
  *
  * @return - STATUS code of the execution
  */
-STATUS timerQueueGetTimersWithCustomData(TIMER_QUEUE_HANDLE, UINT64, PUINT32, PUINT32);
+STATUS timer_queue_getTimersByCustomData(TIMER_QUEUE_HANDLE, UINT64, PUINT32, PUINT32);
 
 /*
  * update timer id's period. Do nothing if timer not found.
