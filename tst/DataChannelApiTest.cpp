@@ -20,13 +20,13 @@ TEST_F(DataChannelApiTest, createDataChannel_Disconnected)
     EXPECT_EQ(peer_connection_create(&configuration, &pPeerConnection), STATUS_SUCCESS);
 
     // Create two DataChannels
-    EXPECT_EQ(createDataChannel(pPeerConnection, (PCHAR) "DataChannel 1", nullptr, &pDataChannel), STATUS_SUCCESS);
-    EXPECT_EQ(createDataChannel(pPeerConnection, (PCHAR) "DataChannel 2", nullptr, &pDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(data_channel_create(pPeerConnection, (PCHAR) "DataChannel 1", nullptr, &pDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(data_channel_create(pPeerConnection, (PCHAR) "DataChannel 2", nullptr, &pDataChannel), STATUS_SUCCESS);
 
     // Don't allow NULL
-    EXPECT_EQ(createDataChannel(nullptr, (PCHAR) "DataChannel 2", nullptr, &pDataChannel), STATUS_NULL_ARG);
-    EXPECT_EQ(createDataChannel(pPeerConnection, nullptr, nullptr, &pDataChannel), STATUS_NULL_ARG);
-    EXPECT_EQ(createDataChannel(pPeerConnection, (PCHAR) "DataChannel 2", nullptr, nullptr), STATUS_NULL_ARG);
+    EXPECT_EQ(data_channel_create(nullptr, (PCHAR) "DataChannel 2", nullptr, &pDataChannel), STATUS_NULL_ARG);
+    EXPECT_EQ(data_channel_create(pPeerConnection, nullptr, nullptr, &pDataChannel), STATUS_NULL_ARG);
+    EXPECT_EQ(data_channel_create(pPeerConnection, (PCHAR) "DataChannel 2", nullptr, nullptr), STATUS_NULL_ARG);
 
     peer_connection_close(pPeerConnection);
     peer_connection_free(&pPeerConnection);

@@ -1,23 +1,42 @@
-#ifdef ENABLE_DATA_CHANNEL
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+//#ifdef ENABLE_DATA_CHANNEL
+#if 1
 
 #define LOG_CLASS "DataChannel"
-
 #include "../Include_i.h"
 #include "PeerConnection.h"
 #include "sctp_session.h"
 #include "DataChannel.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 #define DATA_ENTER()  // ENTER()
 #define DATA_LEAVE()  // LEAVE()
 #define DATA_ENTERS() // ENTERS()
 #define DATA_LEAVES() // LEAVES()
-STATUS connectLocalDataChannel()
-{
-    return STATUS_SUCCESS;
-}
 
-STATUS createDataChannel(PRtcPeerConnection pPeerConnection, PCHAR pDataChannelName, PRtcDataChannelInit pRtcDataChannelInit,
-                         PRtcDataChannel* ppRtcDataChannel)
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+STATUS data_channel_create(PRtcPeerConnection pPeerConnection, PCHAR pDataChannelName, PRtcDataChannelInit pRtcDataChannelInit,
+                           PRtcDataChannel* ppRtcDataChannel)
 {
     DATA_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -69,7 +88,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS dataChannelSend(PRtcDataChannel pRtcDataChannel, BOOL isBinary, PBYTE pMessage, UINT32 pMessageLen)
+STATUS data_channel_send(PRtcDataChannel pRtcDataChannel, BOOL isBinary, PBYTE pMessage, UINT32 pMessageLen)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSctpSession pSctpSession = NULL;
@@ -88,7 +107,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS dataChannelOnMessage(PRtcDataChannel pRtcDataChannel, UINT64 customData, RtcOnMessage rtcOnMessage)
+STATUS data_channel_onMessage(PRtcDataChannel pRtcDataChannel, UINT64 customData, RtcOnMessage rtcOnMessage)
 {
     DATA_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -105,7 +124,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS dataChannelOnOpen(PRtcDataChannel pRtcDataChannel, UINT64 customData, RtcOnOpen rtcOnOpen)
+STATUS data_channel_onOpen(PRtcDataChannel pRtcDataChannel, UINT64 customData, RtcOnOpen rtcOnOpen)
 {
     DATA_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;

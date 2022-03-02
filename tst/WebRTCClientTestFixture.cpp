@@ -256,7 +256,7 @@ STATUS awaitGetIceConfigInfoCount(SIGNALING_CLIENT_HANDLE signalingClientHandle,
 
     while (TRUE) {
         // Get the configuration count
-        CHK_STATUS(signalingClientGetIceConfigInfoCount(signalingClientHandle, pIceConfigInfoCount));
+        CHK_STATUS(signaling_client_getIceConfigInfoCount(signalingClientHandle, pIceConfigInfoCount));
 
         // Return OK if we have some ice configs
         CHK(*pIceConfigInfoCount == 0, retStatus);
@@ -286,7 +286,7 @@ void WebRtcClientTestBase::getIceServers(PRtcConfiguration pRtcConfiguration)
     SNPRINTF(pRtcConfiguration->iceServers[0].urls, MAX_ICE_CONFIG_URI_LEN, KINESIS_VIDEO_STUN_URL, TEST_DEFAULT_REGION);
 
     for (uriCount = 0, i = 0; i < iceConfigCount; i++) {
-        EXPECT_EQ(STATUS_SUCCESS, signalingClientGetIceConfigInfo(mSignalingClientHandle, i, &pIceConfigInfo));
+        EXPECT_EQ(STATUS_SUCCESS, signaling_client_getIceConfigInfo(mSignalingClientHandle, i, &pIceConfigInfo));
         for (j = 0; j < pIceConfigInfo->uriCount; j++) {
             STRNCPY(pRtcConfiguration->iceServers[uriCount + 1].urls, pIceConfigInfo->uris[j], MAX_ICE_CONFIG_URI_LEN);
             STRNCPY(pRtcConfiguration->iceServers[uriCount + 1].credential, pIceConfigInfo->password, MAX_ICE_CONFIG_CREDENTIAL_LEN);

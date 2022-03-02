@@ -126,7 +126,7 @@ class WebRtcClientTestBase : public ::testing::Test {
             lwsDeleteChannel(FROM_SIGNALING_CLIENT_HANDLE(mSignalingClientHandle), 0);
         }
 
-        EXPECT_EQ(STATUS_SUCCESS, signalingClientFree(&mSignalingClientHandle));
+        EXPECT_EQ(STATUS_SUCCESS, signaling_client_free(&mSignalingClientHandle));
 
         return STATUS_SUCCESS;
     }

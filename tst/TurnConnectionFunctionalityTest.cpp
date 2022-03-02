@@ -27,10 +27,10 @@ class TurnConnectionFunctionalityTest : public WebRtcClientTestBase {
         PSocketConnection pTurnSocket = NULL;
 
         initializeSignalingClient();
-        EXPECT_EQ(STATUS_SUCCESS, signalingClientGetIceConfigInfoCount(mSignalingClientHandle, &iceConfigCount));
+        EXPECT_EQ(STATUS_SUCCESS, signaling_client_getIceConfigInfoCount(mSignalingClientHandle, &iceConfigCount));
 
         for (uriCount = 0, i = 0; i < iceConfigCount; i++) {
-            EXPECT_EQ(STATUS_SUCCESS, signalingClientGetIceConfigInfo(mSignalingClientHandle, i, &pIceConfigInfo));
+            EXPECT_EQ(STATUS_SUCCESS, signaling_client_getIceConfigInfo(mSignalingClientHandle, i, &pIceConfigInfo));
             for (j = 0; j < pIceConfigInfo->uriCount; j++) {
                 EXPECT_EQ(STATUS_SUCCESS,
                           ice_utils_parseIceServer(&iceServers[uriCount++], pIceConfigInfo->uris[j], pIceConfigInfo->userName, pIceConfigInfo->password));

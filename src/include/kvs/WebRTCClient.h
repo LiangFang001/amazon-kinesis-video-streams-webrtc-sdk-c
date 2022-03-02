@@ -465,8 +465,8 @@ typedef enum {
                                             //!< we get to this state after ICE refresh
     SIGNALING_CLIENT_STATE_CONNECTED,       //!< On transitioning to this state, the timeout on the state machine is reset
     SIGNALING_CLIENT_STATE_DISCONNECTED,    //!< This state transition happens either from connect or connected state
-    SIGNALING_CLIENT_STATE_DELETE,          //!< This state transition happens when the application calls signalingClientDelete API.
-    SIGNALING_CLIENT_STATE_DELETED,   //!< This state transition happens after the channel gets deleted as a result of a signalingClientDelete API.
+    SIGNALING_CLIENT_STATE_DELETE,          //!< This state transition happens when the application calls signaling_client_delete API.
+    SIGNALING_CLIENT_STATE_DELETED,   //!< This state transition happens after the channel gets deleted as a result of a signaling_client_delete API.
                                       //!< This is a terminal state.
     SIGNALING_CLIENT_STATE_MAX_VALUE, //!< This state indicates maximum number of signaling client states
 } SIGNALING_CLIENT_STATE,
@@ -566,7 +566,7 @@ typedef VOID (*RtcOnPictureLoss)(UINT64);
 typedef struct __RtcDataChannel {
     CHAR name[MAX_DATA_CHANNEL_NAME_LEN + 1]; //!< Define name of data channel. Max length is 256 characters
     UINT32 id;                                //!< Read only field. Setting this in the application has no effect. This field is populated with the id
-               //!< set by the peer connection's createDataChannel() call or the channel id is set in createDataChannel()
+               //!< set by the peer connection's data_channel_create() call or the channel id is set in data_channel_create()
                //!< on embedded end.
 } RtcDataChannel, *PRtcDataChannel;
 
@@ -1384,7 +1384,7 @@ PUBLIC_API STATUS rtp_transceiver_updateEncoderStats(PRtcRtpTransceiver, PRtcEnc
 PUBLIC_API STATUS peer_connection_addIceCandidate(PRtcPeerConnection, PCHAR);
 
 /**
- * @brief createDataChannel creates a new RtcDataChannel object with the given label.
+ * @brief data_channel_create creates a new RtcDataChannel object with the given label.
  *
  * NOTE: The RtcDataChannelInit dictionary can be used to configure properties of the underlying
  * channel such as data reliability.
@@ -1399,29 +1399,29 @@ PUBLIC_API STATUS peer_connection_addIceCandidate(PRtcPeerConnection, PCHAR);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS createDataChannel(PRtcPeerConnection, PCHAR, PRtcDataChannelInit, PRtcDataChannel*);
+PUBLIC_API STATUS data_channel_create(PRtcPeerConnection, PCHAR, PRtcDataChannelInit, PRtcDataChannel*);
 
 /**
  * @brief Set a callback for data channel message
  *
- * @param[in] PRtcDataChannel Data channel struct created by createDataChannel()
+ * @param[in] PRtcDataChannel Data channel struct created by data_channel_create()
  * @param[in] UINT64 User customData that will be passed along when RtcOnMessage is called
  * @param[in] RtcOnMessage User RtcOnMessage callback
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS dataChannelOnMessage(PRtcDataChannel, UINT64, RtcOnMessage);
+PUBLIC_API STATUS data_channel_onMessage(PRtcDataChannel, UINT64, RtcOnMessage);
 
 /**
  * @brief Set a callback for data channel open
  *
- * @param[in] PRtcDataChannel Data channel struct created by createDataChannel()
+ * @param[in] PRtcDataChannel Data channel struct created by data_channel_create()
  * @param[in] UINT64 User customData that will be passed along when RtcOnOpen is called
  * @param[in] RtcOnOpen User RtcOnOpen callback
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS dataChannelOnOpen(PRtcDataChannel, UINT64, RtcOnOpen);
+PUBLIC_API STATUS data_channel_onOpen(PRtcDataChannel, UINT64, RtcOnOpen);
 
 /**
  * @brief Send data via the PRtcDataChannel
@@ -1436,7 +1436,7 @@ PUBLIC_API STATUS dataChannelOnOpen(PRtcDataChannel, UINT64, RtcOnOpen);
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  *
  */
-PUBLIC_API STATUS dataChannelSend(PRtcDataChannel, BOOL, PBYTE, UINT32);
+PUBLIC_API STATUS data_channel_send(PRtcDataChannel, BOOL, PBYTE, UINT32);
 
 /**
  * @brief Use the process described in https://tools.ietf.org/html/rfc5780#section-4.3 to
@@ -1474,8 +1474,8 @@ PUBLIC_API PCHAR getNatBehaviorStr(NAT_BEHAVIOR natBehavior);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientCreate(PSignalingClientInfo, PChannelInfo, PSignalingClientCallbacks, PAwsCredentialProvider,
-                                        PSIGNALING_CLIENT_HANDLE);
+PUBLIC_API STATUS signaling_client_create(PSignalingClientInfo, PChannelInfo, PSignalingClientCallbacks, PAwsCredentialProvider,
+                                          PSIGNALING_CLIENT_HANDLE);
 
 /**
  * @brief Frees the Signaling client object
@@ -1486,7 +1486,7 @@ PUBLIC_API STATUS signalingClientCreate(PSignalingClientInfo, PChannelInfo, PSig
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientFree(PSIGNALING_CLIENT_HANDLE);
+PUBLIC_API STATUS signaling_client_free(PSIGNALING_CLIENT_HANDLE);
 
 /**
  * @brief Send a message through a Signaling client.
@@ -1499,7 +1499,7 @@ PUBLIC_API STATUS signalingClientFree(PSIGNALING_CLIENT_HANDLE);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientSendMessage(SIGNALING_CLIENT_HANDLE, PSignalingMessage);
+PUBLIC_API STATUS signaling_client_sendMsg(SIGNALING_CLIENT_HANDLE, PSignalingMessage);
 
 /**
  * @brief Gets the retrieved ICE configuration information object count
@@ -1511,7 +1511,7 @@ PUBLIC_API STATUS signalingClientSendMessage(SIGNALING_CLIENT_HANDLE, PSignaling
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientGetIceConfigInfoCount(SIGNALING_CLIENT_HANDLE, PUINT32);
+PUBLIC_API STATUS signaling_client_getIceConfigInfoCount(SIGNALING_CLIENT_HANDLE, PUINT32);
 
 /**
  * @brief Gets the ICE configuration information object given its index
@@ -1526,7 +1526,7 @@ PUBLIC_API STATUS signalingClientGetIceConfigInfoCount(SIGNALING_CLIENT_HANDLE, 
  *
  * @return STATUS code of execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientGetIceConfigInfo(SIGNALING_CLIENT_HANDLE, UINT32, PIceConfigInfo*);
+PUBLIC_API STATUS signaling_client_getIceConfigInfo(SIGNALING_CLIENT_HANDLE, UINT32, PIceConfigInfo*);
 
 /**
  * @brief Connects the signaling client to the web socket in order to send/receive messages.
@@ -1537,7 +1537,7 @@ PUBLIC_API STATUS signalingClientGetIceConfigInfo(SIGNALING_CLIENT_HANDLE, UINT3
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientConnect(SIGNALING_CLIENT_HANDLE);
+PUBLIC_API STATUS signaling_client_connect(SIGNALING_CLIENT_HANDLE);
 
 /**
  * @brief Disconnects the signaling client.
@@ -1546,7 +1546,7 @@ PUBLIC_API STATUS signalingClientConnect(SIGNALING_CLIENT_HANDLE);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientDisconnect(SIGNALING_CLIENT_HANDLE);
+PUBLIC_API STATUS signaling_client_disconnect(SIGNALING_CLIENT_HANDLE);
 
 /**
  * @brief Gets the Signaling client current state.
@@ -1556,7 +1556,7 @@ PUBLIC_API STATUS signalingClientDisconnect(SIGNALING_CLIENT_HANDLE);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientGetCurrentState(SIGNALING_CLIENT_HANDLE, PSIGNALING_CLIENT_STATE);
+PUBLIC_API STATUS signaling_client_getCurrentState(SIGNALING_CLIENT_HANDLE, PSIGNALING_CLIENT_STATE);
 
 /**
  * Gets a literal string representing a Signaling client state.
@@ -1566,7 +1566,7 @@ PUBLIC_API STATUS signalingClientGetCurrentState(SIGNALING_CLIENT_HANDLE, PSIGNA
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientGetStateString(SIGNALING_CLIENT_STATE, PCHAR*);
+PUBLIC_API STATUS signaling_client_getStateString(SIGNALING_CLIENT_STATE, PCHAR*);
 
 /**
  * @brief Deletes the signaling channel referenced by SIGNALING_CLIENT_HANDLE
@@ -1584,7 +1584,7 @@ PUBLIC_API STATUS signalingClientGetStateString(SIGNALING_CLIENT_STATE, PCHAR*);
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS signalingClientDelete(SIGNALING_CLIENT_HANDLE);
+PUBLIC_API STATUS signaling_client_delete(SIGNALING_CLIENT_HANDLE);
 
 /**
  * @brief Get signaling related metrics
@@ -1592,7 +1592,7 @@ PUBLIC_API STATUS signalingClientDelete(SIGNALING_CLIENT_HANDLE);
  * @param[in] SIGNALING_CLIENT_HANDLE Signaling client handle
  * @param[in,out] PSignalingClientMetrics Signaling stats
  */
-PUBLIC_API STATUS signalingClientGetMetrics(SIGNALING_CLIENT_HANDLE, PSignalingClientMetrics);
+PUBLIC_API STATUS signaling_client_getMetrics(SIGNALING_CLIENT_HANDLE, PSignalingClientMetrics);
 
 /**
  * @brief Get the relevant/all metrics based on the RTCStatsType field. This does not include

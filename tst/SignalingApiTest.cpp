@@ -24,30 +24,30 @@ TEST_F(SignalingApiTest, signaling_send)
     signalingMessage.payloadLen = 0;
     signalingMessage.correlationId[0] = '\0';
 
-    EXPECT_NE(STATUS_SUCCESS, signalingClientSendMessage(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, &signalingMessage));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientSendMessage(mSignalingClientHandle, NULL));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientSendMessage(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_sendMsg(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, &signalingMessage));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_sendMsg(mSignalingClientHandle, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_sendMsg(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, NULL));
 
     // Not connected
     expectedStatus = mAccessKeyIdSet ? STATUS_STATE_MACHINE_INVALID_STATE : STATUS_NULL_ARG;
-    EXPECT_EQ(expectedStatus, signalingClientSendMessage(mSignalingClientHandle, &signalingMessage));
+    EXPECT_EQ(expectedStatus, signaling_client_sendMsg(mSignalingClientHandle, &signalingMessage));
 
     // Connect and retry
     expectedStatus = mAccessKeyIdSet ? STATUS_SUCCESS : STATUS_NULL_ARG;
-    EXPECT_EQ(expectedStatus, signalingClientConnect(mSignalingClientHandle));
-    EXPECT_EQ(expectedStatus, signalingClientSendMessage(mSignalingClientHandle, &signalingMessage));
+    EXPECT_EQ(expectedStatus, signaling_client_connect(mSignalingClientHandle));
+    EXPECT_EQ(expectedStatus, signaling_client_sendMsg(mSignalingClientHandle, &signalingMessage));
 
     // Some correlation id
     STRCPY(signalingMessage.correlationId, SIGNAING_TEST_CORRELATION_ID);
-    EXPECT_EQ(expectedStatus, signalingClientSendMessage(mSignalingClientHandle, &signalingMessage));
+    EXPECT_EQ(expectedStatus, signaling_client_sendMsg(mSignalingClientHandle, &signalingMessage));
 
     // No peer id
     signalingMessage.peerClientId[0] = '\0';
-    EXPECT_EQ(expectedStatus, signalingClientSendMessage(mSignalingClientHandle, &signalingMessage));
+    EXPECT_EQ(expectedStatus, signaling_client_sendMsg(mSignalingClientHandle, &signalingMessage));
 
     // No peer id no correlation id
     signalingMessage.correlationId[0] = '\0';
-    EXPECT_EQ(expectedStatus, signalingClientSendMessage(mSignalingClientHandle, &signalingMessage));
+    EXPECT_EQ(expectedStatus, signaling_client_sendMsg(mSignalingClientHandle, &signalingMessage));
 
     deinitializeSignalingClient();
 }
@@ -81,57 +81,57 @@ TEST_F(SignalingApiTest, signalingSendMessageSyncFileCredsProvider)
     signalingMessage.payloadLen = 0;
     signalingMessage.correlationId[0] = '\0';
 
-    EXPECT_EQ(STATUS_SUCCESS, signalingClientConnect(mSignalingClientHandle));
-    EXPECT_EQ(STATUS_SUCCESS, signalingClientSendMessage(mSignalingClientHandle, &signalingMessage));
+    EXPECT_EQ(STATUS_SUCCESS, signaling_client_connect(mSignalingClientHandle));
+    EXPECT_EQ(STATUS_SUCCESS, signaling_client_sendMsg(mSignalingClientHandle, &signalingMessage));
 
     // Some correlation id
     STRCPY(signalingMessage.correlationId, SIGNAING_TEST_CORRELATION_ID);
-    EXPECT_EQ(STATUS_SUCCESS, signalingClientSendMessage(mSignalingClientHandle, &signalingMessage));
+    EXPECT_EQ(STATUS_SUCCESS, signaling_client_sendMsg(mSignalingClientHandle, &signalingMessage));
 
     // No peer id
     signalingMessage.peerClientId[0] = '\0';
-    EXPECT_EQ(STATUS_SUCCESS, signalingClientSendMessage(mSignalingClientHandle, &signalingMessage));
+    EXPECT_EQ(STATUS_SUCCESS, signaling_client_sendMsg(mSignalingClientHandle, &signalingMessage));
 
     // No peer id no correlation id
     signalingMessage.correlationId[0] = '\0';
-    EXPECT_EQ(STATUS_SUCCESS, signalingClientSendMessage(mSignalingClientHandle, &signalingMessage));
+    EXPECT_EQ(STATUS_SUCCESS, signaling_client_sendMsg(mSignalingClientHandle, &signalingMessage));
 
     deinitializeSignalingClient();
 
     EXPECT_EQ(STATUS_SUCCESS, freeFileCredentialProvider(&pAwsCredentialProvider));
 }
 
-TEST_F(SignalingApiTest, signalingClientConnect)
+TEST_F(SignalingApiTest, signaling_client_connect)
 {
     STATUS expectedStatus;
 
     initializeSignalingClient();
-    EXPECT_NE(STATUS_SUCCESS, signalingClientConnect(INVALID_SIGNALING_CLIENT_HANDLE_VALUE));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_connect(INVALID_SIGNALING_CLIENT_HANDLE_VALUE));
     expectedStatus = mAccessKeyIdSet ? STATUS_SUCCESS : STATUS_NULL_ARG;
-    EXPECT_EQ(expectedStatus, signalingClientConnect(mSignalingClientHandle));
+    EXPECT_EQ(expectedStatus, signaling_client_connect(mSignalingClientHandle));
 
     // Connect again
-    EXPECT_EQ(expectedStatus, signalingClientConnect(mSignalingClientHandle));
-    EXPECT_EQ(expectedStatus, signalingClientConnect(mSignalingClientHandle));
+    EXPECT_EQ(expectedStatus, signaling_client_connect(mSignalingClientHandle));
+    EXPECT_EQ(expectedStatus, signaling_client_connect(mSignalingClientHandle));
 
     deinitializeSignalingClient();
 }
 
-TEST_F(SignalingApiTest, signalingClientDelete)
+TEST_F(SignalingApiTest, signaling_client_delete)
 {
     STATUS expectedStatus;
 
     initializeSignalingClient();
-    EXPECT_NE(STATUS_SUCCESS, signalingClientDelete(INVALID_SIGNALING_CLIENT_HANDLE_VALUE));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_delete(INVALID_SIGNALING_CLIENT_HANDLE_VALUE));
     expectedStatus = mAccessKeyIdSet ? STATUS_SUCCESS : STATUS_NULL_ARG;
-    EXPECT_EQ(expectedStatus, signalingClientDelete(mSignalingClientHandle));
+    EXPECT_EQ(expectedStatus, signaling_client_delete(mSignalingClientHandle));
 
     // Call again - idempotent
-    EXPECT_EQ(expectedStatus, signalingClientDelete(mSignalingClientHandle));
+    EXPECT_EQ(expectedStatus, signaling_client_delete(mSignalingClientHandle));
 
     // Attempt to call a connect should fail
     expectedStatus = mAccessKeyIdSet ? STATUS_STATE_MACHINE_INVALID_STATE : STATUS_NULL_ARG;
-    EXPECT_EQ(expectedStatus, signalingClientConnect(mSignalingClientHandle));
+    EXPECT_EQ(expectedStatus, signaling_client_connect(mSignalingClientHandle));
 
     // Attempt to send a message should fail
     SignalingMessage signalingMessage;
@@ -142,23 +142,23 @@ TEST_F(SignalingApiTest, signalingClientDelete)
     signalingMessage.payload[100] = '\0';
     signalingMessage.payloadLen = 0;
     signalingMessage.correlationId[0] = '\0';
-    EXPECT_EQ(expectedStatus, signalingClientSendMessage(mSignalingClientHandle, &signalingMessage));
+    EXPECT_EQ(expectedStatus, signaling_client_sendMsg(mSignalingClientHandle, &signalingMessage));
 
     deinitializeSignalingClient();
 }
 
-TEST_F(SignalingApiTest, signalingClientGetIceConfigInfoCount)
+TEST_F(SignalingApiTest, signaling_client_getIceConfigInfoCount)
 {
     STATUS expectedStatus;
     UINT32 count;
 
     initializeSignalingClient();
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetIceConfigInfoCount(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, &count));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetIceConfigInfoCount(mSignalingClientHandle, NULL));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetIceConfigInfoCount(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getIceConfigInfoCount(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, &count));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getIceConfigInfoCount(mSignalingClientHandle, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getIceConfigInfoCount(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, NULL));
 
     expectedStatus = mAccessKeyIdSet ? STATUS_SUCCESS : STATUS_NULL_ARG;
-    EXPECT_EQ(expectedStatus, signalingClientGetIceConfigInfoCount(mSignalingClientHandle, &count));
+    EXPECT_EQ(expectedStatus, signaling_client_getIceConfigInfoCount(mSignalingClientHandle, &count));
     if (mAccessKeyIdSet) {
         EXPECT_NE(0, count);
         EXPECT_GE(MAX_ICE_CONFIG_COUNT, count);
@@ -167,26 +167,26 @@ TEST_F(SignalingApiTest, signalingClientGetIceConfigInfoCount)
     deinitializeSignalingClient();
 }
 
-TEST_F(SignalingApiTest, signalingClientGetIceConfigInfo)
+TEST_F(SignalingApiTest, signaling_client_getIceConfigInfo)
 {
     UINT32 i, j, count;
     PIceConfigInfo pIceConfigInfo;
 
     initializeSignalingClient();
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetIceConfigInfo(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, 0, &pIceConfigInfo));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetIceConfigInfo(mSignalingClientHandle, 0, NULL));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetIceConfigInfo(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, 0, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getIceConfigInfo(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, 0, &pIceConfigInfo));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getIceConfigInfo(mSignalingClientHandle, 0, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getIceConfigInfo(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, 0, NULL));
 
     if (mAccessKeyIdSet) {
-        EXPECT_EQ(STATUS_SUCCESS, signalingClientGetIceConfigInfoCount(mSignalingClientHandle, &count));
+        EXPECT_EQ(STATUS_SUCCESS, signaling_client_getIceConfigInfoCount(mSignalingClientHandle, &count));
         EXPECT_NE(0, count);
         EXPECT_GE(MAX_ICE_CONFIG_COUNT, count);
 
         // Referencing past the max count
-        EXPECT_NE(STATUS_SUCCESS, signalingClientGetIceConfigInfo(mSignalingClientHandle, count, &pIceConfigInfo));
+        EXPECT_NE(STATUS_SUCCESS, signaling_client_getIceConfigInfo(mSignalingClientHandle, count, &pIceConfigInfo));
 
         for (i = 0; i < count; i++) {
-            EXPECT_EQ(STATUS_SUCCESS, signalingClientGetIceConfigInfo(mSignalingClientHandle, i, &pIceConfigInfo));
+            EXPECT_EQ(STATUS_SUCCESS, signaling_client_getIceConfigInfo(mSignalingClientHandle, i, &pIceConfigInfo));
             EXPECT_EQ(SIGNALING_ICE_CONFIG_INFO_CURRENT_VERSION, pIceConfigInfo->version);
             EXPECT_NE(0, pIceConfigInfo->uriCount);
             EXPECT_GE(MAX_ICE_CONFIG_URI_COUNT, pIceConfigInfo->uriCount);
@@ -203,18 +203,18 @@ TEST_F(SignalingApiTest, signalingClientGetIceConfigInfo)
     deinitializeSignalingClient();
 }
 
-TEST_F(SignalingApiTest, signalingClientGetCurrentState)
+TEST_F(SignalingApiTest, signaling_client_getCurrentState)
 {
     STATUS expectedStatus;
     SIGNALING_CLIENT_STATE state, expectedState;
 
     initializeSignalingClient();
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetCurrentState(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, &state));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetCurrentState(mSignalingClientHandle, NULL));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetCurrentState(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getCurrentState(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, &state));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getCurrentState(mSignalingClientHandle, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getCurrentState(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, NULL));
 
     expectedStatus = mAccessKeyIdSet ? STATUS_SUCCESS : STATUS_NULL_ARG;
-    EXPECT_EQ(expectedStatus, signalingClientGetCurrentState(mSignalingClientHandle, &state));
+    EXPECT_EQ(expectedStatus, signaling_client_getCurrentState(mSignalingClientHandle, &state));
 
     expectedState = mAccessKeyIdSet ? SIGNALING_CLIENT_STATE_READY : SIGNALING_CLIENT_STATE_UNKNOWN;
     EXPECT_EQ(expectedState, state);
@@ -222,32 +222,32 @@ TEST_F(SignalingApiTest, signalingClientGetCurrentState)
     deinitializeSignalingClient();
 }
 
-TEST_F(SignalingApiTest, signalingClientGetStateString)
+TEST_F(SignalingApiTest, signaling_client_getStateString)
 {
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetStateString(SIGNALING_CLIENT_STATE_UNKNOWN, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getStateString(SIGNALING_CLIENT_STATE_UNKNOWN, NULL));
 
     for (UINT32 i = 0; i <= (UINT32) SIGNALING_CLIENT_STATE_MAX_VALUE + 1; i++) {
         PCHAR pStateStr;
-        EXPECT_EQ(STATUS_SUCCESS, signalingClientGetStateString((SIGNALING_CLIENT_STATE) i, &pStateStr));
+        EXPECT_EQ(STATUS_SUCCESS, signaling_client_getStateString((SIGNALING_CLIENT_STATE) i, &pStateStr));
         DLOGI("Iterating states \"%s\"", pStateStr);
     }
 }
 
-TEST_F(SignalingApiTest, signalingClientDisconnect)
+TEST_F(SignalingApiTest, signaling_client_disconnect)
 {
-    EXPECT_NE(STATUS_SUCCESS, signalingClientDisconnect(INVALID_SIGNALING_CLIENT_HANDLE_VALUE));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_disconnect(INVALID_SIGNALING_CLIENT_HANDLE_VALUE));
 }
 
-TEST_F(SignalingApiTest, signalingClientGetMetrics)
+TEST_F(SignalingApiTest, signaling_client_getMetrics)
 {
     SignalingClientMetrics metrics;
     SignalingMessage signalingMessage;
     metrics.version = SIGNALING_CLIENT_METRICS_CURRENT_VERSION;
 
     // Invalid input
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetMetrics(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, &metrics));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetMetrics(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, NULL));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetMetrics(mSignalingClientHandle, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getMetrics(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, &metrics));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getMetrics(INVALID_SIGNALING_CLIENT_HANDLE_VALUE, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getMetrics(mSignalingClientHandle, NULL));
 
     if (!mAccessKeyIdSet) {
         return;
@@ -255,7 +255,7 @@ TEST_F(SignalingApiTest, signalingClientGetMetrics)
 
     initializeSignalingClient();
     // Valid call
-    EXPECT_EQ(STATUS_SUCCESS, signalingClientGetMetrics(mSignalingClientHandle, &metrics));
+    EXPECT_EQ(STATUS_SUCCESS, signaling_client_getMetrics(mSignalingClientHandle, &metrics));
 
     EXPECT_EQ(0, metrics.signalingClientStats.numberOfReconnects);
     EXPECT_EQ(0, metrics.signalingClientStats.numberOfMessagesSent);
@@ -269,12 +269,12 @@ TEST_F(SignalingApiTest, signalingClientGetMetrics)
     EXPECT_NE(0, metrics.signalingClientStats.dpApiCallLatency);
 
     // Connect and get metrics
-    EXPECT_EQ(STATUS_SUCCESS, signalingClientConnect(mSignalingClientHandle));
+    EXPECT_EQ(STATUS_SUCCESS, signaling_client_connect(mSignalingClientHandle));
 
     // Await for a little to ensure we get some metrics for the connection duration
     THREAD_SLEEP(200 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
 
-    EXPECT_EQ(STATUS_SUCCESS, signalingClientGetMetrics(mSignalingClientHandle, &metrics));
+    EXPECT_EQ(STATUS_SUCCESS, signaling_client_getMetrics(mSignalingClientHandle, &metrics));
     EXPECT_EQ(0, metrics.signalingClientStats.numberOfReconnects);
     EXPECT_EQ(0, metrics.signalingClientStats.numberOfMessagesSent);
     EXPECT_EQ(0, metrics.signalingClientStats.numberOfMessagesReceived);
@@ -295,8 +295,8 @@ TEST_F(SignalingApiTest, signalingClientGetMetrics)
     signalingMessage.payloadLen = 0;
     signalingMessage.correlationId[0] = '\0';
 
-    EXPECT_EQ(STATUS_SUCCESS, signalingClientSendMessage(mSignalingClientHandle, &signalingMessage));
-    EXPECT_EQ(STATUS_SUCCESS, signalingClientGetMetrics(mSignalingClientHandle, &metrics));
+    EXPECT_EQ(STATUS_SUCCESS, signaling_client_sendMsg(mSignalingClientHandle, &signalingMessage));
+    EXPECT_EQ(STATUS_SUCCESS, signaling_client_getMetrics(mSignalingClientHandle, &metrics));
     EXPECT_EQ(0, metrics.signalingClientStats.numberOfReconnects);
     EXPECT_EQ(1, metrics.signalingClientStats.numberOfMessagesSent);
     EXPECT_EQ(0, metrics.signalingClientStats.numberOfMessagesReceived);
@@ -309,13 +309,13 @@ TEST_F(SignalingApiTest, signalingClientGetMetrics)
     EXPECT_NE(0, metrics.signalingClientStats.dpApiCallLatency);
 
     // Make a couple of bad API invocations
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetIceConfigInfoCount(mSignalingClientHandle, NULL));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetIceConfigInfo(mSignalingClientHandle, 0, NULL));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetCurrentState(mSignalingClientHandle, NULL));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientGetMetrics(mSignalingClientHandle, NULL));
-    EXPECT_NE(STATUS_SUCCESS, signalingClientSendMessage(mSignalingClientHandle, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getIceConfigInfoCount(mSignalingClientHandle, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getIceConfigInfo(mSignalingClientHandle, 0, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getCurrentState(mSignalingClientHandle, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_getMetrics(mSignalingClientHandle, NULL));
+    EXPECT_NE(STATUS_SUCCESS, signaling_client_sendMsg(mSignalingClientHandle, NULL));
 
-    EXPECT_EQ(STATUS_SUCCESS, signalingClientGetMetrics(mSignalingClientHandle, &metrics));
+    EXPECT_EQ(STATUS_SUCCESS, signaling_client_getMetrics(mSignalingClientHandle, &metrics));
     EXPECT_EQ(0, metrics.signalingClientStats.numberOfReconnects);
     EXPECT_EQ(1, metrics.signalingClientStats.numberOfMessagesSent);
     EXPECT_EQ(0, metrics.signalingClientStats.numberOfMessagesReceived);

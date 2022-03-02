@@ -23,8 +23,8 @@
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-STATUS signalingClientCreate(PSignalingClientInfo pClientInfo, PChannelInfo pChannelInfo, PSignalingClientCallbacks pCallbacks,
-                             PAwsCredentialProvider pCredentialProvider, PSIGNALING_CLIENT_HANDLE pSignalingHandle)
+STATUS signaling_client_create(PSignalingClientInfo pClientInfo, PChannelInfo pChannelInfo, PSignalingClientCallbacks pCallbacks,
+                               PAwsCredentialProvider pCredentialProvider, PSIGNALING_CLIENT_HANDLE pSignalingHandle)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -54,7 +54,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingClientFree(PSIGNALING_CLIENT_HANDLE pSignalingHandle)
+STATUS signaling_client_free(PSIGNALING_CLIENT_HANDLE pSignalingHandle)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -77,7 +77,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingClientSendMessage(SIGNALING_CLIENT_HANDLE signalingClientHandle, PSignalingMessage pSignalingMessage)
+STATUS signaling_client_sendMsg(SIGNALING_CLIENT_HANDLE signalingClientHandle, PSignalingMessage pSignalingMessage)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -94,7 +94,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingClientConnect(SIGNALING_CLIENT_HANDLE signalingClientHandle)
+STATUS signaling_client_connect(SIGNALING_CLIENT_HANDLE signalingClientHandle)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -111,7 +111,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingClientDisconnect(SIGNALING_CLIENT_HANDLE signalingClientHandle)
+STATUS signaling_client_disconnect(SIGNALING_CLIENT_HANDLE signalingClientHandle)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -128,7 +128,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingClientDelete(SIGNALING_CLIENT_HANDLE signalingClientHandle)
+STATUS signaling_client_delete(SIGNALING_CLIENT_HANDLE signalingClientHandle)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -145,7 +145,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingClientGetIceConfigInfoCount(SIGNALING_CLIENT_HANDLE signalingClientHandle, PUINT32 pIceConfigCount)
+STATUS signaling_client_getIceConfigInfoCount(SIGNALING_CLIENT_HANDLE signalingClientHandle, PUINT32 pIceConfigCount)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -162,7 +162,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingClientGetIceConfigInfo(SIGNALING_CLIENT_HANDLE signalingClientHandle, UINT32 index, PIceConfigInfo* ppIceConfigInfo)
+STATUS signaling_client_getIceConfigInfo(SIGNALING_CLIENT_HANDLE signalingClientHandle, UINT32 index, PIceConfigInfo* ppIceConfigInfo)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -179,7 +179,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingClientGetCurrentState(SIGNALING_CLIENT_HANDLE signalingClientHandle, PSIGNALING_CLIENT_STATE pState)
+STATUS signaling_client_getCurrentState(SIGNALING_CLIENT_HANDLE signalingClientHandle, PSIGNALING_CLIENT_STATE pState)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -203,7 +203,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingClientGetStateString(SIGNALING_CLIENT_STATE state, PCHAR* ppStateStr)
+STATUS signaling_client_getStateString(SIGNALING_CLIENT_STATE state, PCHAR* ppStateStr)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -272,7 +272,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingClientGetMetrics(SIGNALING_CLIENT_HANDLE signalingClientHandle, PSignalingClientMetrics pSignalingClientMetrics)
+STATUS signaling_client_getMetrics(SIGNALING_CLIENT_HANDLE signalingClientHandle, PSignalingClientMetrics pSignalingClientMetrics)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
