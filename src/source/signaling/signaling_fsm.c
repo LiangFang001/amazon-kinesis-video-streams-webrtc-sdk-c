@@ -49,51 +49,51 @@
 /******************************************************************************
  * INTERNAL FUNCTION PROTOTYPE
  ******************************************************************************/
-STATUS signalingFsmFromNew(UINT64, PUINT64);
-STATUS signalingFsmNew(UINT64, UINT64);
-STATUS signalingFsmFromGetToken(UINT64, PUINT64);
-STATUS signalingFsmGetToken(UINT64, UINT64);
-STATUS signalingFsmFromDescribe(UINT64, PUINT64);
-STATUS signalingFsmDescribe(UINT64, UINT64);
-STATUS signalingFsmFromCreate(UINT64, PUINT64);
-STATUS signalingFsmCreate(UINT64, UINT64);
-STATUS signalingFsmFromGetEndpoint(UINT64, PUINT64);
-STATUS signalingFsmGetEndpoint(UINT64, UINT64);
-STATUS signalingFsmFromGetIceConfig(UINT64, PUINT64);
-STATUS signalingFsmGetIceConfig(UINT64, UINT64);
-STATUS signalingFsmFromReady(UINT64, PUINT64);
-STATUS signalingFsmReady(UINT64 customData, UINT64 time);
-STATUS signalingFsmFromConnect(UINT64, PUINT64);
-STATUS signalingFsmConnect(UINT64, UINT64);
-STATUS signalingFsmFromConnected(UINT64, PUINT64);
-STATUS signalingFsmConnected(UINT64, UINT64);
-STATUS signalingFsmFromDisconnected(UINT64, PUINT64);
-STATUS signalingFsmDisconnected(UINT64, UINT64);
+STATUS signaling_fsm_exitNew(UINT64, PUINT64);
+STATUS signaling_fsm_new(UINT64, UINT64);
+STATUS signaling_fsm_exitGetToken(UINT64, PUINT64);
+STATUS signaling_fsm_getToken(UINT64, UINT64);
+STATUS signaling_fsm_exitDescribe(UINT64, PUINT64);
+STATUS signaling_fsm_describe(UINT64, UINT64);
+STATUS signaling_fsm_exitCreate(UINT64, PUINT64);
+STATUS signaling_fsm_executCreate(UINT64, UINT64);
+STATUS signaling_fsm_exitGetEndpoint(UINT64, PUINT64);
+STATUS signaling_fsm_getEndpoint(UINT64, UINT64);
+STATUS signaling_fsm_exitGetIceConfig(UINT64, PUINT64);
+STATUS signaling_fsm_getIceConfig(UINT64, UINT64);
+STATUS signaling_fsm_exitReady(UINT64, PUINT64);
+STATUS signaling_fsm_ready(UINT64 customData, UINT64 time);
+STATUS signaling_fsm_exitConnect(UINT64, PUINT64);
+STATUS signaling_fsm_connect(UINT64, UINT64);
+STATUS signaling_fsm_exitConnected(UINT64, PUINT64);
+STATUS signaling_fsm_connected(UINT64, UINT64);
+STATUS signaling_fsm_exitDisconnected(UINT64, PUINT64);
+STATUS signaling_fsm_disconnected(UINT64, UINT64);
 /**
  * Static definitions of the states
  */
 static StateMachineState SIGNALING_STATE_MACHINE_STATES[] = {
     // http connection.
-    {SIGNALING_STATE_NEW, SIGNALING_STATE_NEW_REQUIRED, signalingFsmFromNew, signalingFsmNew, INFINITE_RETRY_COUNT_SENTINEL,
+    {SIGNALING_STATE_NEW, SIGNALING_STATE_NEW_REQUIRED, signaling_fsm_exitNew, signaling_fsm_new, INFINITE_RETRY_COUNT_SENTINEL,
      STATUS_SIGNALING_INVALID_READY_STATE},
-    {SIGNALING_STATE_GET_TOKEN, SIGNALING_STATE_GET_TOKEN_REQUIRED, signalingFsmFromGetToken, signalingFsmGetToken,
+    {SIGNALING_STATE_GET_TOKEN, SIGNALING_STATE_GET_TOKEN_REQUIRED, signaling_fsm_exitGetToken, signaling_fsm_getToken,
      SIGNALING_STATES_DEFAULT_RETRY_COUNT, STATUS_SIGNALING_GET_TOKEN_CALL_FAILED},
-    {SIGNALING_STATE_DESCRIBE, SIGNALING_STATE_DESCRIBE_REQUIRED, signalingFsmFromDescribe, signalingFsmDescribe,
+    {SIGNALING_STATE_DESCRIBE, SIGNALING_STATE_DESCRIBE_REQUIRED, signaling_fsm_exitDescribe, signaling_fsm_describe,
      SIGNALING_STATES_DEFAULT_RETRY_COUNT, STATUS_SIGNALING_DESCRIBE_CALL_FAILED},
-    {SIGNALING_STATE_CREATE, SIGNALING_STATE_CREATE_REQUIRED, signalingFsmFromCreate, signalingFsmCreate, SIGNALING_STATES_DEFAULT_RETRY_COUNT,
-     STATUS_SIGNALING_CREATE_CALL_FAILED},
-    {SIGNALING_STATE_GET_ENDPOINT, SIGNALING_STATE_GET_ENDPOINT_REQUIRED, signalingFsmFromGetEndpoint, signalingFsmGetEndpoint,
+    {SIGNALING_STATE_CREATE, SIGNALING_STATE_CREATE_REQUIRED, signaling_fsm_exitCreate, signaling_fsm_executCreate,
+     SIGNALING_STATES_DEFAULT_RETRY_COUNT, STATUS_SIGNALING_CREATE_CALL_FAILED},
+    {SIGNALING_STATE_GET_ENDPOINT, SIGNALING_STATE_GET_ENDPOINT_REQUIRED, signaling_fsm_exitGetEndpoint, signaling_fsm_getEndpoint,
      SIGNALING_STATES_DEFAULT_RETRY_COUNT, STATUS_SIGNALING_GET_ENDPOINT_CALL_FAILED},
-    {SIGNALING_STATE_GET_ICE_CONFIG, SIGNALING_STATE_GET_ICE_CONFIG_REQUIRED, signalingFsmFromGetIceConfig, signalingFsmGetIceConfig,
+    {SIGNALING_STATE_GET_ICE_CONFIG, SIGNALING_STATE_GET_ICE_CONFIG_REQUIRED, signaling_fsm_exitGetIceConfig, signaling_fsm_getIceConfig,
      SIGNALING_STATES_DEFAULT_RETRY_COUNT, STATUS_SIGNALING_GET_ICE_CONFIG_CALL_FAILED},
-    {SIGNALING_STATE_READY, SIGNALING_STATE_READY_REQUIRED, signalingFsmFromReady, signalingFsmReady, INFINITE_RETRY_COUNT_SENTINEL,
+    {SIGNALING_STATE_READY, SIGNALING_STATE_READY_REQUIRED, signaling_fsm_exitReady, signaling_fsm_ready, INFINITE_RETRY_COUNT_SENTINEL,
      STATUS_SIGNALING_READY_CALLBACK_FAILED},
     // websocket connection.
-    {SIGNALING_STATE_CONNECT, SIGNALING_STATE_CONNECT_REQUIRED, signalingFsmFromConnect, signalingFsmConnect, INFINITE_RETRY_COUNT_SENTINEL,
+    {SIGNALING_STATE_CONNECT, SIGNALING_STATE_CONNECT_REQUIRED, signaling_fsm_exitConnect, signaling_fsm_connect, INFINITE_RETRY_COUNT_SENTINEL,
      STATUS_SIGNALING_CONNECT_CALL_FAILED},
-    {SIGNALING_STATE_CONNECTED, SIGNALING_STATE_CONNECTED_REQUIRED, signalingFsmFromConnected, signalingFsmConnected, INFINITE_RETRY_COUNT_SENTINEL,
-     STATUS_SIGNALING_CONNECTED_CALLBACK_FAILED},
-    {SIGNALING_STATE_DISCONNECTED, SIGNALING_STATE_DISCONNECTED_REQUIRED, signalingFsmFromDisconnected, signalingFsmDisconnected,
+    {SIGNALING_STATE_CONNECTED, SIGNALING_STATE_CONNECTED_REQUIRED, signaling_fsm_exitConnected, signaling_fsm_connected,
+     INFINITE_RETRY_COUNT_SENTINEL, STATUS_SIGNALING_CONNECTED_CALLBACK_FAILED},
+    {SIGNALING_STATE_DISCONNECTED, SIGNALING_STATE_DISCONNECTED_REQUIRED, signaling_fsm_exitDisconnected, signaling_fsm_disconnected,
      SIGNALING_STATES_DEFAULT_RETRY_COUNT, STATUS_SIGNALING_DISCONNECTED_CALLBACK_FAILED},
 };
 
@@ -104,7 +104,7 @@ static UINT32 SIGNALING_STATE_MACHINE_STATE_COUNT = ARRAY_SIZE(SIGNALING_STATE_M
 /******************************************************************************
  * State machine callback functions
  ******************************************************************************/
-STATUS signalingFsmFromNew(UINT64 customData, PUINT64 pState)
+STATUS signaling_fsm_exitNew(UINT64 customData, PUINT64 pState)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -123,7 +123,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmNew(UINT64 customData, UINT64 time)
+STATUS signaling_fsm_new(UINT64 customData, UINT64 time)
 {
     SIGNALING_FSM_ENTERS();
     UNUSED_PARAM(time);
@@ -148,7 +148,7 @@ CleanUp:
  *          change the fsm from get token to get endpoint if we have channal arn.
  *          change the fsm from get token to delete if we are deleting the channel.
  */
-STATUS signalingFsmFromGetToken(UINT64 customData, PUINT64 pState)
+STATUS signaling_fsm_exitGetToken(UINT64 customData, PUINT64 pState)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -183,7 +183,7 @@ CleanUp:
 /**
  * @brief   get the aws crendential, and validate the credential. step the fsm.
  */
-STATUS signalingFsmGetToken(UINT64 customData, UINT64 time)
+STATUS signaling_fsm_getToken(UINT64 customData, UINT64 time)
 {
     UNUSED_PARAM(time);
     SIGNALING_FSM_ENTERS();
@@ -226,7 +226,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmFromDescribe(UINT64 customData, PUINT64 pState)
+STATUS signaling_fsm_exitDescribe(UINT64 customData, PUINT64 pState)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -264,7 +264,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmDescribe(UINT64 customData, UINT64 time)
+STATUS signaling_fsm_describe(UINT64 customData, UINT64 time)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -292,7 +292,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmFromCreate(UINT64 customData, PUINT64 pState)
+STATUS signaling_fsm_exitCreate(UINT64 customData, PUINT64 pState)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -325,7 +325,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmCreate(UINT64 customData, UINT64 time)
+STATUS signaling_fsm_executCreate(UINT64 customData, UINT64 time)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -353,7 +353,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmFromGetEndpoint(UINT64 customData, PUINT64 pState)
+STATUS signaling_fsm_exitGetEndpoint(UINT64 customData, PUINT64 pState)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -386,7 +386,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmGetEndpoint(UINT64 customData, UINT64 time)
+STATUS signaling_fsm_getEndpoint(UINT64 customData, UINT64 time)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -414,7 +414,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmFromGetIceConfig(UINT64 customData, PUINT64 pState)
+STATUS signaling_fsm_exitGetIceConfig(UINT64 customData, PUINT64 pState)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -447,7 +447,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmGetIceConfig(UINT64 customData, UINT64 time)
+STATUS signaling_fsm_getIceConfig(UINT64 customData, UINT64 time)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -475,7 +475,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmFromReady(UINT64 customData, PUINT64 pState)
+STATUS signaling_fsm_exitReady(UINT64 customData, PUINT64 pState)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -515,7 +515,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmReady(UINT64 customData, UINT64 time)
+STATUS signaling_fsm_ready(UINT64 customData, UINT64 time)
 {
     UNUSED_PARAM(time);
     SIGNALING_FSM_ENTERS();
@@ -548,7 +548,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmFromConnect(UINT64 customData, PUINT64 pState)
+STATUS signaling_fsm_exitConnect(UINT64 customData, PUINT64 pState)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -613,7 +613,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmConnect(UINT64 customData, UINT64 time)
+STATUS signaling_fsm_connect(UINT64 customData, UINT64 time)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -641,7 +641,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmFromConnected(UINT64 customData, PUINT64 pState)
+STATUS signaling_fsm_exitConnected(UINT64 customData, PUINT64 pState)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -694,7 +694,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmConnected(UINT64 customData, UINT64 time)
+STATUS signaling_fsm_connected(UINT64 customData, UINT64 time)
 {
     SIGNALING_FSM_ENTERS();
     UNUSED_PARAM(time);
@@ -721,7 +721,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmFromDisconnected(UINT64 customData, PUINT64 pState)
+STATUS signaling_fsm_exitDisconnected(UINT64 customData, PUINT64 pState)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -756,7 +756,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS signalingFsmDisconnected(UINT64 customData, UINT64 time)
+STATUS signaling_fsm_disconnected(UINT64 customData, UINT64 time)
 {
     SIGNALING_FSM_ENTERS();
     UNUSED_PARAM(time);

@@ -12,8 +12,7 @@
 #define VIDEO_SUPPPORT_TYPE(codec) (codec == RTC_CODEC_VP8 || codec == RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE)
 #define AUDIO_SUPPORT_TYPE(codec)  (codec == RTC_CODEC_MULAW || codec == RTC_CODEC_ALAW || codec == RTC_CODEC_OPUS)
 
-STATUS serializeSessionDescriptionInit(PRtcSessionDescriptionInit pSessionDescriptionInit, PCHAR sessionDescriptionJSON,
-                                       PUINT32 sessionDescriptionJSONLen)
+STATUS sdp_serializeInit(PRtcSessionDescriptionInit pSessionDescriptionInit, PCHAR sessionDescriptionJSON, PUINT32 sessionDescriptionJSONLen)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -70,8 +69,7 @@ CleanUp:
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-STATUS session_description_deserializeInit(PCHAR sessionDescriptionJSON, UINT32 sessionDescriptionJSONLen,
-                                           PRtcSessionDescriptionInit pSessionDescriptionInit)
+STATUS sdp_deserializeInit(PCHAR sessionDescriptionJSON, UINT32 sessionDescriptionJSONLen, PRtcSessionDescriptionInit pSessionDescriptionInit)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -148,7 +146,7 @@ CleanUp:
 /*
  * Populate map with PayloadTypes if we are offering
  */
-STATUS setPayloadTypesForOffer(PHashTable codecTable)
+STATUS sdp_setPayloadTypesForOffer(PHashTable codecTable)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -163,7 +161,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS setPayloadTypesFromOffer(PHashTable codecTable, PHashTable rtxTable, PSessionDescription pSessionDescription)
+STATUS sdp_setPayloadTypesFromOffer(PHashTable codecTable, PHashTable rtxTable, PSessionDescription pSessionDescription)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -265,7 +263,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS setTransceiverPayloadTypes(PHashTable codecTable, PHashTable rtxTable, PDoubleList pTransceivers)
+STATUS sdp_setTransceiverPayloadTypes(PHashTable codecTable, PHashTable rtxTable, PDoubleList pTransceivers)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -306,7 +304,7 @@ CleanUp:
 }
 #endif
 
-PCHAR fmtpForPayloadType(UINT64 payloadType, PSessionDescription pSessionDescription)
+PCHAR sdp_fmtpForPayloadType(UINT64 payloadType, PSessionDescription pSessionDescription)
 {
     UINT32 currentMedia, currentAttribute;
     PSdpMediaDescription pMediaDescription = NULL;
@@ -329,9 +327,9 @@ PCHAR fmtpForPayloadType(UINT64 payloadType, PSessionDescription pSessionDescrip
 }
 
 // Populate a single media section from a PKvsRtpTransceiver
-STATUS populateSingleMediaSection(PKvsPeerConnection pKvsPeerConnection, PKvsRtpTransceiver pKvsRtpTransceiver,
-                                  PSdpMediaDescription pSdpMediaDescription, PSessionDescription pRemoteSessionDescription,
-                                  PCHAR pCertificateFingerprint, UINT32 mediaSectionId, PCHAR pDtlsRole)
+STATUS sdp_populateSingleMediaSection(PKvsPeerConnection pKvsPeerConnection, PKvsRtpTransceiver pKvsRtpTransceiver,
+                                      PSdpMediaDescription pSdpMediaDescription, PSessionDescription pRemoteSessionDescription,
+                                      PCHAR pCertificateFingerprint, UINT32 mediaSectionId, PCHAR pDtlsRole)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -345,7 +343,7 @@ STATUS populateSingleMediaSection(PKvsPeerConnection pKvsPeerConnection, PKvsRtp
 
     CHK_STATUS(hashTableGet(pKvsPeerConnection->pCodecTable, pRtcMediaStreamTrack->codec, &payloadType));
     // get the payload type of audio or video.
-    currentFmtp = fmtpForPayloadType(payloadType, &(pKvsPeerConnection->remoteSessionDescription));
+    currentFmtp = sdp_fmtpForPayloadType(payloadType, &(pKvsPeerConnection->remoteSessionDescription));
     // video
     if (pRtcMediaStreamTrack->codec == RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE ||
         pRtcMediaStreamTrack->codec == RTC_CODEC_VP8) {
@@ -578,8 +576,8 @@ CleanUp:
     return retStatus;
 }
 
-STATUS populateSessionDescriptionDataChannel(PKvsPeerConnection pKvsPeerConnection, PSdpMediaDescription pSdpMediaDescription,
-                                             PCHAR pCertificateFingerprint, UINT32 mediaSectionId, PCHAR pDtlsRole)
+STATUS sdp_populateSessionDescriptionDataChannel(PKvsPeerConnection pKvsPeerConnection, PSdpMediaDescription pSdpMediaDescription,
+                                                 PCHAR pCertificateFingerprint, UINT32 mediaSectionId, PCHAR pDtlsRole)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -627,7 +625,7 @@ CleanUp:
     return retStatus;
 }
 
-BOOL isPresentInRemote(PKvsRtpTransceiver pKvsRtpTransceiver, PSessionDescription pRemoteSessionDescription)
+BOOL sdp_isPresentInRemote(PKvsRtpTransceiver pKvsRtpTransceiver, PSessionDescription pRemoteSessionDescription)
 {
     PCHAR remoteAttributeValue, end;
     UINT32 remoteTokenLen, i;
@@ -667,8 +665,8 @@ BOOL isPresentInRemote(PKvsRtpTransceiver pKvsRtpTransceiver, PSessionDescriptio
 }
 
 // Populate the media sections of a SessionDescription with the current state of the KvsPeerConnection
-STATUS populateSessionDescriptionMedia(PKvsPeerConnection pKvsPeerConnection, PSessionDescription pRemoteSessionDescription,
-                                       PSessionDescription pLocalSessionDescription)
+STATUS sdp_populateSessionDescriptionMedia(PKvsPeerConnection pKvsPeerConnection, PSessionDescription pRemoteSessionDescription,
+                                           PSessionDescription pLocalSessionDescription)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -686,7 +684,7 @@ STATUS populateSessionDescriptionMedia(PKvsPeerConnection pKvsPeerConnection, PS
         pDtlsRole = DTLS_ROLE_ACTPASS;
     } else {
         pDtlsRole = DTLS_ROLE_ACTIVE;
-        CHK_STATUS(reorderTransceiverByRemoteDescription(pKvsPeerConnection, pRemoteSessionDescription));
+        CHK_STATUS(sdp_reorderTransceiverByRemoteDescription(pKvsPeerConnection, pRemoteSessionDescription));
     }
     // setup the streaming section.
     CHK_STATUS(doubleListGetHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
@@ -699,8 +697,8 @@ STATUS populateSessionDescriptionMedia(PKvsPeerConnection pKvsPeerConnection, PS
 
             // If generating answer, need to check if Local Description is present in remote -- if not, we don't need to create a local description
             // for it or else our Answer will have an extra m-line, for offer the local is the offer itself, don't care about remote
-            if (pKvsPeerConnection->isOffer || isPresentInRemote(pKvsRtpTransceiver, pRemoteSessionDescription)) {
-                CHK_STATUS(populateSingleMediaSection(
+            if (pKvsPeerConnection->isOffer || sdp_isPresentInRemote(pKvsRtpTransceiver, pRemoteSessionDescription)) {
+                CHK_STATUS(sdp_populateSingleMediaSection(
                     pKvsPeerConnection, pKvsRtpTransceiver, &(pLocalSessionDescription->mediaDescriptions[pLocalSessionDescription->mediaCount]),
                     pRemoteSessionDescription, certificateFingerprint, pLocalSessionDescription->mediaCount, pDtlsRole));
                 pLocalSessionDescription->mediaCount++;
@@ -710,9 +708,9 @@ STATUS populateSessionDescriptionMedia(PKvsPeerConnection pKvsPeerConnection, PS
     // setup the data channel section.
     if (pKvsPeerConnection->sctpIsEnabled) {
         CHK(pLocalSessionDescription->mediaCount < MAX_SDP_SESSION_MEDIA_COUNT, STATUS_SDP_MAX_MEDIA_COUNT);
-        CHK_STATUS(populateSessionDescriptionDataChannel(pKvsPeerConnection,
-                                                         &(pLocalSessionDescription->mediaDescriptions[pLocalSessionDescription->mediaCount]),
-                                                         certificateFingerprint, pLocalSessionDescription->mediaCount, pDtlsRole));
+        CHK_STATUS(sdp_populateSessionDescriptionDataChannel(pKvsPeerConnection,
+                                                             &(pLocalSessionDescription->mediaDescriptions[pLocalSessionDescription->mediaCount]),
+                                                             certificateFingerprint, pLocalSessionDescription->mediaCount, pDtlsRole));
         pLocalSessionDescription->mediaCount++;
     }
 
@@ -723,8 +721,8 @@ CleanUp:
 }
 
 // Populate a SessionDescription with the current state of the KvsPeerConnection
-STATUS populateSessionDescription(PKvsPeerConnection pKvsPeerConnection, PSessionDescription pRemoteSessionDescription,
-                                  PSessionDescription pLocalSessionDescription)
+STATUS sdp_populateSessionDescription(PKvsPeerConnection pKvsPeerConnection, PSessionDescription pRemoteSessionDescription,
+                                      PSessionDescription pLocalSessionDescription)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -734,7 +732,7 @@ STATUS populateSessionDescription(PKvsPeerConnection pKvsPeerConnection, PSessio
 
     CHK(pKvsPeerConnection != NULL && pLocalSessionDescription != NULL && pRemoteSessionDescription != NULL, STATUS_NULL_ARG);
 
-    CHK_STATUS(populateSessionDescriptionMedia(pKvsPeerConnection, pRemoteSessionDescription, pLocalSessionDescription));
+    CHK_STATUS(sdp_populateSessionDescriptionMedia(pKvsPeerConnection, pRemoteSessionDescription, pLocalSessionDescription));
 
     MEMSET(bundleValue, 0, MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
     MEMSET(wmsValue, 0, MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
@@ -783,10 +781,10 @@ CleanUp:
     return retStatus;
 }
 
-// primarily meant to be used by reorderTransceiverByRemoteDescription
+// primarily meant to be used by sdp_reorderTransceiverByRemoteDescription
 // Find a Transceiver with n codec, and then copy it to the end of the transceivers
 // this allows us to re-order by the order the remote dictates
-STATUS copyTransceiverWithCodec(PKvsPeerConnection pKvsPeerConnection, RTC_CODEC rtcCodec, PBOOL pDidFindCodec)
+STATUS sdp_copyTransceiverWithCodec(PKvsPeerConnection pKvsPeerConnection, RTC_CODEC rtcCodec, PBOOL pDidFindCodec)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PDoubleListNode pCurNode = NULL;
@@ -818,7 +816,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS reorderTransceiverByRemoteDescription(PKvsPeerConnection pKvsPeerConnection, PSessionDescription pRemoteSessionDescription)
+STATUS sdp_reorderTransceiverByRemoteDescription(PKvsPeerConnection pKvsPeerConnection, PSessionDescription pRemoteSessionDescription)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -857,7 +855,7 @@ STATUS reorderTransceiverByRemoteDescription(PKvsPeerConnection pKvsPeerConnecti
 
             // find transceiver with rtcCodec and duplicate it at tail
             if (supportCodec) {
-                CHK_STATUS(copyTransceiverWithCodec(pKvsPeerConnection, rtcCodec, &foundMediaSectionWithCodec));
+                CHK_STATUS(sdp_copyTransceiverWithCodec(pKvsPeerConnection, rtcCodec, &foundMediaSectionWithCodec));
             }
             if (end != NULL) {
                 attributeValue = end + 1;
@@ -889,7 +887,7 @@ STATUS reorderTransceiverByRemoteDescription(PKvsPeerConnection pKvsPeerConnecti
 
             // find transceiver with rtcCodec and duplicate it at tail
             if (supportCodec) {
-                CHK_STATUS(copyTransceiverWithCodec(pKvsPeerConnection, rtcCodec, &foundMediaSectionWithCodec));
+                CHK_STATUS(sdp_copyTransceiverWithCodec(pKvsPeerConnection, rtcCodec, &foundMediaSectionWithCodec));
             }
         }
     }
@@ -902,7 +900,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS deserializeRtcIceCandidateInit(PCHAR pJson, UINT32 jsonLen, PRtcIceCandidateInit pRtcIceCandidateInit)
+STATUS sdp_deserializeRtcIceCandidateInit(PCHAR pJson, UINT32 jsonLen, PRtcIceCandidateInit pRtcIceCandidateInit)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -937,7 +935,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS setReceiversSsrc(PSessionDescription pRemoteSessionDescription, PDoubleList pTransceivers)
+STATUS sdp_setReceiversSsrc(PSessionDescription pRemoteSessionDescription, PDoubleList pTransceivers)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSdpMediaDescription pMediaDescription = NULL;

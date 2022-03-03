@@ -73,14 +73,14 @@ extern "C" {
  *
  * @return STATUS_SUCCESS
  */
-STATUS setPayloadTypesFromOffer(PHashTable, PHashTable, PSessionDescription);
-STATUS setPayloadTypesForOffer(PHashTable);
+STATUS sdp_setPayloadTypesFromOffer(PHashTable, PHashTable, PSessionDescription);
+STATUS sdp_setPayloadTypesForOffer(PHashTable);
 
-STATUS setTransceiverPayloadTypes(PHashTable, PHashTable, PDoubleList);
-STATUS populateSessionDescription(PKvsPeerConnection, PSessionDescription, PSessionDescription);
-STATUS reorderTransceiverByRemoteDescription(PKvsPeerConnection, PSessionDescription);
-STATUS setReceiversSsrc(PSessionDescription, PDoubleList);
-PCHAR fmtpForPayloadType(UINT64, PSessionDescription);
+STATUS sdp_setTransceiverPayloadTypes(PHashTable, PHashTable, PDoubleList);
+STATUS sdp_populateSessionDescription(PKvsPeerConnection, PSessionDescription, PSessionDescription);
+STATUS sdp_reorderTransceiverByRemoteDescription(PKvsPeerConnection, PSessionDescription);
+STATUS sdp_setReceiversSsrc(PSessionDescription, PDoubleList);
+PCHAR sdp_fmtpForPayloadType(UINT64, PSessionDescription);
 
 #ifdef __cplusplus
 }

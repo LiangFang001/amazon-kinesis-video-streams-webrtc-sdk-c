@@ -22,7 +22,7 @@ TEST_F(MetricsApiTest, webRtcGetMetrics)
 
     MEMSET(&configuration, 0x00, SIZEOF(RtcConfiguration));
 
-    EXPECT_EQ(STATUS_SUCCESS, peer_connection_create(&configuration, &pRtcPeerConnection));
+    EXPECT_EQ(STATUS_SUCCESS, pc_create(&configuration, &pRtcPeerConnection));
 
     EXPECT_EQ(STATUS_NULL_ARG, rtcPeerConnectionGetMetrics(pRtcPeerConnection, NULL, NULL));
 
@@ -36,8 +36,8 @@ TEST_F(MetricsApiTest, webRtcGetMetrics)
     rtcMetrics.requestedTypeOfStats = RTC_STATS_TYPE_CANDIDATE_PAIR;
     EXPECT_EQ(STATUS_SUCCESS, rtcPeerConnectionGetMetrics(pRtcPeerConnection, NULL, &rtcMetrics));
 
-    EXPECT_EQ(STATUS_SUCCESS, peer_connection_close(pRtcPeerConnection));
-    EXPECT_EQ(STATUS_SUCCESS, peer_connection_free(&pRtcPeerConnection));
+    EXPECT_EQ(STATUS_SUCCESS, pc_close(pRtcPeerConnection));
+    EXPECT_EQ(STATUS_SUCCESS, pc_free(&pRtcPeerConnection));
 }
 
 TEST_F(MetricsApiTest, webRtcIceServerGetMetrics)
@@ -57,7 +57,7 @@ TEST_F(MetricsApiTest, webRtcIceServerGetMetrics)
     STRNCPY(configuration.iceServers[1].credential, (PCHAR) "username", MAX_ICE_CONFIG_CREDENTIAL_LEN);
     STRNCPY(configuration.iceServers[1].username, (PCHAR) "password", MAX_ICE_CONFIG_USER_NAME_LEN);
 
-    EXPECT_EQ(STATUS_SUCCESS, peer_connection_create(&configuration, &pRtcPeerConnection));
+    EXPECT_EQ(STATUS_SUCCESS, pc_create(&configuration, &pRtcPeerConnection));
 
     EXPECT_EQ(STATUS_ICE_SERVER_INDEX_INVALID, rtcPeerConnectionGetMetrics(pRtcPeerConnection, NULL, &rtcIceMetrics));
 
@@ -74,8 +74,8 @@ TEST_F(MetricsApiTest, webRtcIceServerGetMetrics)
     EXPECT_PRED_FORMAT2(testing::IsSubstring, configuration.iceServers[1].urls, rtcIceMetrics.rtcStatsObject.iceServerStats.url);
     EXPECT_PRED_FORMAT2(testing::IsSubstring, "transport=tcp", rtcIceMetrics.rtcStatsObject.iceServerStats.protocol);
 
-    EXPECT_EQ(STATUS_SUCCESS, peer_connection_close(pRtcPeerConnection));
-    EXPECT_EQ(STATUS_SUCCESS, peer_connection_free(&pRtcPeerConnection));
+    EXPECT_EQ(STATUS_SUCCESS, pc_close(pRtcPeerConnection));
+    EXPECT_EQ(STATUS_SUCCESS, pc_free(&pRtcPeerConnection));
 }
 
 TEST_F(MetricsApiTest, webRtcIceCandidateGetMetrics)
@@ -90,7 +90,7 @@ TEST_F(MetricsApiTest, webRtcIceCandidateGetMetrics)
     STRNCPY(configuration.iceServers[0].credential, (PCHAR) "", MAX_ICE_CONFIG_CREDENTIAL_LEN);
     STRNCPY(configuration.iceServers[0].username, (PCHAR) "", MAX_ICE_CONFIG_USER_NAME_LEN);
 
-    EXPECT_EQ(STATUS_SUCCESS, peer_connection_create(&configuration, &pRtcPeerConnection));
+    EXPECT_EQ(STATUS_SUCCESS, pc_create(&configuration, &pRtcPeerConnection));
 
     pIceAgent = ((PKvsPeerConnection) pRtcPeerConnection)->pIceAgent;
 
@@ -147,8 +147,8 @@ TEST_F(MetricsApiTest, webRtcIceCandidateGetMetrics)
     EXPECT_PRED_FORMAT2(testing::IsSubstring, "host", rtcIceMetrics.rtcStatsObject.remoteIceCandidateStats.candidateType);
     EXPECT_PRED_FORMAT2(testing::IsSubstring, "", rtcIceMetrics.rtcStatsObject.remoteIceCandidateStats.protocol);
 
-    EXPECT_EQ(STATUS_SUCCESS, peer_connection_close(pRtcPeerConnection));
-    EXPECT_EQ(STATUS_SUCCESS, peer_connection_free(&pRtcPeerConnection));
+    EXPECT_EQ(STATUS_SUCCESS, pc_close(pRtcPeerConnection));
+    EXPECT_EQ(STATUS_SUCCESS, pc_free(&pRtcPeerConnection));
 }
 
 } // namespace webrtcclient

@@ -71,8 +71,8 @@ extern putInt16Func putInt16;
 extern putInt32Func putInt32;
 extern putInt64Func putInt64;
 
-BOOL isBigEndian();
-VOID initializeEndianness();
+BOOL endianness_isBigEndian();
+VOID endianness_initialize();
 
 ////////////////////////////////////////////////////
 // Unaligned access functionality

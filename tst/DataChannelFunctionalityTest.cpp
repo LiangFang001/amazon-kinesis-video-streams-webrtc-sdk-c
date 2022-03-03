@@ -29,8 +29,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_Disconnected)
 
     MEMSET(&configuration, 0x00, SIZEOF(RtcConfiguration));
 
-    EXPECT_EQ(peer_connection_create(&configuration, &offerPc), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_create(&configuration, &answerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &offerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &answerPc), STATUS_SUCCESS);
 
     auto onDataChannel = [](UINT64 customData, PRtcDataChannel pRtcDataChannel) {
         auto remoteOpen = reinterpret_cast<RemoteOpen*>(customData);
@@ -62,8 +62,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_Disconnected)
         }
     };
 
-    EXPECT_EQ(peer_connection_onDataChannel(offerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_onDataChannel(answerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(offerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(answerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
 
     // Create two DataChannels
     EXPECT_EQ(data_channel_create(offerPc, (PCHAR) "Offer PeerConnection", nullptr, &pOfferDataChannel), STATUS_SUCCESS);
@@ -82,10 +82,10 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_Disconnected)
         THREAD_SLEEP(HUNDREDS_OF_NANOS_IN_A_SECOND);
     }
 
-    peer_connection_close(offerPc);
-    peer_connection_close(answerPc);
-    peer_connection_free(&offerPc);
-    peer_connection_free(&answerPc);
+    pc_close(offerPc);
+    pc_close(answerPc);
+    pc_free(&offerPc);
+    pc_free(&answerPc);
 
     ASSERT_EQ(ATOMIC_LOAD(&datachannelLocalOpenCount), 2);
     ASSERT_EQ(ATOMIC_LOAD(&msgCount), 2);
@@ -122,11 +122,11 @@ TEST_F(DataChannelFunctionalityTest, dataChannelSendRecvMessageAfterDtlsComplete
         }
     };
 
-    EXPECT_EQ(peer_connection_create(&configuration, &offerPc), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_create(&configuration, &answerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &offerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &answerPc), STATUS_SUCCESS);
 
-    EXPECT_EQ(peer_connection_onDataChannel(offerPc, (UINT64) &pOfferRemoteDataChannel, onDataChannel), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_onDataChannel(answerPc, (UINT64) &pAnswerRemoteDataChannel, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(offerPc, (UINT64) &pOfferRemoteDataChannel, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(answerPc, (UINT64) &pAnswerRemoteDataChannel, onDataChannel), STATUS_SUCCESS);
 
     // Create two DataChannels
     EXPECT_EQ(data_channel_create(offerPc, (PCHAR) "Offer PeerConnection", nullptr, &pOfferDataChannel), STATUS_SUCCESS);
@@ -160,10 +160,10 @@ TEST_F(DataChannelFunctionalityTest, dataChannelSendRecvMessageAfterDtlsComplete
     }
     EXPECT_EQ(ATOMIC_LOAD(&msgCount), 1);
 
-    peer_connection_close(offerPc);
-    peer_connection_close(answerPc);
-    peer_connection_free(&offerPc);
-    peer_connection_free(&answerPc);
+    pc_close(offerPc);
+    pc_close(answerPc);
+    pc_free(&offerPc);
+    pc_free(&answerPc);
 }
 
 TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityUnorderedMaxPacketLifeTimeParameterSet)
@@ -179,8 +179,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityUnorder
 
     MEMSET(&configuration, 0x00, SIZEOF(RtcConfiguration));
 
-    EXPECT_EQ(peer_connection_create(&configuration, &offerPc), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_create(&configuration, &answerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &offerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &answerPc), STATUS_SUCCESS);
 
     // Set partial reliability parameters
     NULLABLE_SET_VALUE(rtcDataChannelInit.maxPacketLifeTime, 1234);
@@ -217,8 +217,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityUnorder
         }
     };
 
-    EXPECT_EQ(peer_connection_onDataChannel(offerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_onDataChannel(answerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(offerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(answerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
 
     // Create two DataChannels
     EXPECT_EQ(data_channel_create(offerPc, (PCHAR) "Offer PeerConnection", &rtcDataChannelInit, &pOfferDataChannel), STATUS_SUCCESS);
@@ -237,8 +237,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityUnorder
         THREAD_SLEEP(HUNDREDS_OF_NANOS_IN_A_SECOND);
     }
     // Close the connection to avoid data race while accessing SctpSession
-    peer_connection_close(offerPc);
-    peer_connection_close(answerPc);
+    pc_close(offerPc);
+    pc_close(answerPc);
 
     pKvsDataChannel = (PKvsDataChannel) pOfferDataChannel;
     pSctpSession = ((PKvsPeerConnection) pKvsDataChannel->pRtcPeerConnection)->pSctpSession;
@@ -247,8 +247,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityUnorder
     ASSERT_EQ(pSctpSession->spa.sendv_prinfo.pr_policy, SCTP_PR_SCTP_TTL);
     ASSERT_EQ(pSctpSession->spa.sendv_prinfo.pr_value, rtcDataChannelInit.maxPacketLifeTime.value);
 
-    peer_connection_free(&offerPc);
-    peer_connection_free(&answerPc);
+    pc_free(&offerPc);
+    pc_free(&answerPc);
 }
 
 TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityUnOrderedMaxRetransmitsParameterSet)
@@ -264,8 +264,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityUnOrder
 
     MEMSET(&configuration, 0x00, SIZEOF(RtcConfiguration));
 
-    EXPECT_EQ(peer_connection_create(&configuration, &offerPc), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_create(&configuration, &answerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &offerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &answerPc), STATUS_SUCCESS);
 
     // Set partial reliability parameters
     NULLABLE_SET_VALUE(rtcDataChannelInit.maxRetransmits, 5);
@@ -302,8 +302,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityUnOrder
         }
     };
 
-    EXPECT_EQ(peer_connection_onDataChannel(offerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_onDataChannel(answerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(offerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(answerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
 
     // Create two DataChannels
     EXPECT_EQ(data_channel_create(offerPc, (PCHAR) "Offer PeerConnection", &rtcDataChannelInit, &pOfferDataChannel), STATUS_SUCCESS);
@@ -323,8 +323,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityUnOrder
     }
 
     // Close the connection to avoid data race while accessing SctpSession
-    peer_connection_close(offerPc);
-    peer_connection_close(answerPc);
+    pc_close(offerPc);
+    pc_close(answerPc);
 
     pKvsDataChannel = (PKvsDataChannel) pOfferDataChannel;
     pSctpSession = ((PKvsPeerConnection) pKvsDataChannel->pRtcPeerConnection)->pSctpSession;
@@ -333,8 +333,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityUnOrder
     ASSERT_EQ(pSctpSession->spa.sendv_prinfo.pr_policy, SCTP_PR_SCTP_RTX);
     ASSERT_EQ(pSctpSession->spa.sendv_prinfo.pr_value, rtcDataChannelInit.maxRetransmits.value);
 
-    peer_connection_free(&offerPc);
-    peer_connection_free(&answerPc);
+    pc_free(&offerPc);
+    pc_free(&answerPc);
 }
 
 TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityOrderedMaxPacketLifeTimeParameterSet)
@@ -350,8 +350,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityOrdered
 
     MEMSET(&configuration, 0x00, SIZEOF(RtcConfiguration));
 
-    EXPECT_EQ(peer_connection_create(&configuration, &offerPc), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_create(&configuration, &answerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &offerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &answerPc), STATUS_SUCCESS);
 
     // Set partial reliability parameters
     NULLABLE_SET_VALUE(rtcDataChannelInit.maxPacketLifeTime, 1234);
@@ -388,8 +388,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityOrdered
         }
     };
 
-    EXPECT_EQ(peer_connection_onDataChannel(offerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_onDataChannel(answerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(offerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(answerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
 
     // Create two DataChannels
     EXPECT_EQ(data_channel_create(offerPc, (PCHAR) "Offer PeerConnection", &rtcDataChannelInit, &pOfferDataChannel), STATUS_SUCCESS);
@@ -409,8 +409,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityOrdered
     }
 
     // Close the connection to avoid data race while accessing SctpSession
-    peer_connection_close(offerPc);
-    peer_connection_close(answerPc);
+    pc_close(offerPc);
+    pc_close(answerPc);
 
     pKvsDataChannel = (PKvsDataChannel) pOfferDataChannel;
     pSctpSession = ((PKvsPeerConnection) pKvsDataChannel->pRtcPeerConnection)->pSctpSession;
@@ -419,8 +419,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityOrdered
     ASSERT_EQ(pSctpSession->spa.sendv_prinfo.pr_policy, SCTP_PR_SCTP_TTL);
     ASSERT_EQ(pSctpSession->spa.sendv_prinfo.pr_value, rtcDataChannelInit.maxPacketLifeTime.value);
 
-    peer_connection_free(&offerPc);
-    peer_connection_free(&answerPc);
+    pc_free(&offerPc);
+    pc_free(&answerPc);
 }
 
 TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityOrderedMaxRetransmitsParameterSet)
@@ -436,8 +436,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityOrdered
 
     MEMSET(&configuration, 0x00, SIZEOF(RtcConfiguration));
 
-    EXPECT_EQ(peer_connection_create(&configuration, &offerPc), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_create(&configuration, &answerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &offerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &answerPc), STATUS_SUCCESS);
 
     // Set partial reliability parameters
     NULLABLE_SET_VALUE(rtcDataChannelInit.maxRetransmits, 5);
@@ -474,8 +474,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityOrdered
         }
     };
 
-    EXPECT_EQ(peer_connection_onDataChannel(offerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_onDataChannel(answerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(offerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(answerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
 
     // Create two DataChannels
     EXPECT_EQ(data_channel_create(offerPc, (PCHAR) "Offer PeerConnection", &rtcDataChannelInit, &pOfferDataChannel), STATUS_SUCCESS);
@@ -495,8 +495,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityOrdered
     }
 
     // Close the connection to avoid data race while accessing SctpSession
-    peer_connection_close(offerPc);
-    peer_connection_close(answerPc);
+    pc_close(offerPc);
+    pc_close(answerPc);
     pKvsDataChannel = (PKvsDataChannel) pOfferDataChannel;
     pSctpSession = ((PKvsPeerConnection) pKvsDataChannel->pRtcPeerConnection)->pSctpSession;
     
@@ -504,8 +504,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_PartialReliabilityOrdered
     ASSERT_EQ(pSctpSession->spa.sendv_prinfo.pr_policy, SCTP_PR_SCTP_RTX);
     ASSERT_EQ(pSctpSession->spa.sendv_prinfo.pr_value, rtcDataChannelInit.maxRetransmits.value);
 
-    peer_connection_free(&offerPc);
-    peer_connection_free(&answerPc);
+    pc_free(&offerPc);
+    pc_free(&answerPc);
 }
 
 TEST_F(DataChannelFunctionalityTest, createDataChannel_DataChannelMetricsTest)
@@ -522,8 +522,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_DataChannelMetricsTest)
 
     MEMSET(&configuration, 0x00, SIZEOF(RtcConfiguration));
 
-    EXPECT_EQ(peer_connection_create(&configuration, &offerPc), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_create(&configuration, &answerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &offerPc), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &answerPc), STATUS_SUCCESS);
 
     auto onDataChannel = [](UINT64 customData, PRtcDataChannel pRtcDataChannel) {
         auto remoteOpen = reinterpret_cast<RemoteOpen*>(customData);
@@ -555,8 +555,8 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_DataChannelMetricsTest)
         }
     };
 
-    EXPECT_EQ(peer_connection_onDataChannel(offerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
-    EXPECT_EQ(peer_connection_onDataChannel(answerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(offerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
+    EXPECT_EQ(pc_onDataChannel(answerPc, (UINT64) &remoteOpen, onDataChannel), STATUS_SUCCESS);
 
     // Create two DataChannels
     EXPECT_EQ(data_channel_create(offerPc, (PCHAR) "Offer PeerConnection", nullptr, &pOfferDataChannel), STATUS_SUCCESS);
@@ -584,10 +584,10 @@ TEST_F(DataChannelFunctionalityTest, createDataChannel_DataChannelMetricsTest)
     EXPECT_EQ(rtcMetrics.rtcStatsObject.rtcDataChannelStats.messagesSent, 1);
     EXPECT_EQ(rtcMetrics.rtcStatsObject.rtcDataChannelStats.state, RTC_DATA_CHANNEL_STATE_OPEN);
 
-    peer_connection_close(offerPc);
-    peer_connection_close(answerPc);
-    peer_connection_free(&offerPc);
-    peer_connection_free(&answerPc);
+    pc_close(offerPc);
+    pc_close(answerPc);
+    pc_free(&offerPc);
+    pc_free(&answerPc);
 }
 
 } // namespace webrtcclient

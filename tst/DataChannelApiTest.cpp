@@ -17,7 +17,7 @@ TEST_F(DataChannelApiTest, createDataChannel_Disconnected)
 
     MEMSET(&configuration, 0x00, SIZEOF(RtcConfiguration));
 
-    EXPECT_EQ(peer_connection_create(&configuration, &pPeerConnection), STATUS_SUCCESS);
+    EXPECT_EQ(pc_create(&configuration, &pPeerConnection), STATUS_SUCCESS);
 
     // Create two DataChannels
     EXPECT_EQ(data_channel_create(pPeerConnection, (PCHAR) "DataChannel 1", nullptr, &pDataChannel), STATUS_SUCCESS);
@@ -28,8 +28,8 @@ TEST_F(DataChannelApiTest, createDataChannel_Disconnected)
     EXPECT_EQ(data_channel_create(pPeerConnection, nullptr, nullptr, &pDataChannel), STATUS_NULL_ARG);
     EXPECT_EQ(data_channel_create(pPeerConnection, (PCHAR) "DataChannel 2", nullptr, nullptr), STATUS_NULL_ARG);
 
-    peer_connection_close(pPeerConnection);
-    peer_connection_free(&pPeerConnection);
+    pc_close(pPeerConnection);
+    pc_free(&pPeerConnection);
 }
 
 } // namespace webrtcclient

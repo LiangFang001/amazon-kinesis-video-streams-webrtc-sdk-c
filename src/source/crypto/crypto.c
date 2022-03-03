@@ -17,7 +17,7 @@
 #include <mbedtls/x509_crt.h>
 #include "dtls.h"
 
-STATUS createRtcCertificate(PRtcCertificate* ppRtcCertificate)
+STATUS rtc_certificate_create(PRtcCertificate* ppRtcCertificate)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -49,14 +49,14 @@ CleanUp:
     CHK_LOG_ERR(retStatus);
 
     if (STATUS_FAILED(retStatus) && pRtcCertificate != NULL) {
-        freeRtcCertificate(pRtcCertificate);
+        rtc_certificate_free(pRtcCertificate);
     }
 
     LEAVES();
     return retStatus;
 }
 
-STATUS freeRtcCertificate(PRtcCertificate pRtcCertificate)
+STATUS rtc_certificate_free(PRtcCertificate pRtcCertificate)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;

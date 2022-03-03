@@ -553,7 +553,7 @@ STATUS stun_deserializePacket(PBYTE pStunBuffer, UINT32 bufferSize, PBYTE passwo
     CHK(pStunBuffer != NULL && ppStunPacket != NULL, STATUS_STUN_NULL_ARG);
     CHK(bufferSize >= STUN_HEADER_LEN, STATUS_STUN_INVALID_ARG);
 
-    if (!isBigEndian()) {
+    if (!endianness_isBigEndian()) {
         stunMagicCookie = STUN_HEADER_MAGIC_COOKIE_LE;
     }
 

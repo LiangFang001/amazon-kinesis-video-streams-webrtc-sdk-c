@@ -16,19 +16,19 @@ class RtcpFunctionalityTest : public WebRtcClientTestBase {
     STATUS initTransceiver(UINT32 ssrc)
     {
         RtcConfiguration config{};
-        EXPECT_EQ(STATUS_SUCCESS, peer_connection_create(&config, &pRtcPeerConnection));
+        EXPECT_EQ(STATUS_SUCCESS, pc_create(&config, &pRtcPeerConnection));
         pKvsPeerConnection = reinterpret_cast<PKvsPeerConnection>(pRtcPeerConnection);
-        pRtcRtpTransceiver = peer_connection_addTransceiver(ssrc);
+        pRtcRtpTransceiver = pc_addTransceiver(ssrc);
         pKvsRtpTransceiver = reinterpret_cast<PKvsRtpTransceiver>(pRtcRtpTransceiver);
         return STATUS_SUCCESS;
     }
 
-    PRtcRtpTransceiver peer_connection_addTransceiver(UINT32 ssrc)
+    PRtcRtpTransceiver pc_addTransceiver(UINT32 ssrc)
     {
         RtcMediaStreamTrack track{};
         track.codec = RTC_CODEC_VP8;
         PRtcRtpTransceiver out = nullptr;
-        EXPECT_EQ(STATUS_SUCCESS, ::peer_connection_addTransceiver(pRtcPeerConnection, &track, nullptr, &out));
+        EXPECT_EQ(STATUS_SUCCESS, ::pc_addTransceiver(pRtcPeerConnection, &track, nullptr, &out));
         ((PKvsRtpTransceiver) out)->sender.ssrc = ssrc;
         return out;
     }
@@ -167,7 +167,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpPacketCompoundNack)
     ASSERT_EQ(1, stats.nackCount);
     ASSERT_EQ(1, stats.retransmittedPacketsSent);
     ASSERT_EQ(10, stats.retransmittedBytesSent);
-    peer_connection_free(&pRtcPeerConnection);
+    pc_free(&pRtcPeerConnection);
     rtp_packet_free(&pRtpPacket);
 }
 
@@ -192,7 +192,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpPacketCompoundSenderReport)
 
     //added two transceivers to test correct transceiver stats in getRtpRemoteInboundStats
     initTransceiver(4242); // fake transceiver
-    auto t = peer_connection_addTransceiver(1577872978); // real transceiver
+    auto t = pc_addTransceiver(1577872978); // real transceiver
 
     EXPECT_EQ(STATUS_SUCCESS, rtcp_onPacket(pKvsPeerConnection, rawpacket, rawpacketSize));
 
@@ -204,7 +204,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpPacketCompoundSenderReport)
     EXPECT_EQ(4.0 / 255.0, stats.fractionLost);
     EXPECT_LT(0, stats.totalRoundTripTime);
     EXPECT_LT(0, stats.roundTripTime);
-    peer_connection_free(&pRtcPeerConnection);
+    pc_free(&pRtcPeerConnection);
 }
 
 TEST_F(RtcpFunctionalityTest, rtcp_packet_getRembValue)
@@ -260,7 +260,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpRembCalled)
 
     EXPECT_EQ(STATUS_SUCCESS, rtcp_packet_setFromBytes(multipleSSRC, ARRAY_SIZE(multipleSSRC), &rtcpPacket));
     initTransceiver(0x42424242);
-    PRtcRtpTransceiver transceiver43 = peer_connection_addTransceiver(0x43);
+    PRtcRtpTransceiver transceiver43 = pc_addTransceiver(0x43);
 
     BOOL onBandwidthCalled42 = FALSE;
     BOOL onBandwidthCalled43 = FALSE;
@@ -271,7 +271,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpRembCalled)
     rtcp_onRembPacket(&rtcpPacket, pKvsPeerConnection);
     ASSERT_TRUE(onBandwidthCalled42);
     ASSERT_FALSE(onBandwidthCalled43);
-    peer_connection_free(&pRtcPeerConnection);
+    pc_free(&pRtcPeerConnection);
 }
 
 TEST_F(RtcpFunctionalityTest, onpli)
@@ -293,7 +293,7 @@ TEST_F(RtcpFunctionalityTest, onpli)
     RtcOutboundRtpStreamStats stats{};
     EXPECT_EQ(STATUS_SUCCESS, getRtpOutboundStats(pRtcPeerConnection, nullptr, &stats));
     EXPECT_EQ(1, stats.pliCount);
-    peer_connection_free(&pRtcPeerConnection);
+    pc_free(&pRtcPeerConnection);
 }
 
 } // namespace webrtcclient

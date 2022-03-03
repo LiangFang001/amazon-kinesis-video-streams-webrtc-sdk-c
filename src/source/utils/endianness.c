@@ -229,7 +229,7 @@ putUnalignedInt64Func putUnalignedInt64LittleEndian = putUnalignedInt64Le;
 // Checking run-time endianness.
 // Other methods checking for byte placement might fail due to compiler optimization
 //
-BOOL isBigEndian()
+BOOL endianness_isBigEndian()
 {
     union {
         BYTE c[4];
@@ -241,9 +241,9 @@ BOOL isBigEndian()
     return (0x01 == u.c[0]);
 }
 
-VOID initializeEndianness()
+VOID endianness_initialize()
 {
-    if (isBigEndian()) {
+    if (endianness_isBigEndian()) {
         // Big-endian
         g_BigEndian = TRUE;
 

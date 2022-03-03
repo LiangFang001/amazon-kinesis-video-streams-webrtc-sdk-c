@@ -213,13 +213,13 @@ The certificate generating function (certificate_key_create) in dtls_session_cre
 **Important Note: It is recommended to rotate the certificates often - preferably for every peer connection to avoid a compromised client weakening the security of the new connections.**
 
 Take kvsWebRTCClientMaster as sample, add RtcCertificate certificates[CERT_COUNT]; to **SampleConfiguration** in Samples.h.
-Then pass in the pre-generated certificate in initializePeerConnection() in Common.c.
+Then pass in the pre-generated certificate in app_common_initializePeerConnection() in Common.c.
 
 ```
 configuration.certificates[0].pCertificate = pSampleConfiguration->certificates[0].pCertificate;
 configuration.certificates[0].pPrivateKey = pSampleConfiguration->certificates[0].pPrivateKey;
 
-where, `configuration` is of type `RtcConfiguration` in the function that calls `initializePeerConnection()`.
+where, `configuration` is of type `RtcConfiguration` in the function that calls `app_common_initializePeerConnection()`.
 
 Doing this will make sure that `certificate_key_create() would not execute since a certificate is already available.`
 ```
