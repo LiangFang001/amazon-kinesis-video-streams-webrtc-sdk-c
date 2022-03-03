@@ -104,6 +104,7 @@ extern "C" {
 #define CHECK_SIGNALING_CREDENTIALS_EXPIRATION(p)                                                                                                    \
     do {                                                                                                                                             \
         if (GETTIME() >= (p)->pAwsCredentials->expiration) {                                                                                         \
+            DLOGD("Credential is expired.");                                                                                                         \
             ATOMIC_STORE(&(p)->apiCallStatus, (SIZE_T) HTTP_STATUS_UNAUTHORIZED);                                                                    \
             CHK(FALSE, retStatus);                                                                                                                   \
         }                                                                                                                                            \

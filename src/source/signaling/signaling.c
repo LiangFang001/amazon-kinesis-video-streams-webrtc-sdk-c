@@ -143,6 +143,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
                     break;
 
                 case SIGNALING_MESSAGE_TYPE_GO_AWAY:
+                    DLOGD("wss msg type:%d", pMsg->receivedSignalingMessage.signalingMessage.messageType);
                     CHK_STATUS(wss_api_disconnect(pSignalingClient));
                     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
                     ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_SIGNALING_GO_AWAY);
@@ -152,6 +153,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
                     break;
 
                 case SIGNALING_MESSAGE_TYPE_RECONNECT_ICE_SERVER:
+                    DLOGD("wss msg type:%d", pMsg->receivedSignalingMessage.signalingMessage.messageType);
                     CHK_STATUS(wss_api_disconnect(pSignalingClient));
                     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
                     ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_SIGNALING_RECONNECT_ICE);
@@ -161,6 +163,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
                     break;
                 case SIGNALING_MESSAGE_TYPE_CTRL_CLOSE:
                 case SIGNALING_MESSAGE_TYPE_CTRL_LISTENER_TREMINATED:
+                    DLOGD("wss msg type:%d", pMsg->receivedSignalingMessage.signalingMessage.messageType);
                     CHK_STATUS(wss_api_disconnect(pSignalingClient));
                     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
                     ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_UNKNOWN);
@@ -750,6 +753,7 @@ STATUS signaling_validateIceConfiguration(PSignalingClient pSignalingClient)
 
     pSignalingClient->iceConfigTime = GETTIME();
     pSignalingClient->iceConfigExpiration = pSignalingClient->iceConfigTime + (minTtl - ICE_CONFIGURATION_REFRESH_GRACE_PERIOD);
+    DLOGD("The expirationi of ice config: %" PRIu64 ", ttl: %" PRIu64, pSignalingClient->iceConfigExpiration, minTtl);
 
 CleanUp:
     CHK_LOG_ERR(retStatus);
