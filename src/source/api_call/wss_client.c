@@ -39,12 +39,12 @@
 #define CLIENT_UNLOCK(pWssClientCtx) MUTEX_UNLOCK(pWssClientCtx->clientLock)
 #define LISTENER_LOCK(pWssClientCtx)                                                                                                                 \
     do {                                                                                                                                             \
-        CHK((pWssClientCtx != NULL) && IS_VALID_MUTEX_VALUE(pWssClientCtx->clientLock), STATUS_WSS_CLIENT_INVALID_ARG);                              \
+        CHK((pWssClientCtx != NULL) && IS_VALID_MUTEX_VALUE(pWssClientCtx->listenerLock), STATUS_WSS_CLIENT_INVALID_ARG);                            \
         MUTEX_LOCK(pWssClientCtx->listenerLock);                                                                                                     \
     } while (0)
 #define LISTENER_UNLOCK(pWssClientCtx)                                                                                                               \
     do {                                                                                                                                             \
-        if (pWssClientCtx != NULL && IS_VALID_MUTEX_VALUE(pWssClientCtx->clientLock)) {                                                              \
+        if (pWssClientCtx != NULL && IS_VALID_MUTEX_VALUE(pWssClientCtx->listenerLock)) {                                                            \
             MUTEX_UNLOCK(pWssClientCtx->listenerLock);                                                                                               \
         }                                                                                                                                            \
     } while (0)
@@ -368,12 +368,12 @@ PVOID wss_client_start(PWssClientContext pWssClientCtx)
 
 CleanUp:
 
-    LISTENER_UNLOCK(pWssClientCtx);
     if (pWssClientCtx->terminationHandler != NULL) {
         pWssClientCtx->terminationHandler(pWssClientCtx->pUserData, retStatus);
     }
 
     pWssClientCtx->listenerTid = INVALID_TID_VALUE;
+    LISTENER_UNLOCK(pWssClientCtx);
     THREAD_EXIT(NULL);
     WSS_CLIENT_EXIT();
     return (PVOID)(ULONG_PTR) retStatus;
@@ -386,17 +386,21 @@ VOID wss_client_close(PWssClientContext pWssClientCtx)
     CHK(pWssClientCtx != NULL, STATUS_WSS_CLIENT_NULL_ARG);
 
     if (IS_VALID_MUTEX_VALUE(pWssClientCtx->clientLock)) {
+        // exit the thread of wss_client_start.
         CLIENT_LOCK(pWssClientCtx);
         wslay_event_shutdown_read(pWssClientCtx->event_ctx);
         wslay_event_shutdown_write(pWssClientCtx->event_ctx);
         wslay_event_context_free(pWssClientCtx->event_ctx);
         CLIENT_UNLOCK(pWssClientCtx);
     }
-
+    // make sure the thread of wss_client_start exit.
     if (IS_VALID_MUTEX_VALUE(pWssClientCtx->listenerLock)) {
+        LISTENER_LOCK(pWssClientCtx);
+        LISTENER_UNLOCK(pWssClientCtx);
         MUTEX_FREE(pWssClientCtx->listenerLock);
         pWssClientCtx->listenerLock = INVALID_MUTEX_VALUE;
     }
+
     if (IS_VALID_MUTEX_VALUE(pWssClientCtx->clientLock)) {
         MUTEX_FREE(pWssClientCtx->clientLock);
         pWssClientCtx->clientLock = INVALID_MUTEX_VALUE;
