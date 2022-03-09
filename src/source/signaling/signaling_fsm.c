@@ -685,7 +685,6 @@ STATUS signaling_fsm_exitConnected(UINT64 customData, PUINT64 pState)
 
     // Overwrite the state if we are force refreshing
     state = ATOMIC_EXCHANGE_BOOL(&pSignalingClient->refreshIceConfig, FALSE) ? SIGNALING_STATE_GET_ICE_CONFIG : state;
-
     *pState = state;
 
 CleanUp:

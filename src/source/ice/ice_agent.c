@@ -589,13 +589,13 @@ STATUS ice_agent_create(PCHAR username, PCHAR password, PIceAgentCallbacks pIceA
     CHK_STATUS(doubleListCreate(&pIceAgent->localCandidates));
     CHK_STATUS(doubleListCreate(&pIceAgent->remoteCandidates));
     CHK_STATUS(doubleListCreate(&pIceAgent->pIceCandidatePairs));
-    CHK_STATUS(stackQueueCreate(&pIceAgent->pTriggeredCheckQueue));
+    CHK_STATUS(stack_queue_create(&pIceAgent->pTriggeredCheckQueue));
 
     // Pre-allocate stun packets
 
     // no other attribtues needed: https://tools.ietf.org/html/rfc8445#section-11
     CHK_STATUS(stun_createPacket(STUN_PACKET_TYPE_BINDING_INDICATION, NULL, &pIceAgent->pBindingIndication));
-    CHK_STATUS(hashTableCreateWithParams(ICE_HASH_TABLE_BUCKET_COUNT, ICE_HASH_TABLE_BUCKET_LENGTH, &pIceAgent->requestTimestampDiagnostics));
+    CHK_STATUS(hash_table_createWithParams(ICE_HASH_TABLE_BUCKET_COUNT, ICE_HASH_TABLE_BUCKET_LENGTH, &pIceAgent->requestTimestampDiagnostics));
 
     pIceAgent->iceServersCount = 0;
     for (i = 0; i < MAX_ICE_SERVERS_COUNT; i++) {
@@ -651,7 +651,7 @@ STATUS ice_agent_free(PIceAgent* ppIceAgent)
 
     pIceAgent = *ppIceAgent;
 
-    hashTableFree(pIceAgent->requestTimestampDiagnostics);
+    hash_table_free(pIceAgent->requestTimestampDiagnostics);
 
     if (pIceAgent->localCandidates != NULL) {
         CHK_STATUS(doubleListGetHeadNode(pIceAgent->localCandidates, &pCurNode));
@@ -721,7 +721,7 @@ STATUS ice_agent_free(PIceAgent* ppIceAgent)
     }
 
     if (pIceAgent->pTriggeredCheckQueue != NULL) {
-        CHK_LOG_ERR(stackQueueFree(pIceAgent->pTriggeredCheckQueue));
+        CHK_LOG_ERR(stack_queue_free(pIceAgent->pTriggeredCheckQueue));
     }
 
     if (IS_VALID_MUTEX_VALUE(pIceAgent->lock)) {
@@ -1924,7 +1924,7 @@ STATUS ice_candidate_pair_create(PIceAgent pIceAgent, PIceCandidate pIceCandidat
             pIceCandidatePair->state = ICE_CANDIDATE_PAIR_STATE_WAITING;
             CHK_STATUS(ice_candidate_pair_calculateOrdinaryCheckRto(pIceAgent, &pIceCandidatePair->rtoSlot));
             CHK_STATUS(transaction_id_store_create(DEFAULT_MAX_STORED_TRANSACTION_ID_COUNT, &pIceCandidatePair->pTransactionIdStore));
-            CHK_STATUS(hashTableCreateWithParams(ICE_HASH_TABLE_BUCKET_COUNT, ICE_HASH_TABLE_BUCKET_LENGTH, &pIceCandidatePair->requestSentTime));
+            CHK_STATUS(hash_table_createWithParams(ICE_HASH_TABLE_BUCKET_COUNT, ICE_HASH_TABLE_BUCKET_LENGTH, &pIceCandidatePair->requestSentTime));
 
             pIceCandidatePair->lastDataSentTime = 0;
             STRNCPY(pIceCandidatePair->rtcIceCandidatePairDiagnostics.localCandidateId, pIceCandidatePair->local->id,
@@ -1970,7 +1970,7 @@ STATUS ice_candidate_pair_free(PIceCandidatePair* ppIceCandidatePair)
     pIceCandidatePair = *ppIceCandidatePair;
 
     CHK_LOG_ERR(transaction_id_store_free(&pIceCandidatePair->pTransactionIdStore));
-    CHK_LOG_ERR(hashTableFree(pIceCandidatePair->requestSentTime));
+    CHK_LOG_ERR(hash_table_free(pIceCandidatePair->requestSentTime));
     SAFE_MEMFREE(pIceCandidatePair);
 
 CleanUp:
@@ -2446,12 +2446,12 @@ STATUS ice_agent_handleInboundStunPacket(PIceAgent pIceAgent, PBYTE pBuffer, UIN
 
                 // Update round trip time for serial reflexive candidate
                 pIceAgent->rtcIceServerDiagnostics[pIceCandidate->iceServerIndex].totalResponsesReceived++;
-                retStatus = hashTableGet(pIceAgent->requestTimestampDiagnostics, checkSum, &requestSentTime);
+                retStatus = hash_table_get(pIceAgent->requestTimestampDiagnostics, checkSum, &requestSentTime);
                 if (retStatus != STATUS_SUCCESS) {
                     DLOGW("Unable to fetch request Timestamp from the hash table. No update to totalRoundTripTime (error code: 0x%08x)", retStatus);
                 } else {
                     pIceAgent->rtcIceServerDiagnostics[pIceCandidate->iceServerIndex].totalRoundTripTime += GETTIME() - requestSentTime;
-                    CHK_STATUS(hashTableRemove(pIceAgent->requestTimestampDiagnostics, checkSum));
+                    CHK_STATUS(hash_table_remove(pIceAgent->requestTimestampDiagnostics, checkSum));
                 }
 
                 CHK_STATUS(stun_deserializePacket(pBuffer, bufferLen, NULL, 0, &pStunPacket));
@@ -2483,12 +2483,12 @@ STATUS ice_agent_handleInboundStunPacket(PIceAgent pIceAgent, PBYTE pBuffer, UIN
             // Update round trip time and responses received only for relay candidates.
             if (pIceCandidatePair->local->iceCandidateType == ICE_CANDIDATE_TYPE_RELAYED) {
                 pIceAgent->rtcIceServerDiagnostics[pIceCandidatePair->local->iceServerIndex].totalResponsesReceived++;
-                retStatus = hashTableGet(pIceAgent->requestTimestampDiagnostics, checkSum, &requestSentTime);
+                retStatus = hash_table_get(pIceAgent->requestTimestampDiagnostics, checkSum, &requestSentTime);
                 if (retStatus != STATUS_SUCCESS) {
                     DLOGW("Unable to fetch request Timestamp from the hash table. No update to totalRoundTripTime (error code: 0x%08x)", retStatus);
                 } else {
                     pIceAgent->rtcIceServerDiagnostics[pIceCandidatePair->local->iceServerIndex].totalRoundTripTime += GETTIME() - requestSentTime;
-                    CHK_STATUS(hashTableRemove(pIceAgent->requestTimestampDiagnostics, checkSum));
+                    CHK_STATUS(hash_table_remove(pIceAgent->requestTimestampDiagnostics, checkSum));
                 }
             }
             CHK_STATUS(stun_deserializePacket(pBuffer, bufferLen, (PBYTE) pIceAgent->remotePassword,
@@ -2516,7 +2516,7 @@ STATUS ice_agent_handleInboundStunPacket(PIceAgent pIceAgent, PBYTE pBuffer, UIN
             // #TBD, can be used to notify the ice agent fsm of this change.
             if (pIceCandidatePair->state != ICE_CANDIDATE_PAIR_STATE_SUCCEEDED) {
                 pIceCandidatePair->state = ICE_CANDIDATE_PAIR_STATE_SUCCEEDED;
-                retStatus = hashTableGet(pIceCandidatePair->requestSentTime, checkSum, &requestSentTime);
+                retStatus = hash_table_get(pIceCandidatePair->requestSentTime, checkSum, &requestSentTime);
                 if (retStatus != STATUS_SUCCESS) {
                     DLOGW("Unable to fetch request Timestamp from the hash table. No update to totalRoundTripTime (error code: 0x%08x)", retStatus);
                 } else {
@@ -2528,7 +2528,7 @@ STATUS ice_agent_handleInboundStunPacket(PIceAgent pIceAgent, PBYTE pBuffer, UIN
                     pIceCandidatePair->rtcIceCandidatePairDiagnostics.totalRoundTripTime +=
                         (DOUBLE)(pIceCandidatePair->roundTripTime) / HUNDREDS_OF_NANOS_IN_A_SECOND;
 
-                    CHK_STATUS(hashTableRemove(pIceCandidatePair->requestSentTime, checkSum));
+                    CHK_STATUS(hash_table_remove(pIceCandidatePair->requestSentTime, checkSum));
                 }
             }
 

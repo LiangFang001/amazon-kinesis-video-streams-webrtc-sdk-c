@@ -228,7 +228,7 @@ TEST_F(SdpApiTest, setTransceiverPayloadTypes_NoRtxType)
     transceiver.sender.packetBuffer = NULL;
     transceiver.sender.retransmitter = NULL;
     EXPECT_EQ(STATUS_SUCCESS, hashTableCreate(&pCodecTable));
-    EXPECT_EQ(STATUS_SUCCESS, hashTablePut(pCodecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, 1));
+    EXPECT_EQ(STATUS_SUCCESS, hash_table_put(pCodecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, 1));
     EXPECT_EQ(STATUS_SUCCESS, hashTableCreate(&pRtxTable));
     EXPECT_EQ(STATUS_SUCCESS, doubleListCreate(&pTransceivers));
     EXPECT_EQ(STATUS_SUCCESS, doubleListInsertItemHead(pTransceivers, (UINT64)(&transceiver)));
@@ -236,8 +236,8 @@ TEST_F(SdpApiTest, setTransceiverPayloadTypes_NoRtxType)
     EXPECT_EQ(1, transceiver.sender.payloadType);
     EXPECT_NE((PRtpRollingBuffer) NULL, transceiver.sender.packetBuffer);
     EXPECT_NE((PRetransmitter) NULL, transceiver.sender.retransmitter);
-    hashTableFree(pCodecTable);
-    hashTableFree(pRtxTable);
+    hash_table_free(pCodecTable);
+    hash_table_free(pRtxTable);
     rtp_rolling_buffer_free(&transceiver.sender.packetBuffer);
     retransmitter_free(&transceiver.sender.retransmitter);
     doubleListFree(pTransceivers);
@@ -254,9 +254,9 @@ TEST_F(SdpApiTest, setTransceiverPayloadTypes_HasRtxType)
     transceiver.sender.packetBuffer = NULL;
     transceiver.sender.retransmitter = NULL;
     EXPECT_EQ(STATUS_SUCCESS, hashTableCreate(&pCodecTable));
-    EXPECT_EQ(STATUS_SUCCESS, hashTablePut(pCodecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, 1));
+    EXPECT_EQ(STATUS_SUCCESS, hash_table_put(pCodecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, 1));
     EXPECT_EQ(STATUS_SUCCESS, hashTableCreate(&pRtxTable));
-    EXPECT_EQ(STATUS_SUCCESS, hashTablePut(pRtxTable, RTC_RTX_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, 2));
+    EXPECT_EQ(STATUS_SUCCESS, hash_table_put(pRtxTable, RTC_RTX_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, 2));
     EXPECT_EQ(STATUS_SUCCESS, doubleListCreate(&pTransceivers));
     EXPECT_EQ(STATUS_SUCCESS, doubleListInsertItemHead(pTransceivers, (UINT64)(&transceiver)));
     EXPECT_EQ(STATUS_SUCCESS, sdp_setTransceiverPayloadTypes(pCodecTable, pRtxTable, pTransceivers));
@@ -264,8 +264,8 @@ TEST_F(SdpApiTest, setTransceiverPayloadTypes_HasRtxType)
     EXPECT_EQ(2, transceiver.sender.rtxPayloadType);
     EXPECT_NE((PRtpRollingBuffer) NULL, transceiver.sender.packetBuffer);
     EXPECT_NE((PRetransmitter) NULL, transceiver.sender.retransmitter);
-    hashTableFree(pCodecTable);
-    hashTableFree(pRtxTable);
+    hash_table_free(pCodecTable);
+    hash_table_free(pRtxTable);
     rtp_rolling_buffer_free(&transceiver.sender.packetBuffer);
     retransmitter_free(&transceiver.sender.retransmitter);
     doubleListFree(pTransceivers);

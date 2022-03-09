@@ -33,8 +33,8 @@ STATUS jitter_buffer_create(FrameReadyFunc onFrameReadyFunc, FrameDroppedFunc on
     pJitterBuffer->started = FALSE;
 
     pJitterBuffer->customData = customData;
-    CHK_STATUS(hashTableCreateWithParams(JITTER_BUFFER_HASH_TABLE_BUCKET_COUNT, JITTER_BUFFER_HASH_TABLE_BUCKET_LENGTH,
-                                         &pJitterBuffer->pPkgBufferHashTable));
+    CHK_STATUS(hash_table_createWithParams(JITTER_BUFFER_HASH_TABLE_BUCKET_COUNT, JITTER_BUFFER_HASH_TABLE_BUCKET_LENGTH,
+                                           &pJitterBuffer->pPkgBufferHashTable));
 
 CleanUp:
     if (STATUS_FAILED(retStatus) && pJitterBuffer != NULL) {
@@ -65,7 +65,7 @@ STATUS jitter_buffer_free(PJitterBuffer* ppJitterBuffer)
 
     jitter_buffer_pop(pJitterBuffer, TRUE);
     jitter_buffer_dropBufferData(pJitterBuffer, 0, MAX_SEQUENCE_NUM, 0);
-    hashTableFree(pJitterBuffer->pPkgBufferHashTable);
+    hash_table_free(pJitterBuffer->pPkgBufferHashTable);
 
     MEMFREE(*ppJitterBuffer);
 
@@ -100,15 +100,15 @@ STATUS jitter_buffer_push(PJitterBuffer pJitterBuffer, PRtpPacket pRtpPacket, PB
     if ((pRtpPacket->header.timestamp < pJitterBuffer->maxLatency && pJitterBuffer->lastPushTimestamp <= pJitterBuffer->maxLatency) ||
         pRtpPacket->header.timestamp >= pJitterBuffer->lastPushTimestamp - pJitterBuffer->maxLatency) {
         // check the same sequence number is existed or not.
-        status = hashTableGet(pJitterBuffer->pPkgBufferHashTable, pRtpPacket->header.sequenceNumber, &hashValue);
+        status = hash_table_get(pJitterBuffer->pPkgBufferHashTable, pRtpPacket->header.sequenceNumber, &hashValue);
         pCurPacket = (PRtpPacket) hashValue;
         // remove the old sequence number.
         if (STATUS_SUCCEEDED(status) && pCurPacket != NULL) {
             rtp_packet_free(&pCurPacket);
-            CHK_STATUS(hashTableRemove(pJitterBuffer->pPkgBufferHashTable, pRtpPacket->header.sequenceNumber));
+            CHK_STATUS(hash_table_remove(pJitterBuffer->pPkgBufferHashTable, pRtpPacket->header.sequenceNumber));
         }
         // push the new sequence number.
-        CHK_STATUS(hashTablePut(pJitterBuffer->pPkgBufferHashTable, pRtpPacket->header.sequenceNumber, (UINT64) pRtpPacket));
+        CHK_STATUS(hash_table_put(pJitterBuffer->pPkgBufferHashTable, pRtpPacket->header.sequenceNumber, (UINT64) pRtpPacket));
         pJitterBuffer->lastPopTimestamp = MIN(pJitterBuffer->lastPopTimestamp, pRtpPacket->header.timestamp);
         DLOGS("jitter_buffer_push get packet timestamp %lu seqNum %lu", pRtpPacket->header.timestamp, pRtpPacket->header.sequenceNumber);
     } else {
@@ -157,13 +157,13 @@ STATUS jitter_buffer_pop(PJitterBuffer pJitterBuffer, BOOL bufferClosed)
     index = pJitterBuffer->lastRemovedSequenceNumber + 1;
     startDropIndex = index;
     for (; index != lastIndex; index++) {
-        CHK_STATUS(hashTableContains(pJitterBuffer->pPkgBufferHashTable, index, &hasEntry));
+        CHK_STATUS(hash_table_contains(pJitterBuffer->pPkgBufferHashTable, index, &hasEntry));
         if (!hasEntry) {
             isFrameDataContinuous = FALSE;
             CHK(pJitterBuffer->lastPopTimestamp < earliestTimestamp || bufferClosed, retStatus);
         } else {
             lastNonNullIndex = index;
-            retStatus = hashTableGet(pJitterBuffer->pPkgBufferHashTable, index, &hashValue);
+            retStatus = hash_table_get(pJitterBuffer->pPkgBufferHashTable, index, &hashValue);
             pCurPacket = (PRtpPacket) hashValue;
             if (retStatus == STATUS_SUCCESS || retStatus == STATUS_HASH_KEY_NOT_PRESENT) {
                 retStatus = STATUS_SUCCESS;
@@ -215,9 +215,9 @@ STATUS jitter_buffer_pop(PJitterBuffer pJitterBuffer, BOOL bufferClosed)
         curFrameSize = 0;
         hasEntry = TRUE;
         for (index = startDropIndex; UINT16_DEC(index) != lastNonNullIndex && hasEntry; index++) {
-            CHK_STATUS(hashTableContains(pJitterBuffer->pPkgBufferHashTable, index, &hasEntry));
+            CHK_STATUS(hash_table_contains(pJitterBuffer->pPkgBufferHashTable, index, &hasEntry));
             if (hasEntry) {
-                CHK_STATUS(hashTableGet(pJitterBuffer->pPkgBufferHashTable, index, &hashValue));
+                CHK_STATUS(hash_table_get(pJitterBuffer->pPkgBufferHashTable, index, &hashValue));
                 pCurPacket = (PRtpPacket) hashValue;
                 CHK_STATUS(pJitterBuffer->depayPayloadFn(pCurPacket->payload, pCurPacket->payloadLength, NULL, &partialFrameSize, NULL));
                 curFrameSize += partialFrameSize;
@@ -253,12 +253,12 @@ STATUS jitter_buffer_dropBufferData(PJitterBuffer pJitterBuffer, UINT16 startInd
 
     CHK(pJitterBuffer != NULL, STATUS_NULL_ARG);
     for (; UINT16_DEC(index) != endIndex; index++) {
-        CHK_STATUS(hashTableContains(pJitterBuffer->pPkgBufferHashTable, index, &hasEntry));
+        CHK_STATUS(hash_table_contains(pJitterBuffer->pPkgBufferHashTable, index, &hasEntry));
         if (hasEntry) {
-            CHK_STATUS(hashTableGet(pJitterBuffer->pPkgBufferHashTable, index, &hashValue));
+            CHK_STATUS(hash_table_get(pJitterBuffer->pPkgBufferHashTable, index, &hashValue));
             pCurPacket = (PRtpPacket) hashValue;
             rtp_packet_free(&pCurPacket);
-            CHK_STATUS(hashTableRemove(pJitterBuffer->pPkgBufferHashTable, index));
+            CHK_STATUS(hash_table_remove(pJitterBuffer->pPkgBufferHashTable, index));
         }
     }
     pJitterBuffer->lastPopTimestamp = nextTimestamp;
@@ -286,7 +286,7 @@ STATUS jitter_buffer_fillFrameData(PJitterBuffer pJitterBuffer, PBYTE pFrame, UI
     CHK(pJitterBuffer != NULL && pFrame != NULL && pFilledSize != NULL, STATUS_NULL_ARG);
     for (; UINT16_DEC(index) != endIndex; index++) {
         hashValue = 0;
-        retStatus = hashTableGet(pJitterBuffer->pPkgBufferHashTable, index, &hashValue);
+        retStatus = hash_table_get(pJitterBuffer->pPkgBufferHashTable, index, &hashValue);
         pCurPacket = (PRtpPacket) hashValue;
         if (retStatus == STATUS_SUCCESS || retStatus == STATUS_HASH_KEY_NOT_PRESENT) {
             retStatus = STATUS_SUCCESS;

@@ -17,24 +17,24 @@ TEST_F(MetricsApiTest, webRtcGetMetrics)
     RtcMediaStreamTrack videoTrack;
     PRtcRtpTransceiver videoTransceiver;
 
-    EXPECT_EQ(STATUS_NULL_ARG, rtcPeerConnectionGetMetrics(NULL, NULL, NULL));
-    EXPECT_EQ(STATUS_NULL_ARG, rtcPeerConnectionGetMetrics(NULL, NULL, &rtcMetrics));
+    EXPECT_EQ(STATUS_NULL_ARG, metrics_get(NULL, NULL, NULL));
+    EXPECT_EQ(STATUS_NULL_ARG, metrics_get(NULL, NULL, &rtcMetrics));
 
     MEMSET(&configuration, 0x00, SIZEOF(RtcConfiguration));
 
     EXPECT_EQ(STATUS_SUCCESS, pc_create(&configuration, &pRtcPeerConnection));
 
-    EXPECT_EQ(STATUS_NULL_ARG, rtcPeerConnectionGetMetrics(pRtcPeerConnection, NULL, NULL));
+    EXPECT_EQ(STATUS_NULL_ARG, metrics_get(pRtcPeerConnection, NULL, NULL));
 
     rtcMetrics.requestedTypeOfStats = (RTC_STATS_TYPE) 20; // Supplying a type that is unavailable
-    EXPECT_EQ(STATUS_NOT_IMPLEMENTED, rtcPeerConnectionGetMetrics(pRtcPeerConnection, NULL, &rtcMetrics));
+    EXPECT_EQ(STATUS_NOT_IMPLEMENTED, metrics_get(pRtcPeerConnection, NULL, &rtcMetrics));
 
     addTrackToPeerConnection(pRtcPeerConnection, &videoTrack, &videoTransceiver, RTC_CODEC_VP8, MEDIA_STREAM_TRACK_KIND_VIDEO);
     rtcMetrics.requestedTypeOfStats = RTC_STATS_TYPE_INBOUND_RTP;
-    EXPECT_EQ(STATUS_SUCCESS, rtcPeerConnectionGetMetrics(pRtcPeerConnection, NULL, &rtcMetrics));
+    EXPECT_EQ(STATUS_SUCCESS, metrics_get(pRtcPeerConnection, NULL, &rtcMetrics));
 
     rtcMetrics.requestedTypeOfStats = RTC_STATS_TYPE_CANDIDATE_PAIR;
-    EXPECT_EQ(STATUS_SUCCESS, rtcPeerConnectionGetMetrics(pRtcPeerConnection, NULL, &rtcMetrics));
+    EXPECT_EQ(STATUS_SUCCESS, metrics_get(pRtcPeerConnection, NULL, &rtcMetrics));
 
     EXPECT_EQ(STATUS_SUCCESS, pc_close(pRtcPeerConnection));
     EXPECT_EQ(STATUS_SUCCESS, pc_free(&pRtcPeerConnection));
@@ -59,17 +59,17 @@ TEST_F(MetricsApiTest, webRtcIceServerGetMetrics)
 
     EXPECT_EQ(STATUS_SUCCESS, pc_create(&configuration, &pRtcPeerConnection));
 
-    EXPECT_EQ(STATUS_ICE_SERVER_INDEX_INVALID, rtcPeerConnectionGetMetrics(pRtcPeerConnection, NULL, &rtcIceMetrics));
+    EXPECT_EQ(STATUS_ICE_SERVER_INDEX_INVALID, metrics_get(pRtcPeerConnection, NULL, &rtcIceMetrics));
 
     rtcIceMetrics.rtcStatsObject.iceServerStats.iceServerIndex = 0;
-    EXPECT_EQ(STATUS_SUCCESS, rtcPeerConnectionGetMetrics(pRtcPeerConnection, NULL, &rtcIceMetrics));
+    EXPECT_EQ(STATUS_SUCCESS, metrics_get(pRtcPeerConnection, NULL, &rtcIceMetrics));
 
     EXPECT_EQ(443, rtcIceMetrics.rtcStatsObject.iceServerStats.port);
     EXPECT_PRED_FORMAT2(testing::IsSubstring, configuration.iceServers[0].urls, rtcIceMetrics.rtcStatsObject.iceServerStats.url);
     EXPECT_PRED_FORMAT2(testing::IsSubstring, "", rtcIceMetrics.rtcStatsObject.iceServerStats.protocol);
 
     rtcIceMetrics.rtcStatsObject.iceServerStats.iceServerIndex = 1;
-    EXPECT_EQ(STATUS_SUCCESS, rtcPeerConnectionGetMetrics(pRtcPeerConnection, NULL, &rtcIceMetrics));
+    EXPECT_EQ(STATUS_SUCCESS, metrics_get(pRtcPeerConnection, NULL, &rtcIceMetrics));
     EXPECT_EQ(443, rtcIceMetrics.rtcStatsObject.iceServerStats.port);
     EXPECT_PRED_FORMAT2(testing::IsSubstring, configuration.iceServers[1].urls, rtcIceMetrics.rtcStatsObject.iceServerStats.url);
     EXPECT_PRED_FORMAT2(testing::IsSubstring, "transport=tcp", rtcIceMetrics.rtcStatsObject.iceServerStats.protocol);
@@ -129,7 +129,7 @@ TEST_F(MetricsApiTest, webRtcIceCandidateGetMetrics)
     EXPECT_EQ(STATUS_SUCCESS, ice_agent_updateSelectedLocalRemoteCandidateStats(pIceAgent));
 
     rtcIceMetrics.requestedTypeOfStats = RTC_STATS_TYPE_LOCAL_CANDIDATE;
-    EXPECT_EQ(STATUS_SUCCESS, rtcPeerConnectionGetMetrics(pRtcPeerConnection, NULL, &rtcIceMetrics));
+    EXPECT_EQ(STATUS_SUCCESS, metrics_get(pRtcPeerConnection, NULL, &rtcIceMetrics));
 
     EXPECT_EQ(1234, rtcIceMetrics.rtcStatsObject.localIceCandidateStats.port);
     EXPECT_EQ(1, rtcIceMetrics.rtcStatsObject.localIceCandidateStats.priority);
@@ -140,7 +140,7 @@ TEST_F(MetricsApiTest, webRtcIceCandidateGetMetrics)
     EXPECT_PRED_FORMAT2(testing::IsSubstring, "", rtcIceMetrics.rtcStatsObject.localIceCandidateStats.relayProtocol);
 
     rtcIceMetrics.requestedTypeOfStats = RTC_STATS_TYPE_REMOTE_CANDIDATE;
-    EXPECT_EQ(STATUS_SUCCESS, rtcPeerConnectionGetMetrics(pRtcPeerConnection, NULL, &rtcIceMetrics));
+    EXPECT_EQ(STATUS_SUCCESS, metrics_get(pRtcPeerConnection, NULL, &rtcIceMetrics));
     EXPECT_EQ(1111, rtcIceMetrics.rtcStatsObject.remoteIceCandidateStats.port);
     EXPECT_EQ(3, rtcIceMetrics.rtcStatsObject.remoteIceCandidateStats.priority);
     EXPECT_PRED_FORMAT2(testing::IsSubstring, "10.1.255.255", rtcIceMetrics.rtcStatsObject.remoteIceCandidateStats.address);

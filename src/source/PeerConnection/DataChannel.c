@@ -75,7 +75,7 @@ STATUS data_channel_create(PRtcPeerConnection pPeerConnection, PCHAR pDataChanne
     STRNCPY(pKvsDataChannel->rtcDataChannelDiagnostics.protocol, DATA_CHANNEL_PROTOCOL_STR,
             ARRAY_SIZE(pKvsDataChannel->rtcDataChannelDiagnostics.protocol));
 
-    CHK_STATUS(hashTablePut(pKvsPeerConnection->pDataChannels, channelId, (UINT64) pKvsDataChannel));
+    CHK_STATUS(hash_table_put(pKvsPeerConnection->pDataChannels, channelId, (UINT64) pKvsDataChannel));
 
 CleanUp:
     if (STATUS_SUCCEEDED(retStatus)) {

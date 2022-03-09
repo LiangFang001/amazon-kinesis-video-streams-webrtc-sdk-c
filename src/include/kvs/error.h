@@ -503,10 +503,12 @@ extern "C" {
 /******************************************************************************
  * Wss api error codes
  ******************************************************************************/
-#define STATUS_WSS_API_NULL_ARG          STATUS_WSS_API_BASE + 0x00000001
-#define STATUS_WSS_API_PARSE_RSP         STATUS_WSS_API_BASE + 0x00000002
-#define STATUS_WSS_API_NOT_ENOUGH_MEMORY STATUS_WSS_API_BASE + 0x00000003
-#define STATUS_WSS_API_BUF_OVERFLOW      STATUS_WSS_API_BASE + 0x00000004
+#define STATUS_WSS_API_NULL_ARG                 STATUS_WSS_API_BASE + 0x00000001
+#define STATUS_WSS_API_PARSE_RSP                STATUS_WSS_API_BASE + 0x00000002
+#define STATUS_WSS_API_NOT_ENOUGH_MEMORY        STATUS_WSS_API_BASE + 0x00000003
+#define STATUS_WSS_API_BUF_OVERFLOW             STATUS_WSS_API_BASE + 0x00000004
+#define STATUS_WSS_API_MISSING_SIGNALING_CLIENT STATUS_WSS_API_BASE + 0x00000005
+#define STATUS_WSS_API_MISSING_CONTEXT          STATUS_WSS_API_BASE + 0x00000006
 /******************************************************************************
  * Wss client error codes
  ******************************************************************************/

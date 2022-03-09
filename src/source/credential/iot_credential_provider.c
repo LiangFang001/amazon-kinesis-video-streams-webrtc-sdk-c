@@ -30,11 +30,6 @@
 ////////////////////////////////////////////////////////////////////////
 STATUS getIotCredentials(PAwsCredentialProvider, PAwsCredentials*);
 
-// internal functions
-STATUS createLwsIotCredentialProviderWithTime(PCHAR iotGetCredentialEndpoint, PCHAR certPath, PCHAR privateKeyPath, PCHAR caCertPath, PCHAR roleAlias,
-                                              PCHAR thingName, GetCurrentTimeFunc getCurrentTimeFn, UINT64 customData,
-                                              PAwsCredentialProvider* ppCredentialProvider);
-
 STATUS createIotCredentialProviderWithTime(PCHAR iotGetCredentialEndpoint, PCHAR certPath, PCHAR privateKeyPath, PCHAR caCertPath, PCHAR roleAlias,
                                            PCHAR thingName, GetCurrentTimeFunc getCurrentTimeFn, UINT64 customData,
                                            BlockingServiceCallFunc serviceCallFn, PAwsCredentialProvider* ppCredentialProvider)

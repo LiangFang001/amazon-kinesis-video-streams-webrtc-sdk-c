@@ -22,12 +22,12 @@
  */
 STATUS hashTableCreate(PHashTable* ppHashTable)
 {
-    return hashTableCreateWithParams(DEFAULT_HASH_TABLE_BUCKET_COUNT, DEFAULT_HASH_TABLE_BUCKET_LENGTH, ppHashTable);
+    return hash_table_createWithParams(DEFAULT_HASH_TABLE_BUCKET_COUNT, DEFAULT_HASH_TABLE_BUCKET_LENGTH, ppHashTable);
 }
 /**
  * Create a new hash table with specific parameters
  */
-STATUS hashTableCreateWithParams(UINT32 bucketCount, UINT32 bucketLength, PHashTable* ppHashTable)
+STATUS hash_table_createWithParams(UINT32 bucketCount, UINT32 bucketLength, PHashTable* ppHashTable)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PHashTable pHashTable = NULL;
@@ -81,7 +81,7 @@ CleanUp:
     // Clean-up on error
     if (STATUS_FAILED(retStatus)) {
         // Free everything
-        hashTableFree(pHashTable);
+        hash_table_free(pHashTable);
     }
 
     return retStatus;
@@ -90,7 +90,7 @@ CleanUp:
 /**
  * Frees and de-allocates the hash table
  */
-STATUS hashTableFree(PHashTable pHashTable)
+STATUS hash_table_free(PHashTable pHashTable)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 i;
@@ -100,7 +100,7 @@ STATUS hashTableFree(PHashTable pHashTable)
     CHK(pHashTable != NULL, retStatus);
 
     // We shouldn't fail here even if clear fails
-    hashTableClear(pHashTable);
+    hash_table_clear(pHashTable);
 
     // Free the buckets
     pHashBucket = (PHashBucket)(pHashTable + 1);
@@ -122,7 +122,7 @@ CleanUp:
 /**
  * Clears all the items and the buckets
  */
-STATUS hashTableClear(PHashTable pHashTable)
+STATUS hash_table_clear(PHashTable pHashTable)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 i;
@@ -196,13 +196,13 @@ CleanUp:
 /**
  * Checks whether an item exists in the hash table
  */
-STATUS hashTableContains(PHashTable pHashTable, UINT64 key, PBOOL pContains)
+STATUS hash_table_contains(PHashTable pHashTable, UINT64 key, PBOOL pContains)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT64 value;
 
     CHK(pContains != NULL, STATUS_NULL_ARG);
-    retStatus = hashTableGet(pHashTable, key, &value);
+    retStatus = hash_table_get(pHashTable, key, &value);
     CHK(retStatus == STATUS_HASH_KEY_NOT_PRESENT || retStatus == STATUS_SUCCESS, retStatus);
 
     // The return is status success if the item was retrieved OK
@@ -219,7 +219,7 @@ CleanUp:
 /**
  * Gets an item from the hash table
  */
-STATUS hashTableGet(PHashTable pHashTable, UINT64 key, PUINT64 pValue)
+STATUS hash_table_get(PHashTable pHashTable, UINT64 key, PUINT64 pValue)
 {
     STATUS retStatus = STATUS_SUCCESS;
     BOOL found = FALSE;
@@ -253,13 +253,13 @@ CleanUp:
 /**
  * Puts an item into the hash table
  */
-STATUS hashTablePut(PHashTable pHashTable, UINT64 key, UINT64 value)
+STATUS hash_table_put(PHashTable pHashTable, UINT64 key, UINT64 value)
 {
     STATUS retStatus = STATUS_SUCCESS;
     BOOL contains = FALSE;
 
     // Check if the item exists and bail out if it does
-    CHK_STATUS(hashTableContains(pHashTable, key, &contains));
+    CHK_STATUS(hash_table_contains(pHashTable, key, &contains));
     CHK(!contains, STATUS_HASH_KEY_ALREADY_PRESENT);
 
     // Perform an upsert
@@ -338,7 +338,7 @@ CleanUp:
 /**
  * Removes an item from the hash table. If the bucket is empty it's deleted. The existing items will be shifted.
  */
-STATUS hashTableRemove(PHashTable pHashTable, UINT64 key)
+STATUS hash_table_remove(PHashTable pHashTable, UINT64 key)
 {
     STATUS retStatus = STATUS_SUCCESS;
     BOOL found = FALSE;

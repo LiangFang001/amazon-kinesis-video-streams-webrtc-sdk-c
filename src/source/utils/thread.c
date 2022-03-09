@@ -255,6 +255,7 @@ PUBLIC_API STATUS defaultCreateThreadExPri(PTID pThreadId, PCHAR threadName, UIN
         param.sched_priority = prio;
         rs = pthread_attr_setschedparam(pAttr, &param);
     }
+
     if (joinable == TRUE) {
         pthread_attr_setdetachstate(pAttr, PTHREAD_CREATE_JOINABLE);
     } else {
@@ -289,7 +290,7 @@ PUBLIC_API STATUS defaultCreateThreadExPri(PTID pThreadId, PCHAR threadName, UIN
     successNum++;
 CleanUp:
     totalNum++;
-    DLOGD("pthread_create(%d/%d)", successNum, totalNum);
+    DLOGD("The number of threads: (%d/%d)", successNum, totalNum);
     if (pAttr != NULL) {
         result = pthread_attr_destroy(pAttr);
         if (result != 0) {

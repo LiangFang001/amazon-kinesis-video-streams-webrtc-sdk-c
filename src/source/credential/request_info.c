@@ -334,7 +334,7 @@ STATUS releaseCallInfo(PCallInfo pCallInfo)
             }
         }
 
-        stackQueueFree(pCallInfo->pResponseHeaders);
+        stack_queue_free(pCallInfo->pResponseHeaders);
         pCallInfo->pResponseHeaders = NULL;
     }
 

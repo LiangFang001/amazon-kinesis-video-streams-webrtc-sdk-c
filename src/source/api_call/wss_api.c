@@ -69,8 +69,14 @@ STATUS wss_api_connect(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCod
     uint8_t* pHttpSendBuffer = NULL;
     uint8_t* pHttpRecvBuffer = NULL;
 
-    CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
+    BOOL locked = FALSE;
+
+    CHK(pSignalingClient != NULL, STATUS_WSS_API_MISSING_SIGNALING_CLIENT);
     CHK(pSignalingClient->channelDescription.channelEndpointWss[0] != '\0', STATUS_INTERNAL_ERROR);
+
+    MUTEX_LOCK(pSignalingClient->wssContextLock);
+    locked = TRUE;
+
     CHK(NULL != (pHost = (CHAR*) MEMALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN)), STATUS_WSS_API_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpSendBuffer = (uint8_t*) MEMCALLOC(WSS_API_SEND_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpRecvBuffer = (uint8_t*) MEMCALLOC(WSS_API_RECV_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
@@ -152,8 +158,7 @@ STATUS wss_api_connect(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCod
 
         wss_client_create(&pWssClientCtx, xNetIoHandle, pSignalingClient, wss_api_handleDataMsg, wss_api_handleCtrlMsg, wss_api_handleDisconnection);
         pSignalingClient->pWssContext = pWssClientCtx;
-        CHK_STATUS(THREAD_CREATE_EX(&pWssClientCtx->listenerTid, WSS_LISTENER_THREAD_NAME, WSS_LISTENER_THREAD_SIZE, FALSE, wss_client_start,
-                                    (PVOID) pWssClientCtx));
+        CHK_STATUS(wss_client_start(pWssClientCtx));
 
         uHttpStatusCode = HTTP_STATUS_OK;
     }
@@ -189,6 +194,10 @@ CleanUp:
         *pHttpStatusCode = uHttpStatusCode;
     }
 
+    if (locked == TRUE) {
+        MUTEX_UNLOCK(pSignalingClient->wssContextLock);
+    }
+
     SAFE_MEMFREE(pHost);
     SAFE_MEMFREE(pUrl);
     SAFE_MEMFREE(pHttpSendBuffer);
@@ -203,7 +212,8 @@ STATUS wss_api_send(PSignalingClient pSignalingClient, PBYTE pSendBuf, UINT32 bu
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
-    CHK(pSignalingClient != NULL && pSignalingClient->pWssContext != NULL, STATUS_WSS_API_NULL_ARG);
+    CHK(pSignalingClient != NULL, STATUS_WSS_API_MISSING_SIGNALING_CLIENT);
+    CHK(pSignalingClient->pWssContext != NULL, STATUS_WSS_API_MISSING_CONTEXT);
 
     DLOGD("Sending data over web socket: %s", pSendBuf);
     CHK_STATUS(wss_client_sendText(pSignalingClient->pWssContext, pSendBuf, bufLen));
@@ -220,7 +230,7 @@ STATUS wss_api_handleDataMsg(PVOID pUSerData, PCHAR pMessage, UINT32 messageLen)
     PSignalingMessageWrapper pSignalingMessageWrapper = NULL;
     PSignalingClient pSignalingClient = (PSignalingClient) pUSerData;
 
-    CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
+    CHK(pSignalingClient != NULL, STATUS_WSS_API_MISSING_SIGNALING_CLIENT);
 
     // If we have a signalingMessage and if there is a correlation id specified then the response should be non-empty
     if (pMessage == NULL || messageLen == 0) {
@@ -265,7 +275,7 @@ STATUS wss_api_handleCtrlMsg(PVOID pUserData, UINT8 opcode, PCHAR pMessage, UINT
     PCHAR pCurPtr;
     PSignalingClient pSignalingClient = (PSignalingClient) pUserData;
 
-    CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
+    CHK(pSignalingClient != NULL, STATUS_WSS_API_MISSING_SIGNALING_CLIENT);
 
     // DLOGD("opcode:%x", opcode);
     if (opcode == WSLAY_PONG) {
@@ -309,7 +319,7 @@ STATUS wss_api_handleDisconnection(PVOID pUserData, STATUS errCode)
     PCHAR pCurPtr;
     PSignalingClient pSignalingClient = (PSignalingClient) pUserData;
 
-    CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
+    CHK(pSignalingClient != NULL, STATUS_WSS_API_MISSING_SIGNALING_CLIENT);
 
     PSignalingMessageWrapper pSignalingMessageWrapper = NULL;
 
@@ -333,24 +343,22 @@ STATUS wss_api_disconnect(PSignalingClient pSignalingClient)
 {
     WSS_API_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
+    PWssClientContext pWssClientCtx = NULL;
+    BOOL locked = FALSE;
 
-    CHK(pSignalingClient != NULL, STATUS_WSS_API_NULL_ARG);
-    PWssClientContext pWssClientCtx = (PWssClientContext) pSignalingClient->pWssContext;
-    CHK(pWssClientCtx != NULL, STATUS_WSS_API_NULL_ARG);
+    CHK(pSignalingClient != NULL, STATUS_WSS_API_MISSING_SIGNALING_CLIENT);
+    MUTEX_LOCK(pSignalingClient->wssContextLock);
+    locked = TRUE;
 
-    if (IS_VALID_TID_VALUE(pWssClientCtx->listenerTid)) {
-        THREAD_CANCEL(pWssClientCtx->listenerTid);
-        pWssClientCtx->listenerTid = INVALID_TID_VALUE;
-    }
-
-    // waiting the termination of listener thread.
-    if (pWssClientCtx != NULL) {
-        wss_client_close(pWssClientCtx);
-        pSignalingClient->pWssContext = NULL;
-    }
+    pWssClientCtx = (PWssClientContext) pSignalingClient->pWssContext;
+    CHK(pWssClientCtx != NULL, retStatus);
+    wss_client_close(pWssClientCtx);
+    pSignalingClient->pWssContext = NULL;
 
 CleanUp:
-
+    if (locked == TRUE) {
+        MUTEX_UNLOCK(pSignalingClient->wssContextLock);
+    }
     WSS_API_EXIT();
     return retStatus;
 }

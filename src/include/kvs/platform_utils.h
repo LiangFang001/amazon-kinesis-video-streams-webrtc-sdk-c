@@ -12,8 +12,8 @@ extern "C" {
 
 #define CONN_LISTENER_THREAD_NAME "connListener"
 #define CONN_LISTENER_THREAD_SIZE 8192
-#define WSS_LISTENER_THREAD_NAME  "wssListener" //!< the parameters of wss listener.
-#define WSS_LISTENER_THREAD_SIZE  10240
+#define WSS_CLIENT_THREAD_NAME    "wss_client" //!< the parameters of wss listener.
+#define WSS_CLIENT_THREAD_SIZE    10240
 #define WSS_DISPATCH_THREAD_NAME  "wssDispatch" //!< the parameters of wss dispatcher
 #define WSS_DISPATCH_THREAD_SIZE  10240
 #define PEER_TIMER_NAME           "peerTimer"

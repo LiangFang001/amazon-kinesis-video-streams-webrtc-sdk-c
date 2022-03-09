@@ -48,13 +48,12 @@ typedef struct {
     struct wslay_event_callbacks event_callbacks; //!< the callback of event context.
     NetIoHandle xNetIoHandle;
     UINT64 pingCounter;
-    MUTEX clientLock;                          //!< the lock for the control of the whole wss client api.
-    MUTEX listenerLock;                        //!< the lock for the listener thread.
+    MUTEX ioLock;                              //!< the lock for the control of the wss io.
     PVOID pUserData;                           //!< the arguments of the message handler. ref: PSignalingClient
     MessageHandlerFunc messageHandler;         //!< the handler of receive the non-ctrl messages.
     CtrlMessageHandlerFunc ctrlMessageHandler; //!< the handler of receive the ctrl messages.
     TerminationHandlerFunc terminationHandler;
-    TID listenerTid;
+    TID clientTid;
 } WssClientContext, *PWssClientContext;
 
 /******************************************************************************
@@ -83,7 +82,7 @@ VOID wss_client_create(PWssClientContext* ppWssClientCtx, NetIoHandle pNetworkCo
  *
  * @return STATUS status of execution.
  */
-PVOID wss_client_start(PWssClientContext pWssClientCtx);
+STATUS wss_client_start(PWssClientContext pWssClientCtx);
 /**
  * @brief send the text message through the wss connection.
  *

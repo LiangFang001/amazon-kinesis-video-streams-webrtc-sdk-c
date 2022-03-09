@@ -68,7 +68,7 @@ STATUS channel_info_create(PChannelInfo, PChannelInfo*);
  *
  * @return - STATUS code of the execution
  */
-STATUS freeChannelInfo(PChannelInfo*);
+STATUS channel_info_free(PChannelInfo*);
 
 /**
  * Returns the signaling channel status from a string

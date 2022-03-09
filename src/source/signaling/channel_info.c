@@ -204,7 +204,7 @@ STATUS channel_info_create(PChannelInfo pOrigChannelInfo, PChannelInfo* ppChanne
 CleanUp:
 
     if (STATUS_FAILED(retStatus)) {
-        freeChannelInfo(&pChannelInfo);
+        channel_info_free(&pChannelInfo);
     }
 
     if (ppChannelInfo != NULL) {
@@ -215,7 +215,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeChannelInfo(PChannelInfo* ppChannelInfo)
+STATUS channel_info_free(PChannelInfo* ppChannelInfo)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;

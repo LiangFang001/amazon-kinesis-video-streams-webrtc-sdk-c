@@ -1283,13 +1283,13 @@ PUBLIC_API STATUS pc_addTransceiver(PRtcPeerConnection, PRtcMediaStreamTrack, PR
 /**
  * @brief Set a callback for transceiver frame
  *
- * @param[in] PRtcRtpTransceiver Populated RtcRtpTransceiver struct
- * @param[in] UINT64 User customData that will be passed along when RtcOnFrame is called
- * @param[in] RtcOnFrame User RtcOnFrame callback
+ * @param[in] pRtcRtpTransceiver Populated RtcRtpTransceiver struct
+ * @param[in] customData User customData that will be passed along when RtcOnFrame is called
+ * @param[in] rtcOnFrame User RtcOnFrame callback
  *
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
-PUBLIC_API STATUS rtp_transceiver_onFrame(PRtcRtpTransceiver, UINT64, RtcOnFrame);
+STATUS rtp_transceiver_onFrame(PRtcRtpTransceiver pRtcRtpTransceiver, UINT64 customData, RtcOnFrame rtcOnFrame);
 
 /**
  * @brief Set a callback for bandwidth estimation results
@@ -1611,7 +1611,7 @@ PUBLIC_API STATUS signaling_client_getMetrics(SIGNALING_CLIENT_HANDLE, PSignalin
  *
  * Reference: https://www.w3.org/TR/webrtc/#rtcpeerconnection-interface-extensions-1
  */
-PUBLIC_API STATUS rtcPeerConnectionGetMetrics(PRtcPeerConnection, PRtcRtpTransceiver, PRtcStats);
+PUBLIC_API STATUS metrics_get(PRtcPeerConnection, PRtcRtpTransceiver, PRtcStats);
 
 /**
  * @brief Creates an RtcCertificate object

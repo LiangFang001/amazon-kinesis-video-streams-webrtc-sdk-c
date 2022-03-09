@@ -266,7 +266,7 @@ typedef struct {
     SignalingDiagnostics diagnostics; //!< Internal diagnostics object
 
     ApiCallHistory apiCallHistory; //!< Tracking when was the Last time the APIs were called
-
+    MUTEX wssContextLock;
     PVOID pWssContext; //!< wss context to use
     DispatchMsgHandlerFunc pDispatchMsgHandler;
     TID dispatchMsgTid;

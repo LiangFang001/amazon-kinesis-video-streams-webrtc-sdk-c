@@ -28,6 +28,14 @@
 #include "http_api.h"
 
 /******************************************************************************
+ * DEFINITION
+ ******************************************************************************/
+#define SIGNALING_ENTER()  // ENTER()
+#define SIGNALING_LEAVE()  // LEAVE()
+#define SIGNALING_ENTERS() // ENTERS()
+#define SIGNALING_LEAVES() // LEAVES()
+
+/******************************************************************************
  * INTERNAL FUNCTION PROTOTYPE
  ******************************************************************************/
 STATUS signaling_validateCallbacks(PSignalingClient, PSignalingClientCallbacks);
@@ -94,19 +102,22 @@ static PVOID signaling_handleMsg(PVOID pArgs)
     PSignalingMessageWrapper pMsg;
     BOOL connected;
     BOOL exit = FALSE;
+
     DLOGD("The thread of handling msg is up");
     while (1) {
+        if (pSignalingClient == NULL) {
+            DLOGW("null pSignalingClient");
+            break;
+        }
         BaseType_t err = xQueueReceive(pSignalingClient->inboundMsqQ, &pMsg, 0xffffffffUL);
         if (err == pdPASS) {
             DLOGD("handling wss msg");
-            retStatus = STATUS_SUCCESS;
 
             PSignalingClient pSignalingClient = NULL;
+            retStatus = STATUS_SUCCESS;
 
             CHK(pMsg != NULL, STATUS_SIGNALING_NULL_MSG);
-
             pSignalingClient = pMsg->pSignalingClient;
-
             CHK(pSignalingClient != NULL, STATUS_SIGNALING_INTERNAL_ERROR);
 
             switch (pMsg->receivedSignalingMessage.signalingMessage.messageType) {
@@ -143,7 +154,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
                     break;
 
                 case SIGNALING_MESSAGE_TYPE_GO_AWAY:
-                    DLOGD("wss msg type:%d", pMsg->receivedSignalingMessage.signalingMessage.messageType);
+                    DLOGD("Wss msg type:%d", pMsg->receivedSignalingMessage.signalingMessage.messageType);
                     CHK_STATUS(wss_api_disconnect(pSignalingClient));
                     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
                     ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_SIGNALING_GO_AWAY);
@@ -153,7 +164,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
                     break;
 
                 case SIGNALING_MESSAGE_TYPE_RECONNECT_ICE_SERVER:
-                    DLOGD("wss msg type:%d", pMsg->receivedSignalingMessage.signalingMessage.messageType);
+                    DLOGD("Wss msg type:%d", pMsg->receivedSignalingMessage.signalingMessage.messageType);
                     CHK_STATUS(wss_api_disconnect(pSignalingClient));
                     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
                     ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_SIGNALING_RECONNECT_ICE);
@@ -163,7 +174,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
                     break;
                 case SIGNALING_MESSAGE_TYPE_CTRL_CLOSE:
                 case SIGNALING_MESSAGE_TYPE_CTRL_LISTENER_TREMINATED:
-                    DLOGD("wss msg type:%d", pMsg->receivedSignalingMessage.signalingMessage.messageType);
+                    DLOGD("Wss msg type:%d", pMsg->receivedSignalingMessage.signalingMessage.messageType);
                     CHK_STATUS(wss_api_disconnect(pSignalingClient));
                     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
                     ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_UNKNOWN);
@@ -189,14 +200,14 @@ static PVOID signaling_handleMsg(PVOID pArgs)
         }
     }
 
-    DLOGW("Wss dispatcher exits.");
-    if (pSignalingClient->inboundMsqQ != NULL) {
-        DLOGD("Delete the queue of msg");
-        vQueueDelete(pSignalingClient->inboundMsqQ);
-        pSignalingClient->inboundMsqQ = NULL;
+    if (pSignalingClient != NULL) {
+        if (pSignalingClient->inboundMsqQ != NULL) {
+            DLOGD("Delete the queue of msg");
+            vQueueDelete(pSignalingClient->inboundMsqQ);
+            pSignalingClient->inboundMsqQ = NULL;
+        }
     }
-
-    pSignalingClient->dispatchMsgTid = INVALID_TID_VALUE;
+    DLOGW("Wss dispatcher exits.");
     THREAD_EXIT(NULL);
     return (PVOID)(ULONG_PTR) retStatus;
 }
@@ -221,7 +232,7 @@ static STATUS signaling_dispatchMsg(PVOID pMessage)
         pSignalingClient->inboundMsqQ = xQueueCreate(WSS_INBOUND_MSGQ_LENGTH, SIZEOF(PSignalingMessageWrapper));
         CHK(pSignalingClient->inboundMsqQ != NULL, STATUS_SIGNALING_CREATE_MSGQ_FAILED);
         DLOGD("Create new thread to handle msg.");
-        CHK(THREAD_CREATE_EX(&pSignalingClient->dispatchMsgTid, WSS_DISPATCH_THREAD_NAME, WSS_DISPATCH_THREAD_SIZE, FALSE, signaling_handleMsg,
+        CHK(THREAD_CREATE_EX(&pSignalingClient->dispatchMsgTid, WSS_DISPATCH_THREAD_NAME, WSS_DISPATCH_THREAD_SIZE, TRUE, signaling_handleMsg,
                              (PVOID) pSignalingClient) == STATUS_SUCCESS,
             STATUS_SIGNALING_CREATE_DISPATCHER_FAILED);
     }
@@ -314,8 +325,11 @@ STATUS signaling_create(PSignalingClientInfoInternal pClientInfo, PChannelInfo p
     pSignalingClient->diagnosticsLock = MUTEX_CREATE(TRUE);
     CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->diagnosticsLock), STATUS_INVALID_OPERATION);
 
+    pSignalingClient->wssContextLock = MUTEX_CREATE(TRUE);
+    CHK(IS_VALID_MUTEX_VALUE(pSignalingClient->wssContextLock), STATUS_INVALID_OPERATION);
+
     // Create the ongoing message list
-    CHK_STATUS(stackQueueCreate(&pSignalingClient->pOutboundMsgQ));
+    CHK_STATUS(stack_queue_create(&pSignalingClient->pOutboundMsgQ));
 
     // Initializing the diagnostics mostly is taken care of by zero-mem in MEMCALLOC
     pSignalingClient->diagnostics.createTime = GETTIME();
@@ -359,29 +373,30 @@ STATUS signaling_free(PSignalingClient* ppSignalingClient)
     PSignalingClient pSignalingClient;
 
     CHK(ppSignalingClient != NULL, STATUS_SIGNALING_NULL_ARG);
-
     pSignalingClient = *ppSignalingClient;
     CHK(pSignalingClient != NULL, retStatus);
 
     ATOMIC_STORE_BOOL(&pSignalingClient->shutdown, TRUE);
+    pSignalingClient->reconnect = FALSE;
+
     // termination wss connection.
+    DLOGD("Closing the wss client.");
     wss_api_disconnect(pSignalingClient);
+    DLOGD("The wss client is done.");
     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
     ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_OK);
 
     // #TBD, need to add cancel code.
     if (IS_VALID_TID_VALUE(pSignalingClient->dispatchMsgTid)) {
-        DLOGD("Cancel the thread to handle msg.");
-        THREAD_CANCEL(pSignalingClient->dispatchMsgTid);
-
+        DLOGD("Waiting wss dispatcher done.");
+        THREAD_JOIN(pSignalingClient->dispatchMsgTid, NULL);
         pSignalingClient->dispatchMsgTid = INVALID_TID_VALUE;
+        DLOGD("The wss dispatcher is done.");
     }
 
     signaling_fsm_free(pSignalingClient->signalingFsmHandle);
-
-    freeChannelInfo(&pSignalingClient->pChannelInfo);
-
-    stackQueueFree(pSignalingClient->pOutboundMsgQ);
+    channel_info_free(&pSignalingClient->pChannelInfo);
+    stack_queue_free(pSignalingClient->pOutboundMsgQ);
 
     if (IS_VALID_MUTEX_VALUE(pSignalingClient->nestedFsmLock)) {
         MUTEX_FREE(pSignalingClient->nestedFsmLock);
@@ -393,6 +408,10 @@ STATUS signaling_free(PSignalingClient* ppSignalingClient)
 
     if (IS_VALID_MUTEX_VALUE(pSignalingClient->diagnosticsLock)) {
         MUTEX_FREE(pSignalingClient->diagnosticsLock);
+    }
+
+    if (IS_VALID_MUTEX_VALUE(pSignalingClient->wssContextLock)) {
+        MUTEX_FREE(pSignalingClient->wssContextLock);
     }
 
     MEMFREE(pSignalingClient);
@@ -1029,7 +1048,6 @@ CleanUp:
     if (STATUS_FAILED(retStatus) && pSignalingClient != NULL) {
         ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_UNKNOWN);
     }
-
     LEAVES();
     return retStatus;
 }
@@ -1039,7 +1057,6 @@ STATUS signaling_channel_create(PSignalingClient pSignalingClient, UINT64 time)
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 httpStatusCode = HTTP_STATUS_NONE;
-
     CHK(pSignalingClient != NULL, STATUS_SIGNALING_NULL_ARG);
 
     // Check for the stale credentials
@@ -1074,7 +1091,6 @@ CleanUp:
     if (STATUS_FAILED(retStatus) && pSignalingClient != NULL) {
         ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_UNKNOWN);
     }
-
     LEAVES();
     return retStatus;
 }
@@ -1157,7 +1173,6 @@ CleanUp:
     if (STATUS_FAILED(retStatus) && pSignalingClient != NULL) {
         ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_UNKNOWN);
     }
-
     LEAVES();
     return retStatus;
 }
@@ -1204,7 +1219,6 @@ CleanUp:
     if (STATUS_FAILED(retStatus) && pSignalingClient != NULL) {
         ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_UNKNOWN);
     }
-
     LEAVES();
     return retStatus;
 }
@@ -1301,7 +1315,6 @@ STATUS signaling_channel_connect(PSignalingClient pSignalingClient, UINT64 time)
     }
 
 CleanUp:
-
     LEAVES();
     return retStatus;
 }

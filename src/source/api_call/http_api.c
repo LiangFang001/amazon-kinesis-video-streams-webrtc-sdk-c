@@ -741,6 +741,7 @@ STATUS http_api_getIotCredential(PIotCredentialProvider pIotCredentialProvider)
                                          pIotCredentialProvider->certPath, pIotCredentialProvider->privateKeyPath));
 
     CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_NET_SEND_DATA_FAILED);
+
     CHK_STATUS(NetIo_recv(xNetIoHandle, (unsigned char*) pHttpRecvBuffer, HTTP_API_RECV_BUFFER_MAX_SIZE, &uBytesReceived));
 
     CHK(uBytesReceived > 0, STATUS_NET_RECV_DATA_FAILED);

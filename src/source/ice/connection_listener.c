@@ -271,7 +271,7 @@ PVOID connection_listener_receiveRoutine(PVOID pArg)
     MEMSET(&rfds, 0x00, SIZEOF(fd_set));
 
     srcAddr.isPointToPoint = FALSE;
-
+    DLOGD("Connection listener is up.");
     while (!ATOMIC_LOAD_BOOL(&pConnectionListener->terminate)) {
         FD_ZERO(&rfds);
         nfds = 0;
@@ -407,6 +407,7 @@ CleanUp:
     }
 
     CHK_LOG_ERR(retStatus);
+    DLOGD("Connection listener is down.");
     THREAD_EXIT(NULL);
     return (PVOID)(ULONG_PTR) retStatus;
 }

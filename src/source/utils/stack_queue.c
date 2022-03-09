@@ -20,7 +20,7 @@
 /**
  * Create a new stack/queue
  */
-STATUS stackQueueCreate(PStackQueue* ppStackQueue)
+STATUS stack_queue_create(PStackQueue* ppStackQueue)
 {
     return singleListCreate(ppStackQueue);
 }
@@ -28,7 +28,7 @@ STATUS stackQueueCreate(PStackQueue* ppStackQueue)
 /**
  * Frees and de-allocates the stack queue
  */
-STATUS stackQueueFree(PStackQueue pStackQueue)
+STATUS stack_queue_free(PStackQueue pStackQueue)
 {
     return singleListFree(pStackQueue);
 }

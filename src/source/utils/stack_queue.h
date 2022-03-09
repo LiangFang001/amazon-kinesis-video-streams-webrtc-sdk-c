@@ -33,12 +33,12 @@ typedef StackQueueIterator* PStackQueueIterator;
 /**
  * Create a new stack queue
  */
-STATUS stackQueueCreate(PStackQueue*);
+STATUS stack_queue_create(PStackQueue*);
 
 /**
  * Frees and de-allocates the stack queue
  */
-STATUS stackQueueFree(PStackQueue);
+STATUS stack_queue_free(PStackQueue);
 
 /**
  * Clears and de-allocates all the items

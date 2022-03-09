@@ -97,7 +97,7 @@ STATUS pc_sortDataChannelsCallback(UINT64 customData, PHashEntry pHashEntry)
     CHK(customData != 0, STATUS_PEER_CONN_NULL_ARG);
 
     pKvsDataChannel->channelId = data->currentDataChannelId;
-    CHK_STATUS(hashTablePut(data->pKvsPeerConnection->pDataChannels, pKvsDataChannel->channelId, (UINT64) pKvsDataChannel));
+    CHK_STATUS(hash_table_put(data->pKvsPeerConnection->pDataChannels, pKvsDataChannel->channelId, (UINT64) pKvsDataChannel));
 
     data->currentDataChannelId += 2;
 
@@ -129,12 +129,12 @@ STATUS pc_allocateSctp(PKvsPeerConnection pKvsPeerConnection)
     data.currentDataChannelId = currentDataChannelId;
     data.pKvsPeerConnection = pKvsPeerConnection;
     data.unkeyedDataChannels = pKvsPeerConnection->pDataChannels;
-    CHK_STATUS(hashTableCreateWithParams(CODEC_HASH_TABLE_BUCKET_COUNT, CODEC_HASH_TABLE_BUCKET_LENGTH, &pKvsPeerConnection->pDataChannels));
+    CHK_STATUS(hash_table_createWithParams(CODEC_HASH_TABLE_BUCKET_COUNT, CODEC_HASH_TABLE_BUCKET_LENGTH, &pKvsPeerConnection->pDataChannels));
     CHK_STATUS(hashTableIterateEntries(data.unkeyedDataChannels, (UINT64) &data, pc_sortDataChannelsCallback));
 
     // Free unkeyed DataChannels
-    CHK_LOG_ERR(hashTableClear(data.unkeyedDataChannels));
-    CHK_LOG_ERR(hashTableFree(data.unkeyedDataChannels));
+    CHK_LOG_ERR(hash_table_clear(data.unkeyedDataChannels));
+    CHK_LOG_ERR(hash_table_free(data.unkeyedDataChannels));
 
     // Create the SCTP Session
     // setup the sctp callback.
@@ -146,7 +146,7 @@ STATUS pc_allocateSctp(PKvsPeerConnection pKvsPeerConnection)
 
     for (; currentDataChannelId < data.currentDataChannelId; currentDataChannelId += 2) {
         pKvsDataChannel = NULL;
-        retStatus = hashTableGet(pKvsPeerConnection->pDataChannels, currentDataChannelId, &hashValue);
+        retStatus = hash_table_get(pKvsPeerConnection->pDataChannels, currentDataChannelId, &hashValue);
         pKvsDataChannel = (PKvsDataChannel) hashValue;
         if (retStatus == STATUS_SUCCESS || retStatus == STATUS_HASH_KEY_NOT_PRESENT) {
             retStatus = STATUS_SUCCESS;
@@ -395,7 +395,7 @@ STATUS pc_onFrameReady(UINT64 customData, UINT16 startIndex, UINT16 endIndex, UI
     CHK(pTransceiver != NULL, STATUS_PEER_CONN_NULL_ARG);
 
     // TODO: handle multi-packet frames
-    retStatus = hashTableGet(pTransceiver->pJitterBuffer->pPkgBufferHashTable, startIndex, &hashValue);
+    retStatus = hash_table_get(pTransceiver->pJitterBuffer->pPkgBufferHashTable, startIndex, &hashValue);
     pPacket = (PRtpPacket) hashValue;
     if (retStatus == STATUS_SUCCESS || retStatus == STATUS_HASH_KEY_NOT_PRESENT) {
         retStatus = STATUS_SUCCESS;
@@ -453,7 +453,7 @@ STATUS pc_onFrameDrop(UINT64 customData, UINT16 startIndex, UINT16 endIndex, UIN
     DLOGW("Frame with timestamp %u is dropped!", timestamp);
     CHK(pTransceiver != NULL, STATUS_PEER_CONN_NULL_ARG);
 
-    retStatus = hashTableGet(pTransceiver->pJitterBuffer->pPkgBufferHashTable, startIndex, &hashValue);
+    retStatus = hash_table_get(pTransceiver->pJitterBuffer->pPkgBufferHashTable, startIndex, &hashValue);
     pPacket = (PRtpPacket) hashValue;
     if (retStatus == STATUS_SUCCESS || retStatus == STATUS_HASH_KEY_NOT_PRESENT) {
         retStatus = STATUS_SUCCESS;
@@ -608,7 +608,7 @@ VOID pc_onSctpSessionDataChannelMessage(UINT64 customData, UINT32 channelId, BOO
 
     CHK(pKvsPeerConnection != NULL, STATUS_PEER_CONN_NO_CONNECTION);
 
-    retStatus = hashTableGet(pKvsPeerConnection->pDataChannels, channelId, &hashValue);
+    retStatus = hash_table_get(pKvsPeerConnection->pDataChannels, channelId, &hashValue);
     pKvsDataChannel = (PKvsDataChannel) hashValue;
 
     if (retStatus == STATUS_SUCCESS || retStatus == STATUS_HASH_KEY_NOT_PRESENT) {
@@ -656,7 +656,7 @@ VOID pc_onSctpSessionDataChannelOpen(UINT64 customData, UINT32 channelId, PBYTE 
     pKvsDataChannel->rtcDataChannelDiagnostics.dataChannelIdentifier = channelId;
     pKvsDataChannel->rtcDataChannelDiagnostics.state = RTC_DATA_CHANNEL_STATE_OPEN;
     STRNCPY(pKvsDataChannel->rtcDataChannelDiagnostics.label, (PCHAR) pName, nameLen);
-    CHK_STATUS(hashTablePut(pKvsPeerConnection->pDataChannels, channelId, (UINT64) pKvsDataChannel));
+    CHK_STATUS(hash_table_put(pKvsPeerConnection->pDataChannels, channelId, (UINT64) pKvsDataChannel));
     pKvsPeerConnection->onDataChannel(pKvsPeerConnection->onDataChannelCustomData, &(pKvsDataChannel->dataChannel));
 
 CleanUp:
@@ -831,10 +831,10 @@ STATUS pc_create(PRtcConfiguration pConfiguration, PRtcPeerConnection* ppPeerCon
     CHK_STATUS(dtls_session_onOutBoundData(pKvsPeerConnection->pDtlsSession, (UINT64) pKvsPeerConnection, pc_onDtlsOutboundPacket));
     CHK_STATUS(dtls_session_onStateChange(pKvsPeerConnection->pDtlsSession, (UINT64) pKvsPeerConnection, pc_onDtlsStateChange));
     // #codec.
-    CHK_STATUS(hashTableCreateWithParams(CODEC_HASH_TABLE_BUCKET_COUNT, CODEC_HASH_TABLE_BUCKET_LENGTH, &pKvsPeerConnection->pCodecTable));
+    CHK_STATUS(hash_table_createWithParams(CODEC_HASH_TABLE_BUCKET_COUNT, CODEC_HASH_TABLE_BUCKET_LENGTH, &pKvsPeerConnection->pCodecTable));
     // #datachannel
-    CHK_STATUS(hashTableCreateWithParams(CODEC_HASH_TABLE_BUCKET_COUNT, CODEC_HASH_TABLE_BUCKET_LENGTH, &pKvsPeerConnection->pDataChannels));
-    CHK_STATUS(hashTableCreateWithParams(RTX_HASH_TABLE_BUCKET_COUNT, RTX_HASH_TABLE_BUCKET_LENGTH, &pKvsPeerConnection->pRtxTable));
+    CHK_STATUS(hash_table_createWithParams(CODEC_HASH_TABLE_BUCKET_COUNT, CODEC_HASH_TABLE_BUCKET_LENGTH, &pKvsPeerConnection->pDataChannels));
+    CHK_STATUS(hash_table_createWithParams(RTX_HASH_TABLE_BUCKET_COUNT, RTX_HASH_TABLE_BUCKET_LENGTH, &pKvsPeerConnection->pRtxTable));
     CHK_STATUS(doubleListCreate(&(pKvsPeerConnection->pTransceivers)));
 #ifdef ENABLE_STREAMING
     pKvsPeerConnection->pSrtpSessionLock = MUTEX_CREATE(TRUE);
@@ -921,7 +921,7 @@ STATUS pc_free(PRtcPeerConnection* ppPeerConnection)
 #ifdef ENABLE_DATA_CHANNEL
     // Free DataChannels
     CHK_LOG_ERR(hashTableIterateEntries(pKvsPeerConnection->pDataChannels, 0, pc_freeHashEntry));
-    CHK_LOG_ERR(hashTableFree(pKvsPeerConnection->pDataChannels));
+    CHK_LOG_ERR(hash_table_free(pKvsPeerConnection->pDataChannels));
 #endif
 
 // free rest of structs
@@ -933,8 +933,8 @@ STATUS pc_free(PRtcPeerConnection* ppPeerConnection)
 
 #ifdef ENABLE_STREAMING
     CHK_LOG_ERR(doubleListFree(pKvsPeerConnection->pTransceivers));
-    CHK_LOG_ERR(hashTableFree(pKvsPeerConnection->pCodecTable));
-    CHK_LOG_ERR(hashTableFree(pKvsPeerConnection->pRtxTable));
+    CHK_LOG_ERR(hash_table_free(pKvsPeerConnection->pCodecTable));
+    CHK_LOG_ERR(hash_table_free(pKvsPeerConnection->pRtxTable));
     if (IS_VALID_MUTEX_VALUE(pKvsPeerConnection->pSrtpSessionLock)) {
         MUTEX_FREE(pKvsPeerConnection->pSrtpSessionLock);
     }
@@ -1369,7 +1369,7 @@ STATUS pc_addSupportedCodec(PRtcPeerConnection pPeerConnection, RTC_CODEC rtcCod
 
     CHK(pKvsPeerConnection != NULL, STATUS_PEER_CONN_NULL_ARG);
 
-    CHK_STATUS(hashTablePut(pKvsPeerConnection->pCodecTable, rtcCodec, 0));
+    CHK_STATUS(hash_table_put(pKvsPeerConnection->pCodecTable, rtcCodec, 0));
 
 CleanUp:
 

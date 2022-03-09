@@ -199,31 +199,31 @@ STATUS sdp_setPayloadTypesFromOffer(PHashTable codecTable, PHashTable rtxTable, 
         for (currentAttribute = 0; currentAttribute < pMediaDescription->mediaAttributesCount; currentAttribute++) {
             attributeValue = pMediaDescription->sdpAttributes[currentAttribute].attributeValue;
             // #video.
-            CHK_STATUS(hashTableContains(codecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, &supportCodec));
+            CHK_STATUS(hash_table_contains(codecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, &supportCodec));
             if (supportCodec && (end = STRSTR(attributeValue, H264_VALUE)) != NULL) {
                 CHK_STATUS(STRTOUI64(attributeValue, end - 1, 10, &parsedPayloadType));
                 CHK_STATUS(hashTableUpsert(codecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, parsedPayloadType));
             }
             // #audio.
-            CHK_STATUS(hashTableContains(codecTable, RTC_CODEC_OPUS, &supportCodec));
+            CHK_STATUS(hash_table_contains(codecTable, RTC_CODEC_OPUS, &supportCodec));
             if (supportCodec && (end = STRSTR(attributeValue, OPUS_VALUE)) != NULL) {
                 CHK_STATUS(STRTOUI64(attributeValue, end - 1, 10, &parsedPayloadType));
                 CHK_STATUS(hashTableUpsert(codecTable, RTC_CODEC_OPUS, parsedPayloadType));
             }
             // #video.
-            CHK_STATUS(hashTableContains(codecTable, RTC_CODEC_VP8, &supportCodec));
+            CHK_STATUS(hash_table_contains(codecTable, RTC_CODEC_VP8, &supportCodec));
             if (supportCodec && (end = STRSTR(attributeValue, VP8_VALUE)) != NULL) {
                 CHK_STATUS(STRTOUI64(attributeValue, end - 1, 10, &parsedPayloadType));
                 CHK_STATUS(hashTableUpsert(codecTable, RTC_CODEC_VP8, parsedPayloadType));
             }
             // #audio
-            CHK_STATUS(hashTableContains(codecTable, RTC_CODEC_MULAW, &supportCodec));
+            CHK_STATUS(hash_table_contains(codecTable, RTC_CODEC_MULAW, &supportCodec));
             if (supportCodec && (end = STRSTR(attributeValue, MULAW_VALUE)) != NULL) {
                 CHK_STATUS(STRTOUI64(attributeValue, end - 1, 10, &parsedPayloadType));
                 CHK_STATUS(hashTableUpsert(codecTable, RTC_CODEC_MULAW, parsedPayloadType));
             }
             // #audio
-            CHK_STATUS(hashTableContains(codecTable, RTC_CODEC_ALAW, &supportCodec));
+            CHK_STATUS(hash_table_contains(codecTable, RTC_CODEC_ALAW, &supportCodec));
             if (supportCodec && (end = STRSTR(attributeValue, ALAW_VALUE)) != NULL) {
                 CHK_STATUS(STRTOUI64(attributeValue, end - 1, 10, &parsedPayloadType));
                 CHK_STATUS(hashTableUpsert(codecTable, RTC_CODEC_ALAW, parsedPayloadType));
@@ -235,19 +235,19 @@ STATUS sdp_setPayloadTypesFromOffer(PHashTable codecTable, PHashTable rtxTable, 
                 if ((end = STRSTR(attributeValue, RTX_CODEC_VALUE)) != NULL) {
                     CHK_STATUS(STRTOUI64(end + STRLEN(RTX_CODEC_VALUE), NULL, 10, &parsedPayloadType));
                     CHK_STATUS(
-                        hashTableContains(codecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, &supportCodec));
+                        hash_table_contains(codecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, &supportCodec));
                     if (supportCodec) {
-                        CHK_STATUS(
-                            hashTableGet(codecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, &hashmapPayloadType));
+                        CHK_STATUS(hash_table_get(codecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE,
+                                                  &hashmapPayloadType));
                         if (parsedPayloadType == hashmapPayloadType) {
                             CHK_STATUS(hashTableUpsert(rtxTable, RTC_RTX_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE,
                                                        rtxPayloadType));
                         }
                     }
 
-                    CHK_STATUS(hashTableContains(codecTable, RTC_CODEC_VP8, &supportCodec));
+                    CHK_STATUS(hash_table_contains(codecTable, RTC_CODEC_VP8, &supportCodec));
                     if (supportCodec) {
-                        CHK_STATUS(hashTableGet(codecTable, RTC_CODEC_VP8, &hashmapPayloadType));
+                        CHK_STATUS(hash_table_get(codecTable, RTC_CODEC_VP8, &hashmapPayloadType));
                         if (parsedPayloadType == hashmapPayloadType) {
                             CHK_STATUS(hashTableUpsert(rtxTable, RTC_RTX_CODEC_VP8, rtxPayloadType));
                         }
@@ -282,12 +282,12 @@ STATUS sdp_setTransceiverPayloadTypes(PHashTable codecTable, PHashTable rtxTable
         if (pKvsRtpTransceiver != NULL &&
             (pKvsRtpTransceiver->transceiver.direction == RTC_RTP_TRANSCEIVER_DIRECTION_SENDRECV ||
              pKvsRtpTransceiver->transceiver.direction == RTC_RTP_TRANSCEIVER_DIRECTION_SENDONLY)) {
-            CHK_STATUS(hashTableGet(codecTable, pKvsRtpTransceiver->sender.track.codec, &data));
+            CHK_STATUS(hash_table_get(codecTable, pKvsRtpTransceiver->sender.track.codec, &data));
             pKvsRtpTransceiver->sender.payloadType = (UINT8) data;
             pKvsRtpTransceiver->sender.rtxPayloadType = (UINT8) data;
 
             // NACKs may have distinct PayloadTypes, look in the rtxTable and check. Otherwise NACKs will just be re-sending the same seqnum
-            if (hashTableGet(rtxTable, pKvsRtpTransceiver->sender.track.codec, &data) == STATUS_SUCCESS) {
+            if (hash_table_get(rtxTable, pKvsRtpTransceiver->sender.track.codec, &data) == STATUS_SUCCESS) {
                 pKvsRtpTransceiver->sender.rtxPayloadType = (UINT8) data;
             }
         }
@@ -341,7 +341,7 @@ STATUS sdp_populateSingleMediaSection(PKvsPeerConnection pKvsPeerConnection, PKv
     PSdpMediaDescription pSdpMediaDescriptionRemote;
     PCHAR currentFmtp = NULL;
 
-    CHK_STATUS(hashTableGet(pKvsPeerConnection->pCodecTable, pRtcMediaStreamTrack->codec, &payloadType));
+    CHK_STATUS(hash_table_get(pKvsPeerConnection->pCodecTable, pRtcMediaStreamTrack->codec, &payloadType));
     // get the payload type of audio or video.
     currentFmtp = sdp_fmtpForPayloadType(payloadType, &(pKvsPeerConnection->remoteSessionDescription));
     // video
@@ -349,10 +349,10 @@ STATUS sdp_populateSingleMediaSection(PKvsPeerConnection pKvsPeerConnection, PKv
         pRtcMediaStreamTrack->codec == RTC_CODEC_VP8) {
         // get the payload type from rtx table.
         if (pRtcMediaStreamTrack->codec == RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE) {
-            retStatus = hashTableGet(pKvsPeerConnection->pRtxTable, RTC_RTX_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE,
-                                     &rtxPayloadType);
+            retStatus = hash_table_get(pKvsPeerConnection->pRtxTable, RTC_RTX_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE,
+                                       &rtxPayloadType);
         } else {
-            retStatus = hashTableGet(pKvsPeerConnection->pRtxTable, RTC_RTX_CODEC_VP8, &rtxPayloadType);
+            retStatus = hash_table_get(pKvsPeerConnection->pRtxTable, RTC_RTX_CODEC_VP8, &rtxPayloadType);
         }
         CHK(retStatus == STATUS_SUCCESS || retStatus == STATUS_HASH_KEY_NOT_PRESENT, retStatus);
         containRtx = (retStatus == STATUS_SUCCESS);
@@ -545,7 +545,7 @@ STATUS sdp_populateSingleMediaSection(PKvsPeerConnection pKvsPeerConnection, PKv
         attributeCount++;
 
         if (containRtx) {
-            CHK_STATUS(hashTableGet(pKvsPeerConnection->pRtxTable, RTC_RTX_CODEC_VP8, &rtxPayloadType));
+            CHK_STATUS(hash_table_get(pKvsPeerConnection->pRtxTable, RTC_RTX_CODEC_VP8, &rtxPayloadType));
             STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap");
             SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%" PRId64 " " RTX_VALUE, rtxPayloadType);
             attributeCount++;
