@@ -229,6 +229,7 @@ typedef struct {
     // of HTTP_STATUS_SIGNALING_RECONNECT_ICE indicating state transition
     // if it comes first forcing the state machine to loop back to connected state.
     volatile ATOMIC_BOOL refreshIceConfig;
+    volatile ATOMIC_BOOL shutdownWssDispatch;
 
     BOOL connecting; //!< Indicates whether to self-prime on Ready or not
     BOOL reconnect;  //!< Flag determines if reconnection should be attempted on connection drop

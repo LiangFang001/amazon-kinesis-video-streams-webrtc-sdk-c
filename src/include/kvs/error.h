@@ -439,6 +439,9 @@ extern "C" {
 #define STATUS_SIGNALING_INTERNAL_ERROR                            STATUS_SIGNALING_BASE + 0x00000045
 #define STATUS_SIGNALING_NOT_AUTHORIZED_ERROR                      STATUS_SIGNALING_BASE + 0x00000046
 #define STATUS_SIGNALING_TIMEOUT_ERROR                             STATUS_SIGNALING_BASE + 0x00000047
+#define STATUS_SIGNALING_NO_DISPATCHER                             STATUS_SIGNALING_BASE + 0x00000048
+#define STATUS_SIGNALING_NO_INBOUND_MSGQ                           STATUS_SIGNALING_BASE + 0x00000049
+#define STATUS_SIGNALING_INBOUND_MSGQ_OVERFLOW                     STATUS_SIGNALING_BASE + 0x0000004A
 /******************************************************************************
  * Peer connection error codes
  ******************************************************************************/

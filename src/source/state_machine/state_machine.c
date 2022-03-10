@@ -157,7 +157,7 @@ STATUS state_machine_step(PStateMachine pStateMachine)
         pStateMachineImpl->context.retryCount = 0;
         pStateMachineImpl->context.time = time;
 
-        DLOGD("State Machine - Current state: 0x%016" PRIx64 ", Next state: 0x%016" PRIx64, pStateMachineImpl->context.pCurrentState->state,
+        DLOGV("State Machine - Current state: 0x%016" PRIx64 ", Next state: 0x%016" PRIx64, pStateMachineImpl->context.pCurrentState->state,
               nextState);
     } else {
         // Increment the state retry count
