@@ -92,7 +92,7 @@ STATUS freeFileCredentialProvider(PAwsCredentialProvider* ppCredentialProvider)
     CHK(pFileCredentialProvider != NULL, retStatus);
 
     // Release the underlying AWS credentials object
-    freeAwsCredentials(&pFileCredentialProvider->pAwsCredentials);
+    aws_credential_free(&pFileCredentialProvider->pAwsCredentials);
 
     // Release the object
     MEMFREE(pFileCredentialProvider);
@@ -217,12 +217,12 @@ STATUS readFileCredentials(PFileCredentialProvider pFileCredentialProvider)
     CHK(accessKeyIdLen != 0 && secretKeyLen != 0, STATUS_INVALID_AUTH_LEN);
 
     if (pFileCredentialProvider->pAwsCredentials != NULL) {
-        freeAwsCredentials(&pFileCredentialProvider->pAwsCredentials);
+        aws_credential_free(&pFileCredentialProvider->pAwsCredentials);
         pFileCredentialProvider->pAwsCredentials = NULL;
     }
 
-    CHK_STATUS(createAwsCredentials(accessKeyId, accessKeyIdLen, secretKey, secretKeyLen, sessionToken, sessionTokenLen, expiration,
-                                    &pFileCredentialProvider->pAwsCredentials));
+    CHK_STATUS(aws_credential_create(accessKeyId, accessKeyIdLen, secretKey, secretKeyLen, sessionToken, sessionTokenLen, expiration,
+                                     &pFileCredentialProvider->pAwsCredentials));
 
 CleanUp:
 

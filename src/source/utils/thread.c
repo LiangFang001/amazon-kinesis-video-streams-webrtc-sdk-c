@@ -249,7 +249,16 @@ PUBLIC_API STATUS defaultCreateThreadExPri(PTID pThreadId, PCHAR threadName, UIN
     } else {
         pthread_attr_setstacksize(pAttr, threadSize);
     }
-
+#if 0
+// temp rtk code.
+    if (threadName == NULL) {
+        pthread_set_name(DEFAULT_THREAD_NAME);
+        DLOGW("set the RTK pthread name: %s", DEFAULT_THREAD_NAME);
+    } else {
+        pthread_set_name(threadName);
+        DLOGW("set the RTK pthread name: %s", threadName);
+    }
+#endif
     if (prio != 0) {
         int rs = pthread_attr_getschedparam(pAttr, &param);
         param.sched_priority = prio;

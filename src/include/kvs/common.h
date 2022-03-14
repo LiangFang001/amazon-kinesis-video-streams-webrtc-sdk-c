@@ -125,7 +125,7 @@ extern "C" {
 #define DEFAULT_KVS_CACERT_PATH KVS_CA_CERT_PATH
 #else
 #ifdef KVS_PLAT_RTK_FREERTOS
-#define KVS_CA_CERT_PATH KVS_WEBRTC_ROOT_CA_PATH
+#define KVS_CA_CERT_PATH        KVS_WEBRTC_ROOT_CA_PATH
 #define DEFAULT_KVS_CACERT_PATH KVS_WEBRTC_ROOT_CA_PATH
 #else
 #define DEFAULT_KVS_CACERT_PATH EMPTY_STRING
@@ -176,7 +176,7 @@ extern "C" {
 /**
  * Default AWS region
  */
-#define DEFAULT_AWS_REGION "us-west-2"
+#define DEFAULT_AWS_REGION KVS_WEBRTC_REGION
 
 /**
  * Control plane prefix

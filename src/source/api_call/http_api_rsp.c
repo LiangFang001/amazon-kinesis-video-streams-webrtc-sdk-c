@@ -372,7 +372,7 @@ STATUS http_api_rsp_getIoTCredential(PIotCredentialProvider pIotCredentialProvid
     DLOGD("Iot credential expiration time %" PRIu64, expiration / HUNDREDS_OF_NANOS_IN_A_SECOND);
 
     if (pIotCredentialProvider->pAwsCredentials != NULL) {
-        freeAwsCredentials(&pIotCredentialProvider->pAwsCredentials);
+        aws_credential_free(&pIotCredentialProvider->pAwsCredentials);
         pIotCredentialProvider->pAwsCredentials = NULL;
     }
 
@@ -381,8 +381,8 @@ STATUS http_api_rsp_getIoTCredential(PIotCredentialProvider pIotCredentialProvid
     // rotation to be more frequent.
     expiration = MIN(expiration, currentTime + MAX_ENFORCED_TOKEN_EXPIRATION_DURATION);
 
-    CHK_STATUS(createAwsCredentials(accessKeyId, accessKeyIdLen, secretKey, secretKeyLen, sessionToken, sessionTokenLen, expiration,
-                                    &pIotCredentialProvider->pAwsCredentials));
+    CHK_STATUS(aws_credential_create(accessKeyId, accessKeyIdLen, secretKey, secretKeyLen, sessionToken, sessionTokenLen, expiration,
+                                     &pIotCredentialProvider->pAwsCredentials));
 
 CleanUp:
 

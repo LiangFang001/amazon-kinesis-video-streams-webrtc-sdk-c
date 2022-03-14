@@ -1,6 +1,17 @@
-/*******************************************
-Auth internal include file
-*******************************************/
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_AUTH_INCLUDE_I__
 #define __KINESIS_VIDEO_AUTH_INCLUDE_I__
 
@@ -10,10 +21,17 @@ Auth internal include file
 extern "C" {
 #endif
 
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/common.h"
-////////////////////////////////////////////////////
-// Function definitions
-////////////////////////////////////////////////////
+
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 /**
  * Creates an AWS credentials object
  *
@@ -28,7 +46,8 @@ extern "C" {
  *
  * @return - STATUS code of the execution
  */
-STATUS createAwsCredentials(PCHAR, UINT32, PCHAR, UINT32, PCHAR, UINT32, UINT64, PAwsCredentials*);
+STATUS aws_credential_create(PCHAR accessKeyId, UINT32 accessKeyIdLen, PCHAR secretKey, UINT32 secretKeyLen, PCHAR sessionToken,
+                             UINT32 sessionTokenLen, UINT64 expiration, PAwsCredentials* ppAwsCredentials);
 
 /**
  * Deserialize an AWS credentials object, adapt the accessKey/secretKey/sessionToken pointer
@@ -38,7 +57,7 @@ STATUS createAwsCredentials(PCHAR, UINT32, PCHAR, UINT32, PCHAR, UINT32, UINT64,
  *
  * @return - STATUS code of the execution
  */
-STATUS deserializeAwsCredentials(PBYTE);
+STATUS aws_credential_deserialize(PBYTE);
 /**
  * Frees an Aws credentials object
  *
@@ -46,7 +65,7 @@ STATUS deserializeAwsCredentials(PBYTE);
  *
  * @return - STATUS code of the execution
  */
-STATUS freeAwsCredentials(PAwsCredentials*);
+STATUS aws_credential_free(PAwsCredentials*);
 #ifdef __cplusplus
 }
 #endif

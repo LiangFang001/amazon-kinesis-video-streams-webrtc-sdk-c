@@ -2,9 +2,9 @@
 #include "Include_i.h"
 #include "request_info.h"
 
-STATUS createRequestInfo(PCHAR url, PCHAR body, PCHAR region, PCHAR certPath, PCHAR sslCertPath, PCHAR sslPrivateKeyPath,
-                         SSL_CERTIFICATE_TYPE certType, PCHAR userAgent, UINT64 connectionTimeout, UINT64 completionTimeout, UINT64 lowSpeedLimit,
-                         UINT64 lowSpeedTimeLimit, PAwsCredentials pAwsCredentials, PRequestInfo* ppRequestInfo)
+STATUS request_info_create(PCHAR url, PCHAR body, PCHAR region, PCHAR certPath, PCHAR sslCertPath, PCHAR sslPrivateKeyPath,
+                           SSL_CERTIFICATE_TYPE certType, PCHAR userAgent, UINT64 connectionTimeout, UINT64 completionTimeout, UINT64 lowSpeedLimit,
+                           UINT64 lowSpeedTimeLimit, PAwsCredentials pAwsCredentials, PRequestInfo* ppRequestInfo)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -60,12 +60,12 @@ STATUS createRequestInfo(PCHAR url, PCHAR body, PCHAR region, PCHAR certPath, PC
     CHK_STATUS(singleListCreate(&pRequestInfo->pRequestHeaders));
 
     // Set user agent header
-    CHK_STATUS(setRequestHeader(pRequestInfo, (PCHAR) "user-agent", 0, userAgent, 0));
+    CHK_STATUS(request_header_set(pRequestInfo, (PCHAR) "user-agent", 0, userAgent, 0));
 
 CleanUp:
 
     if (STATUS_FAILED(retStatus)) {
-        freeRequestInfo(&pRequestInfo);
+        request_info_free(&pRequestInfo);
         pRequestInfo = NULL;
     }
 
@@ -78,7 +78,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeRequestInfo(PRequestInfo* ppRequestInfo)
+STATUS request_info_free(PRequestInfo* ppRequestInfo)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -92,7 +92,7 @@ STATUS freeRequestInfo(PRequestInfo* ppRequestInfo)
     CHK(pRequestInfo != NULL, retStatus);
 
     // Remove and free the headers
-    removeRequestHeaders(pRequestInfo);
+    request_header_removeAll(pRequestInfo);
 
     // Free the header list itself
     singleListFree(pRequestInfo->pRequestHeaders);
@@ -122,7 +122,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS createRequestHeader(PCHAR headerName, UINT32 headerNameLen, PCHAR headerValue, UINT32 headerValueLen, PRequestHeader* ppHeader)
+STATUS request_header_create(PCHAR headerName, UINT32 headerNameLen, PCHAR headerValue, UINT32 headerValueLen, PRequestHeader* ppHeader)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 nameLen, valueLen, size;
@@ -178,7 +178,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS setRequestHeader(PRequestInfo pRequestInfo, PCHAR headerName, UINT32 headerNameLen, PCHAR headerValue, UINT32 headerValueLen)
+STATUS request_header_set(PRequestInfo pRequestInfo, PCHAR headerName, UINT32 headerNameLen, PCHAR headerValue, UINT32 headerValueLen)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 count;
@@ -190,7 +190,7 @@ STATUS setRequestHeader(PRequestInfo pRequestInfo, PCHAR headerName, UINT32 head
     CHK_STATUS(singleListGetNodeCount(pRequestInfo->pRequestHeaders, &count));
     CHK(count < MAX_REQUEST_HEADER_COUNT, STATUS_MAX_REQUEST_HEADER_COUNT);
 
-    CHK_STATUS(createRequestHeader(headerName, headerNameLen, headerValue, headerValueLen, &pRequestHeader));
+    CHK_STATUS(request_header_create(headerName, headerNameLen, headerValue, headerValueLen, &pRequestHeader));
 
     // Iterate through the list and insert in an alpha order
     CHK_STATUS(singleListGetHeadNode(pRequestInfo->pRequestHeaders, &pCurNode));
@@ -227,7 +227,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS removeRequestHeader(PRequestInfo pRequestInfo, PCHAR headerName)
+STATUS request_header_remove(PRequestInfo pRequestInfo, PCHAR headerName)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSingleListNode pCurNode;
@@ -259,7 +259,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS removeRequestHeaders(PRequestInfo pRequestInfo)
+STATUS request_header_removeAll(PRequestInfo pRequestInfo)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSingleListNode pNode;
@@ -303,42 +303,4 @@ HTTP_STATUS_CODE getServiceCallResultFromHttpStatus(UINT32 httpStatus)
         default:
             return HTTP_STATUS_UNKNOWN;
     }
-}
-
-STATUS releaseCallInfo(PCallInfo pCallInfo)
-{
-    STATUS retStatus = STATUS_SUCCESS;
-    UINT64 item;
-    UINT32 itemCount;
-    PRequestHeader pRequestHeader;
-
-    CHK(pCallInfo != NULL, STATUS_NULL_ARG);
-
-    // Free the response buffer
-    if (pCallInfo->responseData != NULL) {
-        MEMFREE(pCallInfo->responseData);
-        pCallInfo->responseData = NULL;
-        pCallInfo->responseDataLen = 0;
-    }
-
-    // Free the response headers
-    if (pCallInfo->pResponseHeaders != NULL) {
-        stackQueueGetCount(pCallInfo->pResponseHeaders, &itemCount);
-        while (itemCount-- != 0) {
-            // Dequeue the current item
-            stackQueueDequeue(pCallInfo->pResponseHeaders, &item);
-
-            pRequestHeader = (PRequestHeader) item;
-            if (pRequestHeader != NULL) {
-                MEMFREE(pRequestHeader);
-            }
-        }
-
-        stack_queue_free(pCallInfo->pResponseHeaders);
-        pCallInfo->pResponseHeaders = NULL;
-    }
-
-CleanUp:
-
-    return retStatus;
 }

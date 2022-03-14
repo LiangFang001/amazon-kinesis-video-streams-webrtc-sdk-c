@@ -154,9 +154,9 @@ typedef struct __CallInfo {
  *
  * @return STATUS code of the execution
  */
-STATUS createRequestInfo(PCHAR url, PCHAR body, PCHAR region, PCHAR certPath, PCHAR sslCertPath, PCHAR sslPrivateKeyPath,
-                         SSL_CERTIFICATE_TYPE certType, PCHAR userAgent, UINT64 connectionTimeout, UINT64 completionTimeout, UINT64 lowSpeedLimit,
-                         UINT64 lowSpeedTimeLimit, PAwsCredentials pAwsCredentials, PRequestInfo* ppRequestInfo);
+STATUS request_info_create(PCHAR url, PCHAR body, PCHAR region, PCHAR certPath, PCHAR sslCertPath, PCHAR sslPrivateKeyPath,
+                           SSL_CERTIFICATE_TYPE certType, PCHAR userAgent, UINT64 connectionTimeout, UINT64 completionTimeout, UINT64 lowSpeedLimit,
+                           UINT64 lowSpeedTimeLimit, PAwsCredentials pAwsCredentials, PRequestInfo* ppRequestInfo);
 
 /**
  * @brief Frees a Request Info object
@@ -165,7 +165,7 @@ STATUS createRequestInfo(PCHAR url, PCHAR body, PCHAR region, PCHAR certPath, PC
  *
  * @return STATUS code of the execution
  */
-STATUS freeRequestInfo(PRequestInfo* ppRequestInfo);
+STATUS request_info_free(PRequestInfo* ppRequestInfo);
 
 /**
  * @brief Checks whether the request URL requires a secure connection
@@ -187,7 +187,7 @@ STATUS requestRequiresSecureConnection(PCHAR pUrl, PBOOL pSecure);
  *
  * @return STATUS code of the execution.
  */
-STATUS setRequestHeader(PRequestInfo pRequestInfo, PCHAR headerName, UINT32 headerNameLen, PCHAR headerValue, UINT32 headerValueLen);
+STATUS request_header_set(PRequestInfo pRequestInfo, PCHAR headerName, UINT32 headerNameLen, PCHAR headerValue, UINT32 headerValueLen);
 /**
  * @brief Removes a header from the headers list if exists
  *
@@ -196,7 +196,7 @@ STATUS setRequestHeader(PRequestInfo pRequestInfo, PCHAR headerName, UINT32 head
  *
  * @return STATUS code of the execution.
  */
-STATUS removeRequestHeader(PRequestInfo pRequestInfo, PCHAR headerName);
+STATUS request_header_remove(PRequestInfo pRequestInfo, PCHAR headerName);
 /**
  * @brief Removes and deletes all headers
  *
@@ -204,7 +204,7 @@ STATUS removeRequestHeader(PRequestInfo pRequestInfo, PCHAR headerName);
  *
  * @return STATUS code of the execution.
  */
-STATUS removeRequestHeaders(PRequestInfo pRequestInfo);
+STATUS request_header_removeAll(PRequestInfo pRequestInfo);
 /**
  * @brief Creates a request header
  *
@@ -216,7 +216,7 @@ STATUS removeRequestHeaders(PRequestInfo pRequestInfo);
  *
  * @return STATUS code of the execution.
  */
-STATUS createRequestHeader(PCHAR headerName, UINT32 headerNameLen, PCHAR headerValue, UINT32 headerValueLen, PRequestHeader* ppHeader);
+STATUS request_header_create(PCHAR headerName, UINT32 headerNameLen, PCHAR headerValue, UINT32 headerValueLen, PRequestHeader* ppHeader);
 /**
  * @brief Convenience method to convert HTTP statuses to HTTP_STATUS_CODE status.
  *
@@ -225,14 +225,6 @@ STATUS createRequestHeader(PCHAR headerName, UINT32 headerNameLen, PCHAR headerV
  * @return The HTTP status translated into a HTTP_STATUS_CODE value.
  */
 HTTP_STATUS_CODE getServiceCallResultFromHttpStatus(UINT32);
-/**
- * @brief Releases the CallInfo allocations
- *
- * @param[in] PCallInfo Call info object to release
- *
- * @return STATUS code of the execution
- */
-STATUS releaseCallInfo(PCallInfo);
 
 #ifdef __cplusplus
 }

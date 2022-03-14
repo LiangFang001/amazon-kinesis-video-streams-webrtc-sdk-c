@@ -106,10 +106,10 @@ STATUS wss_api_connect(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCod
     CHK(NULL != (xNetIoHandle = NetIo_create()), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK_STATUS(NetIo_setRecvTimeout(xNetIoHandle, WSS_API_COMPLETION_TIMEOUT));
     CHK_STATUS(NetIo_setSendTimeout(xNetIoHandle, WSS_API_COMPLETION_TIMEOUT));
-    CHK_STATUS(createRequestInfo(pUrl, NULL, pSignalingClient->pChannelInfo->pRegion, pSignalingClient->pChannelInfo->pCertPath, NULL, NULL,
-                                 SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, WSS_API_CONNECTION_TIMEOUT,
-                                 WSS_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT, pSignalingClient->pAwsCredentials,
-                                 &pRequestInfo));
+    CHK_STATUS(request_info_create(pUrl, NULL, pSignalingClient->pChannelInfo->pRegion, pSignalingClient->pChannelInfo->pCertPath, NULL, NULL,
+                                   SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, WSS_API_CONNECTION_TIMEOUT,
+                                   WSS_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
+                                   pSignalingClient->pAwsCredentials, &pRequestInfo));
     pRequestInfo->verb = HTTP_REQUEST_VERB_GET;
     MEMSET(clientKey, 0, WSS_CLIENT_BASED64_RANDOM_SEED_LEN + 1);
     CHK_STATUS(wss_client_generateClientKey(clientKey, WSS_CLIENT_BASED64_RANDOM_SEED_LEN + 1));
@@ -202,7 +202,7 @@ CleanUp:
     SAFE_MEMFREE(pUrl);
     SAFE_MEMFREE(pHttpSendBuffer);
     SAFE_MEMFREE(pHttpRecvBuffer);
-    freeRequestInfo(pRequestInfo);
+    request_info_free(pRequestInfo);
 
     WSS_API_EXIT();
     return retStatus;

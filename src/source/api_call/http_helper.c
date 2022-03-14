@@ -235,17 +235,17 @@ STATUS http_req_pack(PRequestInfo pRequestInfo, PCHAR pVerb, PCHAR pHost, UINT32
     }
 
     if (bAssign == FALSE) {
-        CHK_STATUS(setRequestHeader(pRequestInfo, "host", 0, pHost, 0));
+        CHK_STATUS(request_header_set(pRequestInfo, "host", 0, pHost, 0));
     }
     /* Web socket upgrade */
     if (bWss && clientKey != NULL) {
-        CHK_STATUS(setRequestHeader(pRequestInfo, "Pragma", 0, "no-cache", 0));
-        CHK_STATUS(setRequestHeader(pRequestInfo, "Cache-Control", 0, "no-cache", 0));
-        CHK_STATUS(setRequestHeader(pRequestInfo, "upgrade", 0, "WebSocket", 0));
-        CHK_STATUS(setRequestHeader(pRequestInfo, "connection", 0, "Upgrade", 0));
-        CHK_STATUS(setRequestHeader(pRequestInfo, "Sec-WebSocket-Key", 0, clientKey, 0));
-        CHK_STATUS(setRequestHeader(pRequestInfo, "Sec-WebSocket-Protocol", 0, "wss", 0));
-        CHK_STATUS(setRequestHeader(pRequestInfo, "Sec-WebSocket-Version", 0, "13", 0));
+        CHK_STATUS(request_header_set(pRequestInfo, "Pragma", 0, "no-cache", 0));
+        CHK_STATUS(request_header_set(pRequestInfo, "Cache-Control", 0, "no-cache", 0));
+        CHK_STATUS(request_header_set(pRequestInfo, "upgrade", 0, "WebSocket", 0));
+        CHK_STATUS(request_header_set(pRequestInfo, "connection", 0, "Upgrade", 0));
+        CHK_STATUS(request_header_set(pRequestInfo, "Sec-WebSocket-Key", 0, clientKey, 0));
+        CHK_STATUS(request_header_set(pRequestInfo, "Sec-WebSocket-Protocol", 0, "wss", 0));
+        CHK_STATUS(request_header_set(pRequestInfo, "Sec-WebSocket-Version", 0, "13", 0));
     }
 
     p = (PCHAR)(outputBuf);

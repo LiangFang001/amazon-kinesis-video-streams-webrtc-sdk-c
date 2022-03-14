@@ -216,10 +216,10 @@ STATUS http_api_createChannel(PSignalingClient pSignalingClient, PUINT32 pHttpSt
     /* generate HTTP request body */
     CHK(SNPRINTF(pHttpBody, httpBodyLen, HTTP_API_BODY_CREATE_CHANNEL, pChannelInfo->pChannelName) > 0, STATUS_HTTP_BUF_OVERFLOW);
     // Create the request info with the body
-    CHK_STATUS(createRequestInfo(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, (PCHAR) pSignalingClient->pChannelInfo->pCertPath, NULL,
-                                 NULL, SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
-                                 HTTP_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
-                                 pSignalingClient->pAwsCredentials, &pRequestInfo));
+    CHK_STATUS(request_info_create(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, (PCHAR) pSignalingClient->pChannelInfo->pCertPath, NULL,
+                                   NULL, SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
+                                   HTTP_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
+                                   pSignalingClient->pAwsCredentials, &pRequestInfo));
 
     /* Initialize and generate HTTP request, then send it. */
     CHK(NULL != (xNetIoHandle = NetIo_create()), STATUS_HTTP_NOT_ENOUGH_MEMORY);
@@ -269,7 +269,7 @@ CleanUp:
     SAFE_MEMFREE(pUrl);
     SAFE_MEMFREE(pHttpSendBuffer);
     SAFE_MEMFREE(pHttpRecvBuffer);
-    freeRequestInfo(&pRequestInfo);
+    request_info_free(&pRequestInfo);
 
     HTTP_API_EXIT();
     return retStatus;
@@ -315,10 +315,10 @@ STATUS http_api_describeChannel(PSignalingClient pSignalingClient, PUINT32 pHttp
     CHK(SNPRINTF(pHttpBody, httpBodyLen, HTTP_API_BODY_DESCRIBE_CHANNEL, pSignalingClient->pChannelInfo->pChannelName) > 0, STATUS_HTTP_BUF_OVERFLOW);
 
     // Create the request info with the body
-    CHK_STATUS(createRequestInfo(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, pSignalingClient->pChannelInfo->pCertPath, NULL, NULL,
-                                 SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
-                                 HTTP_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
-                                 pSignalingClient->pAwsCredentials, &pRequestInfo));
+    CHK_STATUS(request_info_create(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, pSignalingClient->pChannelInfo->pCertPath, NULL, NULL,
+                                   SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
+                                   HTTP_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
+                                   pSignalingClient->pAwsCredentials, &pRequestInfo));
 
     /* Initialize and generate HTTP request, then send it. */
     CHK(NULL != (xNetIoHandle = NetIo_create()), STATUS_HTTP_NOT_ENOUGH_MEMORY);
@@ -331,6 +331,7 @@ STATUS http_api_describeChannel(PSignalingClient pSignalingClient, PUINT32 pHttp
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, HTTP_API_SECURE_PORT));
 
     CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_NET_SEND_DATA_FAILED);
+
     CHK_STATUS(NetIo_recv(xNetIoHandle, (unsigned char*) pHttpRecvBuffer, HTTP_API_RECV_BUFFER_MAX_SIZE, &uBytesReceived));
 
     CHK(uBytesReceived > 0, STATUS_NET_RECV_DATA_FAILED);
@@ -367,7 +368,7 @@ CleanUp:
     SAFE_MEMFREE(pUrl);
     SAFE_MEMFREE(pHttpSendBuffer);
     SAFE_MEMFREE(pHttpRecvBuffer);
-    freeRequestInfo(&pRequestInfo);
+    request_info_free(&pRequestInfo);
 
     HTTP_API_EXIT();
     return retStatus;
@@ -417,10 +418,10 @@ STATUS http_api_getChannelEndpoint(PSignalingClient pSignalingClient, PUINT32 pH
         STATUS_HTTP_BUF_OVERFLOW);
 
     // Create the request info with the body
-    CHK_STATUS(createRequestInfo(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, pSignalingClient->pChannelInfo->pCertPath, NULL, NULL,
-                                 SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
-                                 HTTP_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
-                                 pSignalingClient->pAwsCredentials, &pRequestInfo));
+    CHK_STATUS(request_info_create(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, pSignalingClient->pChannelInfo->pCertPath, NULL, NULL,
+                                   SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
+                                   HTTP_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
+                                   pSignalingClient->pAwsCredentials, &pRequestInfo));
 
     /* Initialize and generate HTTP request, then send it. */
     CHK(NULL != (xNetIoHandle = NetIo_create()), STATUS_HTTP_NOT_ENOUGH_MEMORY);
@@ -470,7 +471,7 @@ CleanUp:
     SAFE_MEMFREE(pUrl);
     SAFE_MEMFREE(pHttpSendBuffer);
     SAFE_MEMFREE(pHttpRecvBuffer);
-    freeRequestInfo(&pRequestInfo);
+    request_info_free(&pRequestInfo);
     HTTP_API_EXIT();
     return retStatus;
 }
@@ -519,10 +520,10 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, PUINT32 pHttpSta
         STATUS_HTTP_BUF_OVERFLOW);
 
     // Create the request info with the body
-    CHK_STATUS(createRequestInfo(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, pSignalingClient->pChannelInfo->pCertPath, NULL, NULL,
-                                 SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
-                                 HTTP_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
-                                 pSignalingClient->pAwsCredentials, &pRequestInfo));
+    CHK_STATUS(request_info_create(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, pSignalingClient->pChannelInfo->pCertPath, NULL, NULL,
+                                   SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
+                                   HTTP_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
+                                   pSignalingClient->pAwsCredentials, &pRequestInfo));
 
     /* Initialize and generate HTTP request, then send it. */
     CHK(NULL != (xNetIoHandle = NetIo_create()), STATUS_HTTP_NOT_ENOUGH_MEMORY);
@@ -576,7 +577,7 @@ CleanUp:
     SAFE_MEMFREE(pUrl);
     SAFE_MEMFREE(pHttpSendBuffer);
     SAFE_MEMFREE(pHttpRecvBuffer);
-    freeRequestInfo(&pRequestInfo);
+    request_info_free(&pRequestInfo);
     HTTP_API_EXIT();
     return retStatus;
 }
@@ -619,10 +620,10 @@ STATUS http_api_deleteChannel(PSignalingClient pSignalingClient, PUINT32 pHttpSt
         STATUS_HTTP_BUF_OVERFLOW);
 
     // Create the request info with the body
-    CHK_STATUS(createRequestInfo(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, (PCHAR) pSignalingClient->pChannelInfo->pCertPath, NULL,
-                                 NULL, SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
-                                 HTTP_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
-                                 pSignalingClient->pAwsCredentials, &pRequestInfo));
+    CHK_STATUS(request_info_create(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, (PCHAR) pSignalingClient->pChannelInfo->pCertPath, NULL,
+                                   NULL, SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
+                                   HTTP_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
+                                   pSignalingClient->pAwsCredentials, &pRequestInfo));
 
     /* Initialize and generate HTTP request, then send it. */
     CHK(NULL != (xNetIoHandle = NetIo_create()), STATUS_HTTP_NOT_ENOUGH_MEMORY);
@@ -668,7 +669,7 @@ CleanUp:
     SAFE_MEMFREE(pUrl);
     SAFE_MEMFREE(pHttpSendBuffer);
     SAFE_MEMFREE(pHttpRecvBuffer);
-    freeRequestInfo(&pRequestInfo);
+    request_info_free(&pRequestInfo);
 
     HTTP_API_EXIT();
     return retStatus;
@@ -714,20 +715,20 @@ STATUS http_api_getIotCredential(PIotCredentialProvider pIotCredentialProvider)
         STATUS_HTTP_IOT_FAILED);
 
     // Create the request info with the body
-    CHK_STATUS(createRequestInfo(pUrl, pHttpBody, DEFAULT_AWS_REGION, pIotCredentialProvider->caCertPath, pIotCredentialProvider->certPath,
-                                 pIotCredentialProvider->privateKeyPath, SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, DEFAULT_USER_AGENT_NAME,
-                                 HTTP_API_CONNECTION_TIMEOUT, HTTP_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
-                                 pIotCredentialProvider->pAwsCredentials, &pRequestInfo));
+    CHK_STATUS(request_info_create(pUrl, pHttpBody, DEFAULT_AWS_REGION, pIotCredentialProvider->caCertPath, pIotCredentialProvider->certPath,
+                                   pIotCredentialProvider->privateKeyPath, SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, DEFAULT_USER_AGENT_NAME,
+                                   HTTP_API_CONNECTION_TIMEOUT, HTTP_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
+                                   pIotCredentialProvider->pAwsCredentials, &pRequestInfo));
 
-    // CHK_STATUS(createRequestInfo(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, pIotCredentialProvider->caCertPath,
+    // CHK_STATUS(request_info_create(pUrl, pHttpBody, pSignalingClient->pChannelInfo->pRegion, pIotCredentialProvider->caCertPath,
     // pIotCredentialProvider->certPath,
     //                             pIotCredentialProvider->privateKeyPath,
     //                             SSL_CERTIFICATE_TYPE_NOT_SPECIFIED, pSignalingClient->pChannelInfo->pUserAgent, HTTP_API_CONNECTION_TIMEOUT,
     //                             HTTP_API_COMPLETION_TIMEOUT, DEFAULT_LOW_SPEED_LIMIT, DEFAULT_LOW_SPEED_TIME_LIMIT,
     //                             pIotCredentialProvider->pAwsCredentials, &pRequestInfo));
 
-    CHK_STATUS(setRequestHeader(pRequestInfo, HTTP_API_IOT_THING_NAME_HEADER, 0, pIotCredentialProvider->thingName, 0));
-    CHK_STATUS(setRequestHeader(pRequestInfo, "accept", 0, "*/*", 0));
+    CHK_STATUS(request_header_set(pRequestInfo, HTTP_API_IOT_THING_NAME_HEADER, 0, pIotCredentialProvider->thingName, 0));
+    CHK_STATUS(request_header_set(pRequestInfo, "accept", 0, "*/*", 0));
 
     /* Initialize and generate HTTP request, then send it. */
     CHK(NULL != (xNetIoHandle = NetIo_create()), STATUS_HTTP_NOT_ENOUGH_MEMORY);
@@ -779,7 +780,7 @@ CleanUp:
     SAFE_MEMFREE(pUrl);
     SAFE_MEMFREE(pHttpSendBuffer);
     SAFE_MEMFREE(pHttpRecvBuffer);
-    freeRequestInfo(&pRequestInfo);
+    request_info_free(&pRequestInfo);
     HTTP_API_EXIT();
     return retStatus;
 }

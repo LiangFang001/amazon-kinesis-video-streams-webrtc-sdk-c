@@ -195,7 +195,7 @@ Note: "kinesisvideo:CreateSignalingChannel" can be removed if you are running wi
 * With the IoT certificate, IoT credentials provider endpoint (Note: it is not the endpoint on IoT AWS Console!), public key and private key ready, you can replace the static credentials provider createStaticCredentialProvider() and freeStaticCredentialProvider() with IoT credentials provider like below, the credentials provider for [samples](https://github.com/awslabs/amazon-kinesis-video-streams-webrtc-sdk-c/blob/master/samples/Common.c) is in createSampleConfiguration():
 
 ```
-createIotCredentialProvider(
+iot_credential_provider_create(
             "coxxxxxxxx168.credentials.iot.us-west-2.amazonaws.com",  // IoT credentials endpoint
             "/Users/username/Downloads/iot-signaling/certificate.pem",  // path to iot certificate
             "/Users/username/Downloads/iot-signaling/private.pem.key", // path to iot private key
@@ -204,7 +204,7 @@ createIotCredentialProvider(
             channelName, // iot thing name, recommended to be same as your channel name
             &pSampleConfiguration->pCredentialProvider));
 
-freeIotCredentialProvider(&pSampleConfiguration->pCredentialProvider);
+iot_credential_provider_free(&pSampleConfiguration->pCredentialProvider);
 ```
 
 ## Use Pre-generated Certificates

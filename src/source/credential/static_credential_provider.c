@@ -28,7 +28,7 @@ STATUS createStaticCredentialProvider(PCHAR accessKeyId, UINT32 accessKeyIdLen, 
     // Create the credentials object
 
     CHK_STATUS(
-        createAwsCredentials(accessKeyId, accessKeyIdLen, secretKey, secretKeyLen, sessionToken, sessionTokenLen, expiration, &pAwsCredentials));
+        aws_credential_create(accessKeyId, accessKeyIdLen, secretKey, secretKeyLen, sessionToken, sessionTokenLen, expiration, &pAwsCredentials));
 
     pStaticCredentialProvider = (PStaticCredentialProvider) MEMCALLOC(1, SIZEOF(StaticCredentialProvider));
     CHK(pStaticCredentialProvider != NULL, STATUS_NOT_ENOUGH_MEMORY);
@@ -66,7 +66,7 @@ STATUS freeStaticCredentialProvider(PAwsCredentialProvider* ppCredentialProvider
     CHK(pStaticCredentialProvider != NULL, retStatus);
 
     // Release the underlying AWS credentials object
-    freeAwsCredentials(&pStaticCredentialProvider->pAwsCredentials);
+    aws_credential_free(&pStaticCredentialProvider->pAwsCredentials);
 
     // Release the object
     MEMFREE(pStaticCredentialProvider);

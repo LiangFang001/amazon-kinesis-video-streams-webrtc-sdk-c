@@ -28,11 +28,11 @@
 ////////////////////////////////////////////////////////////////////////
 // Callback function implementations
 ////////////////////////////////////////////////////////////////////////
-STATUS getIotCredentials(PAwsCredentialProvider, PAwsCredentials*);
+STATUS priv_iot_credential_provider_get(PAwsCredentialProvider, PAwsCredentials*);
 
-STATUS createIotCredentialProviderWithTime(PCHAR iotGetCredentialEndpoint, PCHAR certPath, PCHAR privateKeyPath, PCHAR caCertPath, PCHAR roleAlias,
-                                           PCHAR thingName, GetCurrentTimeFunc getCurrentTimeFn, UINT64 customData,
-                                           BlockingServiceCallFunc serviceCallFn, PAwsCredentialProvider* ppCredentialProvider)
+STATUS iot_credential_provider_createWithTime(PCHAR iotGetCredentialEndpoint, PCHAR certPath, PCHAR privateKeyPath, PCHAR caCertPath, PCHAR roleAlias,
+                                              PCHAR thingName, GetCurrentTimeFunc getCurrentTimeFn, UINT64 customData,
+                                              BlockingServiceCallFunc serviceCallFn, PAwsCredentialProvider* ppCredentialProvider)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -46,7 +46,7 @@ STATUS createIotCredentialProviderWithTime(PCHAR iotGetCredentialEndpoint, PCHAR
     pIotCredentialProvider = (PIotCredentialProvider) MEMCALLOC(1, SIZEOF(IotCredentialProvider));
     CHK(pIotCredentialProvider != NULL, STATUS_NOT_ENOUGH_MEMORY);
 
-    pIotCredentialProvider->credentialProvider.getCredentialsFn = getIotCredentials;
+    pIotCredentialProvider->credentialProvider.getCredentialsFn = priv_iot_credential_provider_get;
 
     // Store the time functionality and specify default if NULL
     pIotCredentialProvider->getCurrentTimeFn = (getCurrentTimeFn == NULL) ? commonDefaultGetCurrentTimeFunc : getCurrentTimeFn;
@@ -79,7 +79,7 @@ STATUS createIotCredentialProviderWithTime(PCHAR iotGetCredentialEndpoint, PCHAR
 CleanUp:
 
     if (STATUS_FAILED(retStatus)) {
-        freeIotCredentialProvider((PAwsCredentialProvider*) &pIotCredentialProvider);
+        iot_credential_provider_free((PAwsCredentialProvider*) &pIotCredentialProvider);
         pIotCredentialProvider = NULL;
     }
 
@@ -92,7 +92,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeIotCredentialProvider(PAwsCredentialProvider* ppCredentialProvider)
+STATUS iot_credential_provider_free(PAwsCredentialProvider* ppCredentialProvider)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -106,7 +106,7 @@ STATUS freeIotCredentialProvider(PAwsCredentialProvider* ppCredentialProvider)
     CHK(pIotCredentialProvider != NULL, retStatus);
 
     // Release the underlying AWS credentials object
-    freeAwsCredentials(&pIotCredentialProvider->pAwsCredentials);
+    aws_credential_free(&pIotCredentialProvider->pAwsCredentials);
 
     // Release the object
     MEMFREE(pIotCredentialProvider);
@@ -120,7 +120,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS getIotCredentials(PAwsCredentialProvider pCredentialProvider, PAwsCredentials* ppAwsCredentials)
+STATUS priv_iot_credential_provider_get(PAwsCredentialProvider pCredentialProvider, PAwsCredentials* ppAwsCredentials)
 {
     ENTERS();
 
@@ -141,9 +141,9 @@ CleanUp:
     return retStatus;
 }
 
-STATUS createIotCredentialProvider(PCHAR iotGetCredentialEndpoint, PCHAR certPath, PCHAR privateKeyPath, PCHAR caCertPath, PCHAR roleAlias,
-                                   PCHAR thingName, PAwsCredentialProvider* ppCredentialProvider)
+STATUS iot_credential_provider_create(PCHAR iotGetCredentialEndpoint, PCHAR certPath, PCHAR privateKeyPath, PCHAR caCertPath, PCHAR roleAlias,
+                                      PCHAR thingName, PAwsCredentialProvider* ppCredentialProvider)
 {
-    return createIotCredentialProviderWithTime(iotGetCredentialEndpoint, certPath, privateKeyPath, caCertPath, roleAlias, thingName,
-                                               commonDefaultGetCurrentTimeFunc, NULL, NULL, ppCredentialProvider);
+    return iot_credential_provider_createWithTime(iotGetCredentialEndpoint, certPath, privateKeyPath, caCertPath, roleAlias, thingName,
+                                                  commonDefaultGetCurrentTimeFunc, NULL, NULL, ppCredentialProvider);
 }

@@ -87,7 +87,7 @@ typedef struct __IotCredentialProvider {
  *
  * @return STATUS code of the execution.
  */
-STATUS createIotCredentialProvider(PCHAR, PCHAR, PCHAR, PCHAR, PCHAR, PCHAR, PAwsCredentialProvider*);
+STATUS iot_credential_provider_create(PCHAR, PCHAR, PCHAR, PCHAR, PCHAR, PCHAR, PAwsCredentialProvider*);
 
 /**
  * Frees an IoT based Aws credential provider object
@@ -96,7 +96,7 @@ STATUS createIotCredentialProvider(PCHAR, PCHAR, PCHAR, PCHAR, PCHAR, PCHAR, PAw
  *
  * @return STATUS code of the execution.
  */
-STATUS freeIotCredentialProvider(PAwsCredentialProvider*);
+STATUS iot_credential_provider_free(PAwsCredentialProvider*);
 #ifdef __cplusplus
 }
 #endif

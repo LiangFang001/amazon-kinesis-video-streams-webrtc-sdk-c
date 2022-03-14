@@ -126,26 +126,26 @@ STATUS signAwsRequestInfo(PRequestInfo pRequestInfo)
     CHK_STATUS(getRequestHost(pRequestInfo->url, &pHostStart, &pHostEnd));
     len = (UINT32)(pHostEnd - pHostStart);
 
-    CHK_STATUS(setRequestHeader(pRequestInfo, AWS_SIG_V4_HEADER_HOST, 0, pHostStart, len));
-    CHK_STATUS(setRequestHeader(pRequestInfo, AWS_SIG_V4_HEADER_AMZ_DATE, 0, dateTimeStr, 0));
-    CHK_STATUS(setRequestHeader(pRequestInfo, AWS_SIG_V4_CONTENT_TYPE_NAME, 0, AWS_SIG_V4_CONTENT_TYPE_VALUE, 0));
+    CHK_STATUS(request_header_set(pRequestInfo, AWS_SIG_V4_HEADER_HOST, 0, pHostStart, len));
+    CHK_STATUS(request_header_set(pRequestInfo, AWS_SIG_V4_HEADER_AMZ_DATE, 0, dateTimeStr, 0));
+    CHK_STATUS(request_header_set(pRequestInfo, AWS_SIG_V4_CONTENT_TYPE_NAME, 0, AWS_SIG_V4_CONTENT_TYPE_VALUE, 0));
 
     // Set the content-length
     if (pRequestInfo->body != NULL) {
         CHK_STATUS(ULTOSTR(pRequestInfo->bodySize, contentLenBuf, SIZEOF(contentLenBuf), 10, NULL));
-        CHK_STATUS(setRequestHeader(pRequestInfo, (PCHAR) "content-length", 0, contentLenBuf, 0));
+        CHK_STATUS(request_header_set(pRequestInfo, (PCHAR) "content-length", 0, contentLenBuf, 0));
     }
 
     // Generate the signature
     CHK_STATUS(generateAwsSigV4Signature(pRequestInfo, dateTimeStr, TRUE, &pSignatureInfo, &len));
 
     // Set the header
-    CHK_STATUS(setRequestHeader(pRequestInfo, AWS_SIG_V4_HEADER_AUTH, 0, pSignatureInfo, len));
+    CHK_STATUS(request_header_set(pRequestInfo, AWS_SIG_V4_HEADER_AUTH, 0, pSignatureInfo, len));
 
     // Set the security token header if provided
     if (pRequestInfo->pAwsCredentials->sessionTokenLen != 0) {
-        CHK_STATUS(setRequestHeader(pRequestInfo, AWS_SIG_V4_HEADER_AMZ_SECURITY_TOKEN, 0, pRequestInfo->pAwsCredentials->sessionToken,
-                                    pRequestInfo->pAwsCredentials->sessionTokenLen));
+        CHK_STATUS(request_header_set(pRequestInfo, AWS_SIG_V4_HEADER_AMZ_SECURITY_TOKEN, 0, pRequestInfo->pAwsCredentials->sessionToken,
+                                      pRequestInfo->pAwsCredentials->sessionTokenLen));
     }
 
 CleanUp:
@@ -176,7 +176,7 @@ STATUS signAwsRequestInfoQueryParam(PRequestInfo pRequestInfo)
     // Need to add host header
     CHK_STATUS(getRequestHost(pRequestInfo->url, &pHostStart, &pHostEnd));
     len = (INT32)(pHostEnd - pHostStart);
-    CHK_STATUS(setRequestHeader(pRequestInfo, AWS_SIG_V4_HEADER_HOST, 0, pHostStart, len));
+    CHK_STATUS(request_header_set(pRequestInfo, AWS_SIG_V4_HEADER_HOST, 0, pHostStart, len));
 
     // Encode the credentials scope
     CHK_STATUS(generateEncodedCredentials(pRequestInfo, dateTimeStr, NULL, &credsLen));
