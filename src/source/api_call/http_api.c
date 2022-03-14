@@ -32,8 +32,8 @@
 #define HTTP_API_CONNECTION_TIMEOUT   (2 * HUNDREDS_OF_NANOS_IN_A_SECOND)
 #define HTTP_API_COMPLETION_TIMEOUT   (5 * HUNDREDS_OF_NANOS_IN_A_SECOND)
 #define HTTP_API_CHANNEL_PROTOCOL     "\"WSS\", \"HTTPS\""
-#define HTTP_API_SEND_BUFFER_MAX_SIZE (2048)
-#define HTTP_API_RECV_BUFFER_MAX_SIZE (2048)
+#define HTTP_API_SEND_BUFFER_MAX_SIZE (4096)
+#define HTTP_API_RECV_BUFFER_MAX_SIZE (4096)
 
 /**
  * @brief API postfix definitions
@@ -501,6 +501,8 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, PUINT32 pHttpSta
     // new net io.
     NetIoHandle xNetIoHandle = NULL;
     uint8_t* pHttpSendBuffer = NULL;
+    UINT32 uSendBufLen = HTTP_API_SEND_BUFFER_MAX_SIZE;
+    UINT32 uRetryAllocation = 3;
     uint8_t* pHttpRecvBuffer = NULL;
 
     CHK(NULL != (pHost = (PCHAR) MEMCALLOC(MAX_CONTROL_PLANE_URI_CHAR_LEN, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
@@ -509,7 +511,7 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, PUINT32 pHttpSta
     httpBodyLen = SIZEOF(HTTP_API_BODY_GET_ICE_CONFIG) + STRLEN(pSignalingClient->channelDescription.channelArn) +
         STRLEN(pSignalingClient->clientInfo.signalingClientInfo.clientId) + 1;
     CHK(NULL != (pHttpBody = (PCHAR) MEMALLOC(httpBodyLen)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
-    CHK(NULL != (pHttpSendBuffer = (uint8_t*) MEMCALLOC(HTTP_API_SEND_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
+    CHK(NULL != (pHttpSendBuffer = (uint8_t*) MEMCALLOC(uSendBufLen, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
     CHK(NULL != (pHttpRecvBuffer = (uint8_t*) MEMCALLOC(HTTP_API_RECV_BUFFER_MAX_SIZE, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
 
     CHK(SNPRINTF(pUrl, urlLen, "%s%s", pSignalingClient->channelDescription.channelEndpointHttps, HTTP_API_GET_ICE_CONFIG) > 0,
@@ -530,9 +532,17 @@ STATUS http_api_getIceConfig(PSignalingClient pSignalingClient, PUINT32 pHttpSta
     CHK_STATUS(NetIo_setRecvTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
     CHK_STATUS(NetIo_setSendTimeout(xNetIoHandle, HTTP_API_COMPLETION_TIMEOUT));
 
-    CHK_STATUS(http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
-                             HTTP_API_SEND_BUFFER_MAX_SIZE, FALSE, TRUE, NULL));
-
+    while (uRetryAllocation > 0) {
+        if ((retStatus = http_req_pack(pRequestInfo, HTTP_REQUEST_VERB_POST_STRING, pHost, MAX_CONTROL_PLANE_URI_CHAR_LEN, (PCHAR) pHttpSendBuffer,
+                                       uSendBufLen, FALSE, TRUE, NULL)) == STATUS_HTTP_BUF_OVERFLOW) {
+            DLOGD("The send buffer(%u) is not enough", uSendBufLen);
+            uSendBufLen <<= 1;
+            CHK(NULL != (pHttpSendBuffer = (uint8_t*) MEMREALLOC(uSendBufLen, 1)), STATUS_HTTP_NOT_ENOUGH_MEMORY);
+            uRetryAllocation--;
+        } else {
+            break;
+        }
+    }
     CHK_STATUS(NetIo_connect(xNetIoHandle, pHost, HTTP_API_SECURE_PORT));
 
     CHK(NetIo_send(xNetIoHandle, (unsigned char*) pHttpSendBuffer, STRLEN((PCHAR) pHttpSendBuffer)) == STATUS_SUCCESS, STATUS_NET_SEND_DATA_FAILED);
