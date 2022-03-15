@@ -527,6 +527,7 @@ extern "C" {
 #define STATUS_WSS_GENERATE_ACCEPT_KEY_ERROR    STATUS_WSS_CLIENT_BASE + 0x0000000A
 #define STATUS_WSS_VALIDATE_ACCEPT_KEY_ERROR    STATUS_WSS_CLIENT_BASE + 0x0000000B
 #define STATUS_WSS_GENERATE_RANDOM_NUM_ERROR    STATUS_WSS_CLIENT_BASE + 0x0000000C
+#define STATUS_WSS_CLIENT_PING_FAILED           STATUS_WSS_CLIENT_BASE + 0x0000000D
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/

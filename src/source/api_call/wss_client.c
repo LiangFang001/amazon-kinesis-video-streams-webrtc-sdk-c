@@ -262,7 +262,7 @@ STATUS wss_client_sendPing(PWssClientContext pWssClientCtx)
 }
 
 VOID wss_client_create(PWssClientContext* ppWssClientCtx, NetIoHandle xNetIoHandle, PVOID pUserData, MessageHandlerFunc pFunc,
-                       CtrlMessageHandlerFunc pCtrlFunc, TerminationHandlerFunc pTerminationHandlerFunc)
+                       CtrlMessageHandlerFunc pCtrlFunc)
 {
     WSS_CLIENT_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
@@ -285,7 +285,6 @@ VOID wss_client_create(PWssClientContext* ppWssClientCtx, NetIoHandle xNetIoHand
     pWssClientCtx->pUserData = pUserData;
     pWssClientCtx->messageHandler = pFunc;
     pWssClientCtx->ctrlMessageHandler = pCtrlFunc;
-    pWssClientCtx->terminationHandler = pTerminationHandlerFunc;
 
     // the initialization of the mutex
     pWssClientCtx->ioLock = MUTEX_CREATE(FALSE);
@@ -321,7 +320,8 @@ PVOID wss_client_routine(PWssClientContext pWssClientCtx)
     FD_ZERO(&rfds);
 
     // check the wss client want to read or write or not.
-
+    // When the wss lib receive the ctrl frame of close connection, this flag of read_enabled will be pull down.
+    // It means we do not need to handle this loop when the connection is closed.
     while (pWssClientCtx != NULL && wss_client_wantRead(pWssClientCtx)) {
         // need to setup the timeout of epoll in order to let the wss cleint thread to write the buffer out.
         FD_SET(nfds, &rfds);
@@ -342,23 +342,20 @@ PVOID wss_client_routine(PWssClientContext pWssClientCtx)
             }
         }
         // for ping-pong
-        if (pWssClientCtx->pingCounter > WSS_CLIENT_PING_PONG_COUNTER) {
-            pWssClientCtx->ctrlMessageHandler(pWssClientCtx->pUserData, WSLAY_CONNECTION_CLOSE, "connection lost", STRLEN("connection lost"));
-        }
-
         pWssClientCtx->pingCounter++;
-        if (pWssClientCtx->pingCounter == WSS_CLIENT_PING_PONG_COUNTER) {
-            CHK_STATUS(wss_client_sendPing(pWssClientCtx));
+        if (pWssClientCtx->pingCounter >= WSS_CLIENT_PING_PONG_COUNTER) {
+            CHK(wss_client_sendPing(pWssClientCtx) == STATUS_SUCCESS, STATUS_WSS_CLIENT_PING_FAILED);
             pWssClientCtx->pingCounter = 0;
         }
     }
 
 CleanUp:
 
-    if (pWssClientCtx->terminationHandler != NULL) {
-        pWssClientCtx->terminationHandler(pWssClientCtx->pUserData, retStatus);
+    if (STATUS_FAILED(retStatus)) {
+        DLOGW("The wss connection may be lost. We are closing it.");
+        pWssClientCtx->ctrlMessageHandler(pWssClientCtx->pUserData, WSLAY_CONNECTION_CLOSE, "The connection may be lost",
+                                          STRLEN("The connection may be lost"));
     }
-
     DLOGD("Wss client is down");
     THREAD_EXIT(NULL);
     WSS_CLIENT_EXIT();
@@ -407,7 +404,7 @@ VOID wss_client_close(PWssClientContext pWssClientCtx)
         MUTEX_FREE(pWssClientCtx->ioLock);
         pWssClientCtx->ioLock = INVALID_MUTEX_VALUE;
     }
-    
+
     if (pWssClientCtx->xNetIoHandle != NULL) {
         NetIo_disconnect(pWssClientCtx->xNetIoHandle);
         NetIo_terminate(pWssClientCtx->xNetIoHandle);

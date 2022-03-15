@@ -156,7 +156,7 @@ STATUS wss_api_connect(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCod
         PWssClientContext pWssClientCtx = NULL;
         uHttpStatusCode = HTTP_STATUS_UNKNOWN;
 
-        wss_client_create(&pWssClientCtx, xNetIoHandle, pSignalingClient, wss_api_handleDataMsg, wss_api_handleCtrlMsg, wss_api_handleDisconnection);
+        wss_client_create(&pWssClientCtx, xNetIoHandle, pSignalingClient, wss_api_handleDataMsg, wss_api_handleCtrlMsg);
         pSignalingClient->pWssContext = pWssClientCtx;
         CHK_STATUS(wss_client_start(pWssClientCtx));
 
@@ -307,34 +307,6 @@ STATUS wss_api_handleCtrlMsg(PVOID pUserData, UINT8 opcode, PCHAR pMessage, UINT
 
 CleanUp:
 
-    WSS_API_EXIT();
-    return retStatus;
-}
-
-STATUS wss_api_handleDisconnection(PVOID pUserData, STATUS errCode)
-{
-    WSS_API_ENTER();
-    STATUS retStatus = STATUS_SUCCESS;
-    BOOL connected;
-    PCHAR pCurPtr;
-    PSignalingClient pSignalingClient = (PSignalingClient) pUserData;
-
-    CHK(pSignalingClient != NULL, STATUS_WSS_API_MISSING_SIGNALING_CLIENT);
-
-    PSignalingMessageWrapper pSignalingMessageWrapper = NULL;
-
-    CHK(NULL != (pSignalingMessageWrapper = (PSignalingMessageWrapper) MEMCALLOC(1, SIZEOF(SignalingMessageWrapper))),
-        STATUS_WSS_API_NOT_ENOUGH_MEMORY);
-    pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.messageType = SIGNALING_MESSAGE_TYPE_CTRL_LISTENER_TREMINATED;
-    pSignalingMessageWrapper->pSignalingClient = pSignalingClient;
-
-    if (pSignalingClient->pDispatchMsgHandler != NULL) {
-        CHK_STATUS(pSignalingClient->pDispatchMsgHandler((PVOID) pSignalingMessageWrapper));
-    } else {
-        SAFE_MEMFREE(pSignalingMessageWrapper);
-    }
-
-CleanUp:
     WSS_API_EXIT();
     return retStatus;
 }

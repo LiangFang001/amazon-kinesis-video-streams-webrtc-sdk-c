@@ -441,7 +441,6 @@ typedef enum {
     SIGNALING_MESSAGE_TYPE_STATUS_RESPONSE, //!< This message notifies the awaiting send after checking for failure in message delivery
     SIGNALING_MESSAGE_TYPE_CTRL_BASE,
     SIGNALING_MESSAGE_TYPE_CTRL_CLOSE,
-    SIGNALING_MESSAGE_TYPE_CTRL_LISTENER_TREMINATED,
     SIGNALING_MESSAGE_TYPE_UNKNOWN, //!< This message type is set when the type of message received is unknown
 } SIGNALING_MESSAGE_TYPE;
 
@@ -473,11 +472,14 @@ typedef enum {
     *PSIGNALING_CLIENT_STATE;
 
 /**
- * @brief Channel type as reported by the service
+ * @brief Channel type as reported by the service. A type of the signaling channel that you are creating. Currently, SINGLE_MASTER is the only
+ * supported channel type.
+ *
  */
 typedef enum {
     SIGNALING_CHANNEL_TYPE_UNKNOWN,       //!< Channel type is unknown
     SIGNALING_CHANNEL_TYPE_SINGLE_MASTER, //!< Channel type is master
+    SIGNALING_CHANNEL_TYPE_FULL_MESH,     //!< Channel type is full mesh.
 } SIGNALING_CHANNEL_TYPE;
 
 /**
@@ -841,15 +843,20 @@ typedef struct {
     UINT32 version; //!< Version of the structure
 
     PCHAR pChannelName; //!< Name of the signaling channel name. Maximum length is defined by MAX_CHANNEL_NAME_LEN + 1
+                        //!< #create_channel
+                        //!< #describe_channel
 
     PCHAR pChannelArn; //!< Channel Amazon Resource Name (ARN). This is an optional parameter
                        //!< Maximum length is defined by MAX_ARN_LEN+1
 
     PCHAR pRegion; //!< AWS Region in which the channel is to be opened. Can be empty for default
                    //!< Maximum length is defined by MAX_REGION_NAME_LEN+1
+                   //!< #create_channel
 
     PCHAR pControlPlaneUrl; //!< Optional fully qualified control plane URL
                             //!< Maximum length is defined by MAX_ARN_LEN+1
+                            //!< #create_channel
+                            //!< #decribe_channel.
 
     PCHAR pCertPath; //!< Optional certificate path. Maximum length is defined by MAX_PATH_LEN+1
 
@@ -863,6 +870,7 @@ typedef struct {
     PCHAR pKmsKeyId; //!< Optional KMS key id ARN. Maximum length is defined by MAX_ARN_LEN+1
 
     SIGNALING_CHANNEL_TYPE channelType; //!< Channel type when creating.
+                                        //!< #create_channel
 
     SIGNALING_CHANNEL_ROLE_TYPE channelRoleType; //!< Channel role type for the endpoint - master/viewer
 
@@ -879,6 +887,9 @@ typedef struct {
 
     UINT64 messageTtl; //!< The message TTL. Must be in the range of 5ns and 120ns.
                        //!< Specifying zero will default to 60ns
+                       //!< 5s~120s
+                       //!< The period of time a signaling channel retains undelivered messages before they are discarded.
+                       //!< #create_channel.
 
     UINT32 tagCount; //!< Number of tags associated with the stream
 

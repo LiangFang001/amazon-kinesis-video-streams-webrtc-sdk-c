@@ -41,7 +41,6 @@ extern "C" {
 
 typedef STATUS (*MessageHandlerFunc)(PVOID pUserData, PCHAR pMessage, UINT32 messageLen);
 typedef STATUS (*CtrlMessageHandlerFunc)(PVOID pUserData, UINT8 opcode, PCHAR pMessage, UINT32 messageLen);
-typedef STATUS (*TerminationHandlerFunc)(PVOID pUserData, STATUS errCode);
 
 typedef struct {
     wslay_event_context_ptr event_ctx;            //!< the event context of wslay.
@@ -52,7 +51,6 @@ typedef struct {
     PVOID pUserData;                           //!< the arguments of the message handler. ref: PSignalingClient
     MessageHandlerFunc messageHandler;         //!< the handler of receive the non-ctrl messages.
     CtrlMessageHandlerFunc ctrlMessageHandler; //!< the handler of receive the ctrl messages.
-    TerminationHandlerFunc terminationHandler;
     TID clientTid;
 } WssClientContext, *PWssClientContext;
 
@@ -74,7 +72,7 @@ STATUS wss_client_validateAcceptKey(PCHAR clientKey, UINT32 clientKeyLen, PCHAR 
  * @return STATUS status of execution.
  */
 VOID wss_client_create(PWssClientContext* ppWssClientCtx, NetIoHandle pNetworkContext, PVOID pUserData, MessageHandlerFunc pFunc,
-                       CtrlMessageHandlerFunc pCtrlFunc, TerminationHandlerFunc pTerminationHandlerFunc);
+                       CtrlMessageHandlerFunc pCtrlFunc);
 /**
  * @brief start the wss thread to handle the wss connection.
  *

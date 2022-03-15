@@ -107,7 +107,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
         BaseType_t err = xQueueReceive(pSignalingClient->inboundMsqQ, &pMsg, 50 / portTICK_PERIOD_MS);
 
         if (err == pdPASS) {
-            DLOGD("handling wss msg");
+            DLOGD("Handling wss msg");
 
             PSignalingClient pSignalingClient = NULL;
             retStatus = STATUS_SUCCESS;
@@ -166,7 +166,6 @@ static PVOID signaling_handleMsg(PVOID pArgs)
                     CHK(FALSE, retStatus);
                     break;
                 case SIGNALING_MESSAGE_TYPE_CTRL_CLOSE:
-                case SIGNALING_MESSAGE_TYPE_CTRL_LISTENER_TREMINATED:
                     DLOGD("Wss msg type:%d", pMsg->receivedSignalingMessage.signalingMessage.messageType);
                     CHK_STATUS(wss_api_disconnect(pSignalingClient));
                     ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
@@ -187,7 +186,7 @@ static PVOID signaling_handleMsg(PVOID pArgs)
         }
     }
 
-    DLOGW("Wss dispatcher exits.");
+    DLOGD("The thread of handling msg is down");
     THREAD_EXIT(NULL);
     return (PVOID)(ULONG_PTR) retStatus;
 }

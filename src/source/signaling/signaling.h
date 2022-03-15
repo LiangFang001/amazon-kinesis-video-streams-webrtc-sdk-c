@@ -140,24 +140,34 @@ typedef STATUS (*DispatchMsgHandlerFunc)(PVOID pMessage);
  * @brief Signaling channel description returned from the service
  */
 typedef struct {
-    UINT32 version;                                 //!< Version of the SignalingChannelDescription struct
-    CHAR channelArn[MAX_ARN_LEN + 1];               //!< Channel Amazon Resource Name (ARN)
-    CHAR channelName[MAX_CHANNEL_NAME_LEN + 1];     //!< Signaling channel name. Should be unique per AWS account
-    SIGNALING_CHANNEL_STATUS channelStatus;         //!< Current channel status as reported by the service
-    SIGNALING_CHANNEL_TYPE channelType;             //!< Channel type as reported by the service
+    UINT32 version; //!< Version of the SignalingChannelDescription struct
+    //!< #describe_channel_rsp.
+    CHAR channelArn[MAX_ARN_LEN + 1]; //!< Channel Amazon Resource Name (ARN)
+                                      //!< #create_channel_rsp.
+    //!< #descirbe_channel_rsp.
+    CHAR channelName[MAX_CHANNEL_NAME_LEN + 1]; //!< Signaling channel name. Should be unique per AWS account
+    //!< #describe_channel_rsp
+    SIGNALING_CHANNEL_STATUS channelStatus; //!< Current channel status as reported by the service
+    //!< #describe_channel_rsp
+    SIGNALING_CHANNEL_TYPE channelType; //!< Channel type as reported by the service
+    //!< #describe_channel_rsp
     CHAR updateVersion[MAX_UPDATE_VERSION_LEN + 1]; //!< A random number generated on every update while describing
                                                     //!< signaling channel
-    UINT64 messageTtl;                              //!< The period of time a signaling channel retains underlived messages before they are discarded
-                                                    //!< The values are in the range of 5 and 120 seconds
-    UINT64 creationTime;                            //!< Timestamp of when the channel gets created
+    //!< #describe_channel_rsp
+    UINT64 messageTtl; //!< The period of time a signaling channel retains underlived messages before they are discarded
+                       //!< The values are in the range of 5 and 120 seconds
+    //!< #describe_channel_rsp
+    UINT64 creationTime; //!< Timestamp of when the channel gets created
     /**
      * https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_ResourceEndpointListItem.html
      */
     // Signaling endpoint
     CHAR channelEndpointWss[MAX_SIGNALING_ENDPOINT_URI_LEN + 1];
+    //!< http_api_rsp_getChannelEndpoint
 
     // Signaling endpoint
     CHAR channelEndpointHttps[MAX_SIGNALING_ENDPOINT_URI_LEN + 1];
+    //!< http_api_rsp_getChannelEndpoint
     IceConfigInfo iceConfigs[MAX_ICE_CONFIG_COUNT];
 } SignalingChannelDescription, *PSignalingChannelDescription;
 /**
