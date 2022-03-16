@@ -230,7 +230,7 @@ TEST_F(SdpApiTest, setTransceiverPayloadTypes_NoRtxType)
     EXPECT_EQ(STATUS_SUCCESS, hashTableCreate(&pCodecTable));
     EXPECT_EQ(STATUS_SUCCESS, hash_table_put(pCodecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, 1));
     EXPECT_EQ(STATUS_SUCCESS, hashTableCreate(&pRtxTable));
-    EXPECT_EQ(STATUS_SUCCESS, doubleListCreate(&pTransceivers));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_create(&pTransceivers));
     EXPECT_EQ(STATUS_SUCCESS, doubleListInsertItemHead(pTransceivers, (UINT64)(&transceiver)));
     EXPECT_EQ(STATUS_SUCCESS, sdp_setTransceiverPayloadTypes(pCodecTable, pRtxTable, pTransceivers));
     EXPECT_EQ(1, transceiver.sender.payloadType);
@@ -257,7 +257,7 @@ TEST_F(SdpApiTest, setTransceiverPayloadTypes_HasRtxType)
     EXPECT_EQ(STATUS_SUCCESS, hash_table_put(pCodecTable, RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, 1));
     EXPECT_EQ(STATUS_SUCCESS, hashTableCreate(&pRtxTable));
     EXPECT_EQ(STATUS_SUCCESS, hash_table_put(pRtxTable, RTC_RTX_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE, 2));
-    EXPECT_EQ(STATUS_SUCCESS, doubleListCreate(&pTransceivers));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_create(&pTransceivers));
     EXPECT_EQ(STATUS_SUCCESS, doubleListInsertItemHead(pTransceivers, (UINT64)(&transceiver)));
     EXPECT_EQ(STATUS_SUCCESS, sdp_setTransceiverPayloadTypes(pCodecTable, pRtxTable, pTransceivers));
     EXPECT_EQ(1, transceiver.sender.payloadType);

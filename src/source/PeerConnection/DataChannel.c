@@ -67,7 +67,7 @@ STATUS data_channel_create(PRtcPeerConnection pPeerConnection, PCHAR pDataChanne
     STRNCPY(pKvsDataChannel->rtcDataChannelDiagnostics.label, pKvsDataChannel->dataChannel.name, STRLEN(pKvsDataChannel->dataChannel.name));
     pKvsDataChannel->rtcDataChannelDiagnostics.state = RTC_DATA_CHANNEL_STATE_CONNECTING;
 
-    CHK_STATUS(hashTableGetCount(pKvsPeerConnection->pDataChannels, &channelId));
+    CHK_STATUS(hash_table_getCount(pKvsPeerConnection->pDataChannels, &channelId));
 
     pKvsDataChannel->rtcDataChannelDiagnostics.dataChannelIdentifier = channelId;
     pKvsDataChannel->dataChannel.id = channelId;

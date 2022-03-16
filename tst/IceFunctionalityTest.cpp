@@ -17,7 +17,7 @@ BOOL candidatePairsInOrder(PDoubleList pIceCandidatePairs)
     PDoubleListNode pCurNode = NULL;
     PIceCandidatePair pIceCandidatePair = NULL;
 
-    EXPECT_EQ(STATUS_SUCCESS, doubleListGetHeadNode(pIceCandidatePairs, &pCurNode));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_getHeadNode(pIceCandidatePairs, &pCurNode));
     while (pCurNode != NULL && inOrder) {
         pIceCandidatePair = (PIceCandidatePair) pCurNode->data;
         pCurNode = pCurNode->pNext;
@@ -38,7 +38,7 @@ TEST_F(IceFunctionalityTest, sortIceCandidatePairsTest)
     IceCandidatePair iceCandidatePair[10];
     UINT32 i;
 
-    doubleListCreate(&iceAgent.pIceCandidatePairs);
+    double_list_create(&iceAgent.pIceCandidatePairs);
 
     EXPECT_EQ(TRUE, candidatePairsInOrder(iceAgent.pIceCandidatePairs));
 
@@ -342,9 +342,9 @@ TEST_F(IceFunctionalityTest, IceAgentAddRemoteCandidateUnitTest)
 
     // init needed members in iceAgent
     iceAgent.lock = MUTEX_CREATE(TRUE);
-    EXPECT_EQ(STATUS_SUCCESS, doubleListCreate(&iceAgent.remoteCandidates));
-    EXPECT_EQ(STATUS_SUCCESS, doubleListCreate(&iceAgent.localCandidates));
-    EXPECT_EQ(STATUS_SUCCESS, doubleListCreate(&iceAgent.pIceCandidatePairs));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_create(&iceAgent.remoteCandidates));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_create(&iceAgent.localCandidates));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_create(&iceAgent.pIceCandidatePairs));
     iceAgent.iceAgentState = ICE_CANDIDATE_STATE_NEW;
 
     // invalid input
@@ -355,7 +355,7 @@ TEST_F(IceFunctionalityTest, IceAgentAddRemoteCandidateUnitTest)
     EXPECT_NE(STATUS_SUCCESS, ice_agent_addRemoteCandidate(&iceAgent, (PCHAR) "randomStuff"));
 
     // add a ip4 local candidate so that iceCandidate pair will be formed when add remote candidate succeeded
-    EXPECT_EQ(STATUS_SUCCESS, doubleListInsertItemTail(iceAgent.localCandidates, (UINT64) &ip4TestLocalCandidate));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_insertItemTail(iceAgent.localCandidates, (UINT64) &ip4TestLocalCandidate));
     EXPECT_EQ(STATUS_SUCCESS, ice_agent_addRemoteCandidate(&iceAgent, ip4HostCandidateStr));
     EXPECT_EQ(STATUS_SUCCESS, ice_agent_addRemoteCandidate(&iceAgent, ip4HostCandidateStr));
     EXPECT_EQ(STATUS_SUCCESS, doubleListGetNodeCount(iceAgent.remoteCandidates, &remoteCandidateCount));
@@ -366,7 +366,7 @@ TEST_F(IceFunctionalityTest, IceAgentAddRemoteCandidateUnitTest)
     EXPECT_EQ(1, iceCandidateCount);
 
     // add an ip6 local candidate so that iceCandidate pair will be formed when add remote candidate succeeded
-    EXPECT_EQ(STATUS_SUCCESS, doubleListInsertItemTail(iceAgent.localCandidates, (UINT64) &ip6TestLocalCandidate));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_insertItemTail(iceAgent.localCandidates, (UINT64) &ip6TestLocalCandidate));
     EXPECT_EQ(STATUS_SUCCESS, ice_agent_addRemoteCandidate(&iceAgent, ip6HostCandidateStr));
     EXPECT_EQ(STATUS_SUCCESS, ice_agent_addRemoteCandidate(&iceAgent, ip6HostCandidateStr));
     EXPECT_EQ(STATUS_SUCCESS, doubleListGetNodeCount(iceAgent.remoteCandidates, &remoteCandidateCount));
@@ -385,7 +385,7 @@ TEST_F(IceFunctionalityTest, IceAgentAddRemoteCandidateUnitTest)
     EXPECT_EQ(3, iceCandidateCount);
 
     MUTEX_FREE(iceAgent.lock);
-    EXPECT_EQ(STATUS_SUCCESS, doubleListGetHeadNode(iceAgent.pIceCandidatePairs, &pCurNode));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_getHeadNode(iceAgent.pIceCandidatePairs, &pCurNode));
     while (pCurNode != NULL) {
         pIceCandidatePair = (PIceCandidatePair) pCurNode->data;
         pCurNode = pCurNode->pNext;
@@ -507,9 +507,9 @@ TEST_F(IceFunctionalityTest, IceAgentCreateIceCandidatePairsUnitTest)
     remoteCandidate1.ipAddress.family = KVS_IP_FAMILY_TYPE_IPV6;
     remoteCandidate2.ipAddress.family = KVS_IP_FAMILY_TYPE_IPV6;
     remoteCandidate3.ipAddress.family = KVS_IP_FAMILY_TYPE_IPV6;
-    EXPECT_EQ(STATUS_SUCCESS, doubleListCreate(&iceAgent.localCandidates));
-    EXPECT_EQ(STATUS_SUCCESS, doubleListCreate(&iceAgent.remoteCandidates));
-    EXPECT_EQ(STATUS_SUCCESS, doubleListCreate(&iceAgent.pIceCandidatePairs));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_create(&iceAgent.localCandidates));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_create(&iceAgent.remoteCandidates));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_create(&iceAgent.pIceCandidatePairs));
 
     EXPECT_NE(STATUS_SUCCESS, ice_candidate_pair_create(NULL, NULL, FALSE));
     EXPECT_NE(STATUS_SUCCESS, ice_candidate_pair_create(&iceAgent, NULL, FALSE));
@@ -547,7 +547,7 @@ TEST_F(IceFunctionalityTest, IceAgentCreateIceCandidatePairsUnitTest)
     EXPECT_EQ(STATUS_SUCCESS, doubleListGetNodeCount(iceAgent.pIceCandidatePairs, &iceCandidateCount));
     // both candidate are valid now. Ice candidate pair should be created
     EXPECT_EQ(1, iceCandidateCount);
-    EXPECT_EQ(STATUS_SUCCESS, doubleListGetHeadNode(iceAgent.pIceCandidatePairs, &pCurNode));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_getHeadNode(iceAgent.pIceCandidatePairs, &pCurNode));
     pIceCandidatePair = (PIceCandidatePair) pCurNode->data;
     EXPECT_EQ(&localCandidate1, pIceCandidatePair->local);
     EXPECT_EQ(&remoteCandidate1, pIceCandidatePair->remote);
@@ -576,7 +576,7 @@ TEST_F(IceFunctionalityTest, IceAgentCreateIceCandidatePairsUnitTest)
     EXPECT_EQ(STATUS_SUCCESS, doubleListFree(iceAgent.localCandidates));
     EXPECT_EQ(STATUS_SUCCESS, doubleListFree(iceAgent.remoteCandidates));
 
-    EXPECT_EQ(STATUS_SUCCESS, doubleListGetHeadNode(iceAgent.pIceCandidatePairs, &pCurNode));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_getHeadNode(iceAgent.pIceCandidatePairs, &pCurNode));
     while (pCurNode != NULL) {
         pIceCandidatePair = (PIceCandidatePair) pCurNode->data;
         pCurNode = pCurNode->pNext;
@@ -596,7 +596,7 @@ TEST_F(IceFunctionalityTest, IceAgentPruneUnconnectedIceCandidatePairUnitTest)
     PIceCandidatePair pIceCandidatePair = NULL;
 
     MEMSET(&iceAgent, 0x00, SIZEOF(IceAgent));
-    doubleListCreate(&iceAgent.pIceCandidatePairs);
+    double_list_create(&iceAgent.pIceCandidatePairs);
 
     EXPECT_NE(STATUS_SUCCESS, ice_candidate_pair_pruneUnconnected(NULL));
     // candidate pair count can be 0
@@ -615,11 +615,11 @@ TEST_F(IceFunctionalityTest, IceAgentPruneUnconnectedIceCandidatePairUnitTest)
     EXPECT_EQ(1, iceCandidateCount);
     // candidate pair at index 3 is in state ICE_CANDIDATE_PAIR_STATE_SUCCEEDED.
     // only candidate pair with state ICE_CANDIDATE_PAIR_STATE_SUCCEEDED wont get deleted
-    doubleListGetHeadNode(iceAgent.pIceCandidatePairs, &pCurNode);
+    double_list_getHeadNode(iceAgent.pIceCandidatePairs, &pCurNode);
     pIceCandidatePair = (PIceCandidatePair) pCurNode->data;
     EXPECT_EQ(300, pIceCandidatePair->priority);
 
-    EXPECT_EQ(STATUS_SUCCESS, doubleListGetHeadNode(iceAgent.pIceCandidatePairs, &pCurNode));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_getHeadNode(iceAgent.pIceCandidatePairs, &pCurNode));
     while (pCurNode != NULL) {
         pIceCandidatePair = (PIceCandidatePair) pCurNode->data;
         pCurNode = pCurNode->pNext;

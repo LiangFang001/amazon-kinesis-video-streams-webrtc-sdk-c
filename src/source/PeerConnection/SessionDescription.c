@@ -273,7 +273,7 @@ STATUS sdp_setTransceiverPayloadTypes(PHashTable codecTable, PHashTable rtxTable
 
     // Loop over Transceivers and set the payloadType (which what we got from the other side)
     // If a codec we want to send wasn't supported by the other return an error
-    CHK_STATUS(doubleListGetHeadNode(pTransceivers, &pCurNode));
+    CHK_STATUS(double_list_getHeadNode(pTransceivers, &pCurNode));
     while (pCurNode != NULL) {
         CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
         pCurNode = pCurNode->pNext;
@@ -687,7 +687,7 @@ STATUS sdp_populateSessionDescriptionMedia(PKvsPeerConnection pKvsPeerConnection
         CHK_STATUS(sdp_reorderTransceiverByRemoteDescription(pKvsPeerConnection, pRemoteSessionDescription));
     }
     // setup the streaming section.
-    CHK_STATUS(doubleListGetHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
+    CHK_STATUS(double_list_getHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
     while (pCurNode != NULL) {
         CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
         pCurNode = pCurNode->pNext;
@@ -795,7 +795,7 @@ STATUS sdp_copyTransceiverWithCodec(PKvsPeerConnection pKvsPeerConnection, RTC_C
 
     *pDidFindCodec = FALSE;
 
-    CHK_STATUS(doubleListGetHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
+    CHK_STATUS(double_list_getHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
     while (pCurNode != NULL) {
         CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
         pKvsRtpTransceiver = (PKvsRtpTransceiver) data;
@@ -807,7 +807,7 @@ STATUS sdp_copyTransceiverWithCodec(PKvsPeerConnection pKvsPeerConnection, RTC_C
         pCurNode = pCurNode->pNext;
     }
     if (pTargetKvsRtpTransceiver != NULL) {
-        CHK_STATUS(doubleListInsertItemTail(pKvsPeerConnection->pTransceivers, (UINT64) pTargetKvsRtpTransceiver));
+        CHK_STATUS(double_list_insertItemTail(pKvsPeerConnection->pTransceivers, (UINT64) pTargetKvsRtpTransceiver));
         *pDidFindCodec = TRUE;
     }
 
@@ -967,7 +967,7 @@ STATUS sdp_setReceiversSsrc(PSessionDescription pRemoteSessionDescription, PDoub
             }
 
             if (foundSsrc) {
-                CHK_STATUS(doubleListGetHeadNode(pTransceivers, &pCurNode));
+                CHK_STATUS(double_list_getHeadNode(pTransceivers, &pCurNode));
                 while (pCurNode != NULL) {
                     CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
                     pKvsRtpTransceiver = (PKvsRtpTransceiver) data;

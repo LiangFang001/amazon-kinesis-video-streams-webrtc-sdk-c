@@ -242,7 +242,7 @@ TEST_F(PeerConnectionFunctionalityTest, shutdownTurnDueToP2PFoundBeforeTurnEstab
 
     pIceAgent = ((PKvsPeerConnection) offerPc)->pIceAgent;
     MUTEX_LOCK(pIceAgent->lock);
-    EXPECT_EQ(doubleListGetHeadNode(pIceAgent->localCandidates, &pCurNode), STATUS_SUCCESS);
+    EXPECT_EQ(double_list_getHeadNode(pIceAgent->localCandidates, &pCurNode), STATUS_SUCCESS);
     while (pCurNode != NULL) {
         pIceCandidate = (PIceCandidate) pCurNode->data;
         pCurNode = pCurNode->pNext;
@@ -256,7 +256,7 @@ TEST_F(PeerConnectionFunctionalityTest, shutdownTurnDueToP2PFoundBeforeTurnEstab
 
     pIceAgent = ((PKvsPeerConnection) answerPc)->pIceAgent;
     MUTEX_LOCK(pIceAgent->lock);
-    EXPECT_EQ(doubleListGetHeadNode(pIceAgent->localCandidates, &pCurNode), STATUS_SUCCESS);
+    EXPECT_EQ(double_list_getHeadNode(pIceAgent->localCandidates, &pCurNode), STATUS_SUCCESS);
     while (pCurNode != NULL) {
         pIceCandidate = (PIceCandidate) pCurNode->data;
         pCurNode = pCurNode->pNext;
@@ -349,7 +349,7 @@ TEST_F(PeerConnectionFunctionalityTest, shutdownTurnDueToP2PFoundAfterTurnEstabl
 
     pIceAgent = ((PKvsPeerConnection) offerPc)->pIceAgent;
     MUTEX_LOCK(pIceAgent->lock);
-    EXPECT_EQ(doubleListGetHeadNode(pIceAgent->localCandidates, &pCurNode), STATUS_SUCCESS);
+    EXPECT_EQ(double_list_getHeadNode(pIceAgent->localCandidates, &pCurNode), STATUS_SUCCESS);
     while (pCurNode != NULL) {
         pIceCandidate = (PIceCandidate) pCurNode->data;
         pCurNode = pCurNode->pNext;
@@ -363,7 +363,7 @@ TEST_F(PeerConnectionFunctionalityTest, shutdownTurnDueToP2PFoundAfterTurnEstabl
 
     pIceAgent = ((PKvsPeerConnection) answerPc)->pIceAgent;
     MUTEX_LOCK(pIceAgent->lock);
-    EXPECT_EQ(doubleListGetHeadNode(pIceAgent->localCandidates, &pCurNode), STATUS_SUCCESS);
+    EXPECT_EQ(double_list_getHeadNode(pIceAgent->localCandidates, &pCurNode), STATUS_SUCCESS);
     while (pCurNode != NULL) {
         pIceCandidate = (PIceCandidate) pCurNode->data;
         pCurNode = pCurNode->pNext;

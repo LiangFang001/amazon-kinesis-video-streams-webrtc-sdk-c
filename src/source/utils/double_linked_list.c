@@ -19,7 +19,7 @@
 /**
  * Create a new double linked list
  */
-STATUS doubleListCreate(PDoubleList* ppList)
+STATUS double_list_create(PDoubleList* ppList)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PDoubleList pList = NULL;
@@ -142,7 +142,7 @@ CleanUp:
 /**
  * Insert a new node with the data at the tail position in the list
  */
-STATUS doubleListInsertItemTail(PDoubleList pList, UINT64 data)
+STATUS double_list_insertItemTail(PDoubleList pList, UINT64 data)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PDoubleListNode pNode;
@@ -176,7 +176,7 @@ CleanUp:
 /**
  * Insert a new node with the data before a given node
  */
-STATUS doubleListInsertItemBefore(PDoubleList pList, PDoubleListNode pNode, UINT64 data)
+STATUS double_list_insertItemBefore(PDoubleList pList, PDoubleListNode pNode, UINT64 data)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PDoubleListNode pInsertNode;
@@ -308,7 +308,7 @@ CleanUp:
 /**
  * Gets the head node
  */
-STATUS doubleListGetHeadNode(PDoubleList pList, PDoubleListNode* ppNode)
+STATUS double_list_getHeadNode(PDoubleList pList, PDoubleListNode* ppNode)
 {
     STATUS retStatus = STATUS_SUCCESS;
 

@@ -126,7 +126,7 @@ STATUS getRtpRemoteInboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTr
     CHK(pRtcPeerConnection != NULL || pRtcRemoteInboundRtpStreamStats != NULL, STATUS_NULL_ARG);
     PKvsRtpTransceiver pKvsRtpTransceiver = (PKvsRtpTransceiver) pTransceiver;
     if (pKvsRtpTransceiver == NULL) {
-        CHK_STATUS(doubleListGetHeadNode(pKvsPeerConnection->pTransceivers, &node));
+        CHK_STATUS(double_list_getHeadNode(pKvsPeerConnection->pTransceivers, &node));
         CHK_STATUS(doubleListGetNodeData(node, &hashValue));
         pKvsRtpTransceiver = (PKvsRtpTransceiver) hashValue;
         CHK(pKvsRtpTransceiver != NULL, STATUS_NOT_FOUND);
@@ -152,7 +152,7 @@ STATUS getRtpOutboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTransce
     CHK(pRtcPeerConnection != NULL || pRtcOutboundRtpStreamStats != NULL, STATUS_NULL_ARG);
     PKvsRtpTransceiver pKvsRtpTransceiver = (PKvsRtpTransceiver) pTransceiver;
     if (pKvsRtpTransceiver == NULL) {
-        CHK_STATUS(doubleListGetHeadNode(pKvsPeerConnection->pTransceivers, &node));
+        CHK_STATUS(double_list_getHeadNode(pKvsPeerConnection->pTransceivers, &node));
         CHK_STATUS(doubleListGetNodeData(node, &hashValue));
         pKvsRtpTransceiver = (PKvsRtpTransceiver) hashValue;
         CHK(pKvsRtpTransceiver != NULL, STATUS_NOT_FOUND);
@@ -177,7 +177,7 @@ STATUS getRtpInboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTranscei
     CHK(pRtcPeerConnection != NULL || pRtcInboundRtpStreamStats != NULL, STATUS_NULL_ARG);
     PKvsRtpTransceiver pKvsRtpTransceiver = (PKvsRtpTransceiver) pTransceiver;
     if (pKvsRtpTransceiver == NULL) {
-        CHK_STATUS(doubleListGetHeadNode(pKvsPeerConnection->pTransceivers, &node));
+        CHK_STATUS(double_list_getHeadNode(pKvsPeerConnection->pTransceivers, &node));
         CHK_STATUS(doubleListGetNodeData(node, &hashValue));
         pKvsRtpTransceiver = (PKvsRtpTransceiver) hashValue;
         CHK(pKvsRtpTransceiver != NULL, STATUS_NOT_FOUND);

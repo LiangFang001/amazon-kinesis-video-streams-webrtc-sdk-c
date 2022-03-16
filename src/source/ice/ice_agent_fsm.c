@@ -23,8 +23,8 @@
 /******************************************************************************
  * DEFINITIONS
  ******************************************************************************/
-#define ICE_FSM_ENTER()
-#define ICE_FSM_LEAVE()
+#define ICE_FSM_ENTER() // DLOGD("%s enter", __func__);
+#define ICE_FSM_LEAVE() // DLOGD("%s leave", __func__);
 
 /******************************************************************************
  * FUNCTIONS
@@ -249,7 +249,7 @@ STATUS ice_agent_fsm_exitCheckConnection(UINT64 customData, PUINT64 pState)
 
     // connected pair found ? go to ICE_AGENT_STATE_CONNECTED : timeout ? go to error : remain in ICE_AGENT_STATE_CHECK_CONNECTION
     // pop the first succeeded candidate pair, and switch to connected state.
-    CHK_STATUS(doubleListGetHeadNode(pIceAgent->pIceCandidatePairs, &pCurNode));
+    CHK_STATUS(double_list_getHeadNode(pIceAgent->pIceCandidatePairs, &pCurNode));
     while (pCurNode != NULL && !connectedCandidatePairFound) {
         pIceCandidatePair = (PIceCandidatePair) pCurNode->data;
         pCurNode = pCurNode->pNext;
@@ -404,7 +404,7 @@ STATUS ice_agent_fsm_exitNominating(UINT64 customData, PUINT64 pState)
     // move to failed state if any error happened.
     CHK_STATUS(pIceAgent->iceAgentStatus);
 
-    CHK_STATUS(doubleListGetHeadNode(pIceAgent->pIceCandidatePairs, &pCurNode));
+    CHK_STATUS(double_list_getHeadNode(pIceAgent->pIceCandidatePairs, &pCurNode));
     while (pCurNode != NULL) {
         pIceCandidatePair = (PIceCandidatePair) pCurNode->data;
         pCurNode = pCurNode->pNext;
@@ -491,7 +491,7 @@ STATUS ice_agent_fsm_exitReady(UINT64 customData, PUINT64 pState)
     CHK_STATUS(ice_agent_fsm_checkDisconnection(pIceAgent, &state));
 
     // Free TurnConnections that are shutdown
-    CHK_STATUS(doubleListGetHeadNode(pIceAgent->localCandidates, &pCurNode));
+    CHK_STATUS(double_list_getHeadNode(pIceAgent->localCandidates, &pCurNode));
     while (pCurNode != NULL) {
         pIceCandidate = (PIceCandidate) pCurNode->data;
         pNodeToDelete = pCurNode;

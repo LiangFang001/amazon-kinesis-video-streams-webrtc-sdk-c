@@ -109,12 +109,12 @@ STATUS hash_table_clear(PHashTable);
 /**
  * Gets the number of items in the hash table
  */
-STATUS hashTableGetCount(PHashTable, PUINT32);
+STATUS hash_table_getCount(PHashTable, PUINT32);
 
 /**
  * Whether the hash table is empty
  */
-STATUS hashTableIsEmpty(PHashTable, PBOOL);
+STATUS hash_table_isEmpty(PHashTable, PBOOL);
 
 /**
  * Puts an item into the hash table

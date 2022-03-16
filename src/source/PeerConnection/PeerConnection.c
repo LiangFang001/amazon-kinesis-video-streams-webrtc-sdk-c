@@ -275,7 +275,7 @@ STATUS pc_sendPacketToRtpReceiver(PKvsPeerConnection pKvsPeerConnection, PBYTE p
 
     ssrc = getInt32(*(PUINT32)(pBuffer + SSRC_OFFSET));
 
-    CHK_STATUS(doubleListGetHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
+    CHK_STATUS(double_list_getHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
     while (pCurNode != NULL) {
         CHK_STATUS(doubleListGetNodeData(pCurNode, &item));
         pTransceiver = (PKvsRtpTransceiver) item;
@@ -835,7 +835,7 @@ STATUS pc_create(PRtcConfiguration pConfiguration, PRtcPeerConnection* ppPeerCon
     // #datachannel
     CHK_STATUS(hash_table_createWithParams(CODEC_HASH_TABLE_BUCKET_COUNT, CODEC_HASH_TABLE_BUCKET_LENGTH, &pKvsPeerConnection->pDataChannels));
     CHK_STATUS(hash_table_createWithParams(RTX_HASH_TABLE_BUCKET_COUNT, RTX_HASH_TABLE_BUCKET_LENGTH, &pKvsPeerConnection->pRtxTable));
-    CHK_STATUS(doubleListCreate(&(pKvsPeerConnection->pTransceivers)));
+    CHK_STATUS(double_list_create(&(pKvsPeerConnection->pTransceivers)));
 #ifdef ENABLE_STREAMING
     pKvsPeerConnection->pSrtpSessionLock = MUTEX_CREATE(TRUE);
 #endif
@@ -909,7 +909,7 @@ STATUS pc_free(PRtcPeerConnection* ppPeerConnection)
 
 #ifdef ENABLE_STREAMING
     // free transceivers
-    CHK_LOG_ERR(doubleListGetHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
+    CHK_LOG_ERR(double_list_getHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
     while (pCurNode != NULL) {
         CHK_LOG_ERR(doubleListGetNodeData(pCurNode, &item));
         CHK_LOG_ERR(rtp_transceiver_free((PKvsRtpTransceiver*) &item));

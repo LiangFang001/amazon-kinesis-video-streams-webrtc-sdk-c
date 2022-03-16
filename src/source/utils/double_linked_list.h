@@ -51,7 +51,7 @@ STATUS doubleListGetNodeAtInternal(PDoubleList, UINT32, PDoubleListNode*);
 /**
  * Create a new double linked list
  */
-STATUS doubleListCreate(PDoubleList*);
+STATUS double_list_create(PDoubleList*);
 
 /**
  * Frees a double linked list and deallocates the nodes
@@ -81,7 +81,7 @@ STATUS doubleListInsertNodeTail(PDoubleList, PDoubleListNode);
 /**
  * Insert a new node with the data at the tail position in the list
  */
-STATUS doubleListInsertItemTail(PDoubleList, UINT64);
+STATUS double_list_insertItemTail(PDoubleList, UINT64);
 
 /**
  * Insert a node before a given node
@@ -91,7 +91,7 @@ STATUS doubleListInsertNodeBefore(PDoubleList, PDoubleListNode, PDoubleListNode)
 /**
  * Insert a new node with the data before a given node
  */
-STATUS doubleListInsertItemBefore(PDoubleList, PDoubleListNode, UINT64);
+STATUS double_list_insertItemBefore(PDoubleList, PDoubleListNode, UINT64);
 
 /**
  * Insert a node after a given node
@@ -126,7 +126,7 @@ STATUS doubleListDeleteNode(PDoubleList, PDoubleListNode);
 /**
  * Gets the head node
  */
-STATUS doubleListGetHeadNode(PDoubleList, PDoubleListNode*);
+STATUS double_list_getHeadNode(PDoubleList, PDoubleListNode*);
 
 /**
  * Gets the tail node

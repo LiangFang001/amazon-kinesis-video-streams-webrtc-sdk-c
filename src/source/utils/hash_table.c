@@ -148,7 +148,7 @@ CleanUp:
 /**
  * Gets the number of items in the hash table
  */
-STATUS hashTableGetCount(PHashTable pHashTable, PUINT32 pItemCount)
+STATUS hash_table_getCount(PHashTable pHashTable, PUINT32 pItemCount)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
@@ -180,7 +180,7 @@ CleanUp:
 /**
  * Whether the hash table is empty
  */
-STATUS hashTableIsEmpty(PHashTable pHashTable, PBOOL pIsEmpty)
+STATUS hash_table_isEmpty(PHashTable pHashTable, PBOOL pIsEmpty)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
