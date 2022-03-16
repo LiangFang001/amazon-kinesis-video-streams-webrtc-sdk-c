@@ -369,6 +369,8 @@ STATUS wss_client_start(PWssClientContext pWssClientCtx)
     if (!IS_VALID_TID_VALUE(pWssClientCtx->clientTid)) {
         CHK_STATUS(THREAD_CREATE_EX(&pWssClientCtx->clientTid, WSS_CLIENT_THREAD_NAME, WSS_CLIENT_THREAD_SIZE, TRUE, wss_client_routine,
                                     (PVOID) pWssClientCtx));
+    } else {
+        DLOGW("Unknown wss connection.");
     }
 
 CleanUp:

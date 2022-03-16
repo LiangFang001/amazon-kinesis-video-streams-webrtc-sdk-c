@@ -834,6 +834,7 @@ typedef struct {
 typedef struct {
     UINT32 version;                                 //!< Version of the structure
     CHAR clientId[MAX_SIGNALING_CLIENT_ID_LEN + 1]; //!< Client id to use. Defines if the client is a producer/consumers
+    // #http_api_getIceConfig
 } SignalingClientInfo, *PSignalingClientInfo;
 
 /**
@@ -843,37 +844,44 @@ typedef struct {
     UINT32 version; //!< Version of the structure
 
     PCHAR pChannelName; //!< Name of the signaling channel name. Maximum length is defined by MAX_CHANNEL_NAME_LEN + 1
-                        //!< #create_channel
-                        //!< #describe_channel
-
+    // #http_api_createChannel
+    // #http_api_describeChannel
     PCHAR pChannelArn; //!< Channel Amazon Resource Name (ARN). This is an optional parameter
                        //!< Maximum length is defined by MAX_ARN_LEN+1
 
     PCHAR pRegion; //!< AWS Region in which the channel is to be opened. Can be empty for default
                    //!< Maximum length is defined by MAX_REGION_NAME_LEN+1
-                   //!< #create_channel
-
+    // #http_api_createChannel
+    // #http_api_describeChannel
+    // #http_api_getChannelEndpoint
+    // #http_api_getIceConfig
     PCHAR pControlPlaneUrl; //!< Optional fully qualified control plane URL
                             //!< Maximum length is defined by MAX_ARN_LEN+1
-                            //!< #create_channel
-                            //!< #decribe_channel.
-
+    // #http_api_createChannel
+    // #http_api_describeChannel
+    // #http_api_getChannelEndpoint
     PCHAR pCertPath; //!< Optional certificate path. Maximum length is defined by MAX_PATH_LEN+1
-
+    // #http_api_createChannel
+    // #http_api_describeChannel
+    // #http_api_getChannelEndpoint
+    // #http_api_getIceConfig
     PCHAR pUserAgentPostfix; //!< Optional user agent post-fix. Maximum length is defined by
                              //!< MAX_CUSTOM_USER_AGENT_NAME_POSTFIX_LEN+1
 
     PCHAR pCustomUserAgent; //!< Optional custom user agent name. Maximum length is defined by MAX_USER_AGENT_LEN+1
 
     PCHAR pUserAgent; //!< Combined user agent.  Maximum length is defined by MAX_USER_AGENT_LEN+1
-
+    // #http_api_createChannel
+    // #http_api_describeChannel
+    // #http_api_getChannelEndpoint
+    // #http_api_getIceConfig
     PCHAR pKmsKeyId; //!< Optional KMS key id ARN. Maximum length is defined by MAX_ARN_LEN+1
 
     SIGNALING_CHANNEL_TYPE channelType; //!< Channel type when creating.
                                         //!< #create_channel
 
     SIGNALING_CHANNEL_ROLE_TYPE channelRoleType; //!< Channel role type for the endpoint - master/viewer
-
+    // #http_api_getChannelEndpoint
     BOOL reserved; //!< Reserved field for compatibility
 
     UINT64 cachingPeriod; //!< Endpoint caching TTL.

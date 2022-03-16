@@ -263,8 +263,8 @@ STATUS signaling_create(PSignalingClientInfoInternal pClientInfo, PChannelInfo p
     // load the previous cached information of endpoint.
     if (pSignalingClient->pChannelInfo->cachingPolicy == SIGNALING_API_CALL_CACHE_TYPE_FILE) {
         // Signaling channel name can be NULL in case of pre-created channels in which case we use ARN as the name
-        if (STATUS_FAILED(signalingCacheLoadFromFile(pChannelInfo->pChannelName != NULL ? pChannelInfo->pChannelName : pChannelInfo->pChannelArn,
-                                                     pChannelInfo->pRegion, pChannelInfo->channelRoleType, pFileCacheEntry, &cacheFound))) {
+        if (STATUS_FAILED(signaling_cache_loadFromFile(pChannelInfo->pChannelName != NULL ? pChannelInfo->pChannelName : pChannelInfo->pChannelArn,
+                                                       pChannelInfo->pRegion, pChannelInfo->channelRoleType, pFileCacheEntry, &cacheFound))) {
             DLOGW("Failed to load signaling cache from file");
         } else if (cacheFound) {
             STRCPY(pSignalingClient->channelDescription.channelArn, pFileCacheEntry->channelArn);
@@ -1017,6 +1017,7 @@ STATUS signaling_channel_describe(PSignalingClient pSignalingClient, UINT64 time
                 retStatus = pSignalingClient->clientInfo.describePostHookFn(pSignalingClient->clientInfo.hookCustomData);
             }
         } else {
+            DLOGD("Skip the call of describing the channel");
             ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_OK);
         }
     }
@@ -1079,7 +1080,7 @@ STATUS signaling_channel_getEndpoint(PSignalingClient pSignalingClient, UINT64 t
     STATUS retStatus = STATUS_SUCCESS;
     BOOL apiCall = TRUE;
     UINT32 httpStatusCode = HTTP_STATUS_NONE;
-    SignalingFileCacheEntry signalingFileCacheEntry;
+    PSignalingFileCacheEntry psignalingFileCacheEntry = NULL;
 
     CHK(pSignalingClient != NULL, STATUS_SIGNALING_NULL_ARG);
 
@@ -1117,23 +1118,25 @@ STATUS signaling_channel_getEndpoint(PSignalingClient pSignalingClient, UINT64 t
                     pSignalingClient->apiCallHistory.getEndpointTime = time;
 
                     if (pSignalingClient->pChannelInfo->cachingPolicy == SIGNALING_API_CALL_CACHE_TYPE_FILE) {
-                        signalingFileCacheEntry.creationTsEpochSeconds = time / HUNDREDS_OF_NANOS_IN_A_SECOND;
-                        signalingFileCacheEntry.role = pSignalingClient->pChannelInfo->channelRoleType;
+                        CHK(NULL != (psignalingFileCacheEntry = (PSignalingFileCacheEntry) MEMCALLOC(1, SIZEOF(SignalingFileCacheEntry))),
+                            STATUS_SIGNALING_NOT_ENOUGH_MEMORY);
+                        psignalingFileCacheEntry->creationTsEpochSeconds = time / HUNDREDS_OF_NANOS_IN_A_SECOND;
+                        psignalingFileCacheEntry->role = pSignalingClient->pChannelInfo->channelRoleType;
                         // In case of pre-created channels, the channel name can be NULL in which case we will use ARN.
                         // The validation logic in the channel info validates that both can't be NULL at the same time.
-                        STRCPY(signalingFileCacheEntry.channelName,
+                        STRCPY(psignalingFileCacheEntry->channelName,
                                pSignalingClient->pChannelInfo->pChannelName != NULL ? pSignalingClient->pChannelInfo->pChannelName
                                                                                     : pSignalingClient->pChannelInfo->pChannelArn);
-                        STRCPY(signalingFileCacheEntry.region, pSignalingClient->pChannelInfo->pRegion);
-                        STRCPY(signalingFileCacheEntry.channelArn, pSignalingClient->channelDescription.channelArn);
-                        STRCPY(signalingFileCacheEntry.httpsEndpoint, pSignalingClient->channelDescription.channelEndpointHttps);
-                        STRCPY(signalingFileCacheEntry.wssEndpoint, pSignalingClient->channelDescription.channelEndpointWss);
-                        if (STATUS_FAILED(signalingCacheSaveToFile(&signalingFileCacheEntry))) {
+                        STRCPY(psignalingFileCacheEntry->region, pSignalingClient->pChannelInfo->pRegion);
+                        STRCPY(psignalingFileCacheEntry->channelArn, pSignalingClient->channelDescription.channelArn);
+                        STRCPY(psignalingFileCacheEntry->httpsEndpoint, pSignalingClient->channelDescription.channelEndpointHttps);
+                        STRCPY(psignalingFileCacheEntry->wssEndpoint, pSignalingClient->channelDescription.channelEndpointWss);
+
+                        if (STATUS_FAILED(signaling_cache_saveToFile(psignalingFileCacheEntry))) {
                             DLOGW("Failed to save signaling cache to file");
                         }
                     }
                 }
-
                 // Calculate the latency whether the call succeeded or not
                 SIGNALING_API_LATENCY_CALCULATION(pSignalingClient, time, TRUE);
             }
@@ -1142,6 +1145,7 @@ STATUS signaling_channel_getEndpoint(PSignalingClient pSignalingClient, UINT64 t
                 retStatus = pSignalingClient->clientInfo.getEndpointPostHookFn(pSignalingClient->clientInfo.hookCustomData);
             }
         } else {
+            DLOGD("Skip the call of getting the endpoint");
             ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_OK);
         }
     }
@@ -1151,6 +1155,7 @@ CleanUp:
     if (STATUS_FAILED(retStatus) && pSignalingClient != NULL) {
         ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_UNKNOWN);
     }
+    SAFE_MEMFREE(psignalingFileCacheEntry);
     LEAVES();
     return retStatus;
 }

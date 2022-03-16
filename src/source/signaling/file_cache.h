@@ -23,6 +23,7 @@ extern "C" {
 /******************************************************************************
  * HEADERS
  ******************************************************************************/
+#include "kvs/config.h"
 #include "kvs/error.h"
 #include "kvs/common_defs.h"
 #include "kvs/WebRTCClient.h"
@@ -31,7 +32,6 @@ extern "C" {
  ******************************************************************************/
 /* If SignalingFileCacheEntry layout is changed, change the version in cache file name so we wont read from older
  * cache file. */
-#define DEFAULT_CACHE_FILE_PATH                     "./.SignalingCache_v0"
 #define MAX_SIGNALING_CACHE_ENTRY_TIMESTAMP_STR_LEN 10
 /* Max length for a serialized signaling cache entry. 8 accounts for 6 commas and 1 newline
  * char and null terminator */
@@ -54,8 +54,8 @@ typedef struct {
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-STATUS signalingCacheLoadFromFile(PCHAR, PCHAR, SIGNALING_CHANNEL_ROLE_TYPE, PSignalingFileCacheEntry, PBOOL);
-STATUS signalingCacheSaveToFile(PSignalingFileCacheEntry);
+STATUS signaling_cache_loadFromFile(PCHAR, PCHAR, SIGNALING_CHANNEL_ROLE_TYPE, PSignalingFileCacheEntry, PBOOL);
+STATUS signaling_cache_saveToFile(PSignalingFileCacheEntry);
 
 #ifdef __cplusplus
 }

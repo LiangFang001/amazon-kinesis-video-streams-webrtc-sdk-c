@@ -141,10 +141,12 @@ typedef STATUS (*DispatchMsgHandlerFunc)(PVOID pMessage);
  */
 typedef struct {
     UINT32 version; //!< Version of the SignalingChannelDescription struct
-    //!< #describe_channel_rsp.
+    // #http_api_rsp_describeChannel
     CHAR channelArn[MAX_ARN_LEN + 1]; //!< Channel Amazon Resource Name (ARN)
-                                      //!< #create_channel_rsp.
-    //!< #descirbe_channel_rsp.
+    // #http_api_rsp_createChannel
+    // #http_api_rsp_describeChannel
+    // #http_api_getChannelEndpoint
+    // #http_api_getIceConfig
     CHAR channelName[MAX_CHANNEL_NAME_LEN + 1]; //!< Signaling channel name. Should be unique per AWS account
     //!< #describe_channel_rsp
     SIGNALING_CHANNEL_STATUS channelStatus; //!< Current channel status as reported by the service
@@ -153,6 +155,7 @@ typedef struct {
     //!< #describe_channel_rsp
     CHAR updateVersion[MAX_UPDATE_VERSION_LEN + 1]; //!< A random number generated on every update while describing
                                                     //!< signaling channel
+    //!< #describe_channel_rsp
     //!< #describe_channel_rsp
     UINT64 messageTtl; //!< The period of time a signaling channel retains underlived messages before they are discarded
                        //!< The values are in the range of 5 and 120 seconds
@@ -164,10 +167,10 @@ typedef struct {
     // Signaling endpoint
     CHAR channelEndpointWss[MAX_SIGNALING_ENDPOINT_URI_LEN + 1];
     //!< http_api_rsp_getChannelEndpoint
-
     // Signaling endpoint
     CHAR channelEndpointHttps[MAX_SIGNALING_ENDPOINT_URI_LEN + 1];
     //!< http_api_rsp_getChannelEndpoint
+    // #http_api_getIceConfig
     IceConfigInfo iceConfigs[MAX_ICE_CONFIG_COUNT];
 } SignalingChannelDescription, *PSignalingChannelDescription;
 /**
@@ -259,6 +262,7 @@ typedef struct {
     UINT32 iceConfigCount;
     // Returned Ice configurations
     IceConfigInfo iceConfigs[MAX_ICE_CONFIG_COUNT];
+    // #http_api_rsp_getIceConfig
 
     // The state machine
     PVOID signalingFsmHandle;
@@ -267,7 +271,10 @@ typedef struct {
 
     PAwsCredentialProvider pCredentialProvider; //!< AWS credentials provider
     PAwsCredentials pAwsCredentials;            //!< Current AWS credentials
-
+    // #http_api_createChannel
+    // #http_api_describeChannel
+    // #http_api_getChannelEndpoint
+    // #http_api_getIceConfig
     UINT64 stepUntil; //!< Execute the state machine until this time
 
     PStackQueue pOutboundMsgQ; //!< List of the ongoing messages, the queue of singaling ongoing messsages.

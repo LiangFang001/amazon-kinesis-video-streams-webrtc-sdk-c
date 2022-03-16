@@ -62,15 +62,6 @@ STATUS wss_api_handleDataMsg(PVOID pUserData, PCHAR pMessage, UINT32 messageLen)
  */
 STATUS wss_api_handleCtrlMsg(PVOID pUserData, UINT8 opcode, PCHAR pMessage, UINT32 messageLen);
 /**
- * @brief the callback to handle the termination of wss connection.
- *
- * @param[in] pSignalingClient the context of signaling client.
- * @param[in] errCode the buffer of the message.
- *
- * @return STATUS status of execution.
- */
-STATUS wss_api_handleDisconnection(PVOID pUserData, STATUS errCode);
-/**
  * @brief send the data buffer out.
  *
  * @param[in] pSignalingClient the context of signaling client.
