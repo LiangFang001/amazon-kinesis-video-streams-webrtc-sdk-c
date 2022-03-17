@@ -23,11 +23,13 @@ extern "C" {
 /******************************************************************************
  * HEADERS
  ******************************************************************************/
+ /* Config for Ameba-Pro */
+#include "sample_config_webrtc.h"
 
 /******************************************************************************
  * DEFINITIONS
  ******************************************************************************/
-#define DEFAULT_SIGNALING_CACHE_FILE_PATH "0://SignalingCache_v0"
+#define DEFAULT_SIGNALING_CACHE_FILE_PATH   KVS_WEBRTC_SIGNALING_CACHE_FILE_PATH
 
 #ifdef __cplusplus
 }
