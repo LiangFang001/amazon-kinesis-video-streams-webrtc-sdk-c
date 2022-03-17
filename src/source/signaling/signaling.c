@@ -750,7 +750,7 @@ STATUS signaling_validateIceConfiguration(PSignalingClient pSignalingClient)
 
     pSignalingClient->iceConfigTime = GETTIME();
     pSignalingClient->iceConfigExpiration = pSignalingClient->iceConfigTime + (minTtl - ICE_CONFIGURATION_REFRESH_GRACE_PERIOD);
-    DLOGD("The expiration of ice config: %" PRIu64 ", ttl: %" PRIu64, pSignalingClient->iceConfigExpiration, minTtl);
+    DLOGD("The expiration of ice config: %" PRIu64 ", ttl: %" PRIu64, pSignalingClient->iceConfigExpiration, minTtl/HUNDREDS_OF_NANOS_IN_A_SECOND);
 
 CleanUp:
     CHK_LOG_ERR(retStatus);

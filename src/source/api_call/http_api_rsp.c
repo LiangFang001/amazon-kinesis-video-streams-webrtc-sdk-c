@@ -205,7 +205,7 @@ STATUS http_api_rsp_getChannelEndpoint(const CHAR* pResponseStr, UINT32 resultLe
                     i++;
                 } else if (compareJsonString(pResponseStr, &pTokens[i], JSMN_STRING, (PCHAR) "ResourceEndpoint")) {
                     strLen = (UINT32)(pTokens[i + 1].end - pTokens[i + 1].start);
-                    CHK(strLen <= MAX_CHANNEL_NAME_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
+                    CHK(strLen <= MAX_SIGNALING_ENDPOINT_URI_LEN, STATUS_JSON_API_CALL_INVALID_RETURN);
                     pEndpoint = pResponseStr + pTokens[i + 1].start;
                     endpointLen = strLen;
                     endpoint = TRUE;
