@@ -18,11 +18,32 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/platform_utils.h"
+
+/******************************************************************************
+ * Main defines
+ ******************************************************************************/
 /**
  * Default values for the limits
  */
 #define KVS_COMMON_FILE_INDEX_BUFFER_SIZE 256
+/**
+ * File based logger limit constants
+ */
+#define MAX_FILE_LOGGER_STRING_BUFFER_SIZE (100 * 1024 * 1024)
+#define MIN_FILE_LOGGER_STRING_BUFFER_SIZE (10 * 1024)
+#define MAX_FILE_LOGGER_LOG_FILE_COUNT     (10 * 1024)
+/**
+ * Default values used in the file logger
+ */
+#define FILE_LOGGER_LOG_FILE_NAME           "kvsFileLog"
+#define FILE_LOGGER_LAST_INDEX_FILE_NAME    "kvsFileLogIndex"
+#define FILE_LOGGER_STRING_BUFFER_SIZE      (100 * 1024)
+#define FILE_LOGGER_LOG_FILE_COUNT          3
+#define FILE_LOGGER_LOG_FILE_DIRECTORY_PATH "./"
 
 /**
  * file logger declaration
@@ -63,34 +84,9 @@ typedef struct {
     logPrintFunc storedLoggerLogPrintFn;
 } FileLogger, *PFileLogger;
 
-/**
- * Flushes currentOffset number of chars from stringBuffer into logfile.
- * If maxFileCount is exceeded, the earliest file is deleted before writing to the new file.
- * After flushLogToFile finishes, currentOffset is set to 0, whether the status of execution was success or not.
- *
- * @return - STATUS of execution
- */
-STATUS flushLogToFile();
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-// File logging functionality
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/**
- * File based logger limit constants
- */
-#define MAX_FILE_LOGGER_STRING_BUFFER_SIZE (100 * 1024 * 1024)
-#define MIN_FILE_LOGGER_STRING_BUFFER_SIZE (10 * 1024)
-#define MAX_FILE_LOGGER_LOG_FILE_COUNT     (10 * 1024)
-
-/**
- * Default values used in the file logger
- */
-#define FILE_LOGGER_LOG_FILE_NAME           "kvsFileLog"
-#define FILE_LOGGER_LAST_INDEX_FILE_NAME    "kvsFileLogIndex"
-#define FILE_LOGGER_STRING_BUFFER_SIZE      (100 * 1024)
-#define FILE_LOGGER_LOG_FILE_COUNT          3
-#define FILE_LOGGER_LOG_FILE_DIRECTORY_PATH "./"
-
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 /**
  * Creates a file based logger object and installs the global logger callback function
  *
@@ -103,7 +99,7 @@ STATUS flushLogToFile();
  *
  * @return - STATUS code of the execution
  */
-STATUS createFileLogger(UINT64, UINT64, PCHAR, BOOL, BOOL, logPrintFunc*);
+STATUS file_logger_create(UINT64, UINT64, PCHAR, BOOL, BOOL, logPrintFunc*);
 
 /**
  * Frees the static file logger object and resets the global logging function if it was
@@ -111,22 +107,30 @@ STATUS createFileLogger(UINT64, UINT64, PCHAR, BOOL, BOOL, logPrintFunc*);
  *
  * @return - STATUS code of the execution
  */
-STATUS freeFileLogger();
+STATUS file_logger_free();
 
+/**
+ * Flushes currentOffset number of chars from stringBuffer into logfile.
+ * If maxFileCount is exceeded, the earliest file is deleted before writing to the new file.
+ * After file_logger_flushToFile finishes, currentOffset is set to 0, whether the status of execution was success or not.
+ *
+ * @return - STATUS of execution
+ */
+STATUS file_logger_flushToFile();
 /**
  * Helper macros to be used in pairs at the application start and end
  */
 #define CREATE_DEFAULT_FILE_LOGGER()                                                                                                                 \
-    createFileLogger(FILE_LOGGER_STRING_BUFFER_SIZE, FILE_LOGGER_LOG_FILE_COUNT, (PCHAR) FILE_LOGGER_LOG_FILE_DIRECTORY_PATH, TRUE, TRUE, NULL);
+    file_logger_create(FILE_LOGGER_STRING_BUFFER_SIZE, FILE_LOGGER_LOG_FILE_COUNT, (PCHAR) FILE_LOGGER_LOG_FILE_DIRECTORY_PATH, TRUE, TRUE, NULL);
 
-#define RELEASE_FILE_LOGGER() freeFileLogger();
+#define RELEASE_FILE_LOGGER() file_logger_free();
 
 /**
  * Helper macros to be used in pairs at the application start and end
  */
 #define SET_FILE_LOGGER()                                                                                                                            \
-    createFileLogger(FILE_LOGGER_STRING_BUFFER_SIZE, FILE_LOGGER_LOG_FILE_COUNT, (PCHAR) FILE_LOGGER_LOG_FILE_DIRECTORY_PATH, TRUE, TRUE, NULL)
-#define RESET_FILE_LOGGER() freeFileLogger()
+    file_logger_create(FILE_LOGGER_STRING_BUFFER_SIZE, FILE_LOGGER_LOG_FILE_COUNT, (PCHAR) FILE_LOGGER_LOG_FILE_DIRECTORY_PATH, TRUE, TRUE, NULL)
+#define RESET_FILE_LOGGER() file_logger_free()
 #ifdef __cplusplus
 }
 #endif

@@ -24,7 +24,7 @@
 
 PFileLogger gFileLogger = NULL;
 
-STATUS flushLogToFile()
+STATUS file_logger_flushToFile()
 {
     STATUS retStatus = STATUS_SUCCESS;
     CHAR filePath[MAX_PATH_LEN + 1];
@@ -105,13 +105,13 @@ VOID fileLoggerLogPrintFn(UINT32 level, PCHAR tag, PCHAR fmt, ...)
         va_end(valist);
 
         if (gFileLogger->currentOffset + offset >= gFileLogger->stringBufferLen) {
-            status = flushLogToFile();
+            status = file_logger_flushToFile();
             if (STATUS_FAILED(status)) {
                 PRINTF("flush log to file failed with 0x%08x\n", status);
             }
         }
 
-        // even if flushLogToFile failed, currentOffset will still be reset to 0
+        // even if file_logger_flushToFile failed, currentOffset will still be reset to 0
         // _vsnprintf truncates the string if it is larger than buffer
         va_start(valist, fmt);
         offset = _vsnprintf(gFileLogger->stringBuffer + gFileLogger->currentOffset, gFileLogger->stringBufferLen - gFileLogger->currentOffset,
@@ -136,12 +136,12 @@ VOID fileLoggerLogPrintFn(UINT32 level, PCHAR tag, PCHAR fmt, ...)
         // If vsnprintf fills the stringBuffer then flush first and then vsnprintf again into the stringBuffer.
         // This is because we dont know how long the log message is
         if (offset > 0 && gFileLogger->currentOffset + offset >= gFileLogger->stringBufferLen) {
-            status = flushLogToFile();
+            status = file_logger_flushToFile();
             if (STATUS_FAILED(status)) {
                 PRINTF("flush log to file failed with 0x%08x\n", status);
             }
 
-            // even if flushLogToFile failed, currentOffset will still be reset to 0
+            // even if file_logger_flushToFile failed, currentOffset will still be reset to 0
             va_start(valist, fmt);
             offset = vsnprintf(gFileLogger->stringBuffer + gFileLogger->currentOffset, gFileLogger->stringBufferLen - gFileLogger->currentOffset,
                                logFmtString, valist);
@@ -169,8 +169,8 @@ VOID fileLoggerLogPrintFn(UINT32 level, PCHAR tag, PCHAR fmt, ...)
     }
 }
 
-STATUS createFileLogger(UINT64 maxStringBufferLen, UINT64 maxLogFileCount, PCHAR logFileDir, BOOL printLog, BOOL setGlobalLogFn,
-                        logPrintFunc* pFilePrintFn)
+STATUS file_logger_create(UINT64 maxStringBufferLen, UINT64 maxLogFileCount, PCHAR logFileDir, BOOL printLog, BOOL setGlobalLogFn,
+                          logPrintFunc* pFilePrintFn)
 {
     STATUS retStatus = STATUS_SUCCESS;
     CHK(gFileLogger == NULL, retStatus); // dont allocate again if already allocated
@@ -222,7 +222,7 @@ STATUS createFileLogger(UINT64 maxStringBufferLen, UINT64 maxLogFileCount, PCHAR
 CleanUp:
 
     if (STATUS_FAILED(retStatus)) {
-        freeFileLogger();
+        file_logger_free();
         gFileLogger = NULL;
     } else if (pFilePrintFn != NULL) {
         *pFilePrintFn = fileLoggerLogPrintFn;
@@ -231,7 +231,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeFileLogger()
+STATUS file_logger_free()
 {
     STATUS retStatus = STATUS_SUCCESS;
     CHK(gFileLogger != NULL, retStatus);
@@ -239,7 +239,7 @@ STATUS freeFileLogger()
     if (IS_VALID_MUTEX_VALUE(gFileLogger->lock)) {
         // flush out remaining log
         MUTEX_LOCK(gFileLogger->lock);
-        retStatus = flushLogToFile();
+        retStatus = file_logger_flushToFile();
         if (STATUS_FAILED(retStatus)) {
             PRINTF("flush log to file failed with 0x%08x\n", retStatus);
         }
