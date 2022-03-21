@@ -66,7 +66,7 @@ TEST_F(SignalingApiTest, signalingSendMessageSyncFileCredsProvider)
     // Store the credentials in a file under the current dir
     length = SNPRINTF(fileContent, length, "CREDENTIALS %s %s", mAccessKey, mSecretKey);
     ASSERT_GT(ARRAY_SIZE(fileContent), length);
-    ASSERT_EQ(STATUS_SUCCESS, writeFile(TEST_FILE_CREDENTIALS_FILE_PATH, FALSE, FALSE, (PBYTE) fileContent, length));
+    ASSERT_EQ(STATUS_SUCCESS, fileio_write(TEST_FILE_CREDENTIALS_FILE_PATH, FALSE, FALSE, (PBYTE) fileContent, length));
 
     // Create file creds provider from the file
     EXPECT_EQ(STATUS_SUCCESS, createFileCredentialProvider(TEST_FILE_CREDENTIALS_FILE_PATH, &pAwsCredentialProvider));

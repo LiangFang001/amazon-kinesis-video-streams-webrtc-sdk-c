@@ -29,12 +29,12 @@ extern "C" {
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-STATUS readFile(PCHAR filePath, BOOL binMode, PBYTE pBuffer, PUINT64 pSize);
-STATUS readFileSegment(PCHAR filePath, BOOL binMode, PBYTE pBuffer, UINT64 offset, UINT64 readSize);
-STATUS writeFile(PCHAR filePath, BOOL binMode, BOOL append, PBYTE pBuffer, UINT64 size);
-STATUS getFileLength(PCHAR filePath, PUINT64 pSize);
-STATUS fileExists(PCHAR filePath, PBOOL pExists);
-STATUS createFile(PCHAR filePath, UINT64 size);
+STATUS fileio_read(PCHAR filePath, BOOL binMode, PBYTE pBuffer, PUINT64 pSize);
+STATUS fileio_readSegment(PCHAR filePath, BOOL binMode, PBYTE pBuffer, UINT64 offset, UINT64 readSize);
+STATUS fileio_write(PCHAR filePath, BOOL binMode, BOOL append, PBYTE pBuffer, UINT64 size);
+STATUS fileio_getLength(PCHAR filePath, PUINT64 pSize);
+STATUS fileio_isExisted(PCHAR filePath, PBOOL pExists);
+STATUS fileio_create(PCHAR filePath, UINT64 size);
 
 #ifdef __cplusplus
 }

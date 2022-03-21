@@ -28,7 +28,7 @@
  *     pBuffer  - buffer to write contents of the file to. If NULL return the size in pSize.
  *     pSize    - destination PUINT64 to store the size of the file when pBuffer is NULL;
  */
-STATUS readFile(PCHAR filePath, BOOL binMode, PBYTE pBuffer, PUINT64 pSize)
+STATUS fileio_read(PCHAR filePath, BOOL binMode, PBYTE pBuffer, PUINT64 pSize)
 {
     UINT64 fileLen;
     STATUS retStatus = STATUS_SUCCESS;
@@ -79,7 +79,7 @@ CleanUp:
  *     offset   - Offset into the file to start reading from.
  *     readSize - The number of bytes to read from the file.
  */
-STATUS readFileSegment(PCHAR filePath, BOOL binMode, PBYTE pBuffer, UINT64 offset, UINT64 readSize)
+STATUS fileio_readSegment(PCHAR filePath, BOOL binMode, PBYTE pBuffer, UINT64 offset, UINT64 readSize)
 {
     UINT64 fileLen;
     STATUS retStatus = STATUS_SUCCESS;
@@ -123,7 +123,7 @@ CleanUp:
  *     pBuffer  - memory location whose contents should be written to the file
  *     size     - number of bytes that should be written to the file
  */
-STATUS writeFile(PCHAR filePath, BOOL binMode, BOOL append, PBYTE pBuffer, UINT64 size)
+STATUS fileio_write(PCHAR filePath, BOOL binMode, BOOL append, PBYTE pBuffer, UINT64 size)
 {
     STATUS retStatus = STATUS_SUCCESS;
     FILE* fp = NULL;
@@ -157,11 +157,11 @@ CleanUp:
  * Returns:
  *     STATUS of the operation
  */
-STATUS getFileLength(PCHAR filePath, PUINT64 pLength)
+STATUS fileio_getLength(PCHAR filePath, PUINT64 pLength)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
-    CHK_STATUS(readFile(filePath, TRUE, NULL, pLength));
+    CHK_STATUS(fileio_read(filePath, TRUE, NULL, pLength));
 
 CleanUp:
 
@@ -175,7 +175,7 @@ CleanUp:
  *      filePath - file path to check
  *      pExists - TRUE if the file exists
  */
-STATUS fileExists(PCHAR filePath, PBOOL pExists)
+STATUS fileio_isExisted(PCHAR filePath, PBOOL pExists)
 {
     if (filePath == NULL || pExists == NULL) {
         return STATUS_NULL_ARG;
@@ -195,7 +195,7 @@ STATUS fileExists(PCHAR filePath, PBOOL pExists)
  *      filePath - file path to check
  *      size - The size of the newly created file
  */
-STATUS createFile(PCHAR filePath, UINT64 size)
+STATUS fileio_create(PCHAR filePath, UINT64 size)
 {
     STATUS retStatus = STATUS_SUCCESS;
     FILE* fp = NULL;

@@ -207,8 +207,8 @@ class WebRtcClientTestBase : public ::testing::Test {
         SNPRINTF(filePath, MAX_PATH_LEN, "%s/frame-%04d.h264", frameFilePath, index);
 
         // Get the size and read into frame
-        CHK_STATUS(readFile(filePath, TRUE, NULL, &size));
-        CHK_STATUS(readFile(filePath, TRUE, pFrame, &size));
+        CHK_STATUS(fileio_read(filePath, TRUE, NULL, &size));
+        CHK_STATUS(fileio_read(filePath, TRUE, pFrame, &size));
 
         *pSize = (UINT32) size;
 

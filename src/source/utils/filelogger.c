@@ -55,11 +55,11 @@ STATUS flushLogToFile()
     // just in case currentOffset is greater than stringBufferLen, then use stringBufferLen.
     charLenToWrite = MIN(gFileLogger->currentOffset, gFileLogger->stringBufferLen - 1);
     gFileLogger->stringBuffer[charLenToWrite] = '\0';
-    CHK_STATUS(writeFile(filePath, TRUE, FALSE, (PBYTE) gFileLogger->stringBuffer, charLenToWrite * SIZEOF(CHAR)));
+    CHK_STATUS(fileio_write(filePath, TRUE, FALSE, (PBYTE) gFileLogger->stringBuffer, charLenToWrite * SIZEOF(CHAR)));
     gFileLogger->currentFileIndex++;
 
     ULLTOSTR(gFileLogger->currentFileIndex, fileIndexBuffer, ARRAY_SIZE(fileIndexBuffer), 10, &fileIndexStrSize);
-    retStatus = writeFile(gFileLogger->indexFilePath, TRUE, FALSE, (PBYTE) fileIndexBuffer, (STRLEN(fileIndexBuffer)) * SIZEOF(CHAR));
+    retStatus = fileio_write(gFileLogger->indexFilePath, TRUE, FALSE, (PBYTE) fileIndexBuffer, (STRLEN(fileIndexBuffer)) * SIZEOF(CHAR));
     if (STATUS_FAILED(retStatus)) {
         PRINTF("Failed to write to index file due to error 0x%08x\n", retStatus);
         retStatus = STATUS_SUCCESS;
@@ -202,11 +202,11 @@ STATUS createFileLogger(UINT64 maxStringBufferLen, UINT64 maxLogFileCount, PCHAR
     CHK(charWritten <= MAX_PATH_LEN, STATUS_PATH_TOO_LONG);
     gFileLogger->indexFilePath[charWritten] = '\0';
 
-    CHK_STATUS(fileExists(gFileLogger->indexFilePath, &fileFound));
+    CHK_STATUS(fileio_isExisted(gFileLogger->indexFilePath, &fileFound));
     if (fileFound) {
-        CHK_STATUS(readFile(gFileLogger->indexFilePath, FALSE, NULL, &indexFileSize));
+        CHK_STATUS(fileio_read(gFileLogger->indexFilePath, FALSE, NULL, &indexFileSize));
         CHK(indexFileSize < KVS_COMMON_FILE_INDEX_BUFFER_SIZE, STATUS_FILE_LOGGER_INDEX_FILE_INVALID_SIZE);
-        CHK_STATUS(readFile(gFileLogger->indexFilePath, FALSE, (PBYTE) fileIndexBuffer, &indexFileSize));
+        CHK_STATUS(fileio_read(gFileLogger->indexFilePath, FALSE, (PBYTE) fileIndexBuffer, &indexFileSize));
         fileIndexBuffer[indexFileSize] = '\0';
         STRTOUI64(fileIndexBuffer, NULL, 10, &gFileLogger->currentFileIndex);
     }

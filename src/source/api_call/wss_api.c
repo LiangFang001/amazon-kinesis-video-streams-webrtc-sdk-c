@@ -283,15 +283,19 @@ STATUS wss_api_handleCtrlMsg(PVOID pUserData, UINT8 opcode, PCHAR pMessage, UINT
     } else if (opcode == WSLAY_PING) {
         DLOGV("<== wss ping, len: %ld", messageLen);
     } else if (opcode == WSLAY_CONNECTION_CLOSE) {
-        DLOGD("<== connection close, len: %ld, reason:%s", messageLen, pMessage);
-        pCurPtr = pMessage == NULL ? "(None)" : (PCHAR) pMessage;
-        DLOGW("Client connection failed. Connection error string: %s", pCurPtr);
+        DLOGD("<== connection close, msg len: %ld", messageLen);
 
         PSignalingMessageWrapper pSignalingMessageWrapper = NULL;
+        PSignalingMessage pSignalingMessage = NULL;
 
         CHK(NULL != (pSignalingMessageWrapper = (PSignalingMessageWrapper) MEMCALLOC(1, SIZEOF(SignalingMessageWrapper))),
             STATUS_WSS_API_NOT_ENOUGH_MEMORY);
-        pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage.messageType = SIGNALING_MESSAGE_TYPE_CTRL_CLOSE;
+        pSignalingMessage = &pSignalingMessageWrapper->receivedSignalingMessage.signalingMessage;
+        pSignalingMessage->messageType = SIGNALING_MESSAGE_TYPE_CTRL_CLOSE;
+        if (pMessage != NULL) {
+            STRNCPY(pSignalingMessage->payload, pMessage, MIN(messageLen, MAX_SIGNALING_MESSAGE_LEN) + 1);
+            DLOGW("Client connection failed. reason: %s", pSignalingMessage->payload);
+        }
         pSignalingMessageWrapper->pSignalingClient = pSignalingClient;
 
         // CHK_STATUS(signaling_dispatchMsg((PVOID) pSignalingMessageWrapper));

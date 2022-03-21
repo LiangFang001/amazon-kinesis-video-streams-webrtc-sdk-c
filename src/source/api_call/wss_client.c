@@ -207,7 +207,11 @@ STATUS wss_client_onReadEvent(PWssClientContext pWssClientCtx)
     STATUS retStatus = STATUS_SUCCESS;
     IO_LOCK(pWssClientCtx);
     if (wslay_event_get_read_enabled(pWssClientCtx->event_ctx) == 1) {
-        retStatus = wslay_event_recv(pWssClientCtx->event_ctx) == 0 ? STATUS_SUCCESS : STATUS_WSS_CLIENT_RECV_FAILED;
+        int res = wslay_event_recv(pWssClientCtx->event_ctx);
+        if (res != WSLAY_SUCCESS) {
+            DLOGE("Wss client throws an error(%d)", res);
+        }
+        retStatus = (res == WSLAY_SUCCESS) ? STATUS_SUCCESS : STATUS_WSS_CLIENT_RECV_FAILED;
     }
     IO_UNLOCK(pWssClientCtx);
     WSS_CLIENT_EXIT();
@@ -337,10 +341,10 @@ PVOID wss_client_routine(PWssClientContext pWssClientCtx)
         }
 
         if (FD_ISSET(nfds, &rfds)) {
-            if (wss_client_onReadEvent(pWssClientCtx)) {
-                DLOGE("on read event failed");
-            }
+            CHK_ERR(wss_client_onReadEvent(pWssClientCtx) == STATUS_SUCCESS, STATUS_WSS_CLIENT_RECV_FAILED,
+                    "The onRead event of wss connection failed");
         }
+
         // for ping-pong
         pWssClientCtx->pingCounter++;
         if (pWssClientCtx->pingCounter >= WSS_CLIENT_PING_PONG_COUNTER) {
