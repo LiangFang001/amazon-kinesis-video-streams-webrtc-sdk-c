@@ -71,7 +71,7 @@ STATUS doubleListInsertNodeHead(PDoubleList, PDoubleListNode);
 /**
  * Insert a new node with the data at the head position in the list
  */
-STATUS doubleListInsertItemHead(PDoubleList, UINT64);
+STATUS double_list_insertItemHead(PDoubleList, UINT64);
 
 /**
  * Insert a node in the tail position in the list
@@ -146,7 +146,7 @@ STATUS doubleListGetNodeDataAt(PDoubleList, UINT32, PUINT64);
 /**
  * Gets the node data
  */
-STATUS doubleListGetNodeData(PDoubleListNode, PUINT64);
+STATUS double_list_getNodeData(PDoubleListNode, PUINT64);
 
 /**
  * Gets the next node

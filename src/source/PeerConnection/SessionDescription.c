@@ -275,7 +275,7 @@ STATUS sdp_setTransceiverPayloadTypes(PHashTable codecTable, PHashTable rtxTable
     // If a codec we want to send wasn't supported by the other return an error
     CHK_STATUS(double_list_getHeadNode(pTransceivers, &pCurNode));
     while (pCurNode != NULL) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &data));
         pCurNode = pCurNode->pNext;
         pKvsRtpTransceiver = (PKvsRtpTransceiver) data;
 
@@ -689,7 +689,7 @@ STATUS sdp_populateSessionDescriptionMedia(PKvsPeerConnection pKvsPeerConnection
     // setup the streaming section.
     CHK_STATUS(double_list_getHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
     while (pCurNode != NULL) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &data));
         pCurNode = pCurNode->pNext;
         pKvsRtpTransceiver = (PKvsRtpTransceiver) data;
         if (pKvsRtpTransceiver != NULL) {
@@ -797,7 +797,7 @@ STATUS sdp_copyTransceiverWithCodec(PKvsPeerConnection pKvsPeerConnection, RTC_C
 
     CHK_STATUS(double_list_getHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
     while (pCurNode != NULL) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &data));
         pKvsRtpTransceiver = (PKvsRtpTransceiver) data;
         if (pKvsRtpTransceiver != NULL && pKvsRtpTransceiver->sender.track.codec == rtcCodec) {
             pTargetKvsRtpTransceiver = pKvsRtpTransceiver;
@@ -969,7 +969,7 @@ STATUS sdp_setReceiversSsrc(PSessionDescription pRemoteSessionDescription, PDoub
             if (foundSsrc) {
                 CHK_STATUS(double_list_getHeadNode(pTransceivers, &pCurNode));
                 while (pCurNode != NULL) {
-                    CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+                    CHK_STATUS(double_list_getNodeData(pCurNode, &data));
                     pKvsRtpTransceiver = (PKvsRtpTransceiver) data;
                     codec = pKvsRtpTransceiver->sender.track.codec;
                     isVideoCodec = VIDEO_SUPPPORT_TYPE(codec);

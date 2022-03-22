@@ -12,31 +12,11 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#ifndef __KINESIS_VIDEO_WEBRTC_CLIENT_PEERCONNECTION_RTCP__
-#define __KINESIS_VIDEO_WEBRTC_CLIENT_PEERCONNECTION_RTCP__
-
-#pragma once
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 /******************************************************************************
  * HEADERS
  ******************************************************************************/
-#include "PeerConnection.h"
-#include "RtcpPacket.h"
+#include "kvs/config.h"
 
 /******************************************************************************
- * DEFINITIONS
+ * FUNCTION
  ******************************************************************************/
-/******************************************************************************
- * FUNCTIONS
- ******************************************************************************/
-STATUS rtcp_onInboundPacket(PKvsPeerConnection pKvsPeerConnection, PBYTE pBuff, UINT32 buffLen);
-STATUS rtcp_onInboundRembPacket(PRtcpPacket, PKvsPeerConnection);
-STATUS rtcp_onPLIPacket(PRtcpPacket, PKvsPeerConnection);
-
-#ifdef __cplusplus
-}
-#endif
-#endif /* __KINESIS_VIDEO_WEBRTC_CLIENT_PEERCONNECTION_RTCP__ */

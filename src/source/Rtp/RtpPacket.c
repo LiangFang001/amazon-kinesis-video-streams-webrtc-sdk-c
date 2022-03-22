@@ -252,7 +252,7 @@ STATUS rtp_packet_setBytesFromPacket(PRtpPacket pRtpPacket, PBYTE pRawPacket, UI
     CHK(pRtpPacket != NULL && pRawPacket != NULL, STATUS_RTP_NULL_ARG);
 
     packetLengthNeeded = RTP_GET_RAW_PACKET_SIZE(pRtpPacket);
-    CHK(packetLength >= packetLengthNeeded, STATUS_BUFFER_TOO_SMALL);
+    CHK(packetLength >= packetLengthNeeded, STATUS_RTP_BUFFER_TOO_SMALL);
     /*
      *  0                   1                   2                   3
      *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -331,7 +331,7 @@ STATUS rtp_packet_constructPackets(PPayloadArray pPayloadArray, UINT8 payloadTyp
 
     CHK(pPayloadArray != NULL && pPayloadArray->payloadLength > 0, retStatus);
     CHK(pPackets != NULL, STATUS_RTP_BUFFER_TOO_SMALL);
-    CHK(pPayloadArray->payloadSubLenSize <= packetCount, STATUS_BUFFER_TOO_SMALL);
+    CHK(pPayloadArray->payloadSubLenSize <= packetCount, STATUS_RTP_BUFFER_TOO_SMALL);
 
     curPtrInPayload = pPayloadArray->payloadBuffer;
     for (i = 0, curPtrInPayloadSubLen = pPayloadArray->payloadSubLength; i < pPayloadArray->payloadSubLenSize; i++, curPtrInPayloadSubLen++) {

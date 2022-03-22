@@ -512,7 +512,7 @@ TEST_F(PeerConnectionFunctionalityTest, exchangeMedia)
 
     MEMFREE(videoFrame.frameData);
     RtcOutboundRtpStreamStats stats{};
-    EXPECT_EQ(STATUS_SUCCESS, getRtpOutboundStats(offerPc, offerVideoTransceiver, &stats));
+    EXPECT_EQ(STATUS_SUCCESS, metrics_getRtpOutboundStats(offerPc, offerVideoTransceiver, &stats));
     EXPECT_EQ(206, stats.sent.packetsSent);
 #ifdef KVS_USE_MBEDTLS
     EXPECT_EQ(248026, stats.sent.bytesSent);
@@ -524,7 +524,7 @@ TEST_F(PeerConnectionFunctionalityTest, exchangeMedia)
     EXPECT_LT(0, stats.lastPacketSentTimestamp);
 
     RtcInboundRtpStreamStats answerStats{};
-    EXPECT_EQ(STATUS_SUCCESS, getRtpInboundStats(answerPc, answerVideoTransceiver, &answerStats));
+    EXPECT_EQ(STATUS_SUCCESS, metrics_getRtpInboundStats(answerPc, answerVideoTransceiver, &answerStats));
     EXPECT_LE(1, answerStats.framesReceived);
     EXPECT_LT(103, answerStats.received.packetsReceived);
     EXPECT_LT(120000, answerStats.bytesReceived);

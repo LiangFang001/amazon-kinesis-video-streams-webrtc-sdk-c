@@ -42,7 +42,7 @@ STATUS rtp_createTransceiver(RTC_RTP_TRANSCEIVER_DIRECTION direction, PKvsPeerCo
     STATUS retStatus = STATUS_SUCCESS;
     PKvsRtpTransceiver pKvsRtpTransceiver = NULL;
 
-    CHK(ppKvsRtpTransceiver != NULL && pKvsPeerConnection != NULL && pRtcMediaStreamTrack != NULL, STATUS_NULL_ARG);
+    CHK(ppKvsRtpTransceiver != NULL && pKvsPeerConnection != NULL && pRtcMediaStreamTrack != NULL, STATUS_RTP_NULL_ARG);
 
     pKvsRtpTransceiver = (PKvsRtpTransceiver) MEMCALLOC(1, SIZEOF(KvsRtpTransceiver));
     CHK(pKvsRtpTransceiver != NULL, STATUS_NOT_ENOUGH_MEMORY);
@@ -91,7 +91,7 @@ STATUS rtp_transceiver_free(PKvsRtpTransceiver* ppKvsRtpTransceiver)
     STATUS retStatus = STATUS_SUCCESS;
     PKvsRtpTransceiver pKvsRtpTransceiver = NULL;
 
-    CHK(ppKvsRtpTransceiver != NULL, STATUS_NULL_ARG);
+    CHK(ppKvsRtpTransceiver != NULL, STATUS_RTP_NULL_ARG);
     pKvsRtpTransceiver = *ppKvsRtpTransceiver;
     // free is idempotent
     CHK(pKvsRtpTransceiver != NULL, retStatus);
@@ -125,7 +125,7 @@ CleanUp:
 STATUS rtp_transceiver_setJitterBuffer(PKvsRtpTransceiver pKvsRtpTransceiver, PJitterBuffer pJitterBuffer)
 {
     STATUS retStatus = STATUS_SUCCESS;
-    CHK(pKvsRtpTransceiver != NULL && pJitterBuffer != NULL, STATUS_NULL_ARG);
+    CHK(pKvsRtpTransceiver != NULL && pJitterBuffer != NULL, STATUS_RTP_NULL_ARG);
 
     pKvsRtpTransceiver->pJitterBuffer = pJitterBuffer;
 
@@ -140,7 +140,7 @@ STATUS rtp_transceiver_onFrame(PRtcRtpTransceiver pRtcRtpTransceiver, UINT64 cus
     STATUS retStatus = STATUS_SUCCESS;
     PKvsRtpTransceiver pKvsRtpTransceiver = (PKvsRtpTransceiver) pRtcRtpTransceiver;
 
-    CHK(pKvsRtpTransceiver != NULL && rtcOnFrame != NULL, STATUS_NULL_ARG);
+    CHK(pKvsRtpTransceiver != NULL && rtcOnFrame != NULL, STATUS_RTP_NULL_ARG);
 
     pKvsRtpTransceiver->onFrame = rtcOnFrame;
     pKvsRtpTransceiver->onFrameCustomData = customData;
@@ -158,7 +158,7 @@ STATUS rtp_transceiver_onBandwidthEstimation(PRtcRtpTransceiver pRtcRtpTransceiv
     STATUS retStatus = STATUS_SUCCESS;
     PKvsRtpTransceiver pKvsRtpTransceiver = (PKvsRtpTransceiver) pRtcRtpTransceiver;
 
-    CHK(pKvsRtpTransceiver != NULL && rtcOnBandwidthEstimation != NULL, STATUS_NULL_ARG);
+    CHK(pKvsRtpTransceiver != NULL && rtcOnBandwidthEstimation != NULL, STATUS_RTP_NULL_ARG);
 
     pKvsRtpTransceiver->onBandwidthEstimation = rtcOnBandwidthEstimation;
     pKvsRtpTransceiver->onBandwidthEstimationCustomData = customData;
@@ -175,7 +175,7 @@ STATUS rtp_transceiver_onPictureLoss(PRtcRtpTransceiver pRtcRtpTransceiver, UINT
     STATUS retStatus = STATUS_SUCCESS;
     PKvsRtpTransceiver pKvsRtpTransceiver = (PKvsRtpTransceiver) pRtcRtpTransceiver;
 
-    CHK(pKvsRtpTransceiver != NULL && onPictureLoss != NULL, STATUS_NULL_ARG);
+    CHK(pKvsRtpTransceiver != NULL && onPictureLoss != NULL, STATUS_RTP_NULL_ARG);
 
     pKvsRtpTransceiver->onPictureLoss = onPictureLoss;
     pKvsRtpTransceiver->onPictureLossCustomData = customData;
@@ -190,7 +190,7 @@ STATUS rtp_transceiver_updateEncoderStats(PRtcRtpTransceiver pRtcRtpTransceiver,
 {
     STATUS retStatus = STATUS_SUCCESS;
     PKvsRtpTransceiver pKvsRtpTransceiver = (PKvsRtpTransceiver) pRtcRtpTransceiver;
-    CHK(pKvsRtpTransceiver != NULL && encoderStats != NULL, STATUS_NULL_ARG);
+    CHK(pKvsRtpTransceiver != NULL && encoderStats != NULL, STATUS_RTP_NULL_ARG);
     MUTEX_LOCK(pKvsRtpTransceiver->statsLock);
     pKvsRtpTransceiver->outboundStats.totalEncodeTime += encoderStats->encodeTimeMsec;
     pKvsRtpTransceiver->outboundStats.targetBitrate = encoderStats->targetBitrate;
@@ -227,18 +227,17 @@ STATUS rtp_writeFrame(PRtcRtpTransceiver pRtcRtpTransceiver, PFrame pFrame)
     UINT64 randomRtpTimeoffset = 0; // TODO: spec requires random rtp time offset
     UINT64 rtpTimestamp = 0;
     UINT64 now = GETTIME();
-
     // stats updates
     DOUBLE fps = 0.0;
     UINT32 frames = 0, keyframes = 0, bytesSent = 0, packetsSent = 0, headerBytesSent = 0, framesSent = 0;
     UINT32 packetsDiscardedOnSend = 0, bytesDiscardedOnSend = 0, framesDiscardedOnSend = 0;
     UINT64 lastPacketSentTimestamp = 0;
-
     // temp vars :(
     UINT64 tmpFrames, tmpTime;
     STATUS sendStatus;
 
-    CHK(pKvsRtpTransceiver != NULL && pFrame != NULL, STATUS_NULL_ARG);
+    CHK(pKvsRtpTransceiver != NULL && pFrame != NULL, STATUS_RTP_NULL_ARG);
+
     pKvsPeerConnection = pKvsRtpTransceiver->pKvsPeerConnection;
     pPayloadArray = &(pKvsRtpTransceiver->sender.payloadArray);
     if (MEDIA_STREAM_TRACK_KIND_VIDEO == pKvsRtpTransceiver->sender.track.kind) {
@@ -412,7 +411,7 @@ STATUS rtp_writePacket(PKvsPeerConnection pKvsPeerConnection, PRtpPacket pRtpPac
     PBYTE pRawPacket = NULL;
     INT32 rawLen = 0;
 
-    CHK(pKvsPeerConnection != NULL && pRtpPacket != NULL && pRtpPacket->pRawPacket != NULL, STATUS_NULL_ARG);
+    CHK(pKvsPeerConnection != NULL && pRtpPacket != NULL && pRtpPacket->pRawPacket != NULL, STATUS_RTP_NULL_ARG);
 
     MUTEX_LOCK(pKvsPeerConnection->pSrtpSessionLock);
     locked = TRUE;
@@ -444,11 +443,11 @@ STATUS rtp_transceiver_findBySsrc(PKvsPeerConnection pKvsPeerConnection, PKvsRtp
     PDoubleListNode pCurNode = NULL;
     UINT64 item = 0;
     PKvsRtpTransceiver pTransceiver = NULL;
-    CHK(pKvsPeerConnection != NULL && ppTransceiver != NULL, STATUS_NULL_ARG);
+    CHK(pKvsPeerConnection != NULL && ppTransceiver != NULL, STATUS_RTP_NULL_ARG);
 
     CHK_STATUS(double_list_getHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
     while (pCurNode != NULL) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &item));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &item));
         pTransceiver = (PKvsRtpTransceiver) item;
         if (pTransceiver->sender.ssrc == ssrc || pTransceiver->sender.rtxSsrc == ssrc || pTransceiver->jitterBufferSsrc == ssrc) {
             break;

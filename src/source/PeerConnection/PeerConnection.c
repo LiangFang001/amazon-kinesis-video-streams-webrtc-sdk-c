@@ -239,7 +239,7 @@ VOID pc_onInboundPacket(UINT64 customData, PBYTE buff, UINT32 buffLen)
                 CHK(FALSE, STATUS_SUCCESS);
             }
 
-            CHK_STATUS(rtcp_onPacket(pKvsPeerConnection, buff, signedBuffLen));
+            CHK_STATUS(rtcp_onInboundPacket(pKvsPeerConnection, buff, signedBuffLen));
         } else {
             // rtp
             CHK_STATUS(pc_sendPacketToRtpReceiver(pKvsPeerConnection, buff, signedBuffLen));
@@ -277,7 +277,7 @@ STATUS pc_sendPacketToRtpReceiver(PKvsPeerConnection pKvsPeerConnection, PBYTE p
 
     CHK_STATUS(double_list_getHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
     while (pCurNode != NULL) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &item));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &item));
         pTransceiver = (PKvsRtpTransceiver) item;
 
         if (pTransceiver->jitterBufferSsrc == ssrc) {
@@ -911,7 +911,7 @@ STATUS pc_free(PRtcPeerConnection* ppPeerConnection)
     // free transceivers
     CHK_LOG_ERR(double_list_getHeadNode(pKvsPeerConnection->pTransceivers, &pCurNode));
     while (pCurNode != NULL) {
-        CHK_LOG_ERR(doubleListGetNodeData(pCurNode, &item));
+        CHK_LOG_ERR(double_list_getNodeData(pCurNode, &item));
         CHK_LOG_ERR(rtp_transceiver_free((PKvsRtpTransceiver*) &item));
 
         pCurNode = pCurNode->pNext;
@@ -1330,7 +1330,7 @@ STATUS pc_addTransceiver(PRtcPeerConnection pPeerConnection, PRtcMediaStreamTrac
     // after pKvsRtpTransceiver is successfully created, jitterBuffer will be freed by pKvsRtpTransceiver.
     pJitterBuffer = NULL;
 
-    CHK_STATUS(doubleListInsertItemHead(pKvsPeerConnection->pTransceivers, (UINT64) pKvsRtpTransceiver));
+    CHK_STATUS(double_list_insertItemHead(pKvsPeerConnection->pTransceivers, (UINT64) pKvsRtpTransceiver));
     *ppRtcRtpTransceiver = (PRtcRtpTransceiver) pKvsRtpTransceiver;
 
     CHK_STATUS(timer_queue_addTimer(pKvsPeerConnection->timerQueueHandle, RTCP_FIRST_REPORT_DELAY, TIMER_QUEUE_SINGLE_INVOCATION_PERIOD,

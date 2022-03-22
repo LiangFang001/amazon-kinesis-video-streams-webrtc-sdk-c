@@ -65,6 +65,7 @@ extern "C" {
 #define STATUS_SCTP_BASE           0x1E000000
 #define STATUS_SDP_BASE            0x1F000000
 #define STATUS_PEER_CONN_BASE      0x20000000
+#define STATUS_METRICS_BASE        0x21000000
 /******************************************************************************
  * Common error codes
  ******************************************************************************/
@@ -528,6 +529,11 @@ extern "C" {
 #define STATUS_WSS_VALIDATE_ACCEPT_KEY_ERROR    STATUS_WSS_CLIENT_BASE + 0x0000000B
 #define STATUS_WSS_GENERATE_RANDOM_NUM_ERROR    STATUS_WSS_CLIENT_BASE + 0x0000000C
 #define STATUS_WSS_CLIENT_PING_FAILED           STATUS_WSS_CLIENT_BASE + 0x0000000D
+/******************************************************************************
+ * Metrics error codes
+ ******************************************************************************/
+#define STATUS_METRICS_NULL_ARG STATUS_METRICS_BASE + 0x00000001
+
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/

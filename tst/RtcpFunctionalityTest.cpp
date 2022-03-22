@@ -161,9 +161,9 @@ TEST_F(RtcpFunctionalityTest, onRtcpPacketCompoundNack)
     ASSERT_EQ(STATUS_SUCCESS, createRtpPacketWithSeqNum(0, &pRtpPacket));
 
     ASSERT_EQ(STATUS_SUCCESS, rtp_rolling_buffer_addRtpPacket(pKvsRtpTransceiver->sender.packetBuffer, pRtpPacket));
-    ASSERT_EQ(STATUS_SUCCESS, rtcp_onPacket(pKvsPeerConnection, validRtcpPacket, SIZEOF(validRtcpPacket)));
+    ASSERT_EQ(STATUS_SUCCESS, rtcp_onInboundPacket(pKvsPeerConnection, validRtcpPacket, SIZEOF(validRtcpPacket)));
     RtcOutboundRtpStreamStats  stats{};
-    getRtpOutboundStats(pRtcPeerConnection, nullptr, &stats);
+    metrics_getRtpOutboundStats(pRtcPeerConnection, nullptr, &stats);
     ASSERT_EQ(1, stats.nackCount);
     ASSERT_EQ(1, stats.retransmittedPacketsSent);
     ASSERT_EQ(10, stats.retransmittedBytesSent);
@@ -180,7 +180,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpPacketCompound)
         0xef, 0x00, 0x00, 0x23, 0xf3, 0x00, 0x6c, 0xd3, 0x75, 0x81, 0xca, 0x00, 0x06, 0xf1, 0x2d, 0x7b, 0x4b, 0x01, 0x10,
         0x2f, 0x76, 0x6d, 0x4b, 0x51, 0x6e, 0x47, 0x6e, 0x55, 0x70, 0x4f, 0x2b, 0x70, 0x38, 0x64, 0x52, 0x00, 0x00,
     };
-    EXPECT_EQ(STATUS_SUCCESS, rtcp_onPacket(&peerConnection, compound, SIZEOF(compound)));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_onInboundPacket(&peerConnection, compound, SIZEOF(compound)));
 }
 
 TEST_F(RtcpFunctionalityTest, onRtcpPacketCompoundSenderReport)
@@ -194,13 +194,13 @@ TEST_F(RtcpFunctionalityTest, onRtcpPacketCompoundSenderReport)
     initTransceiver(4242); // fake transceiver
     auto t = pc_addTransceiver(1577872978); // real transceiver
 
-    EXPECT_EQ(STATUS_SUCCESS, rtcp_onPacket(pKvsPeerConnection, rawpacket, rawpacketSize));
+    EXPECT_EQ(STATUS_SUCCESS, rtcp_onInboundPacket(pKvsPeerConnection, rawpacket, rawpacketSize));
 
     RtcRemoteInboundRtpStreamStats stats{};
     EXPECT_EQ(STATUS_SUCCESS, getRtpRemoteInboundStats(pRtcPeerConnection, t, &stats));
     EXPECT_EQ(1, stats.reportsReceived);
     EXPECT_EQ(1, stats.roundTripTimeMeasurements);
-    // rtcp_onPacket uses real time clock GETTIME to calculate roundTripTime, cant test
+    // rtcp_onInboundPacket uses real time clock GETTIME to calculate roundTripTime, cant test
     EXPECT_EQ(4.0 / 255.0, stats.fractionLost);
     EXPECT_LT(0, stats.totalRoundTripTime);
     EXPECT_LT(0, stats.roundTripTime);
@@ -268,7 +268,7 @@ TEST_F(RtcpFunctionalityTest, onRtcpRembCalled)
     rtp_transceiver_onBandwidthEstimation(pRtcRtpTransceiver, reinterpret_cast<UINT64>(&onBandwidthCalled42), callback);
     rtp_transceiver_onBandwidthEstimation(transceiver43, reinterpret_cast<UINT64>(&onBandwidthCalled43), callback);
 
-    rtcp_onRembPacket(&rtcpPacket, pKvsPeerConnection);
+    rtcp_onInboundRembPacket(&rtcpPacket, pKvsPeerConnection);
     ASSERT_TRUE(onBandwidthCalled42);
     ASSERT_FALSE(onBandwidthCalled43);
     pc_free(&pRtcPeerConnection);
@@ -291,7 +291,7 @@ TEST_F(RtcpFunctionalityTest, onpli)
     rtcp_onPLIPacket(&rtcpPacket, pKvsPeerConnection);
     ASSERT_TRUE(on_picture_loss_called);
     RtcOutboundRtpStreamStats stats{};
-    EXPECT_EQ(STATUS_SUCCESS, getRtpOutboundStats(pRtcPeerConnection, nullptr, &stats));
+    EXPECT_EQ(STATUS_SUCCESS, metrics_getRtpOutboundStats(pRtcPeerConnection, nullptr, &stats));
     EXPECT_EQ(1, stats.pliCount);
     pc_free(&pRtcPeerConnection);
 }

@@ -70,7 +70,7 @@ typedef STATUS (*DepayRtpPayloadFunc)(PBYTE, UINT32, PBYTE, PUINT32, PBOOL);
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 
-struct __RtpPacketHeader {
+typedef struct __RtpPacketHeader {
     UINT8 version;
     BOOL padding;
     BOOL extension;
@@ -84,23 +84,18 @@ struct __RtpPacketHeader {
     UINT16 extensionProfile;
     PBYTE extensionPayload;
     UINT32 extensionLength;
-};
-typedef struct __RtpPacketHeader RtpPacketHeader;
-typedef RtpPacketHeader* PRtpPacketHeader;
+} RtpPacketHeader, *PRtpPacketHeader;
 
-struct __Payloads {
+typedef struct __Payloads {
     PBYTE payloadBuffer;
     UINT32 payloadLength;
     UINT32 maxPayloadLength;
     PUINT32 payloadSubLength;
     UINT32 payloadSubLenSize;
     UINT32 maxPayloadSubLenSize;
-};
-typedef struct __Payloads PayloadArray;
-typedef PayloadArray* PPayloadArray;
+} PayloadArray, *PPayloadArray;
 
-typedef struct __RtpPacket RtpPacket;
-struct __RtpPacket {
+typedef struct __RtpPacket {
     RtpPacketHeader header;
     PBYTE payload;
     UINT32 payloadLength;
@@ -108,8 +103,7 @@ struct __RtpPacket {
     UINT32 rawPacketLength;
     // used for jitterBufferDelay calculation
     UINT64 receivedTime;
-};
-typedef RtpPacket* PRtpPacket;
+} RtpPacket, *PRtpPacket;
 
 /******************************************************************************
  * FUNCTIONS

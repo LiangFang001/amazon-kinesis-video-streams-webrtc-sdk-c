@@ -69,7 +69,7 @@ STATUS getRtpRemoteInboundStats(PRtcPeerConnection, PRtcRtpTransceiver, PRtcRemo
  * @return Pass/Fail
  *
  */
-STATUS getRtpOutboundStats(PRtcPeerConnection, PRtcRtpTransceiver, PRtcOutboundRtpStreamStats);
+STATUS metrics_getRtpOutboundStats(PRtcPeerConnection, PRtcRtpTransceiver, PRtcOutboundRtpStreamStats);
 
 /**
  * @brief Get RTP inbound stats
@@ -79,7 +79,7 @@ STATUS getRtpOutboundStats(PRtcPeerConnection, PRtcRtpTransceiver, PRtcOutboundR
  * @return Pass/Fail
  *
  */
-STATUS getRtpInboundStats(PRtcPeerConnection, PRtcRtpTransceiver, PRtcInboundRtpStreamStats);
+STATUS metrics_getRtpInboundStats(PRtcPeerConnection, PRtcRtpTransceiver, PRtcInboundRtpStreamStats);
 #ifdef __cplusplus
 }
 #endif

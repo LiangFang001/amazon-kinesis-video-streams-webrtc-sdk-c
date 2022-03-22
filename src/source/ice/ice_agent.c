@@ -189,7 +189,7 @@ STATUS ice_agent_findCandidateByIp(PKvsIpAddress pIpAddress, PDoubleList pCandid
 
     CHK_STATUS(double_list_getHeadNode(pCandidateList, &pCurNode));
     while (pCurNode != NULL && pTargetIceCandidate == NULL) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &data));
         pIceCandidate = (PIceCandidate) data;
         pCurNode = pCurNode->pNext;
 
@@ -223,7 +223,7 @@ STATUS ice_agent_findCandidateBySocketConnection(PSocketConnection pSocketConnec
 
     CHK_STATUS(double_list_getHeadNode(pCandidateList, &pCurNode));
     while (pCurNode != NULL && pTargetIceCandidate == NULL) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &data));
         pIceCandidate = (PIceCandidate) data;
         pCurNode = pCurNode->pNext;
 
@@ -301,7 +301,7 @@ STATUS ice_agent_populateSdpMediaDescriptionCandidates(PIceAgent pIceAgent, PSdp
 
     CHK_STATUS(double_list_getHeadNode(pIceAgent->localCandidates, &pCurNode));
     while (pCurNode != NULL) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &data));
         pCurNode = pCurNode->pNext;
 
         STRCPY(pSdpMediaDescription->sdpAttributes[attrIndex].attributeName, "candidate");
@@ -672,7 +672,7 @@ STATUS ice_agent_free(PIceAgent* ppIceAgent)
     if (pIceAgent->pIceCandidatePairs != NULL) {
         CHK_STATUS(double_list_getHeadNode(pIceAgent->pIceCandidatePairs, &pCurNode));
         while (pCurNode != NULL) {
-            CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+            CHK_STATUS(double_list_getNodeData(pCurNode, &data));
             pCurNode = pCurNode->pNext;
             pIceCandidatePair = (PIceCandidatePair) data;
 
@@ -686,7 +686,7 @@ STATUS ice_agent_free(PIceAgent* ppIceAgent)
     if (pIceAgent->localCandidates != NULL) {
         CHK_STATUS(double_list_getHeadNode(pIceAgent->localCandidates, &pCurNode));
         while (pCurNode != NULL) {
-            CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+            CHK_STATUS(double_list_getNodeData(pCurNode, &data));
             pCurNode = pCurNode->pNext;
             pIceCandidate = (PIceCandidate) data;
 
@@ -914,7 +914,7 @@ static STATUS ice_agent_initSrflxCandidate(PIceAgent pIceAgent)
     /* There should be no other thread mutating localCandidates at this time, so safe to read without lock. */
     CHK_STATUS(double_list_getHeadNode(pIceAgent->localCandidates, &pCurNode));
     while (pCurNode != NULL) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &data));
         pCurNode = pCurNode->pNext;
         pCandidate = (PIceCandidate) data;
 
@@ -1041,7 +1041,7 @@ static STATUS ice_agent_initRelayCandidate(PIceAgent pIceAgent, UINT32 iceServer
      * ice_agent_addRemoteCandidate calls. */
     CHK_STATUS(double_list_getHeadNode(pIceAgent->remoteCandidates, &pCurNode));
     while (pCurNode != NULL) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &data));
         pCurNode = pCurNode->pNext;
         pCandidate = (PIceCandidate) data;
 
@@ -1206,7 +1206,7 @@ STATUS ice_agent_gatherTimerCallback(UINT32 timerId, UINT64 currentTime, UINT64 
 
     CHK_STATUS(double_list_getHeadNode(pIceAgent->localCandidates, &pCurNode));
     while (pCurNode != NULL) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &data));
         pIceCandidate = (PIceCandidate) data;
         pCurNode = pCurNode->pNext;
 
@@ -1242,7 +1242,7 @@ STATUS ice_agent_gatherTimerCallback(UINT32 timerId, UINT64 currentTime, UINT64 
 
     CHK_STATUS(double_list_getHeadNode(pIceAgent->localCandidates, &pCurNode));
     while (pCurNode != NULL && newLocalCandidateCount < ARRAY_SIZE(newLocalCandidates)) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &data));
         pCurNode = pCurNode->pNext;
         pIceCandidate = (PIceCandidate) data;
 
@@ -1901,7 +1901,7 @@ STATUS ice_candidate_pair_create(PIceAgent pIceAgent, PIceCandidate pIceCandidat
 
     CHK_STATUS(double_list_getHeadNode(pDoubleList, &pCurNode));
     while (pCurNode != NULL) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &data));
         pCurrentIceCandidate = (PIceCandidate) data;
         pCurNode = pCurNode->pNext;
 
@@ -2319,7 +2319,7 @@ static STATUS ice_agent_checkPeerReflexiveCandidate(PIceAgent pIceAgent, PKvsIpA
     pIceCandidate->state = ICE_CANDIDATE_STATE_VALID;
     pIceCandidate->pSocketConnection = NULL; // remote candidate dont have PSocketConnection
 
-    CHK_STATUS(doubleListInsertItemHead(pIceAgent->remoteCandidates, (UINT64) pIceCandidate));
+    CHK_STATUS(double_list_insertItemHead(pIceAgent->remoteCandidates, (UINT64) pIceCandidate));
     freeIceCandidateOnError = FALSE;
 
     CHK_STATUS(ice_candidate_pair_create(pIceAgent, pIceCandidate, isRemote));
@@ -2850,7 +2850,7 @@ STATUS ice_agent_sendSrflxCandidateRequest(PIceAgent pIceAgent)
 
     CHK_STATUS(double_list_getHeadNode(pIceAgent->localCandidates, &pCurNode));
     while (pCurNode != NULL) {
-        CHK_STATUS(doubleListGetNodeData(pCurNode, &data));
+        CHK_STATUS(double_list_getNodeData(pCurNode, &data));
         pCurNode = pCurNode->pNext;
         pCandidate = (PIceCandidate) data;
 

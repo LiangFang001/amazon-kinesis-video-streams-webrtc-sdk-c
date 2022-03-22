@@ -422,7 +422,7 @@ TEST_F(IceFunctionalityTest, IceAgentFindCandidateWithIpUnitTest)
     EXPECT_EQ(NULL, pIceCandidate);
 
     candidateInList.ipAddress = ipAddress;
-    EXPECT_EQ(STATUS_SUCCESS, doubleListInsertItemHead(&candidateList, (UINT64) &candidateInList));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_insertItemHead(&candidateList, (UINT64) &candidateInList));
 
     ipAddress.family = KVS_IP_FAMILY_TYPE_IPV6;
     EXPECT_EQ(STATUS_SUCCESS, ice_agent_findCandidateByIp(&ipAddress, &candidateList, &pIceCandidate));
@@ -469,7 +469,7 @@ TEST_F(IceFunctionalityTest, IceAgentFindCandidateWithConnectionHandleUnitTest)
     EXPECT_EQ(NULL, pIceCandidate);
 
     candidateInList.pSocketConnection = &socketConnection1;
-    EXPECT_EQ(STATUS_SUCCESS, doubleListInsertItemHead(&candidateList, (UINT64) &candidateInList));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_insertItemHead(&candidateList, (UINT64) &candidateInList));
 
     EXPECT_EQ(STATUS_SUCCESS, ice_agent_findCandidateBySocketConnection(&socketConnection2, &candidateList, &pIceCandidate));
     // no matching socket connection
@@ -515,13 +515,13 @@ TEST_F(IceFunctionalityTest, IceAgentCreateIceCandidatePairsUnitTest)
     EXPECT_NE(STATUS_SUCCESS, ice_candidate_pair_create(&iceAgent, NULL, FALSE));
     EXPECT_NE(STATUS_SUCCESS, ice_candidate_pair_create(NULL, &localCandidate1, FALSE));
 
-    EXPECT_EQ(STATUS_SUCCESS, doubleListInsertItemHead(iceAgent.localCandidates, (UINT64) &localCandidate1));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_insertItemHead(iceAgent.localCandidates, (UINT64) &localCandidate1));
     EXPECT_EQ(STATUS_SUCCESS, ice_candidate_pair_create(&iceAgent, &localCandidate1, FALSE));
     // no remote candidate to form pair with
     EXPECT_EQ(STATUS_SUCCESS, doubleListGetNodeCount(iceAgent.pIceCandidatePairs, &iceCandidateCount));
     EXPECT_EQ(0, iceCandidateCount);
 
-    EXPECT_EQ(STATUS_SUCCESS, doubleListInsertItemHead(iceAgent.remoteCandidates, (UINT64) &remoteCandidate1));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_insertItemHead(iceAgent.remoteCandidates, (UINT64) &remoteCandidate1));
     remoteCandidate1.state = ICE_CANDIDATE_STATE_NEW;
     EXPECT_EQ(STATUS_SUCCESS, ice_candidate_pair_create(&iceAgent, &remoteCandidate1, TRUE));
     EXPECT_EQ(STATUS_SUCCESS, doubleListGetNodeCount(iceAgent.pIceCandidatePairs, &iceCandidateCount));
@@ -552,19 +552,19 @@ TEST_F(IceFunctionalityTest, IceAgentCreateIceCandidatePairsUnitTest)
     EXPECT_EQ(&localCandidate1, pIceCandidatePair->local);
     EXPECT_EQ(&remoteCandidate1, pIceCandidatePair->remote);
 
-    EXPECT_EQ(STATUS_SUCCESS, doubleListInsertItemHead(iceAgent.localCandidates, (UINT64) &localCandidate2));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_insertItemHead(iceAgent.localCandidates, (UINT64) &localCandidate2));
     EXPECT_EQ(STATUS_SUCCESS, ice_candidate_pair_create(&iceAgent, &localCandidate2, FALSE));
     // 1 local ip4 & 1 local ip6 vs 1 remote ip4, thus 1 pair
     EXPECT_EQ(STATUS_SUCCESS, doubleListGetNodeCount(iceAgent.pIceCandidatePairs, &iceCandidateCount));
     EXPECT_EQ(1, iceCandidateCount);
 
-    EXPECT_EQ(STATUS_SUCCESS, doubleListInsertItemHead(iceAgent.remoteCandidates, (UINT64) &remoteCandidate2));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_insertItemHead(iceAgent.remoteCandidates, (UINT64) &remoteCandidate2));
     EXPECT_EQ(STATUS_SUCCESS, ice_candidate_pair_create(&iceAgent, &remoteCandidate2, TRUE));
     // 1 local ip4 & 1 local ip6 vs 1 remote ip4 & 1 remote ip6, thus 2 pairs
     EXPECT_EQ(STATUS_SUCCESS, doubleListGetNodeCount(iceAgent.pIceCandidatePairs, &iceCandidateCount));
     EXPECT_EQ(2, iceCandidateCount);
 
-    EXPECT_EQ(STATUS_SUCCESS, doubleListInsertItemHead(iceAgent.remoteCandidates, (UINT64) &remoteCandidate3));
+    EXPECT_EQ(STATUS_SUCCESS, double_list_insertItemHead(iceAgent.remoteCandidates, (UINT64) &remoteCandidate3));
     EXPECT_EQ(STATUS_SUCCESS, ice_candidate_pair_create(&iceAgent, &remoteCandidate3, TRUE));
     // 1 local ip4 & 1 local ip6 vs 1 remote ip4 & 2 remote ip6, thus 3 pairs
     EXPECT_EQ(STATUS_SUCCESS, doubleListGetNodeCount(iceAgent.pIceCandidatePairs, &iceCandidateCount));

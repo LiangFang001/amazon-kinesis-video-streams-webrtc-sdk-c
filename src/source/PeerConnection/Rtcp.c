@@ -209,7 +209,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS rtcp_onPacket(PKvsPeerConnection pKvsPeerConnection, PBYTE pBuff, UINT32 buffLen)
+STATUS rtcp_onInboundPacket(PKvsPeerConnection pKvsPeerConnection, PBYTE pBuff, UINT32 buffLen)
 {
     STATUS retStatus = STATUS_SUCCESS;
     RtcpPacket rtcpPacket;
@@ -234,7 +234,7 @@ STATUS rtcp_onPacket(PKvsPeerConnection pKvsPeerConnection, PBYTE pBuff, UINT32 
             case RTCP_PACKET_TYPE_PAYLOAD_SPECIFIC_FEEDBACK:
                 if (rtcpPacket.header.receptionReportCount == RTCP_FEEDBACK_MESSAGE_TYPE_APPLICATION_LAYER_FEEDBACK &&
                     rtcp_packet_isRemb(rtcpPacket.payload, rtcpPacket.payloadLength) == STATUS_SUCCESS) {
-                    CHK_STATUS(rtcp_onRembPacket(&rtcpPacket, pKvsPeerConnection));
+                    CHK_STATUS(rtcp_onInboundRembPacket(&rtcpPacket, pKvsPeerConnection));
                 } else if (rtcpPacket.header.receptionReportCount == RTCP_PSFB_PLI) {
                     CHK_STATUS(rtcp_onPLIPacket(&rtcpPacket, pKvsPeerConnection));
                 } else if (rtcpPacket.header.receptionReportCount == RTCP_PSFB_SLI) {
@@ -268,7 +268,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS rtcp_onRembPacket(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerConnection)
+STATUS rtcp_onInboundRembPacket(PRtcpPacket pRtcpPacket, PKvsPeerConnection pKvsPeerConnection)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 ssrcList[MAX_UINT8] = {0};

@@ -108,7 +108,7 @@ CleanUp:
 /**
  * Insert a new node with the data at the head position in the list
  */
-STATUS doubleListInsertItemHead(PDoubleList pList, UINT64 data)
+STATUS double_list_insertItemHead(PDoubleList pList, UINT64 data)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PDoubleListNode pNode;
@@ -374,7 +374,7 @@ CleanUp:
 /**
  * Gets the node data
  */
-STATUS doubleListGetNodeData(PDoubleListNode pNode, PUINT64 pData)
+STATUS double_list_getNodeData(PDoubleListNode pNode, PUINT64 pData)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
