@@ -750,7 +750,7 @@ STATUS signaling_validateIceConfiguration(PSignalingClient pSignalingClient)
 
     pSignalingClient->iceConfigTime = GETTIME();
     pSignalingClient->iceConfigExpiration = pSignalingClient->iceConfigTime + (minTtl - ICE_CONFIGURATION_REFRESH_GRACE_PERIOD);
-    DLOGD("The expiration of ice config: %" PRIu64 ", ttl: %" PRIu64, pSignalingClient->iceConfigExpiration, minTtl/HUNDREDS_OF_NANOS_IN_A_SECOND);
+    DLOGD("The expiration of ice config: %" PRIu64 ", ttl: %" PRIu64, pSignalingClient->iceConfigExpiration, minTtl / HUNDREDS_OF_NANOS_IN_A_SECOND);
 
 CleanUp:
     CHK_LOG_ERR(retStatus);
@@ -1277,8 +1277,7 @@ STATUS signaling_channel_connect(PSignalingClient pSignalingClient, UINT64 time)
 
     if (STATUS_SUCCEEDED(retStatus)) {
         // No need to reconnect again if already connected. This can happen if we get to this state after ice refresh
-        // if (!ATOMIC_LOAD_BOOL(&pSignalingClient->connected)) {
-        if (1) {
+        if (!ATOMIC_LOAD_BOOL(&pSignalingClient->connected)) {
             ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_NONE);
             retStatus = wss_api_connect(pSignalingClient, &httpStatusCode);
             ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) httpStatusCode);
