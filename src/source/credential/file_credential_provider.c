@@ -1,11 +1,27 @@
-/**
- * Kinesis Video Producer File based Credential Provider
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
  */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #define LOG_CLASS "FileCredentialProvider"
-
 #include "auth.h"
 #include "file_credential_provider.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 typedef struct __FileCredentialProvider {
     // First member should be the abstract credential provider
     AwsCredentialProvider credentialProvider;
@@ -23,21 +39,19 @@ typedef struct __FileCredentialProvider {
     PCHAR credentialsFilepath[MAX_PATH_LEN + 1];
 } FileCredentialProvider, *PFileCredentialProvider;
 
-////////////////////////////////////////////////////////////////////////
-// Callback function implementations
-////////////////////////////////////////////////////////////////////////
-STATUS getFileCredentials(PAwsCredentialProvider, PAwsCredentials*);
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+static STATUS priv_file_credential_provider_get(PAwsCredentialProvider, PAwsCredentials*);
+static STATUS priv_file_credential_provider_read(PFileCredentialProvider);
 
-// Internal functionality
-STATUS readFileCredentials(PFileCredentialProvider);
-
-STATUS createFileCredentialProvider(PCHAR pCredentialsFilepath, PAwsCredentialProvider* ppCredentialProvider)
+STATUS file_credential_provider_create(PCHAR pCredentialsFilepath, PAwsCredentialProvider* ppCredentialProvider)
 {
-    return createFileCredentialProviderWithTime(pCredentialsFilepath, commonDefaultGetCurrentTimeFunc, 0, ppCredentialProvider);
+    return file_credential_provider_createWithTime(pCredentialsFilepath, commonDefaultGetCurrentTimeFunc, 0, ppCredentialProvider);
 }
 
-STATUS createFileCredentialProviderWithTime(PCHAR pCredentialsFilepath, GetCurrentTimeFunc getCurrentTimeFn, UINT64 customData,
-                                            PAwsCredentialProvider* ppCredentialProvider)
+STATUS file_credential_provider_createWithTime(PCHAR pCredentialsFilepath, GetCurrentTimeFunc getCurrentTimeFn, UINT64 customData,
+                                               PAwsCredentialProvider* ppCredentialProvider)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -50,7 +64,7 @@ STATUS createFileCredentialProviderWithTime(PCHAR pCredentialsFilepath, GetCurre
     pFileCredentialProvider = (PFileCredentialProvider) MEMCALLOC(1, SIZEOF(FileCredentialProvider));
     CHK(pFileCredentialProvider != NULL, STATUS_NOT_ENOUGH_MEMORY);
 
-    pFileCredentialProvider->credentialProvider.getCredentialsFn = getFileCredentials;
+    pFileCredentialProvider->credentialProvider.getCredentialsFn = priv_file_credential_provider_get;
 
     // Store the file path in case we need to access it again
     STRCPY((PCHAR) pFileCredentialProvider->credentialsFilepath, pCredentialsFilepath);
@@ -60,12 +74,12 @@ STATUS createFileCredentialProviderWithTime(PCHAR pCredentialsFilepath, GetCurre
     pFileCredentialProvider->customData = customData;
 
     // Create the credentials object
-    CHK_STATUS(readFileCredentials(pFileCredentialProvider));
+    CHK_STATUS(priv_file_credential_provider_read(pFileCredentialProvider));
 
 CleanUp:
 
     if (STATUS_FAILED(retStatus)) {
-        freeFileCredentialProvider((PAwsCredentialProvider*) &pFileCredentialProvider);
+        file_credential_provider_free((PAwsCredentialProvider*) &pFileCredentialProvider);
         pFileCredentialProvider = NULL;
     }
 
@@ -78,7 +92,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeFileCredentialProvider(PAwsCredentialProvider* ppCredentialProvider)
+STATUS file_credential_provider_free(PAwsCredentialProvider* ppCredentialProvider)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -106,7 +120,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS getFileCredentials(PAwsCredentialProvider pCredentialProvider, PAwsCredentials* ppAwsCredentials)
+static STATUS priv_file_credential_provider_get(PAwsCredentialProvider pCredentialProvider, PAwsCredentials* ppAwsCredentials)
 {
     ENTERS();
 
@@ -116,7 +130,7 @@ STATUS getFileCredentials(PAwsCredentialProvider pCredentialProvider, PAwsCreden
     CHK(pFileCredentialProvider != NULL && ppAwsCredentials != NULL, STATUS_NULL_ARG);
 
     // Fill the credentials
-    CHK_STATUS(readFileCredentials(pFileCredentialProvider));
+    CHK_STATUS(priv_file_credential_provider_read(pFileCredentialProvider));
 
     *ppAwsCredentials = pFileCredentialProvider->pAwsCredentials;
 
@@ -134,7 +148,7 @@ CleanUp:
  * @return - STATUS code of the execution
  */
 
-STATUS readFileCredentials(PFileCredentialProvider pFileCredentialProvider)
+static STATUS priv_file_credential_provider_read(PFileCredentialProvider pFileCredentialProvider)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT64 fileLen;
@@ -155,11 +169,7 @@ STATUS readFileCredentials(PFileCredentialProvider pFileCredentialProvider)
             currentTime + CREDENTIAL_FILE_READ_GRACE_PERIOD > pFileCredentialProvider->pAwsCredentials->expiration,
         retStatus);
 
-#ifdef KVS_PLAT_RTK_FREERTOS
-    fp = fopen((PCHAR) pFileCredentialProvider->credentialsFilepath, "r");
-#else
     fp = FOPEN((PCHAR) pFileCredentialProvider->credentialsFilepath, "r");
-#endif
 
     CHK(fp != NULL, STATUS_FILE_CREDENTIAL_PROVIDER_OPEN_FILE_FAILED);
 

@@ -26,6 +26,78 @@ extern "C" {
 #define DEFAULT_THREAD_NAME "pthread"
 #endif
 
+// Max thread name buffer length - similar to Linux platforms
+#ifndef MAX_THREAD_NAME
+#define MAX_THREAD_NAME 16
+#endif
+
+// Thread Id
+typedef UINT64 TID;
+typedef TID* PTID;
+
+#ifndef INVALID_TID_VALUE
+#define INVALID_TID_VALUE ((UINT64) NULL)
+#endif
+
+#ifndef IS_VALID_TID_VALUE
+#define IS_VALID_TID_VALUE(t) ((t) != INVALID_TID_VALUE)
+#endif
+
+//
+// Thread library function definitions
+//
+typedef TID (*getTId)();
+typedef STATUS (*getTName)(TID, PCHAR, UINT32);
+//
+// Thread library function definitions
+//
+typedef PVOID (*startRoutine)(PVOID);
+typedef STATUS (*createThread)(PTID, startRoutine, PVOID);
+typedef STATUS (*createThreadEx)(PTID, PCHAR, UINT32, BOOL, startRoutine, PVOID);
+typedef STATUS (*joinThread)(TID, PVOID*);
+typedef VOID (*threadSleep)(UINT64);
+typedef VOID (*threadSleepUntil)(UINT64);
+typedef STATUS (*cancelThread)(TID);
+typedef STATUS (*detachThread)(TID);
+typedef VOID (*exitThread)(PVOID);
+
+//
+// Thread related functionality
+//
+extern getTId globalGetThreadId;
+extern getTName globalGetThreadName;
+
+//
+// Thread and Mutex related functionality
+//
+extern createThread globalCreateThread;
+extern createThreadEx globalCreateThreadEx;
+extern joinThread globalJoinThread;
+extern threadSleep globalThreadSleep;
+extern threadSleepUntil globalThreadSleepUntil;
+extern cancelThread globalCancelThread;
+extern detachThread globalDetachThread;
+extern exitThread globalExitThread;
+
+//
+// Thread functionality
+//
+#define GETTID   globalGetThreadId
+#define GETTNAME globalGetThreadName
+
+//
+// Thread functionality
+//
+#define THREAD_CREATE        globalCreateThread
+#define THREAD_CREATE_EX     globalCreateThreadEx
+#define THREAD_CREATE_EX_PRI globalCreateThreadExPri
+#define THREAD_JOIN          globalJoinThread
+#define THREAD_SLEEP         globalThreadSleep
+#define THREAD_SLEEP_UNTIL   globalThreadSleepUntil
+#define THREAD_CANCEL        globalCancelThread
+#define THREAD_DETACH        globalDetachThread
+#define THREAD_EXIT          globalExitThread
+
 #ifdef __cplusplus
 }
 #endif

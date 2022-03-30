@@ -754,7 +754,7 @@ STATUS pc_rtcpReportsCallback(UINT32 timerId, UINT64 currentTime, UINT64 customD
 
     // check if ice agent is connected, reschedule in 200msec if not
     ready = pKvsPeerConnection->pSrtpSession != NULL &&
-        currentTime - pKvsRtpTransceiver->sender.firstFrameWallClockTime >= 2500 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND;
+        (currentTime - pKvsRtpTransceiver->sender.firstFrameWallClockTime >= 2500 * HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
     if (!ready) {
         DLOGV("sender report no frames sent %u", ssrc);
     } else {

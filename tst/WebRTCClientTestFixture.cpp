@@ -88,7 +88,7 @@ void WebRtcClientTestBase::SetUp()
 
     if (mAccessKey) {
         ASSERT_EQ(STATUS_SUCCESS,
-                  createStaticCredentialProvider(mAccessKey, 0, mSecretKey, 0, mSessionToken, 0, MAX_UINT64, &mTestCredentialProvider));
+                  static_credential_provider_create(mAccessKey, 0, mSecretKey, 0, mSessionToken, 0, MAX_UINT64, &mTestCredentialProvider));
     } else {
         mTestCredentialProvider = nullptr;
     }
@@ -114,7 +114,7 @@ void WebRtcClientTestBase::TearDown()
 
     pc_deinitWebRtc();
 
-    freeStaticCredentialProvider(&mTestCredentialProvider);
+    static_credential_provider_free(&mTestCredentialProvider);
 
     EXPECT_EQ(STATUS_SUCCESS, RESET_INSTRUMENTED_ALLOCATORS());
 }

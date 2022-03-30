@@ -354,11 +354,7 @@ STATUS net_getIpByHostName(PCHAR hostname, PKvsIpAddress destIp)
 
     errCode = getaddrinfo(hostname, NULL, NULL, &res);
     if (errCode != 0) {
-#ifdef KVS_PLAT_RTK_FREERTOS
-        errStr = errCode == EAI_SYSTEM ? strerror(errno) : "gai_strerror(errCode) not supported.";
-#else
-        errStr = errCode == EAI_SYSTEM ? strerror(errno) : (PCHAR) gai_strerror(errCode);
-#endif
+        errStr = errCode == EAI_SYSTEM ? strerror(errno) : (PCHAR) net_getGaiStrRrror(errCode);
         CHK_ERR(FALSE, STATUS_NET_RESOLVE_HOSTNAME_FAILED, "getaddrinfo() with errno %s", errStr);
     }
 
@@ -495,5 +491,17 @@ PCHAR net_getErrorString(INT32 error)
         DLOGD("net error code:%d.", error);
     }
     return strerror(error);
+}
+#endif
+
+#ifdef KVS_PLAT_RTK_FREERTOS
+PCHAR net_getGaiStrRrror(INT32 error)
+{
+    return "gai_strerror(errCode) not supported.";
+}
+#else
+PCHAR net_getGaiStrRrror(INT32 error)
+{
+    return gai_strerror(error);
 }
 #endif

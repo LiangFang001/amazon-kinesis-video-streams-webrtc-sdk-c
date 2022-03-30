@@ -20,7 +20,7 @@
 #include <sys/socket.h>
 #include "logger.h"
 #include "channel_info.h"
-#include "file_cache.h"
+#include "signaling_cache.h"
 #include "signaling_fsm.h"
 #include "signaling.h"
 #include "base64.h"

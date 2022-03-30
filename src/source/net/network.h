@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 #include "kvs/common_defs.h"
-#include "kvs/WebRTCClient.h"
+#include "kvs/webrtc_client.h"
 #include "endianness.h"
 
 #define MAX_LOCAL_NETWORK_INTERFACE_COUNT 128
@@ -147,6 +147,7 @@ INT32 net_getErrorCode(VOID);
  * @return - PCHAR string associated with error code
  */
 PCHAR net_getErrorString(INT32);
+PCHAR net_getGaiStrRrror(INT32 error);
 
 #ifdef __cplusplus
 }

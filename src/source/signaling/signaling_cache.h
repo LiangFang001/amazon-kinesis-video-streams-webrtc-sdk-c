@@ -12,8 +12,8 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#ifndef __AWS_KVS_WEBRTC_FILE_CACHE_INCLUDE__
-#define __AWS_KVS_WEBRTC_FILE_CACHE_INCLUDE__
+#ifndef __AWS_KVS_WEBRTC_SIGNALING_CACHE_INCLUDE__
+#define __AWS_KVS_WEBRTC_SIGNALING_CACHE_INCLUDE__
 
 #pragma once
 
@@ -26,7 +26,7 @@ extern "C" {
 #include "kvs/config.h"
 #include "kvs/error.h"
 #include "kvs/common_defs.h"
-#include "kvs/WebRTCClient.h"
+#include "kvs/webrtc_client.h"
 /******************************************************************************
  * DEFINITIONS
  ******************************************************************************/
@@ -60,4 +60,4 @@ STATUS signaling_cache_saveToFile(PSignalingFileCacheEntry);
 #ifdef __cplusplus
 }
 #endif
-#endif /* __AWS_KVS_WEBRTC_FILE_CACHE_INCLUDE__ */
+#endif /* __AWS_KVS_WEBRTC_SIGNALING_CACHE_INCLUDE__ */

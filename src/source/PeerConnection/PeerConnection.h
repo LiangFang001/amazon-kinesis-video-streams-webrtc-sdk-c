@@ -64,14 +64,14 @@ extern "C" {
 // Environment variable to display SDPs
 #define DEBUG_LOG_SDP ((PCHAR) "DEBUG_LOG_SDP")
 
-typedef enum {
+typedef enum __RTX_CODEC {
     RTC_RTX_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE = 1,
     RTC_RTX_CODEC_VP8 = 2,
 } RTX_CODEC;
 /**
  * @brief internal structure for peer connection.
  */
-typedef struct {
+typedef struct __KvsPeerConnection {
     RtcPeerConnection peerConnection;
     PIceAgent pIceAgent;
     PDtlsSession pDtlsSession;
@@ -131,6 +131,7 @@ typedef struct {
     NullableBool canTrickleIce; //!< indicate the behavior of ice, trickle ice or non-trickle ice.
                                 ///!< https://tools.ietf.org/html/rfc8838
 } KvsPeerConnection, *PKvsPeerConnection;
+
 #ifdef ENABLE_DATA_CHANNEL
 typedef struct {
     UINT32 currentDataChannelId;

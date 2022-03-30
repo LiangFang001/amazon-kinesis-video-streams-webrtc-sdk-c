@@ -30,10 +30,9 @@ extern "C" {
 #endif
 #include "kvs/error.h"
 #include "kvs/common_defs.h"
-#include "kvs/Client.h"
 #include "kvs/common.h"
-#include "kvs/NullableDefs.h"
-#include "kvs/Stats.h"
+#include "kvs/nullable_defs.h"
+#include "kvs/stats.h"
 #include "tags.h"
 
 #if defined(__clang__)
@@ -414,6 +413,85 @@ typedef enum {
     RTC_RTP_TRANSCEIVER_DIRECTION_RECVONLY = 3, //!< This indicates that the peer can only receive information
     RTC_RTP_TRANSCEIVER_DIRECTION_INACTIVE = 4, //!< This indicates that the peer can not send or receive data
 } RTC_RTP_TRANSCEIVER_DIRECTION;
+
+/**
+ * @brief Service call result
+ *  https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+ */
+typedef enum {
+    // Not defined
+    HTTP_STATUS_NONE = 0,
+    // Information responses
+    //
+    HTTP_STATUS_CONTINUE = 100,
+
+    HTTP_STATUS_SWITCH_PROTOCOL = 101,
+
+    // Successful responses
+    // All OK
+    HTTP_STATUS_OK = 200,
+
+    // Client error responses
+    // Bad request
+    HTTP_STATUS_BAD_REQUEST = 400,
+    // Security error
+    HTTP_STATUS_UNAUTHORIZED = 401,
+    // Forbidden
+    HTTP_STATUS_FORBIDDEN = 403,
+    // Resource not found exception
+    HTTP_STATUS_NOT_FOUND = 404,
+    // Invalid params error
+    HTTP_STATUS_NOT_ACCEPTABLE = 406,
+    // Request timeout
+    HTTP_STATUS_REQUEST_TIMEOUT = 408,
+    // Internal server error
+    HTTP_STATUS_INTERNAL_SERVER_ERROR = 500,
+
+    // Server error responses
+    // Not implemented
+    HTTP_STATUS_NOT_IMPLEMENTED = 501,
+
+    // Service unavailable
+    HTTP_STATUS_SERVICE_UNAVAILABLE = 503,
+
+    // Gateway timeout
+    HTTP_STATUS_GATEWAY_TIMEOUT = 504,
+
+    // Network read timeout
+    HTTP_STATUS_NETWORK_READ_TIMEOUT = 598,
+
+    // Network connection timeout
+    HTTP_STATUS_NETWORK_CONNECTION_TIMEOUT = 599,
+
+    // Go Away result
+    HTTP_STATUS_SIGNALING_GO_AWAY = 6000,
+
+    // Reconnect ICE Server
+    HTTP_STATUS_SIGNALING_RECONNECT_ICE = 6001,
+
+    // Client limit exceeded error
+    HTTP_STATUS_CLIENT_LIMIT = 10000,
+
+    // Device limit exceeded error
+    HTTP_STATUS_DEVICE_LIMIT = 10001,
+
+    // Stream limit exception
+    HTTP_STATUS_STREAM_LIMIT = 10002,
+
+    // Resource in use exception
+    HTTP_STATUS_RESOURCE_IN_USE = 10003,
+
+    // Device not provisioned
+    HTTP_STATUS_DEVICE_NOT_PROVISIONED = 10004,
+
+    // Device not found
+    HTTP_STATUS_DEVICE_NOT_FOUND = 10005,
+    // Other errors
+    HTTP_STATUS_UNKNOWN = 10006,
+    // Resource deleted exception
+    HTTP_STATUS_RESOURCE_DELETED = 10400,
+
+} HTTP_STATUS_CODE;
 
 /**
  * @brief Defines channel status as reported by the service

@@ -30,7 +30,7 @@ extern "C" {
 /******************************************************************************
  * DEFINITIONS
  ******************************************************************************/
-typedef struct {
+typedef struct __Retransmitter {
     PUINT16 sequenceNumberList;
     UINT32 seqNumListLen;
     UINT32 validIndexListLen;

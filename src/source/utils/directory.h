@@ -40,7 +40,7 @@ typedef STATUS (*DirectoryEntryCallbackFunc)(UINT64, DIR_ENTRY_TYPES, PCHAR, PCH
  * @BOOL - whether to iterate
  * @DirectoryEntryCallbackFunc - the callback function called with each entry
  */
-STATUS traverseDirectory(PCHAR, UINT64, BOOL iterate, DirectoryEntryCallbackFunc);
+STATUS directory_traverse(PCHAR, UINT64, BOOL iterate, DirectoryEntryCallbackFunc);
 
 #ifdef __cplusplus
 }

@@ -25,6 +25,7 @@ extern "C" {
  ******************************************************************************/
 #include "kvs/common_defs.h"
 #include "kvs/common.h"
+#include "kvs/webrtc_client.h"
 /**
  * Request Header structure
  */

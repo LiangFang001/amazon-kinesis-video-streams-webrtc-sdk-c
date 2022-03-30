@@ -1,11 +1,28 @@
-/**
- * Kinesis Video Producer Static Credential Provider
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
  */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #define LOG_CLASS "StaticCredentialProvider"
 #include "Include_i.h"
 #include "auth.h"
 #include "static_credential_provider.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 typedef struct __StaticCredentialProvider {
     // First member should be the abstract credential provider
     AwsCredentialProvider credentialProvider;
@@ -14,10 +31,13 @@ typedef struct __StaticCredentialProvider {
     PAwsCredentials pAwsCredentials;
 } StaticCredentialProvider, *PStaticCredentialProvider;
 
-STATUS getStaticCredentials(PAwsCredentialProvider, PAwsCredentials*);
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+STATUS priv_static_credential_provider_get(PAwsCredentialProvider, PAwsCredentials*);
 
-STATUS createStaticCredentialProvider(PCHAR accessKeyId, UINT32 accessKeyIdLen, PCHAR secretKey, UINT32 secretKeyLen, PCHAR sessionToken,
-                                      UINT32 sessionTokenLen, UINT64 expiration, PAwsCredentialProvider* ppCredentialProvider)
+STATUS static_credential_provider_create(PCHAR accessKeyId, UINT32 accessKeyIdLen, PCHAR secretKey, UINT32 secretKeyLen, PCHAR sessionToken,
+                                         UINT32 sessionTokenLen, UINT64 expiration, PAwsCredentialProvider* ppCredentialProvider)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -34,12 +54,12 @@ STATUS createStaticCredentialProvider(PCHAR accessKeyId, UINT32 accessKeyIdLen, 
     CHK(pStaticCredentialProvider != NULL, STATUS_NOT_ENOUGH_MEMORY);
 
     pStaticCredentialProvider->pAwsCredentials = pAwsCredentials;
-    pStaticCredentialProvider->credentialProvider.getCredentialsFn = getStaticCredentials;
+    pStaticCredentialProvider->credentialProvider.getCredentialsFn = priv_static_credential_provider_get;
 
 CleanUp:
 
     if (STATUS_FAILED(retStatus)) {
-        freeStaticCredentialProvider((PAwsCredentialProvider*) &pStaticCredentialProvider);
+        static_credential_provider_free((PAwsCredentialProvider*) &pStaticCredentialProvider);
         pStaticCredentialProvider = NULL;
     }
 
@@ -52,7 +72,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS freeStaticCredentialProvider(PAwsCredentialProvider* ppCredentialProvider)
+STATUS static_credential_provider_free(PAwsCredentialProvider* ppCredentialProvider)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -80,7 +100,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS getStaticCredentials(PAwsCredentialProvider pCredentialProvider, PAwsCredentials* ppAwsCredentials)
+STATUS priv_static_credential_provider_get(PAwsCredentialProvider pCredentialProvider, PAwsCredentials* ppAwsCredentials)
 {
     ENTERS();
 

@@ -26,7 +26,7 @@ extern "C" {
 #include "kvs/error.h"
 #include "kvs/common_defs.h"
 #include "kvs/platform_utils.h"
-#include "kvs/WebRTCClient.h"
+#include "kvs/webrtc_client.h"
 #include "hash_table.h"
 #include "RtpPacket.h"
 

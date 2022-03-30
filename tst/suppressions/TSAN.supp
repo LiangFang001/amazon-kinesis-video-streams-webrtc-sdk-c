@@ -609,10 +609,10 @@ race:DataChannelFunctionalityTest_createDataChannel_Disconnected_Test
 race:SignalingApiFunctionalityTest_iceRefreshEmulationWithFaultInjectionErrorDisconnect_Test
 race:SignalingApiFunctionalityTest_iceRefreshEmulationWithFaultInjectionErrorDisconnectNoRecovery_Test
 
-race:getDataChannelStats
+race:metrics_getDataChannelStats
 # WARNING: ThreadSanitizer: data race (pid=51832)
 #  Read of size 8 at 0x7b6800020358 by main thread:
-#    #0 getDataChannelStats Metrics.c:151 (libkvsWebrtcClient.dylib:x86_64+0x36505)
+#    #0 metrics_getDataChannelStats Metrics.c:151 (libkvsWebrtcClient.dylib:x86_64+0x36505)
 #    #1 metrics_get Metrics.c:197 (libkvsWebrtcClient.dylib:x86_64+0x36d33)
 #    #2 com::amazonaws::kinesis::video::webrtcclient::DataChannelFunctionalityTest_createDataChannel_DataChannelMetricsTest_Test::TestBody() DataChannelFunctionalityTest.cpp:580 (webrtc_client_test:x86_64+0x10001ca19)
 #    #3 void testing::internal::HandleSehExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) <null> (webrtc_client_test:x86_64+0x10025b0bd)
@@ -657,6 +657,6 @@ race:getDataChannelStats
 #    #6 void testing::internal::HandleSehExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) <null> (webrtc_client_test:x86_64+0x10025b0bd)
 #    #7 main main.cpp:68 (webrtc_client_test:x86_64+0x10020be1d)
 
-#SUMMARY: ThreadSanitizer: data race Metrics.c:151 in getDataChannelStats
+#SUMMARY: ThreadSanitizer: data race Metrics.c:151 in metrics_getDataChannelStats
 
 

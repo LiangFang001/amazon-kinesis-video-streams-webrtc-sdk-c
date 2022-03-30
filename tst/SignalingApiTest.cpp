@@ -69,7 +69,7 @@ TEST_F(SignalingApiTest, signalingSendMessageSyncFileCredsProvider)
     ASSERT_EQ(STATUS_SUCCESS, fileio_write(TEST_FILE_CREDENTIALS_FILE_PATH, FALSE, FALSE, (PBYTE) fileContent, length));
 
     // Create file creds provider from the file
-    EXPECT_EQ(STATUS_SUCCESS, createFileCredentialProvider(TEST_FILE_CREDENTIALS_FILE_PATH, &pAwsCredentialProvider));
+    EXPECT_EQ(STATUS_SUCCESS, file_credential_provider_create(TEST_FILE_CREDENTIALS_FILE_PATH, &pAwsCredentialProvider));
 
     initializeSignalingClient(pAwsCredentialProvider);
 
@@ -98,7 +98,7 @@ TEST_F(SignalingApiTest, signalingSendMessageSyncFileCredsProvider)
 
     deinitializeSignalingClient();
 
-    EXPECT_EQ(STATUS_SUCCESS, freeFileCredentialProvider(&pAwsCredentialProvider));
+    EXPECT_EQ(STATUS_SUCCESS, file_credential_provider_free(&pAwsCredentialProvider));
 }
 
 TEST_F(SignalingApiTest, signaling_client_connect)

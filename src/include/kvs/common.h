@@ -24,7 +24,6 @@ extern "C" {
  * HEADERS
  ******************************************************************************/
 #include "kvs/error.h"
-#include "kvs/Client.h"
 #include "single_linked_list.h"
 #include "stack_queue.h"
 
@@ -39,6 +38,78 @@ extern "C" {
 /******************************************************************************
  * DEFINITIONS
  ******************************************************************************/
+/**
+ * Max device name length in chars
+ */
+#define MAX_DEVICE_NAME_LEN 256
+
+/**
+ * Max update version length in chars
+ * https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_DeleteSignalingChannel.html#KinesisVideo-DeleteSignalingChannel-request-CurrentVersion
+ */
+#define MAX_UPDATE_VERSION_LEN 64
+
+/**
+ * Max ARN len in chars
+ * https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_DescribeSignalingChannel.html#API_DescribeSignalingChannel_RequestSyntax
+ * https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/API_CreateStream.html#KinesisVideo-CreateStream-request-KmsKeyId
+ */
+#define MAX_ARN_LEN 1024
+
+/**
+ * Max len of the auth data (STS or Cert) in bytes
+ */
+#define MAX_AUTH_LEN 10000
+
+/**
+ * Max len of the fully qualified URI
+ */
+#define MAX_URI_CHAR_LEN 10 * 1024
+
+/**
+ * Min streaming token expiration duration. Currently defined as 30 seconds.
+ */
+#define MIN_STREAMING_TOKEN_EXPIRATION_DURATION (30 * HUNDREDS_OF_NANOS_IN_A_SECOND)
+
+/**
+ * The max streaming token expiration duration after which the ingestion host will force terminate the connection.
+ */
+#define MAX_ENFORCED_TOKEN_EXPIRATION_DURATION (40 * HUNDREDS_OF_NANOS_IN_A_MINUTE)
+
+/**
+ * Grace period for the streaming token expiration - 3 seconds
+ */
+#define STREAMING_TOKEN_EXPIRATION_GRACE_PERIOD (3 * HUNDREDS_OF_NANOS_IN_A_SECOND)
+
+/**
+ * Service call default timeout - 5 seconds
+ */
+#define SERVICE_CALL_DEFAULT_TIMEOUT (5 * HUNDREDS_OF_NANOS_IN_A_SECOND)
+
+/**
+ * Service call infinite timeout for streaming
+ */
+#define SERVICE_CALL_INFINITE_TIMEOUT MAX_UINT64
+
+/**
+ * Default service call retry count
+ */
+#define SERVICE_CALL_MAX_RETRY_COUNT 5
+
+/**
+ * This is a sentinel indicating an invalid timestamp value
+ */
+#ifndef INVALID_TIMESTAMP_VALUE
+#define INVALID_TIMESTAMP_VALUE ((UINT64) 0xFFFFFFFFFFFFFFFFULL)
+#endif
+
+/**
+ * Checks for the handle validity
+ */
+#ifndef IS_VALID_TIMESTAMP
+#define IS_VALID_TIMESTAMP(h) ((h) != INVALID_TIMESTAMP_VALUE)
+#endif
+
 /**
  * Environment variable to enable file logging. Run export AWS_ENABLE_FILE_LOGGING=TRUE to enable file
  * logging

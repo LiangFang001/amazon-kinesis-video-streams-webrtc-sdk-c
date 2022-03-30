@@ -190,14 +190,14 @@ TEST_F(RtcpFunctionalityTest, onRtcpPacketCompoundSenderReport)
     UINT32 rawpacketSize = 64;
     EXPECT_EQ(STATUS_SUCCESS, hexDecode(hexpacket, strlen(hexpacket), rawpacket, &rawpacketSize));
 
-    //added two transceivers to test correct transceiver stats in getRtpRemoteInboundStats
+    //added two transceivers to test correct transceiver stats in metrics_getRtpRemoteInboundStats
     initTransceiver(4242); // fake transceiver
     auto t = pc_addTransceiver(1577872978); // real transceiver
 
     EXPECT_EQ(STATUS_SUCCESS, rtcp_onInboundPacket(pKvsPeerConnection, rawpacket, rawpacketSize));
 
     RtcRemoteInboundRtpStreamStats stats{};
-    EXPECT_EQ(STATUS_SUCCESS, getRtpRemoteInboundStats(pRtcPeerConnection, t, &stats));
+    EXPECT_EQ(STATUS_SUCCESS, metrics_getRtpRemoteInboundStats(pRtcPeerConnection, t, &stats));
     EXPECT_EQ(1, stats.reportsReceived);
     EXPECT_EQ(1, stats.roundTripTimeMeasurements);
     // rtcp_onInboundPacket uses real time clock GETTIME to calculate roundTripTime, cant test

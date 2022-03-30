@@ -25,7 +25,7 @@ extern "C" {
  * HEADERS
  ******************************************************************************/
 #include <sys/socket.h> //!< #TBD, for freertos message queue.
-#include "kvs/WebRTCClient.h"
+#include "kvs/webrtc_client.h"
 #include "channel_info.h"
 #include "timer_queue.h"
 

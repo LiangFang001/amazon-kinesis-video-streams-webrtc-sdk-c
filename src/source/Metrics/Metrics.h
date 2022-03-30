@@ -1,6 +1,17 @@
-/*******************************************
-WebRTC Client Metrics internal include file
-*******************************************/
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_WEBRTCCLIENT_METRICS_INCLUDE__
 #define __KINESIS_VIDEO_WEBRTCCLIENT_METRICS_INCLUDE__
 
@@ -9,7 +20,15 @@ WebRTC Client Metrics internal include file
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 /**
  * @brief Get specific ICE candidate pair stats
  * @param [in] PRtcPeerConnection Contains the Ice agent object with diagnostics object
@@ -17,7 +36,7 @@ extern "C" {
  * @return Pass/Fail
  *
  */
-STATUS getIceCandidatePairStats(PRtcPeerConnection, PRtcIceCandidatePairStats);
+STATUS metrics_getIceCandidatePairStats(PRtcPeerConnection, PRtcIceCandidatePairStats);
 
 /**
  * @brief Get specific ICE candidate stats
@@ -27,11 +46,11 @@ STATUS getIceCandidatePairStats(PRtcPeerConnection, PRtcIceCandidatePairStats);
  * @return Pass/Fail
  *
  */
-STATUS getIceCandidateStats(PRtcPeerConnection, BOOL, PRtcIceCandidateStats);
+STATUS metrics_getIceCandidateStats(PRtcPeerConnection, BOOL, PRtcIceCandidateStats);
 
 /**
  * @brief Get specific ICE server stats
- * getIceServerStats will return stats for a specific server. In a multi server configuration, it is upto
+ * metrics_getIceServerStats will return stats for a specific server. In a multi server configuration, it is upto
  * to the application to get Stats for every server being supported / desired server. The application is
  * expected to pass in the specific iceServerIndex for which the stats are desired
  *
@@ -40,7 +59,7 @@ STATUS getIceCandidateStats(PRtcPeerConnection, BOOL, PRtcIceCandidateStats);
  * @return Pass/Fail
  *
  */
-STATUS getIceServerStats(PRtcPeerConnection, PRtcIceServerStats);
+STATUS metrics_getIceServerStats(PRtcPeerConnection, PRtcIceServerStats);
 
 /**
  * @brief Get specific transport stats
@@ -49,7 +68,7 @@ STATUS getIceServerStats(PRtcPeerConnection, PRtcIceServerStats);
  * @return Pass/Fail
  *
  */
-STATUS getTransportStats(PRtcPeerConnection, PRtcTransportStats);
+STATUS metrics_getTransportStats(PRtcPeerConnection, PRtcTransportStats);
 
 /**
  * @brief Get remote RTP inbound stats
@@ -59,7 +78,7 @@ STATUS getTransportStats(PRtcPeerConnection, PRtcTransportStats);
  * @return Pass/Fail
  *
  */
-STATUS getRtpRemoteInboundStats(PRtcPeerConnection, PRtcRtpTransceiver, PRtcRemoteInboundRtpStreamStats);
+STATUS metrics_getRtpRemoteInboundStats(PRtcPeerConnection, PRtcRtpTransceiver, PRtcRemoteInboundRtpStreamStats);
 
 /**
  * @brief Get RTP outbound stats

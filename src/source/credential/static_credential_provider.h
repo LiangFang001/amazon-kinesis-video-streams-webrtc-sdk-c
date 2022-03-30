@@ -1,4 +1,18 @@
 
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
 #ifndef __KINESIS_VIDEO_STATIC_CREDENTIAL_PROVIDER_INCLUDE_I__
 #define __KINESIS_VIDEO_STATIC_CREDENTIAL_PROVIDER_INCLUDE_I__
 
@@ -7,6 +21,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+#include "kvs/common_defs.h"
+#include "kvs/error.h"
+
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 /**
  * Creates a Static AWS credential provider object
  *
@@ -21,7 +47,7 @@ extern "C" {
  *
  * @return - STATUS code of the execution
  */
-STATUS createStaticCredentialProvider(PCHAR, UINT32, PCHAR, UINT32, PCHAR, UINT32, UINT64, PAwsCredentialProvider*);
+STATUS static_credential_provider_create(PCHAR, UINT32, PCHAR, UINT32, PCHAR, UINT32, UINT64, PAwsCredentialProvider*);
 /**
  * Frees a Static Aws credential provider object
  *
@@ -29,7 +55,7 @@ STATUS createStaticCredentialProvider(PCHAR, UINT32, PCHAR, UINT32, PCHAR, UINT3
  *
  * @return - STATUS code of the execution
  */
-STATUS freeStaticCredentialProvider(PAwsCredentialProvider*);
+STATUS static_credential_provider_free(PAwsCredentialProvider*);
 
 #ifdef __cplusplus
 }

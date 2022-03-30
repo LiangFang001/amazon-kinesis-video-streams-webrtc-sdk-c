@@ -16,6 +16,7 @@
 #include "kvs/error.h"
 #include "kvs/platform_utils.h"
 #include "instrumented_allocators.h"
+#include "allocators.h"
 
 volatile SIZE_T gInstrumentedAllocatorsTotalAllocationSize = 0;
 

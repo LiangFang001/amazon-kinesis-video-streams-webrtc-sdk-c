@@ -26,7 +26,7 @@ extern "C" {
  ******************************************************************************/
 #define DATA_CHANNEL_PROTOCOL_STR (PCHAR) "SCTP"
 
-typedef struct {
+typedef struct __KvsDataChannel {
     RtcDataChannel dataChannel;
 
     PRtcPeerConnection pRtcPeerConnection;

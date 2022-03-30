@@ -6,7 +6,7 @@
 #include "Rtp.h"
 #include "DataChannel.h"
 
-STATUS getIceCandidatePairStats(PRtcPeerConnection pRtcPeerConnection, PRtcIceCandidatePairStats pRtcIceCandidatePairStats)
+STATUS metrics_getIceCandidatePairStats(PRtcPeerConnection pRtcPeerConnection, PRtcIceCandidatePairStats pRtcIceCandidatePairStats)
 {
     STATUS retStatus = STATUS_SUCCESS;
     BOOL locked = FALSE;
@@ -55,7 +55,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS getIceCandidateStats(PRtcPeerConnection pRtcPeerConnection, BOOL isRemote, PRtcIceCandidateStats pRtcIceCandidateStats)
+STATUS metrics_getIceCandidateStats(PRtcPeerConnection pRtcPeerConnection, BOOL isRemote, PRtcIceCandidateStats pRtcIceCandidateStats)
 {
     STATUS retStatus = STATUS_SUCCESS;
     BOOL locked = FALSE;
@@ -81,7 +81,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS getIceServerStats(PRtcPeerConnection pRtcPeerConnection, PRtcIceServerStats pRtcIceServerStats)
+STATUS metrics_getIceServerStats(PRtcPeerConnection pRtcPeerConnection, PRtcIceServerStats pRtcIceServerStats)
 {
     STATUS retStatus = STATUS_SUCCESS;
     BOOL locked = FALSE;
@@ -104,7 +104,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS getTransportStats(PRtcPeerConnection pRtcPeerConnection, PRtcTransportStats pRtcTransportStats)
+STATUS metrics_getTransportStats(PRtcPeerConnection pRtcPeerConnection, PRtcTransportStats pRtcTransportStats)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PKvsPeerConnection pKvsPeerConnection = (PKvsPeerConnection) pRtcPeerConnection;
@@ -115,8 +115,8 @@ CleanUp:
     return retStatus;
 }
 
-STATUS getRtpRemoteInboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTransceiver pTransceiver,
-                                PRtcRemoteInboundRtpStreamStats pRtcRemoteInboundRtpStreamStats)
+STATUS metrics_getRtpRemoteInboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTransceiver pTransceiver,
+                                        PRtcRemoteInboundRtpStreamStats pRtcRemoteInboundRtpStreamStats)
 {
     STATUS retStatus = STATUS_SUCCESS;
 #ifdef ENABLE_STREAMING
@@ -201,7 +201,7 @@ CleanUp:
 }
 
 #ifdef ENABLE_DATA_CHANNEL
-STATUS getDataChannelStats(PRtcPeerConnection pRtcPeerConnection, PRtcDataChannelStats pRtcDataChannelStats)
+STATUS metrics_getDataChannelStats(PRtcPeerConnection pRtcPeerConnection, PRtcDataChannelStats pRtcDataChannelStats)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PKvsDataChannel pKvsDataChannel = NULL;
@@ -228,21 +228,22 @@ STATUS metrics_get(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTransceiver pRt
     pRtcMetrics->timestamp = GETTIME();
     switch (pRtcMetrics->requestedTypeOfStats) {
         case RTC_STATS_TYPE_CANDIDATE_PAIR:
-            CHK_STATUS(getIceCandidatePairStats(pRtcPeerConnection, &pRtcMetrics->rtcStatsObject.iceCandidatePairStats));
+            CHK_STATUS(metrics_getIceCandidatePairStats(pRtcPeerConnection, &pRtcMetrics->rtcStatsObject.iceCandidatePairStats));
             break;
         case RTC_STATS_TYPE_LOCAL_CANDIDATE:
-            CHK_STATUS(getIceCandidateStats(pRtcPeerConnection, FALSE, &pRtcMetrics->rtcStatsObject.localIceCandidateStats));
+            CHK_STATUS(metrics_getIceCandidateStats(pRtcPeerConnection, FALSE, &pRtcMetrics->rtcStatsObject.localIceCandidateStats));
             DLOGD("ICE local candidate Stats requested at %" PRIu64, pRtcMetrics->timestamp);
             break;
         case RTC_STATS_TYPE_REMOTE_CANDIDATE:
-            CHK_STATUS(getIceCandidateStats(pRtcPeerConnection, TRUE, &pRtcMetrics->rtcStatsObject.remoteIceCandidateStats));
+            CHK_STATUS(metrics_getIceCandidateStats(pRtcPeerConnection, TRUE, &pRtcMetrics->rtcStatsObject.remoteIceCandidateStats));
             DLOGD("ICE remote candidate Stats requested at %" PRIu64, pRtcMetrics->timestamp);
             break;
         case RTC_STATS_TYPE_TRANSPORT:
-            CHK_STATUS(getTransportStats(pRtcPeerConnection, &pRtcMetrics->rtcStatsObject.transportStats));
+            CHK_STATUS(metrics_getTransportStats(pRtcPeerConnection, &pRtcMetrics->rtcStatsObject.transportStats));
             break;
         case RTC_STATS_TYPE_REMOTE_INBOUND_RTP:
-            CHK_STATUS(getRtpRemoteInboundStats(pRtcPeerConnection, pRtcRtpTransceiver, &pRtcMetrics->rtcStatsObject.remoteInboundRtpStreamStats));
+            CHK_STATUS(
+                metrics_getRtpRemoteInboundStats(pRtcPeerConnection, pRtcRtpTransceiver, &pRtcMetrics->rtcStatsObject.remoteInboundRtpStreamStats));
             break;
         case RTC_STATS_TYPE_OUTBOUND_RTP:
             CHK_STATUS(metrics_getRtpOutboundStats(pRtcPeerConnection, pRtcRtpTransceiver, &pRtcMetrics->rtcStatsObject.outboundRtpStreamStats));
@@ -251,13 +252,13 @@ STATUS metrics_get(PRtcPeerConnection pRtcPeerConnection, PRtcRtpTransceiver pRt
             CHK_STATUS(metrics_getRtpInboundStats(pRtcPeerConnection, pRtcRtpTransceiver, &pRtcMetrics->rtcStatsObject.inboundRtpStreamStats));
             break;
         case RTC_STATS_TYPE_ICE_SERVER:
-            CHK_STATUS(getIceServerStats(pRtcPeerConnection, &pRtcMetrics->rtcStatsObject.iceServerStats));
+            CHK_STATUS(metrics_getIceServerStats(pRtcPeerConnection, &pRtcMetrics->rtcStatsObject.iceServerStats));
             DLOGD("ICE Server Stats requested at %" PRIu64, pRtcMetrics->timestamp);
             break;
         case RTC_STATS_TYPE_DATA_CHANNEL:
             pRtcMetrics->timestamp = GETTIME();
 #ifdef ENABLE_DATA_CHANNEL
-            CHK_STATUS(getDataChannelStats(pRtcPeerConnection, &pRtcMetrics->rtcStatsObject.rtcDataChannelStats));
+            CHK_STATUS(metrics_getDataChannelStats(pRtcPeerConnection, &pRtcMetrics->rtcStatsObject.rtcDataChannelStats));
 #endif
             DLOGD("RTC Data Channel Stats requested at %" PRIu64, pRtcMetrics->timestamp);
             break;

@@ -12,8 +12,8 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-#ifndef __AWS_KVS_WEBRTC_THREAD_INCLUDE__
-#define __AWS_KVS_WEBRTC_THREAD_INCLUDE__
+#ifndef __AWS_KVS_WEBRTC_INSTRUMENTED_ALLOCATORS_INCLUDE__
+#define __AWS_KVS_WEBRTC_INSTRUMENTED_ALLOCATORS_INCLUDE__
 
 #ifdef __cplusplus
 extern "C" {
@@ -91,4 +91,4 @@ SIZE_T getInstrumentedTotalAllocationSize();
 #ifdef __cplusplus
 }
 #endif
-#endif /* __AWS_KVS_WEBRTC_THREAD_INCLUDE__ */
+#endif /* __AWS_KVS_WEBRTC_INSTRUMENTED_ALLOCATORS_INCLUDE__ */
