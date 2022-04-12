@@ -108,6 +108,7 @@ STATUS rtp_transceiver_free(PKvsRtpTransceiver* ppKvsRtpTransceiver)
         retransmitter_free(&pKvsRtpTransceiver->sender.retransmitter);
     }
     MUTEX_FREE(pKvsRtpTransceiver->statsLock);
+    pKvsRtpTransceiver->statsLock = INVALID_MUTEX_VALUE;
 
     SAFE_MEMFREE(pKvsRtpTransceiver->peerFrameBuffer);
     SAFE_MEMFREE(pKvsRtpTransceiver->sender.payloadArray.payloadBuffer);

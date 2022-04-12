@@ -361,6 +361,7 @@ CleanUp:
 
     if (lock != INVALID_MUTEX_VALUE) {
         MUTEX_FREE(lock);
+        lock = INVALID_MUTEX_VALUE;
     }
 
     CHK_LOG_ERR(retStatus);

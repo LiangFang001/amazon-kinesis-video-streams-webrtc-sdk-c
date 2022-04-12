@@ -99,6 +99,7 @@ STATUS connection_listener_free(PConnectionListener* ppConnectionListener)
         }
 
         MUTEX_FREE(pConnectionListener->lock);
+        pConnectionListener->lock = INVALID_MUTEX_VALUE;
     }
 
     MEMFREE(pConnectionListener);

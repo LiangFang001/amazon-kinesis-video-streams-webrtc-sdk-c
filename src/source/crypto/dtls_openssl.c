@@ -421,6 +421,7 @@ STATUS dtls_session_free(PDtlsSession* ppDtlsSession)
     }
     if (IS_VALID_MUTEX_VALUE(pDtlsSession->nestedDtlsLock)) {
         MUTEX_FREE(pDtlsSession->nestedDtlsLock);
+        pDtlsSession->nestedDtlsLock = INVALID_MUTEX_VALUE;
     }
 
     SAFE_MEMFREE(pDtlsSession);

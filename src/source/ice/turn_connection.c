@@ -1036,6 +1036,7 @@ STATUS turn_connection_free(PTurnConnection* ppTurnConnection)
         MUTEX_LOCK(pTurnConnection->lock);
         MUTEX_UNLOCK(pTurnConnection->lock);
         MUTEX_FREE(pTurnConnection->lock);
+        pTurnConnection->lock = INVALID_MUTEX_VALUE;
     }
 
     if (IS_VALID_MUTEX_VALUE(pTurnConnection->sendLock)) {
@@ -1043,6 +1044,7 @@ STATUS turn_connection_free(PTurnConnection* ppTurnConnection)
         MUTEX_LOCK(pTurnConnection->sendLock);
         MUTEX_UNLOCK(pTurnConnection->sendLock);
         MUTEX_FREE(pTurnConnection->sendLock);
+        pTurnConnection->sendLock = INVALID_MUTEX_VALUE;
     }
 
     if (IS_VALID_CVAR_VALUE(pTurnConnection->freeAllocationCvar)) {

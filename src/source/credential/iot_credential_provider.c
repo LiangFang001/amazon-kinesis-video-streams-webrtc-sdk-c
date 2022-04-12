@@ -125,18 +125,28 @@ STATUS priv_iot_credential_provider_get(PAwsCredentialProvider pCredentialProvid
     ENTERS();
 
     STATUS retStatus = STATUS_SUCCESS;
+    UINT64 currentTime;
 
     PIotCredentialProvider pIotCredentialProvider = (PIotCredentialProvider) pCredentialProvider;
 
     CHK(pIotCredentialProvider != NULL && ppAwsCredentials != NULL, STATUS_NULL_ARG);
 
+    currentTime = pIotCredentialProvider->getCurrentTimeFn(pIotCredentialProvider->customData);
+
+    CHK(pIotCredentialProvider->pAwsCredentials == NULL ||
+            currentTime + IOT_CREDENTIAL_FETCH_GRACE_PERIOD > pIotCredentialProvider->pAwsCredentials->expiration,
+        retStatus);
+
     // Fill the credentials
     CHK_STATUS(http_api_getIotCredential(pIotCredentialProvider));
 
-    *ppAwsCredentials = pIotCredentialProvider->pAwsCredentials;
-
 CleanUp:
 
+    if (STATUS_FAILED(retStatus)) {
+        *ppAwsCredentials = NULL; //!< this can be removed.
+    } else {
+        *ppAwsCredentials = pIotCredentialProvider->pAwsCredentials;
+    }
     LEAVES();
     return retStatus;
 }

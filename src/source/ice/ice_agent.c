@@ -726,6 +726,7 @@ STATUS ice_agent_free(PIceAgent* ppIceAgent)
 
     if (IS_VALID_MUTEX_VALUE(pIceAgent->lock)) {
         MUTEX_FREE(pIceAgent->lock);
+        pIceAgent->lock = INVALID_MUTEX_VALUE;
     }
     state_machine_free(pIceAgent->pStateMachine);
 

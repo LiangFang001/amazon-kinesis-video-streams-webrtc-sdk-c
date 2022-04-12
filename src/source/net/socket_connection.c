@@ -101,6 +101,7 @@ STATUS socket_connection_free(PSocketConnection* ppSocketConnection)
 
     if (IS_VALID_MUTEX_VALUE(pSocketConnection->lock)) {
         MUTEX_FREE(pSocketConnection->lock);
+        pSocketConnection->lock = INVALID_MUTEX_VALUE;
     }
 
     if (pSocketConnection->pTlsSession != NULL) {

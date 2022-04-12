@@ -937,11 +937,13 @@ STATUS pc_free(PRtcPeerConnection* ppPeerConnection)
     CHK_LOG_ERR(hash_table_free(pKvsPeerConnection->pRtxTable));
     if (IS_VALID_MUTEX_VALUE(pKvsPeerConnection->pSrtpSessionLock)) {
         MUTEX_FREE(pKvsPeerConnection->pSrtpSessionLock);
+        pKvsPeerConnection->pSrtpSessionLock = INVALID_MUTEX_VALUE;
     }
 #endif
 
     if (IS_VALID_MUTEX_VALUE(pKvsPeerConnection->peerConnectionObjLock)) {
         MUTEX_FREE(pKvsPeerConnection->peerConnectionObjLock);
+        pKvsPeerConnection->peerConnectionObjLock = INVALID_MUTEX_VALUE;
     }
 
     if (IS_VALID_TIMER_QUEUE_HANDLE(pKvsPeerConnection->timerQueueHandle)) {
