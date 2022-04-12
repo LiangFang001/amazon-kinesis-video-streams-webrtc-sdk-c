@@ -32,6 +32,7 @@ extern "C" {
 #include "kvs/common_defs.h"
 #include "kvs/common.h"
 #include "kvs/nullable_defs.h"
+#include "kvs/platform_utils.h"
 #include "kvs/stats.h"
 #include "tags.h"
 

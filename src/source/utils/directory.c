@@ -12,12 +12,21 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+#include <dirent.h>
 #include "kvs/common_defs.h"
 #include "kvs/error.h"
-#include <kvs/platform_utils.h>
+#include "kvs/platform_utils.h"
 #include "directory.h"
-#include <dirent.h>
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 /**
  * Traverses the directory iteratively
  *

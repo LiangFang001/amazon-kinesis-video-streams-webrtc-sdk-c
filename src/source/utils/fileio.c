@@ -12,22 +12,21 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+#include <dirent.h> //!< #TBD
 #include "kvs/common_defs.h"
 #include "kvs/error.h"
 #include "kvs/platform_utils.h"
 #include "fileio.h"
-#include <dirent.h>
 
-/**
- * Read a file from the given full/relative filePath into the memory area pointed to by pBuffer.
- * Specifying NULL in pBuffer will return the size of the file.
- *
- * Parameters:
- *     filePath - file path to read from
- *     binMode  - TRUE to read file stream as binary; FALSE to read as a normal text file
- *     pBuffer  - buffer to write contents of the file to. If NULL return the size in pSize.
- *     pSize    - destination PUINT64 to store the size of the file when pBuffer is NULL;
- */
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 STATUS fileio_read(PCHAR filePath, BOOL binMode, PBYTE pBuffer, PUINT64 pSize)
 {
     UINT64 fileLen;
@@ -67,18 +66,6 @@ CleanUp:
     return retStatus;
 }
 
-/**
- * Read a section of the file from the given full/relative filePath into the memory area pointed to by pBuffer.
- *
- * NOTE: The buffer should be large enough to read the section.
- *
- * Parameters:
- *     filePath - file path to read from
- *     binMode  - TRUE to read file stream as binary; FALSE to read as a normal text file
- *     pBuffer  - buffer to write contents of the file to. Non-null
- *     offset   - Offset into the file to start reading from.
- *     readSize - The number of bytes to read from the file.
- */
 STATUS fileio_readSegment(PCHAR filePath, BOOL binMode, PBYTE pBuffer, UINT64 offset, UINT64 readSize)
 {
     UINT64 fileLen;
@@ -113,16 +100,6 @@ CleanUp:
     return retStatus;
 }
 
-/**
- * Write contents pointed to by pBuffer to the given filePath.
- *
- * Parameters:
- *     filePath - file path to write to
- *     binMode  - TRUE to read file stream as binary; FALSE to read as a normal text file
- *     append   - TRUE to append; FALSE to overwrite
- *     pBuffer  - memory location whose contents should be written to the file
- *     size     - number of bytes that should be written to the file
- */
 STATUS fileio_write(PCHAR filePath, BOOL binMode, BOOL append, PBYTE pBuffer, UINT64 size)
 {
     STATUS retStatus = STATUS_SUCCESS;
@@ -147,16 +124,6 @@ CleanUp:
     return retStatus;
 }
 
-/**
- * Gets the file length of the given filePath.
- *
- * Parameters:
- *     filePath - file path whose file length should be computed
- *     pLength  - Returns the size of the file in bytes
- *
- * Returns:
- *     STATUS of the operation
- */
 STATUS fileio_getLength(PCHAR filePath, PUINT64 pLength)
 {
     STATUS retStatus = STATUS_SUCCESS;
@@ -168,13 +135,6 @@ CleanUp:
     return retStatus;
 }
 
-/**
- * Checks if the file or directory exists with a given full or relative path
- *
- * Parameters:
- *      filePath - file path to check
- *      pExists - TRUE if the file exists
- */
 STATUS fileio_isExisted(PCHAR filePath, PBOOL pExists)
 {
     if (filePath == NULL || pExists == NULL) {
@@ -188,13 +148,6 @@ STATUS fileio_isExisted(PCHAR filePath, PBOOL pExists)
     return STATUS_SUCCESS;
 }
 
-/**
- * Creates/overwrites a new file with a given size
- *
- * Parameters:
- *      filePath - file path to check
- *      size - The size of the newly created file
- */
 STATUS fileio_create(PCHAR filePath, UINT64 size)
 {
     STATUS retStatus = STATUS_SUCCESS;

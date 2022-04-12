@@ -18,7 +18,17 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/common_defs.h"
+
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 /**
  * @brief Updates a CRC32 checksum
  *
@@ -28,14 +38,16 @@ extern "C" {
  *
  * @return UINT32 crc32 checksum.
  */
-UINT32 updateCrc32(UINT32 start, PBYTE pBuffer, UINT32 len);
-
+UINT32 crc32_update(UINT32 start, PBYTE pBuffer, UINT32 len);
 /**
- * @PBYTE - IN - buffer used to compute checksum
- * @UINT32 - IN - number of bytes to use from buffer
- * @return - UINT32 crc32 checksum
+ * @brief Updates a CRC32 checksum
+ *
+ * @param[in] PBYTE buffer used to compute checksum
+ * @param[in] UINT32 number of bytes to use from buffer
+ *
+ * @return UINT32 crc32 checksum
  */
-#define COMPUTE_CRC32(pBuffer, len) (updateCrc32(0, pBuffer, len))
+#define COMPUTE_CRC32(pBuffer, len) (crc32_update(0, pBuffer, len))
 #ifdef __cplusplus
 }
 #endif

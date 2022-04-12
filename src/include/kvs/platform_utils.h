@@ -1,5 +1,16 @@
-/**
- * Platform specific definitions for logging, assert, etc..
+/*
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 #ifndef __PLATFORM_UTILS_DEFINES_H__
 #define __PLATFORM_UTILS_DEFINES_H__
@@ -9,7 +20,14 @@ extern "C" {
 #endif
 
 #pragma once
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+#include "kvs/common_defs.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 #define CONN_LISTENER_THREAD_NAME "connListener"
 #define CONN_LISTENER_THREAD_SIZE 8192
 #define WSS_CLIENT_THREAD_NAME    "wss_client" //!< the parameters of wss listener.
@@ -247,14 +265,6 @@ extern logPrintFunc globalCustomLogPrintFn;
 ////////////////////////////////////////////////////
 // Callbacks definitions
 ////////////////////////////////////////////////////
-/**
- * Gets the current time in 100ns from some timestamp.
- *
- * @param 1 UINT64 - Custom handle passed by the caller.
- *
- * @return Current time value in 100ns
- */
-typedef UINT64 (*GetCurrentTimeFunc)(UINT64);
 
 ////////////////////////////////////////////////////
 // Main structure declarations
@@ -325,6 +335,10 @@ typedef struct {
     // Id of the track this frame belong to
     UINT64 trackId;
 } Frame, *PFrame;
+
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 
 #ifdef __cplusplus
 }

@@ -18,7 +18,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 //
 // Atomics functions
 //
@@ -33,7 +38,6 @@ typedef SIZE_T (*atomicSubtract)(volatile SIZE_T*, SIZE_T);
 typedef SIZE_T (*atomicAnd)(volatile SIZE_T*, SIZE_T);
 typedef SIZE_T (*atomicOr)(volatile SIZE_T*, SIZE_T);
 typedef SIZE_T (*atomicXor)(volatile SIZE_T*, SIZE_T);
-
 //
 // Atomics
 //
@@ -48,7 +52,6 @@ extern PUBLIC_API atomicSubtract globalAtomicSubtract;
 extern PUBLIC_API atomicAnd globalAtomicAnd;
 extern PUBLIC_API atomicOr globalAtomicOr;
 extern PUBLIC_API atomicXor globalAtomicXor;
-
 //
 // Basic Atomics functionality
 //
@@ -63,7 +66,6 @@ extern PUBLIC_API atomicXor globalAtomicXor;
 #define ATOMIC_AND              globalAtomicAnd
 #define ATOMIC_OR               globalAtomicOr
 #define ATOMIC_XOR              globalAtomicXor
-
 //
 // Helper atomics
 //
@@ -75,7 +77,9 @@ typedef SIZE_T ATOMIC_BOOL;
 #define ATOMIC_AND_BOOL              (BOOL) globalAtomicAnd
 #define ATOMIC_OR_BOOL               (BOOL) globalAtomicOr
 #define ATOMIC_XOR_BOOL              (BOOL) globalAtomicXor
-
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 #ifdef __cplusplus
 }
 #endif

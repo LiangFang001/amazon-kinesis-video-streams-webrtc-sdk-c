@@ -387,18 +387,6 @@ typedef INT_PTR SSIZE_T, *PSSIZE_T;
     } while (0)
 #endif
 
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
-
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
-
-#ifndef ABS
-#define ABS(a) ((a) > (0) ? (a) : (-a))
-#endif
-
 #ifndef IS_ALIGNED_TO
 #define IS_ALIGNED_TO(m, n) ((m) % (n) == 0)
 #endif
@@ -410,13 +398,16 @@ typedef INT_PTR SSIZE_T, *PSSIZE_T;
 #include "kvs/error.h"
 
 #include <stdlib.h>
-#include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <errno.h>
+
 #include <ctype.h>
-#include <time.h>
+#define TOLOWER    tolower
+#define TOUPPER    toupper
+#define TOLOWERSTR tolowerstr
+#define TOUPPERSTR toupperstr
 
 #if !(defined _WIN32 || defined _WIN64)
 #include <unistd.h>
@@ -491,55 +482,13 @@ typedef struct stat STAT_STRUCT;
 #include "mutex.h"
 #include "version.h"
 #include "atomics.h"
-
 #include "kvs_string.h"
-//
-// String operations
-//
-#define STRCAT     strcat
-#define STRNCAT    strncat
-#define STRCPY     strcpy
-#define STRNCPY    strncpy
-#define STRLEN     strlen
-#define STRNLEN    strnlen
-#define STRCHR     strchr
-#define STRNCHR    strnchr
-#define STRRCHR    strrchr
-#define STRCMP     strcmp
-#define STRCMPI    GLOBAL_STRCMPI
-#define STRNCMPI   GLOBAL_STRNCMPI
-#define STRNCMP    strncmp
-#define PRINTF     printf
-#define SPRINTF    sprintf
-#define SNPRINTF   snprintf
-#define TRIMSTRALL trimstrall
-#define LTRIMSTR   ltrimstr
-#define RTRIMSTR   rtrimstr
-#define STRSTR     strstr
-#ifdef strnstr
-#define STRNSTR strnstr
-#else
-#define STRNSTR defaultStrnstr
-#endif
-#define TOLOWER    tolower
-#define TOUPPER    toupper
-#define TOLOWERSTR tolowerstr
-#define TOUPPERSTR toupperstr
+#include "endianness.h"
 
 //
 // Environment variables
 //
 #define GETENV getenv
-
-//
-// Empty string definition
-//
-#define EMPTY_STRING ((PCHAR) "")
-
-//
-// Check if string is empty
-//
-#define IS_EMPTY_STRING(str) ((str)[0] == '\0')
 
 //
 // Pseudo-random functionality
@@ -550,13 +499,6 @@ typedef struct stat STAT_STRUCT;
 #ifndef RAND
 #define RAND rand
 #endif
-
-//
-// CRT functionality
-//
-#define STRTOUL  strtoul
-#define ULLTOSTR ulltostr
-#define ULTOSTR  ultostr
 
 //
 // File operations
@@ -629,13 +571,18 @@ typedef struct stat STAT_STRUCT;
 #define FPATHSEPARATOR     '/'
 #define FPATHSEPARATOR_STR "/"
 #endif
-//
-// String to integer conversion
-//
-#define STRTOUI32 strtoui32
-#define STRTOI32  strtoi32
-#define STRTOUI64 strtoui64
-#define STRTOI64  strtoi64
+
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
+#ifndef ABS
+#define ABS(a) ((a) > (0) ? (a) : (-a))
+#endif
 
 #ifndef SQRT
 #include <math.h>
@@ -654,26 +601,6 @@ typedef struct stat STAT_STRUCT;
 //
 #define ROUND_DOWN(X, A) ((X) & ~((A) -1))
 #define ROUND_UP(X, A)   (((X) + (A) -1) & ~((A) -1))
-
-//
-// Macros to swap endinanness
-//
-#define LOW_BYTE(x)   ((BYTE)(x))
-#define HIGH_BYTE(x)  ((BYTE)(((INT16)(x) >> 8) & 0xFF))
-#define LOW_INT16(x)  ((INT16)(x))
-#define HIGH_INT16(x) ((INT16)(((INT32)(x) >> 16) & 0xFFFF))
-#define LOW_INT32(x)  ((INT32)(x))
-#define HIGH_INT32(x) ((INT32)(((INT64)(x) >> 32) & 0xFFFFFFFF))
-
-#define MAKE_INT16(a, b) ((INT16)(((UINT8)((UINT16)(a) &0xff)) | ((UINT16)((UINT8)((UINT16)(b) &0xff))) << 8))
-#define MAKE_INT32(a, b) ((INT32)(((UINT16)((UINT32)(a) &0xffff)) | ((UINT32)((UINT16)((UINT32)(b) &0xffff))) << 16))
-#define MAKE_INT64(a, b) ((INT64)(((UINT32)((UINT64)(a) &0xffffffff)) | ((UINT64)((UINT32)((UINT64)(b) &0xffffffff))) << 32))
-
-#define SWAP_INT16(x) MAKE_INT16(HIGH_BYTE(x), LOW_BYTE(x))
-
-#define SWAP_INT32(x) MAKE_INT32(SWAP_INT16(HIGH_INT16(x)), SWAP_INT16(LOW_INT16(x)))
-
-#define SWAP_INT64(x) MAKE_INT64(SWAP_INT32(HIGH_INT32(x)), SWAP_INT32(LOW_INT32(x)))
 
 //
 // Check if at most 1 bit is set
@@ -704,6 +631,9 @@ typedef UINT64 HANDLE;
 #define HANDLE_TO_POINTER(h) ((PBYTE)(h))
 #endif
 
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 #ifdef __cplusplus
 }
 #endif

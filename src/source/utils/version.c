@@ -17,6 +17,7 @@
  ******************************************************************************/
 #include "kvs/common_defs.h"
 #include "kvs/error.h"
+#include "kvs/platform_utils.h"
 #include "kvs/common.h"
 #include "version.h"
 

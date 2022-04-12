@@ -21,6 +21,7 @@ extern "C" {
 /******************************************************************************
  * HEADERS
  ******************************************************************************/
+#include <time.h>
 #include "kvs/common_defs.h"
 #include "kvs/error.h"
 
@@ -48,6 +49,14 @@ extern "C" {
 // Default time library functions
 //
 #define TIME_DIFF_UNIX_WINDOWS_TIME 116444736000000000ULL
+/**
+ * Gets the current time in 100ns from some timestamp.
+ *
+ * @param 1 UINT64 - Custom handle passed by the caller.
+ *
+ * @return Current time value in 100ns
+ */
+typedef UINT64 (*GetCurrentTimeFunc)(UINT64);
 //
 // Time library function definitions
 //

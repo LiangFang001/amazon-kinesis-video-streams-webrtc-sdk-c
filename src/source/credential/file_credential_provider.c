@@ -16,6 +16,7 @@
  * HEADERS
  ******************************************************************************/
 #define LOG_CLASS "FileCredentialProvider"
+#include "kvs/platform_utils.h"
 #include "auth.h"
 #include "file_credential_provider.h"
 

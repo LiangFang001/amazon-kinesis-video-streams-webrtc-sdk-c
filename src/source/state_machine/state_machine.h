@@ -25,9 +25,9 @@ extern "C" {
  * HEADERS
  ******************************************************************************/
 #include "kvs/common_defs.h"
-#include <kvs/platform_utils.h>
+#include "kvs/platform_utils.h"
 #include "kvs/error.h"
-
+#include "time_port.h"
 /******************************************************************************
  * General defines and data structures
  ******************************************************************************/

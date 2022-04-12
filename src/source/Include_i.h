@@ -13,7 +13,7 @@ extern "C" {
 ////////////////////////////////////////////////////
 // Project include files
 ////////////////////////////////////////////////////
-#include <kvs/WebRTCClient.h>
+#include <kvs/webrtc_client.h>
 
 // INET/INET6 MUST be defined before usrsctp
 // If removed will cause corruption that is hard to determine at runtime

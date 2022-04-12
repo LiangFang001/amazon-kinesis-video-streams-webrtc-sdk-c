@@ -19,7 +19,61 @@
 extern "C" {
 #endif
 
+#include <string.h>
 #include "kvs/error.h"
+
+//
+// String operations
+//
+#define STRCAT     strcat
+#define STRNCAT    strncat
+#define STRCPY     strcpy
+#define STRNCPY    strncpy
+#define STRLEN     strlen
+#define STRNLEN    strnlen
+#define STRCHR     strchr
+#define STRNCHR    strnchr
+#define STRRCHR    strrchr
+#define STRCMP     strcmp
+#define STRCMPI    GLOBAL_STRCMPI
+#define STRNCMPI   GLOBAL_STRNCMPI
+#define STRNCMP    strncmp
+#define PRINTF     printf
+#define SPRINTF    sprintf
+#define SNPRINTF   snprintf
+#define TRIMSTRALL trimstrall
+#define LTRIMSTR   ltrimstr
+#define RTRIMSTR   rtrimstr
+#define STRSTR     strstr
+#ifdef strnstr
+#define STRNSTR strnstr
+#else
+#define STRNSTR defaultStrnstr
+#endif
+
+//
+// CRT functionality
+//
+#define STRTOUL  strtoul
+#define ULLTOSTR ulltostr
+#define ULTOSTR  ultostr
+
+//
+// String to integer conversion
+//
+#define STRTOUI32 strtoui32
+#define STRTOI32  strtoi32
+#define STRTOUI64 strtoui64
+#define STRTOI64  strtoi64
+//
+// Empty string definition
+//
+#define EMPTY_STRING ((PCHAR) "")
+
+//
+// Check if string is empty
+//
+#define IS_EMPTY_STRING(str) ((str)[0] == '\0')
 
 #define MAX_STRING_CONVERSION_BASE 36
 // Check for whitespace

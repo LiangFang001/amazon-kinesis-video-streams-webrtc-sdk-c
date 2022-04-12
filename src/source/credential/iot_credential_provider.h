@@ -23,6 +23,12 @@ extern "C" {
 /******************************************************************************
  * HEADERS
  ******************************************************************************/
+#include "kvs/platform_utils.h"
+#include "time_port.h"
+
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 #define IOT_REQUEST_CONNECTION_TIMEOUT (3 * HUNDREDS_OF_NANOS_IN_A_SECOND)
 #define IOT_REQUEST_COMPLETION_TIMEOUT (5 * HUNDREDS_OF_NANOS_IN_A_SECOND)
 #define ROLE_ALIASES_PATH              ((PCHAR) "/role-aliases")

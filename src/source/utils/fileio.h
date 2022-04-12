@@ -29,11 +29,105 @@ extern "C" {
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+/**
+ * @brief Read a file from the given full/relative filePath into the memory area pointed to by pBuffer.
+ * Specifying NULL in pBuffer will return the size of the file.
+ *
+ * @param[in] filePath file path to read from
+ * @param[in] binMode TRUE to read file stream as binary; FALSE to read as a normal text file
+ * @param[in] pBuffer buffer to write contents of the file to. If NULL return the size in pSize.
+ * @param[in] pSize destination PUINT64 to store the size of the file when pBuffer is NULL;
+ *
+ * @return STATUS code of the execution.
+ */
 STATUS fileio_read(PCHAR filePath, BOOL binMode, PBYTE pBuffer, PUINT64 pSize);
+/**
+ * @brief Read a section of the file from the given full/relative filePath into the memory area pointed to by pBuffer.
+ * NOTE: The buffer should be large enough to read the section.
+ *
+ * @param[in] filePath file path to read from
+ * @param[in] binMode TRUE to read file stream as binary; FALSE to read as a normal text file
+ * @param[in] pBuffer buffer to write contents of the file to. Non-null
+ * @param[in] offset Offset into the file to start reading from.
+ * @param[in] readSize The number of bytes to read from the file.
+ *
+ * @return STATUS code of the execution.
+ */
 STATUS fileio_readSegment(PCHAR filePath, BOOL binMode, PBYTE pBuffer, UINT64 offset, UINT64 readSize);
+/**
+ * @brief
+ *
+ * @param[in]
+ * @param[in]
+ * @param[in]
+ * @param[in]
+ *
+ * @return STATUS code of the execution.
+ */
+/**
+ * Write contents pointed to by pBuffer to the given filePath.
+ *
+ * Parameters:
+ *     filePath - file path to write to
+ *     binMode  - TRUE to read file stream as binary; FALSE to read as a normal text file
+ *     append   - TRUE to append; FALSE to overwrite
+ *     pBuffer  - memory location whose contents should be written to the file
+ *     size     - number of bytes that should be written to the file
+ */
 STATUS fileio_write(PCHAR filePath, BOOL binMode, BOOL append, PBYTE pBuffer, UINT64 size);
+/**
+ * @brief
+ *
+ * @param[in]
+ * @param[in]
+ * @param[in]
+ * @param[in]
+ *
+ * @return STATUS code of the execution.
+/**
+ * Gets the file length of the given filePath.
+ *
+ * Parameters:
+ *     filePath - file path whose file length should be computed
+ *     pLength  - Returns the size of the file in bytes
+ *
+ * Returns:
+ *     STATUS of the operation
+ */
 STATUS fileio_getLength(PCHAR filePath, PUINT64 pSize);
+/**
+ * @brief
+ *
+ * @param[in]
+ * @param[in]
+ * @param[in]
+ * @param[in]
+ *
+ * @return STATUS code of the execution.
+/**
+ * Checks if the file or directory exists with a given full or relative path
+ *
+ * Parameters:
+ *      filePath - file path to check
+ *      pExists - TRUE if the file exists
+ */
 STATUS fileio_isExisted(PCHAR filePath, PBOOL pExists);
+/**
+ * @brief
+ *
+ * @param[in]
+ * @param[in]
+ * @param[in]
+ * @param[in]
+ *
+ * @return STATUS code of the execution.
+/**
+ * Creates/overwrites a new file with a given size
+ *
+ * Parameters:
+ *      filePath - file path to check
+ *      size - The size of the newly created file
+ */
 STATUS fileio_create(PCHAR filePath, UINT64 size);
 
 #ifdef __cplusplus
