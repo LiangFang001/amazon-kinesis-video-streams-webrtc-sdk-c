@@ -846,7 +846,7 @@ STATUS signaling_storeOutboundMessage(PSignalingClient pSignalingClient, PSignal
     CHK_STATUS(signaling_getOutboundMessage(pSignalingClient, pSignalingMessage->correlationId, pSignalingMessage->peerClientId, &pExistingMessage));
     CHK(pExistingMessage == NULL, STATUS_SIGNALING_DUPLICATE_MESSAGE_BEING_SENT);
     // push it into signaling message queue.
-    CHK_STATUS(stackQueueEnqueue(pSignalingClient->pOutboundMsgQ, (UINT64) pSignalingMessage));
+    CHK_STATUS(stack_queue_enqueue(pSignalingClient->pOutboundMsgQ, (UINT64) pSignalingMessage));
 
 CleanUp:
 
@@ -871,9 +871,9 @@ STATUS signaling_removeOutboundMessage(PSignalingClient pSignalingClient, PCHAR 
     MUTEX_LOCK(pSignalingClient->outboundMsgQLock);
     locked = TRUE;
 
-    CHK_STATUS(stackQueueGetIterator(pSignalingClient->pOutboundMsgQ, &iterator));
+    CHK_STATUS(stack_queue_iterator_get(pSignalingClient->pOutboundMsgQ, &iterator));
     while (IS_VALID_ITERATOR(iterator)) {
-        CHK_STATUS(stackQueueIteratorGetItem(iterator, &data));
+        CHK_STATUS(stack_queue_iterator_getItem(iterator, &data));
 
         pExistingMessage = (PSignalingMessage) data;
         CHK(pExistingMessage != NULL, STATUS_SIGNALING_INTERNAL_ERROR);
@@ -886,7 +886,7 @@ STATUS signaling_removeOutboundMessage(PSignalingClient pSignalingClient, PCHAR 
             CHK(FALSE, retStatus);
         }
 
-        CHK_STATUS(stackQueueIteratorNext(&iterator));
+        CHK_STATUS(stack_queue_iterator_getNext(&iterator));
     }
 
     // Didn't find a match
@@ -929,9 +929,9 @@ STATUS signaling_getOutboundMessage(PSignalingClient pSignalingClient, PCHAR cor
     MUTEX_LOCK(pSignalingClient->outboundMsgQLock);
     locked = TRUE;
 
-    CHK_STATUS(stackQueueGetIterator(pSignalingClient->pOutboundMsgQ, &iterator));
+    CHK_STATUS(stack_queue_iterator_get(pSignalingClient->pOutboundMsgQ, &iterator));
     while (IS_VALID_ITERATOR(iterator)) {
-        CHK_STATUS(stackQueueIteratorGetItem(iterator, &data));
+        CHK_STATUS(stack_queue_iterator_getItem(iterator, &data));
 
         pExistingMessage = (PSignalingMessage) data;
         CHK(pExistingMessage != NULL, STATUS_SIGNALING_INTERNAL_ERROR);
@@ -945,7 +945,7 @@ STATUS signaling_getOutboundMessage(PSignalingClient pSignalingClient, PCHAR cor
             CHK(FALSE, retStatus);
         }
 
-        CHK_STATUS(stackQueueIteratorNext(&iterator));
+        CHK_STATUS(stack_queue_iterator_getNext(&iterator));
     }
 
 CleanUp:

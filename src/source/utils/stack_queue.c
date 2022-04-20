@@ -12,17 +12,27 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/common_defs.h"
 #include "kvs/error.h"
 #include "kvs/platform_utils.h"
 #include "stack_queue.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 /**
  * Create a new stack/queue
  */
 STATUS stack_queue_create(PStackQueue* ppStackQueue)
 {
-    return singleListCreate(ppStackQueue);
+    return single_list_create(ppStackQueue);
 }
 
 /**
@@ -30,29 +40,29 @@ STATUS stack_queue_create(PStackQueue* ppStackQueue)
  */
 STATUS stack_queue_free(PStackQueue pStackQueue)
 {
-    return singleListFree(pStackQueue);
+    return single_list_free(pStackQueue);
 }
 
 /**
  * Clears and de-allocates all the items
  */
-STATUS stackQueueClear(PStackQueue pStackQueue, BOOL freeData)
+STATUS stack_queue_clear(PStackQueue pStackQueue, BOOL freeData)
 {
-    return singleListClear(pStackQueue, freeData);
+    return single_list_clear(pStackQueue, freeData);
 }
 
 /**
  * Gets the number of items in the stack/queue
  */
-STATUS stackQueueGetCount(PStackQueue pStackQueue, PUINT32 pCount)
+STATUS stack_queue_getCount(PStackQueue pStackQueue, PUINT32 pCount)
 {
-    return singleListGetNodeCount(pStackQueue, pCount);
+    return single_list_getNodeCount(pStackQueue, pCount);
 }
 
 /**
  * Whether the stack queue is empty
  */
-STATUS stackQueueIsEmpty(PStackQueue pStackQueue, PBOOL pIsEmpty)
+STATUS stack_queue_isEmpty(PStackQueue pStackQueue, PBOOL pIsEmpty)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 count;
@@ -60,7 +70,7 @@ STATUS stackQueueIsEmpty(PStackQueue pStackQueue, PBOOL pIsEmpty)
     // The call is idempotent so we shouldn't fail
     CHK(pStackQueue != NULL && pIsEmpty != NULL, STATUS_NULL_ARG);
 
-    CHK_STATUS(singleListGetNodeCount(pStackQueue, &count));
+    CHK_STATUS(single_list_getNodeCount(pStackQueue, &count));
 
     *pIsEmpty = (count == 0);
 
@@ -85,7 +95,7 @@ STATUS stackQueuePop(PStackQueue pStackQueue, PUINT64 pItem)
     STATUS retStatus = STATUS_SUCCESS;
 
     CHK_STATUS(stackQueuePeek(pStackQueue, pItem));
-    CHK_STATUS(singleListDeleteHead(pStackQueue));
+    CHK_STATUS(single_list_deleteHead(pStackQueue));
 
 CleanUp:
 
@@ -100,9 +110,9 @@ STATUS stackQueuePeek(PStackQueue pStackQueue, PUINT64 pItem)
     STATUS retStatus = STATUS_SUCCESS;
     PSingleListNode pHead;
 
-    CHK_STATUS(singleListGetHeadNode(pStackQueue, &pHead));
+    CHK_STATUS(single_list_getHeadNode(pStackQueue, &pHead));
     CHK(pHead != NULL, STATUS_NOT_FOUND);
-    CHK_STATUS(singleListGetNodeData(pHead, pItem));
+    CHK_STATUS(single_list_getNodeData(pHead, pItem));
 
 CleanUp:
 
@@ -122,10 +132,10 @@ STATUS stackQueueGetIndexOf(PStackQueue pStackQueue, UINT64 item, PUINT32 pIndex
 
     CHK(pStackQueue != NULL && pIndex != NULL, STATUS_NULL_ARG);
 
-    CHK_STATUS(singleListGetHeadNode(pStackQueue, &pCurNode));
+    CHK_STATUS(single_list_getHeadNode(pStackQueue, &pCurNode));
 
     while (pCurNode != NULL) {
-        CHK_STATUS(singleListGetNodeData(pCurNode, &data));
+        CHK_STATUS(single_list_getNodeData(pCurNode, &data));
         if (data == item) {
             found = TRUE;
             break;
@@ -212,23 +222,20 @@ CleanUp:
 /**
  * Enqueues an item in the queue
  */
-STATUS stackQueueEnqueue(PStackQueue pStackQueue, UINT64 item)
+STATUS stack_queue_enqueue(PStackQueue pStackQueue, UINT64 item)
 {
-    return singleListInsertItemTail(pStackQueue, item);
+    return single_list_insertItemTail(pStackQueue, item);
 }
 
-/**
- * Dequeues an item from the queue
- */
-STATUS stackQueueDequeue(PStackQueue pStackQueue, PUINT64 pItem)
+STATUS stack_queue_dequeue(PStackQueue pStackQueue, PUINT64 pItem)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSingleListNode pHead;
 
-    CHK_STATUS(singleListGetHeadNode(pStackQueue, &pHead));
+    CHK_STATUS(single_list_getHeadNode(pStackQueue, &pHead));
     CHK(pHead != NULL, STATUS_NOT_FOUND);
-    CHK_STATUS(singleListGetNodeData(pHead, pItem));
-    CHK_STATUS(singleListDeleteHead(pStackQueue));
+    CHK_STATUS(single_list_getNodeData(pHead, pItem));
+    CHK_STATUS(single_list_deleteHead(pStackQueue));
 
 CleanUp:
 
@@ -238,10 +245,10 @@ CleanUp:
 /**
  * Gets the iterator
  */
-STATUS stackQueueGetIterator(PStackQueue pStackQueue, PStackQueueIterator pIterator)
+STATUS stack_queue_iterator_get(PStackQueue pStackQueue, PStackQueueIterator pIterator)
 {
     STATUS retStatus = STATUS_SUCCESS;
-    CHK_STATUS(singleListGetHeadNode(pStackQueue, pIterator));
+    CHK_STATUS(single_list_getHeadNode(pStackQueue, pIterator));
 
 CleanUp:
 
@@ -251,7 +258,7 @@ CleanUp:
 /**
  * Iterates to next
  */
-STATUS stackQueueIteratorNext(PStackQueueIterator pIterator)
+STATUS stack_queue_iterator_getNext(PStackQueueIterator pIterator)
 {
     STATUS retStatus = STATUS_SUCCESS;
     StackQueueIterator nextIterator;
@@ -269,12 +276,12 @@ CleanUp:
 /**
  * Gets the item and the index
  */
-STATUS stackQueueIteratorGetItem(StackQueueIterator iterator, PUINT64 pData)
+STATUS stack_queue_iterator_getItem(StackQueueIterator iterator, PUINT64 pData)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
     CHK(iterator != NULL, STATUS_NOT_FOUND);
-    CHK_STATUS(singleListGetNodeData(iterator, pData));
+    CHK_STATUS(single_list_getNodeData(iterator, pData));
 
 CleanUp:
 

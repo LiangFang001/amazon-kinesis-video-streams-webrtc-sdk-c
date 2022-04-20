@@ -255,9 +255,9 @@ STATUS http_req_pack(PRequestInfo pRequestInfo, PCHAR pVerb, PCHAR pHost, UINT32
     totalLen -= len;
     p += len;
 
-    CHK_STATUS(singleListGetHeadNode(pRequestInfo->pRequestHeaders, &pCurNode));
+    CHK_STATUS(single_list_getHeadNode(pRequestInfo->pRequestHeaders, &pCurNode));
     while (pCurNode != NULL) {
-        CHK_STATUS(singleListGetNodeData(pCurNode, &item));
+        CHK_STATUS(single_list_getNodeData(pCurNode, &item));
         pRequestHeader = (PRequestHeader) item;
         CHK(totalLen > 0, STATUS_HTTP_BUF_OVERFLOW);
         CHK((len = SNPRINTF(p, totalLen, "%s: %s\r\n", pRequestHeader->pName, pRequestHeader->pValue)) > 0, STATUS_HTTP_BUF_OVERFLOW);

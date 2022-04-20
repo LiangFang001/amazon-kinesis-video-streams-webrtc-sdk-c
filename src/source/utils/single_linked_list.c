@@ -12,15 +12,31 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "kvs/common_defs.h"
 #include "kvs/error.h"
 #include "kvs/platform_utils.h"
 #include "single_linked_list.h"
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
+
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+STATUS priv_single_list_allocateNode(UINT64, PSingleListNode*);
+STATUS priv_single_list_insertNodeHead(PSingleList, PSingleListNode);
+STATUS priv_single_list_insertNodeTail(PSingleList, PSingleListNode);
+STATUS priv_single_list_insertNodeAfter(PSingleList, PSingleListNode, PSingleListNode);
+STATUS priv_single_list_getNodeAt(PSingleList, UINT32, PSingleListNode*);
+
 /**
  * Create a new single linked list
  */
-STATUS singleListCreate(PSingleList* ppList)
+STATUS single_list_create(PSingleList* ppList)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSingleList pList = NULL;
@@ -39,10 +55,7 @@ CleanUp:
     return retStatus;
 }
 
-/**
- * Frees a single linked list
- */
-STATUS singleListFree(PSingleList pList)
+STATUS single_list_free(PSingleList pList)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
@@ -50,7 +63,7 @@ STATUS singleListFree(PSingleList pList)
     CHK(pList != NULL, retStatus);
 
     // We shouldn't fail here even if clear fails
-    singleListClear(pList, FALSE);
+    single_list_clear(pList, FALSE);
 
     // Free the structure itself
     MEMFREE(pList);
@@ -60,10 +73,7 @@ CleanUp:
     return retStatus;
 }
 
-/**
- * Clears a single linked list
- */
-STATUS singleListClear(PSingleList pList, BOOL freeData)
+STATUS single_list_clear(PSingleList pList, BOOL freeData)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSingleListNode pCurNode = NULL;
@@ -99,7 +109,7 @@ STATUS singleListInsertNodeHead(PSingleList pList, PSingleListNode pNode)
     STATUS retStatus = STATUS_SUCCESS;
 
     CHK(pList != NULL && pNode != NULL, STATUS_NULL_ARG);
-    CHK_STATUS(singleListInsertNodeHeadInternal(pList, pNode));
+    CHK_STATUS(priv_single_list_insertNodeHead(pList, pNode));
 
 CleanUp:
 
@@ -117,8 +127,8 @@ STATUS singleListInsertItemHead(PSingleList pList, UINT64 data)
     CHK(pList != NULL, STATUS_NULL_ARG);
 
     // Allocate the node and insert
-    CHK_STATUS(singleListAllocNode(data, &pNode));
-    CHK_STATUS(singleListInsertNodeHeadInternal(pList, pNode));
+    CHK_STATUS(priv_single_list_allocateNode(data, &pNode));
+    CHK_STATUS(priv_single_list_insertNodeHead(pList, pNode));
 
 CleanUp:
 
@@ -133,7 +143,7 @@ STATUS singleListInsertNodeTail(PSingleList pList, PSingleListNode pNode)
     STATUS retStatus = STATUS_SUCCESS;
 
     CHK(pList != NULL && pNode != NULL, STATUS_NULL_ARG);
-    CHK_STATUS(singleListInsertNodeTailInternal(pList, pNode));
+    CHK_STATUS(priv_single_list_insertNodeTail(pList, pNode));
 
 CleanUp:
 
@@ -143,7 +153,7 @@ CleanUp:
 /**
  * Insert a new node with the data at the tail position in the list
  */
-STATUS singleListInsertItemTail(PSingleList pList, UINT64 data)
+STATUS single_list_insertItemTail(PSingleList pList, UINT64 data)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSingleListNode pNode;
@@ -151,8 +161,8 @@ STATUS singleListInsertItemTail(PSingleList pList, UINT64 data)
     CHK(pList != NULL, STATUS_NULL_ARG);
 
     // Allocate the node and insert
-    CHK_STATUS(singleListAllocNode(data, &pNode));
-    CHK_STATUS(singleListInsertNodeTailInternal(pList, pNode));
+    CHK_STATUS(priv_single_list_allocateNode(data, &pNode));
+    CHK_STATUS(priv_single_list_insertNodeTail(pList, pNode));
 
 CleanUp:
 
@@ -167,7 +177,7 @@ STATUS singleListInsertNodeAfter(PSingleList pList, PSingleListNode pNode, PSing
     STATUS retStatus = STATUS_SUCCESS;
 
     CHK(pList != NULL && pNode != NULL && pInsertNode != NULL, STATUS_NULL_ARG);
-    CHK_STATUS(singleListInsertNodeAfterInternal(pList, pNode, pInsertNode));
+    CHK_STATUS(priv_single_list_insertNodeAfter(pList, pNode, pInsertNode));
 
 CleanUp:
 
@@ -185,8 +195,8 @@ STATUS singleListInsertItemAfter(PSingleList pList, PSingleListNode pNode, UINT6
     CHK(pList != NULL && pNode != NULL, STATUS_NULL_ARG);
 
     // Allocate the node and insert
-    CHK_STATUS(singleListAllocNode(data, &pInsertNode));
-    CHK_STATUS(singleListInsertNodeAfterInternal(pList, pNode, pInsertNode));
+    CHK_STATUS(priv_single_list_allocateNode(data, &pInsertNode));
+    CHK_STATUS(priv_single_list_insertNodeAfter(pList, pNode, pInsertNode));
 
 CleanUp:
 
@@ -196,7 +206,7 @@ CleanUp:
 /**
  * Removes and deletes the head
  */
-STATUS singleListDeleteHead(PSingleList pList)
+STATUS single_list_deleteHead(PSingleList pList)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSingleListNode pNode;
@@ -275,7 +285,7 @@ STATUS singleListDeleteNode(PSingleList pList, PSingleListNode pNode)
 
     if (pList->pHead == pNode) {
         // Fast path to remove the head and return
-        CHK_STATUS(singleListDeleteHead(pList));
+        CHK_STATUS(single_list_deleteHead(pList));
         CHK(FALSE, retStatus);
     }
 
@@ -300,7 +310,7 @@ CleanUp:
 /**
  * Gets the head node
  */
-STATUS singleListGetHeadNode(PSingleList pList, PSingleListNode* ppNode)
+STATUS single_list_getHeadNode(PSingleList pList, PSingleListNode* ppNode)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
@@ -337,7 +347,7 @@ STATUS singleListGetNodeAt(PSingleList pList, UINT32 index, PSingleListNode* ppN
     CHK(pList != NULL && ppNode != NULL, STATUS_NULL_ARG);
     CHK(index < pList->count, STATUS_INVALID_ARG);
 
-    CHK_STATUS(singleListGetNodeAtInternal(pList, index, ppNode));
+    CHK_STATUS(priv_single_list_getNodeAt(pList, index, ppNode));
 
 CleanUp:
 
@@ -355,7 +365,7 @@ STATUS singleListGetNodeDataAt(PSingleList pList, UINT32 index, PUINT64 pData)
     CHK(pList != NULL && pData != NULL, STATUS_NULL_ARG);
     CHK(index < pList->count, STATUS_INVALID_ARG);
 
-    CHK_STATUS(singleListGetNodeAtInternal(pList, index, &pNode));
+    CHK_STATUS(priv_single_list_getNodeAt(pList, index, &pNode));
     *pData = pNode->data;
 
 CleanUp:
@@ -366,7 +376,7 @@ CleanUp:
 /**
  * Gets the node data
  */
-STATUS singleListGetNodeData(PSingleListNode pNode, PUINT64 pData)
+STATUS single_list_getNodeData(PSingleListNode pNode, PUINT64 pData)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
@@ -396,7 +406,7 @@ CleanUp:
 /**
  * Gets the count of nodes in the list
  */
-STATUS singleListGetNodeCount(PSingleList pList, PUINT32 pCount)
+STATUS single_list_getNodeCount(PSingleList pList, PUINT32 pCount)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
@@ -411,7 +421,7 @@ CleanUp:
 /////////////////////////////////////////////////////////////////////////////////
 // Internal operations
 /////////////////////////////////////////////////////////////////////////////////
-STATUS singleListAllocNode(UINT64 data, PSingleListNode* ppNode)
+STATUS priv_single_list_allocateNode(UINT64 data, PSingleListNode* ppNode)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSingleListNode pNode = (PSingleListNode) MEMCALLOC(1, SIZEOF(SingleListNode));
@@ -425,7 +435,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS singleListInsertNodeHeadInternal(PSingleList pList, PSingleListNode pNode)
+STATUS priv_single_list_insertNodeHead(PSingleList pList, PSingleListNode pNode)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
@@ -452,7 +462,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS singleListInsertNodeTailInternal(PSingleList pList, PSingleListNode pNode)
+STATUS priv_single_list_insertNodeTail(PSingleList pList, PSingleListNode pNode)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
@@ -481,7 +491,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS singleListInsertNodeAfterInternal(PSingleList pList, PSingleListNode pNode, PSingleListNode pInsertNode)
+STATUS priv_single_list_insertNodeAfter(PSingleList pList, PSingleListNode pNode, PSingleListNode pInsertNode)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
@@ -508,7 +518,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS singleListGetNodeAtInternal(PSingleList pList, UINT32 index, PSingleListNode* ppNode)
+STATUS priv_single_list_getNodeAt(PSingleList pList, UINT32 index, PSingleListNode* ppNode)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSingleListNode pNode = pList->pHead;

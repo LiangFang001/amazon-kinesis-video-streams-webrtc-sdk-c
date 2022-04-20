@@ -18,6 +18,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 typedef struct __SingleListNode {
     struct __SingleListNode* pNext;
     UINT64 data;
@@ -29,32 +35,30 @@ typedef struct {
     PSingleListNode pTail;
 } SingleList, *PSingleList;
 
-/**
- * Internal Single Linked List operations
- */
-STATUS singleListAllocNode(UINT64, PSingleListNode*);
-STATUS singleListInsertNodeHeadInternal(PSingleList, PSingleListNode);
-STATUS singleListInsertNodeTailInternal(PSingleList, PSingleListNode);
-STATUS singleListInsertNodeAfterInternal(PSingleList, PSingleListNode, PSingleListNode);
-STATUS singleListGetNodeAtInternal(PSingleList, UINT32, PSingleListNode*);
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-// Single-linked list functionality
-//////////////////////////////////////////////////////////////////////////////////////////////////////
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 /**
  * Create a new single linked list
  */
-STATUS singleListCreate(PSingleList*);
-
+STATUS single_list_create(PSingleList*);
 /**
- * Frees a single linked list and deallocates the nodes
+ * @brief Frees a single linked list and deallocates the nodes
+ *
+ * @param[in] pList the context of the single list.
+ *
+ * @return STATUS code of the execution. STATUS_SUCCESS on success.
  */
-STATUS singleListFree(PSingleList);
-
+STATUS single_list_free(PSingleList pList);
 /**
- * Clears and deallocates all the items
+ * @brief Clears a single linked list and deallocates all the items.
+ *
+ * @param[in] pList the context of the single list.
+ * @param[in] freeData
+ *
+ * @return STATUS code of the execution. STATUS_SUCCESS on success.
  */
-STATUS singleListClear(PSingleList, BOOL);
+STATUS single_list_clear(PSingleList pList, BOOL freeData);
 
 /**
  * Insert a node in the head position in the list
@@ -74,7 +78,7 @@ STATUS singleListInsertNodeTail(PSingleList, PSingleListNode);
 /**
  * Insert a new node with the data at the tail position in the list
  */
-STATUS singleListInsertItemTail(PSingleList, UINT64);
+STATUS single_list_insertItemTail(PSingleList, UINT64);
 
 /**
  * Insert a node after a given node
@@ -85,11 +89,14 @@ STATUS singleListInsertNodeAfter(PSingleList, PSingleListNode, PSingleListNode);
  * Insert a new node with the data after a given node
  */
 STATUS singleListInsertItemAfter(PSingleList, PSingleListNode, UINT64);
-
 /**
- * Removes and deletes the head
+ * @brief Removes and deletes the head, but does not free the data inside the head node.
+ *
+ * @param[in] pList the context of the single list.
+ *
+ * @return STATUS code of the execution. STATUS_SUCCESS on success.
  */
-STATUS singleListDeleteHead(PSingleList);
+STATUS single_list_deleteHead(PSingleList pList);
 
 /**
  * Removes and deletes the specified node
@@ -100,12 +107,15 @@ STATUS singleListDeleteNode(PSingleList, PSingleListNode);
  * Removes and deletes the next node of the specified node
  */
 STATUS singleListDeleteNextNode(PSingleList, PSingleListNode);
-
 /**
- * Gets the head node
+ * @brief Gets the head node.
+ *
+ * @param[in] pList the context of the single list.
+ * @param[in, out] ppNode
+ *
+ * @return STATUS code of the execution. STATUS_SUCCESS on success.
  */
-STATUS singleListGetHeadNode(PSingleList, PSingleListNode*);
-
+STATUS single_list_getHeadNode(PSingleList pList, PSingleListNode* ppNode);
 /**
  * Gets the tail node
  */
@@ -124,17 +134,21 @@ STATUS singleListGetNodeDataAt(PSingleList, UINT32, PUINT64);
 /**
  * Gets the node data
  */
-STATUS singleListGetNodeData(PSingleListNode, PUINT64);
+STATUS single_list_getNodeData(PSingleListNode, PUINT64);
 
 /**
  * Gets the next node
  */
 STATUS singleListGetNextNode(PSingleListNode, PSingleListNode*);
-
 /**
- * Gets the count of nodes in the list
+ * @brief Gets the count of nodes in the list
+ *
+ * @param[in] pList the context of the single list.
+ * @param[in] pCount
+ *
+ * @return STATUS code of the execution. STATUS_SUCCESS on success.
  */
-STATUS singleListGetNodeCount(PSingleList, PUINT32);
+STATUS single_list_getNodeCount(PSingleList pList, PUINT32 pCount);
 
 /**
  * Append a single list to the other and then free the list being appended

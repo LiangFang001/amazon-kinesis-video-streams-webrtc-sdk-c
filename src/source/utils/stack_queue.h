@@ -18,11 +18,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/******************************************************************************
+ * HEADERS
+ ******************************************************************************/
 #include "single_linked_list.h"
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-// Stack/Queue functionality
-//////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/******************************************************************************
+ * DEFINITIONS
+ ******************************************************************************/
 typedef SingleList StackQueue;
 typedef PSingleList PStackQueue;
 typedef PSingleListNode StackQueueIterator;
@@ -30,6 +33,9 @@ typedef StackQueueIterator* PStackQueueIterator;
 
 #define IS_VALID_ITERATOR(x) ((x) != NULL)
 
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 /**
  * Create a new stack queue
  */
@@ -43,12 +49,12 @@ STATUS stack_queue_free(PStackQueue);
 /**
  * Clears and de-allocates all the items
  */
-STATUS stackQueueClear(PStackQueue, BOOL);
+STATUS stack_queue_clear(PStackQueue, BOOL);
 
 /**
  * Gets the number of items in the stack/queue
  */
-STATUS stackQueueGetCount(PStackQueue, PUINT32);
+STATUS stack_queue_getCount(PStackQueue, PUINT32);
 
 /**
  * Gets the item at the given index
@@ -78,7 +84,7 @@ STATUS stackQueueRemoveItem(PStackQueue, UINT64);
 /**
  * Whether the stack queue is empty
  */
-STATUS stackQueueIsEmpty(PStackQueue, PBOOL);
+STATUS stack_queue_isEmpty(PStackQueue, PBOOL);
 
 /**
  * Pushes an item onto the stack
@@ -98,27 +104,31 @@ STATUS stackQueuePeek(PStackQueue, PUINT64);
 /**
  * Enqueues an item in the queue
  */
-STATUS stackQueueEnqueue(PStackQueue, UINT64);
-
+STATUS stack_queue_enqueue(PStackQueue, UINT64);
 /**
- * Dequeues an item from the queue
+ * @brief Dequeues an item from the queue.
+ *
+ * @param[in] pStackQueue the context of the stack queue.
+ * @param[in] pItem the user data inside the stack queue.
+ *
+ * @return STATUS code of the execution. STATUS_SUCCESS on success.
  */
-STATUS stackQueueDequeue(PStackQueue, PUINT64);
+STATUS stack_queue_dequeue(PStackQueue pStackQueue, PUINT64 pItem);
 
 /**
  * Gets the iterator
  */
-STATUS stackQueueGetIterator(PStackQueue, PStackQueueIterator);
+STATUS stack_queue_iterator_get(PStackQueue, PStackQueueIterator);
 
 /**
  * Iterates to next
  */
-STATUS stackQueueIteratorNext(PStackQueueIterator);
+STATUS stack_queue_iterator_getNext(PStackQueueIterator);
 
 /**
  * Gets the data
  */
-STATUS stackQueueIteratorGetItem(StackQueueIterator, PUINT64);
+STATUS stack_queue_iterator_getItem(StackQueueIterator, PUINT64);
 
 #ifdef __cplusplus
 }

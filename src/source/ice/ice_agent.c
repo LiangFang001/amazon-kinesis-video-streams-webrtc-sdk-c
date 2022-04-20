@@ -1510,7 +1510,7 @@ STATUS ice_agent_restart(PIceAgent pIceAgent, PCHAR localIceUfrag, PCHAR localIc
      * There is no way to tell which session a remote candidate belongs to. Old ones will eventually fail the
      * connectivity test so it's ok. */
 
-    CHK_STATUS(stackQueueClear(pIceAgent->pTriggeredCheckQueue, FALSE));
+    CHK_STATUS(stack_queue_clear(pIceAgent->pTriggeredCheckQueue, FALSE));
 
     ATOMIC_STORE_BOOL(&pIceAgent->remoteCredentialReceived, FALSE);
     ATOMIC_STORE_BOOL(&pIceAgent->agentStartGathering, FALSE);
@@ -2146,13 +2146,13 @@ STATUS ice_agent_checkCandidatePairConnection(PIceAgent pIceAgent)
     MUTEX_LOCK(pIceAgent->lock);
     locked = TRUE;
 
-    CHK_STATUS(stackQueueIsEmpty(pIceAgent->pTriggeredCheckQueue, &triggeredCheckQueueEmpty));
+    CHK_STATUS(stack_queue_isEmpty(pIceAgent->pTriggeredCheckQueue, &triggeredCheckQueueEmpty));
 
     // The original desgin of linux based webrtc sdk does not control the throughput of the outbound packets, and does not follow the rfc8445 either.
     // triggered connectivity check.
     if (!triggeredCheckQueueEmpty) {
         // if pTriggeredCheckQueue is not empty, check its candidate pair first
-        stackQueueDequeue(pIceAgent->pTriggeredCheckQueue, &data);
+        CHK_STATUS(stack_queue_dequeue(pIceAgent->pTriggeredCheckQueue, &data));
         pIceCandidatePair = (PIceCandidatePair) data;
         CHK_STATUS(ice_candidate_pair_checkConnection(pIceAgent->pBindingRequest, pIceAgent, pIceCandidatePair));
     } else {
@@ -2425,7 +2425,7 @@ STATUS ice_agent_handleInboundStunPacket(PIceAgent pIceAgent, PBYTE pBuffer, UIN
                         DLOGW("the priority of triggered check queue may be reverse.");
                     }
                 }
-                CHK_STATUS(stackQueueEnqueue(pIceAgent->pTriggeredCheckQueue, (UINT64) pIceCandidatePair));
+                CHK_STATUS(stack_queue_enqueue(pIceAgent->pTriggeredCheckQueue, (UINT64) pIceCandidatePair));
             }
 
             if (pIceCandidatePair == pIceAgent->pDataSendingIceCandidatePair) {
