@@ -160,16 +160,34 @@ STATUS dtls_session_create(PDtlsSessionCallbacks, TIMER_QUEUE_HANDLE, INT32, BOO
  * @return STATUS - status of operation
  */
 STATUS dtls_session_free(PDtlsSession*);
-
 /**
- * Start DTLS handshake. Not thread safe.
- * @param PDtlsSession - DtlsSession object
- * @param BOOL - is server
- * @return STATUS - status of operation
+ * @brief Start DTLS handshake. Not thread safe.
+ *
+ * @param[in] pDtlsSession the context of the dtls session.
+ * @param[in] isServer is server
+ *
+ * @return STATUS status of execution.
  */
-STATUS dtls_session_start(PDtlsSession, BOOL);
-STATUS dtls_session_read(PDtlsSession, PBYTE, PINT32);
-STATUS dtls_session_isInitFinished(PDtlsSession, PBOOL);
+STATUS dtls_session_start(PDtlsSession pDtlsSession, BOOL isServer);
+/**
+ * @brief The handler of dtls inbound packets.
+ *
+ * @param[in] pDtlsSession the context of the dtls session.
+ * @param[in] pData
+ * @param[in] pDataLen
+ *
+ * @return STATUS status of execution.
+ */
+STATUS dtls_session_read(PDtlsSession pDtlsSession, PBYTE pData, PINT32 pDataLen);
+/**
+ * @brief Is the dtls session connected.
+ *
+ * @param[in] pDtlsSession the context of the dtls session.
+ * @param[in, out] pIsConnected is connected or not.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS dtls_session_isConnected(PDtlsSession pDtlsSession, PBOOL pIsConnected);
 STATUS dtls_session_populateKeyingMaterial(PDtlsSession, PDtlsKeyingMaterial);
 STATUS dtls_session_getLocalCertificateFingerprint(PDtlsSession, PCHAR, UINT32);
 STATUS dtls_session_verifyRemoteCertificateFingerprint(PDtlsSession, PCHAR);

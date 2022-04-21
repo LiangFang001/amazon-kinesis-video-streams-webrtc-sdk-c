@@ -166,8 +166,8 @@ typedef struct {
 typedef struct {
     UINT64 customData;
     IceInboundPacketFunc inboundPacketFn;
-    IceConnectionStateChangedFunc connectionStateChangedFn; //!< the callback for the state of ice agent is changed.
-    IceNewLocalCandidateFunc newLocalCandidateFn;           //!< the callback of new local candidate for the peer connection layer.
+    IceConnectionStateChangedFunc onIceAgentStateChange; //!< the callback for the state of ice agent is changed.
+    IceNewLocalCandidateFunc newLocalCandidateFn;        //!< the callback of new local candidate for the peer connection layer.
 } IceAgentCallbacks, *PIceAgentCallbacks;
 
 // https://developer.mozilla.org/en-US/docs/Web/API/RTCIceCandidate/candidate

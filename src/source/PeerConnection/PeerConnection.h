@@ -74,8 +74,8 @@ typedef enum __RTX_CODEC {
 typedef struct __KvsPeerConnection {
     RtcPeerConnection peerConnection;
     PIceAgent pIceAgent;
-    PDtlsSession pDtlsSession;
-    BOOL dtlsIsServer; //!< indicate the role of dtls session.
+    PDtlsSession pDtlsSession; //!< The context of the dtls session. It will be initialized when the ice agent is ready.
+    BOOL dtlsIsServer;         //!< indicate the role of dtls session.
 #ifdef ENABLE_STREAMING
     MUTEX pSrtpSessionLock; //!< the lock for srtp session.
     PSrtpSession pSrtpSession;

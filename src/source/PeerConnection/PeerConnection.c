@@ -210,7 +210,7 @@ VOID pc_onInboundPacket(UINT64 customData, PBYTE buff, UINT32 buffLen)
 #endif
         }
 
-        CHK_STATUS(dtls_session_isInitFinished(pKvsPeerConnection->pDtlsSession, &isDtlsConnected));
+        CHK_STATUS(dtls_session_isConnected(pKvsPeerConnection->pDtlsSession, &isDtlsConnected));
         if (isDtlsConnected) {
 #ifdef ENABLE_STREAMING
             if (pKvsPeerConnection->pSrtpSession == NULL) {
@@ -476,24 +476,32 @@ CleanUp:
     return retStatus;
 }
 #endif
-
-static VOID pc_onIceConnectionStateChange(UINT64 customData, UINT64 connectionState)
+/**
+ * @brief
+ *
+ * @param[in] customData the user data.
+ * @param[in] newIceAgentState
+ *
+ * @return STATUS status of execution.
+ */
+static VOID pc_onIceAgentStateChange(UINT64 customData, UINT64 newIceAgentState)
 {
     PC_ENTER();
     STATUS retStatus = STATUS_SUCCESS;
     PKvsPeerConnection pKvsPeerConnection = (PKvsPeerConnection) customData;
-    RTC_PEER_CONNECTION_STATE newConnectionState = RTC_PEER_CONNECTION_STATE_NEW;
-    BOOL startDtlsSession = FALSE, dtlsConnected;
+    RTC_PEER_CONNECTION_STATE newPeerConnectionState = RTC_PEER_CONNECTION_STATE_NEW;
+    BOOL startDtlsSession = FALSE;
+    BOOL isDtlsConnected;
 
     CHK(pKvsPeerConnection != NULL, STATUS_PEER_CONN_NULL_ARG);
 
-    switch (connectionState) {
+    switch (newIceAgentState) {
         case ICE_AGENT_STATE_NEW:
-            newConnectionState = RTC_PEER_CONNECTION_STATE_NEW;
+            newPeerConnectionState = RTC_PEER_CONNECTION_STATE_NEW;
             break;
 
         case ICE_AGENT_STATE_CHECK_CONNECTION:
-            newConnectionState = RTC_PEER_CONNECTION_STATE_CONNECTING;
+            newPeerConnectionState = RTC_PEER_CONNECTION_STATE_CONNECTING;
             break;
 
         case ICE_AGENT_STATE_CONNECTED:
@@ -506,25 +514,25 @@ static VOID pc_onIceConnectionStateChange(UINT64 customData, UINT64 connectionSt
             break;
 
         case ICE_AGENT_STATE_DISCONNECTED:
-            newConnectionState = RTC_PEER_CONNECTION_STATE_DISCONNECTED;
+            newPeerConnectionState = RTC_PEER_CONNECTION_STATE_DISCONNECTED;
             break;
 
         case ICE_AGENT_STATE_FAILED:
-            newConnectionState = RTC_PEER_CONNECTION_STATE_FAILED;
+            newPeerConnectionState = RTC_PEER_CONNECTION_STATE_FAILED;
             break;
 
         default:
-            DLOGW("Unknown ice agent state %" PRIu64, connectionState);
+            DLOGW("Unknown ice agent state %" PRIu64, newIceAgentState);
             break;
     }
 
     if (startDtlsSession) {
-        CHK_STATUS(dtls_session_isInitFinished(pKvsPeerConnection->pDtlsSession, &dtlsConnected));
+        CHK_STATUS(dtls_session_isConnected(pKvsPeerConnection->pDtlsSession, &isDtlsConnected));
 
-        if (dtlsConnected) {
+        if (isDtlsConnected) {
             // In ICE restart scenario, DTLS handshake is not going to be reset. Therefore, we need to check
             // if the DTLS state has been connected.
-            newConnectionState = RTC_PEER_CONNECTION_STATE_CONNECTED;
+            newPeerConnectionState = RTC_PEER_CONNECTION_STATE_CONNECTED;
         } else {
             // PeerConnection's state changes to CONNECTED only when DTLS state is also connected. So, we need
             // wait until DTLS state changes to CONNECTED.
@@ -534,7 +542,7 @@ static VOID pc_onIceConnectionStateChange(UINT64 customData, UINT64 connectionSt
         }
     }
 
-    CHK_STATUS(pc_changeState(pKvsPeerConnection, newConnectionState));
+    CHK_STATUS(pc_changeState(pKvsPeerConnection, newPeerConnectionState));
 
 CleanUp:
 
@@ -848,7 +856,7 @@ STATUS pc_create(PRtcConfiguration pConfiguration, PRtcPeerConnection* ppPeerCon
 
     iceAgentCallbacks.customData = (UINT64) pKvsPeerConnection;
     iceAgentCallbacks.inboundPacketFn = pc_onInboundPacket;
-    iceAgentCallbacks.connectionStateChangedFn = pc_onIceConnectionStateChange;
+    iceAgentCallbacks.onIceAgentStateChange = pc_onIceAgentStateChange;
     iceAgentCallbacks.newLocalCandidateFn = pc_onNewIceLocalCandidate;
     CHK_STATUS(connection_listener_create(&pConnectionListener));
     // IceAgent will own the lifecycle of pConnectionListener;
@@ -894,12 +902,10 @@ STATUS pc_free(PRtcPeerConnection* ppPeerConnection)
     /* Shutdown IceAgent first so there is no more incoming packets which can cause
      * SCTP to be allocated again after SCTP is freed. */
     CHK_LOG_ERR(ice_agent_shutdown(pKvsPeerConnection->pIceAgent));
-
     // free timer queue first to remove liveness provided by timer
     if (IS_VALID_TIMER_QUEUE_HANDLE(pKvsPeerConnection->timerQueueHandle)) {
         timer_queue_shutdown(pKvsPeerConnection->timerQueueHandle);
     }
-
 /* Free structs that have their own thread. SCTP has threads created by SCTP library. IceAgent has the
  * connectionListener thread. Free SCTP first so it wont try to send anything through ICE. */
 #ifdef ENABLE_DATA_CHANNEL
@@ -928,7 +934,6 @@ STATUS pc_free(PRtcPeerConnection* ppPeerConnection)
 #ifdef ENABLE_STREAMING
     CHK_LOG_ERR(srtp_session_free(&pKvsPeerConnection->pSrtpSession));
 #endif
-
     CHK_LOG_ERR(dtls_session_free(&pKvsPeerConnection->pDtlsSession));
 
 #ifdef ENABLE_STREAMING
@@ -945,13 +950,11 @@ STATUS pc_free(PRtcPeerConnection* ppPeerConnection)
         MUTEX_FREE(pKvsPeerConnection->peerConnectionObjLock);
         pKvsPeerConnection->peerConnectionObjLock = INVALID_MUTEX_VALUE;
     }
-
     if (IS_VALID_TIMER_QUEUE_HANDLE(pKvsPeerConnection->timerQueueHandle)) {
         timer_queue_free(&pKvsPeerConnection->timerQueueHandle);
     }
 
     SAFE_MEMFREE(pKvsPeerConnection);
-
     *ppPeerConnection = NULL;
 
 CleanUp:

@@ -142,7 +142,7 @@ TEST_F(DataChannelFunctionalityTest, dataChannelSendRecvMessageAfterDtlsComplete
 
     // Busy wait until remote channel open and dtls completed
     for (auto i = 0; i <= 100 &&
-         (dtls_session_isInitFinished(((PKvsPeerConnection) offerPc)->pDtlsSession, &dtlsCompleted) || ATOMIC_LOAD(&pOfferRemoteDataChannel) == 0);
+         (dtls_session_isConnected(((PKvsPeerConnection) offerPc)->pDtlsSession, &dtlsCompleted) || ATOMIC_LOAD(&pOfferRemoteDataChannel) == 0);
          i++) {
         THREAD_SLEEP(HUNDREDS_OF_NANOS_IN_A_SECOND);
     }

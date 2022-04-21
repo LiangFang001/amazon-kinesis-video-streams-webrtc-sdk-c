@@ -307,13 +307,13 @@ CleanUp:
     return retStatus;
 }
 
-STATUS dtls_session_isInitFinished(PDtlsSession pDtlsSession, PBOOL pIsFinished)
+STATUS dtls_session_isConnected(PDtlsSession pDtlsSession, PBOOL pIsConnected)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
-    CHK(pDtlsSession != NULL && pIsFinished != NULL, STATUS_DTLS_NULL_ARG);
+    CHK(pDtlsSession != NULL && pIsConnected != NULL, STATUS_DTLS_NULL_ARG);
     MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
-    *pIsFinished = pDtlsSession->state == RTC_DTLS_TRANSPORT_STATE_CONNECTED;
+    *pIsConnected = pDtlsSession->state == RTC_DTLS_TRANSPORT_STATE_CONNECTED;
     MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
 
 CleanUp:

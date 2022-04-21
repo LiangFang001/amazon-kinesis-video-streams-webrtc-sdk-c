@@ -581,7 +581,7 @@ CleanUp:
     return retStatus;
 }
 
-STATUS dtls_session_isInitFinished(PDtlsSession pDtlsSession, PBOOL pIsConnected)
+STATUS dtls_session_isConnected(PDtlsSession pDtlsSession, PBOOL pIsConnected)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;

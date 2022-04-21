@@ -80,9 +80,9 @@ STATUS ice_agent_fsm_step(PIceAgent pIceAgent)
     }
 
     if (oldState != pIceAgent->iceAgentState) {
-        if (pIceAgent->iceAgentCallbacks.connectionStateChangedFn != NULL) {
+        if (pIceAgent->iceAgentCallbacks.onIceAgentStateChange != NULL) {
             DLOGD("Ice agent state changed from %s to %s.", ice_agent_fsm_toString(oldState), ice_agent_fsm_toString(pIceAgent->iceAgentState));
-            pIceAgent->iceAgentCallbacks.connectionStateChangedFn(pIceAgent->iceAgentCallbacks.customData, pIceAgent->iceAgentState);
+            pIceAgent->iceAgentCallbacks.onIceAgentStateChange(pIceAgent->iceAgentCallbacks.customData, pIceAgent->iceAgentState);
         }
     } else {
         // state machine retry is not used. state_machine_resetRetryCount just to avoid
@@ -144,8 +144,9 @@ STATUS ice_agent_fsm_checkDisconnection(PIceAgent pIceAgent, PUINT64 pNextState)
             // recovered from disconnection
             DLOGD("recovered from disconnection");
             pIceAgent->detectedDisconnection = FALSE;
-            if (pIceAgent->iceAgentCallbacks.connectionStateChangedFn != NULL) {
-                pIceAgent->iceAgentCallbacks.connectionStateChangedFn(pIceAgent->iceAgentCallbacks.customData, pIceAgent->iceAgentState);
+            // #TBD, need to check the function of stateChange.
+            if (pIceAgent->iceAgentCallbacks.onIceAgentStateChange != NULL) {
+                pIceAgent->iceAgentCallbacks.onIceAgentStateChange(pIceAgent->iceAgentCallbacks.customData, pIceAgent->iceAgentState);
             }
         } else if (currentTime >= pIceAgent->disconnectionGracePeriodEndTime) {
             CHK(FALSE, STATUS_ICE_FSM_FAILED_TO_RECOVER_FROM_DISCONNECTION);
@@ -550,8 +551,9 @@ STATUS ice_agent_fsm_disconnected(UINT64 customData, UINT64 time)
     // then go to failed state.
     pIceAgent->disconnectionGracePeriodEndTime = GETTIME() + KVS_ICE_ENTER_STATE_FAILED_GRACE_PERIOD;
 
-    if (pIceAgent->iceAgentCallbacks.connectionStateChangedFn != NULL) {
-        pIceAgent->iceAgentCallbacks.connectionStateChangedFn(pIceAgent->iceAgentCallbacks.customData, ICE_AGENT_STATE_DISCONNECTED);
+    // #TBD, need to check the function of stateChange.
+    if (pIceAgent->iceAgentCallbacks.onIceAgentStateChange != NULL) {
+        pIceAgent->iceAgentCallbacks.onIceAgentStateChange(pIceAgent->iceAgentCallbacks.customData, ICE_AGENT_STATE_DISCONNECTED);
     }
 
     // step out of disconnection state to retry. Do not use stepIceAgentState machine because lock is not re-entrant.
