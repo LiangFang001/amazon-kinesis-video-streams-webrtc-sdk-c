@@ -838,16 +838,17 @@ CleanUp:
 static STATUS turn_connection_getLongTermKey(PCHAR username, PCHAR realm, PCHAR password, PBYTE pBuffer, UINT32 bufferLen)
 {
     STATUS retStatus = STATUS_SUCCESS;
-    CHAR stringBuffer[STUN_MAX_USERNAME_LEN + MAX_ICE_CONFIG_CREDENTIAL_LEN + STUN_MAX_REALM_LEN + 2]; // 2 for two ":" between each value
+    UINT32 stringSize = STUN_MAX_USERNAME_LEN + MAX_ICE_CONFIG_CREDENTIAL_LEN + STUN_MAX_REALM_LEN + 2;
+    CHAR stringBuffer[stringSize + 1]; // 2 for two ":" between each value
 
     CHK(username != NULL && realm != NULL && password != NULL && pBuffer != NULL, STATUS_TURN_NULL_ARG);
     CHK(username[0] != '\0' && realm[0] != '\0' && password[0] != '\0' && bufferLen >= KVS_MD5_DIGEST_LENGTH, STATUS_TURN_INVALID_LONG_TERM_KEY_ARG);
-    CHK((STRLEN(username) + STRLEN(realm) + STRLEN(password)) <= ARRAY_SIZE(stringBuffer) - 2, STATUS_TURN_INVALID_LONG_TERM_KEY_ARG);
+    CHK((STRLEN(username) + STRLEN(realm) + STRLEN(password)) <= stringSize - 2, STATUS_TURN_INVALID_LONG_TERM_KEY_ARG);
 
-    SPRINTF(stringBuffer, "%s:%s:%s", username, realm, password);
+    SNPRINTF(stringBuffer, stringSize, "%s:%s:%s", username, realm, password);
 
     // TODO: Return back the error check
-    KVS_MD5_DIGEST((PBYTE) stringBuffer, STRLEN(stringBuffer), pBuffer);
+    KVS_MD5_DIGEST((PBYTE) stringBuffer, stringSize, pBuffer);
 
 CleanUp:
 

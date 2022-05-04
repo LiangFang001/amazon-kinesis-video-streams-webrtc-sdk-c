@@ -132,26 +132,26 @@ STATUS channel_info_create(PChannelInfo pOrigChannelInfo, PChannelInfo* ppChanne
     // Set the pointers to the end and copy the data.
     // NOTE: the structure is calloc-ed so the strings will be NULL terminated
     if (nameLen != 0) {
-        STRCPY(pCurPtr, pOrigChannelInfo->pChannelName);
+        STRNCPY(pCurPtr, pOrigChannelInfo->pChannelName, nameLen);
         pChannelInfo->pChannelName = pCurPtr;
         pCurPtr += ALIGN_UP_TO_MACHINE_WORD(nameLen + 1); // For the NULL terminator
     }
 
     if (arnLen != 0) {
-        STRCPY(pCurPtr, pOrigChannelInfo->pChannelArn);
+        STRNCPY(pCurPtr, pOrigChannelInfo->pChannelArn, arnLen);
         pChannelInfo->pChannelArn = pCurPtr;
         pCurPtr += ALIGN_UP_TO_MACHINE_WORD(arnLen + 1);
     }
 
-    STRCPY(pCurPtr, pRegionPtr);
+    STRNCPY(pCurPtr, pRegionPtr, regionLen);
     pChannelInfo->pRegion = pCurPtr;
     pCurPtr += ALIGN_UP_TO_MACHINE_WORD(regionLen + 1);
 
     if (pOrigChannelInfo->pControlPlaneUrl != NULL && *pOrigChannelInfo->pControlPlaneUrl != '\0') {
-        STRCPY(pCurPtr, pOrigChannelInfo->pControlPlaneUrl);
+        STRNCPY(pCurPtr, pOrigChannelInfo->pControlPlaneUrl, cplLen);
     } else {
         // Create a fully qualified URI
-        SNPRINTF(pCurPtr, MAX_CONTROL_PLANE_URI_CHAR_LEN, "%s%s.%s%s", CONTROL_PLANE_URI_PREFIX, KINESIS_VIDEO_SERVICE_NAME, pChannelInfo->pRegion,
+        SNPRINTF(pCurPtr, cplLen, "%s%s.%s%s", CONTROL_PLANE_URI_PREFIX, KINESIS_VIDEO_SERVICE_NAME, pChannelInfo->pRegion,
                  CONTROL_PLANE_URI_POSTFIX);
     }
 
@@ -159,30 +159,30 @@ STATUS channel_info_create(PChannelInfo pOrigChannelInfo, PChannelInfo* ppChanne
     pCurPtr += ALIGN_UP_TO_MACHINE_WORD(cplLen + 1);
 
     if (certLen != 0) {
-        STRCPY(pCurPtr, pOrigChannelInfo->pCertPath);
+        STRNCPY(pCurPtr, pOrigChannelInfo->pCertPath, certLen);
         pChannelInfo->pCertPath = pCurPtr;
         pCurPtr += ALIGN_UP_TO_MACHINE_WORD(certLen + 1);
     }
 
     if (postfixLen != 0) {
-        STRCPY(pCurPtr, pOrigChannelInfo->pUserAgentPostfix);
+        STRNCPY(pCurPtr, pOrigChannelInfo->pUserAgentPostfix, postfixLen);
         pChannelInfo->pUserAgentPostfix = pCurPtr;
         pCurPtr += ALIGN_UP_TO_MACHINE_WORD(postfixLen + 1);
     }
 
     if (agentLen != 0) {
-        STRCPY(pCurPtr, pOrigChannelInfo->pCustomUserAgent);
+        STRNCPY(pCurPtr, pOrigChannelInfo->pCustomUserAgent, agentLen);
         pChannelInfo->pCustomUserAgent = pCurPtr;
         pCurPtr += ALIGN_UP_TO_MACHINE_WORD(agentLen + 1);
     }
 
-    getUserAgentString(pOrigChannelInfo->pUserAgentPostfix, pOrigChannelInfo->pCustomUserAgent, MAX_USER_AGENT_LEN, pCurPtr);
+    getUserAgentString(pOrigChannelInfo->pUserAgentPostfix, pOrigChannelInfo->pCustomUserAgent, userAgentLen, pCurPtr);
     pChannelInfo->pUserAgent = pCurPtr;
-    pChannelInfo->pUserAgent[MAX_USER_AGENT_LEN] = '\0';
+    pChannelInfo->pUserAgent[userAgentLen] = '\0';
     pCurPtr += ALIGN_UP_TO_MACHINE_WORD(userAgentLen + 1);
 
     if (kmsLen != 0) {
-        STRCPY(pCurPtr, pOrigChannelInfo->pCustomUserAgent);
+        STRNCPY(pCurPtr, pOrigChannelInfo->pKmsKeyId, kmsLen);
         pChannelInfo->pKmsKeyId = pCurPtr;
         pCurPtr += ALIGN_UP_TO_MACHINE_WORD(kmsLen + 1);
     }

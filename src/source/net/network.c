@@ -216,13 +216,11 @@ STATUS net_createSocket(KVS_IP_FAMILY_TYPE familyType, KVS_SOCKET_PROTOCOL proto
     UINT32 nonblock = 1;
     ioctlsocket(sockfd, FIONBIO, &nonblock);
 #else
-#if 1
     // Set the non-blocking mode for the socket
     flags = fcntl(sockfd, F_GETFL, 0);
     CHK_ERR(flags >= 0, STATUS_NET_GET_SOCKET_FLAG_FAILED, "Failed to get the socket flags with system error %s", strerror(errno));
     CHK_ERR(0 <= fcntl(sockfd, F_SETFL, flags | O_NONBLOCK), STATUS_NET_SET_SOCKET_FLAG_FAILED, "Failed to Set the socket flags with system error %s",
             strerror(errno));
-#endif
 #endif
 
     // done at this point for UDP

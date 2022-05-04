@@ -66,6 +66,7 @@ STATUS jitter_buffer_free(PJitterBuffer* ppJitterBuffer)
     jitter_buffer_pop(pJitterBuffer, TRUE);
     jitter_buffer_dropBufferData(pJitterBuffer, 0, MAX_SEQUENCE_NUM, 0);
     hash_table_free(pJitterBuffer->pPkgBufferHashTable);
+    pJitterBuffer->pPkgBufferHashTable = NULL;
 
     MEMFREE(*ppJitterBuffer);
 

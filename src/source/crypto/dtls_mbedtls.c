@@ -717,7 +717,8 @@ STATUS dtls_session_calculateCertificateFingerprint(mbedtls_x509_crt* pCert, PCH
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
-    BYTE fingerprint[MBEDTLS_MD_MAX_SIZE];
+    UINT32 fingerprintSize = MBEDTLS_MD_MAX_SIZE;
+    BYTE fingerprint[fingerprintSize];
     INT32 sslRet, i, size;
     // const is not pure C, but mbedtls_md_info_from_type requires the param to be const
     const mbedtls_md_info_t* pMdInfo;
@@ -731,14 +732,16 @@ STATUS dtls_session_calculateCertificateFingerprint(mbedtls_x509_crt* pCert, PCH
     CHK(sslRet == 0, STATUS_INTERNAL_ERROR);
 
     size = mbedtls_md_get_size(pMdInfo);
+
     for (i = 0; i < size; i++) {
+        CHK(fingerprintSize >= 3, STATUS_DTLS_FINGERPRINT_OVERFLOW);
         SPRINTF(pBuff, "%.2X:", fingerprint[i]);
         pBuff += 3;
     }
     *(pBuff - 1) = '\0';
 
 CleanUp:
-
+    CHK_LOG_ERR(retStatus);
     LEAVES();
     return retStatus;
 }

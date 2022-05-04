@@ -304,7 +304,7 @@ STATUS ice_agent_populateSdpMediaDescriptionCandidates(PIceAgent pIceAgent, PSdp
         CHK_STATUS(double_list_getNodeData(pCurNode, &data));
         pCurNode = pCurNode->pNext;
 
-        STRCPY(pSdpMediaDescription->sdpAttributes[attrIndex].attributeName, "candidate");
+        STRNCPY(pSdpMediaDescription->sdpAttributes[attrIndex].attributeName, "candidate", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
         CHK_STATUS(ice_candidate_serialize((PIceCandidate) data, pSdpMediaDescription->sdpAttributes[attrIndex].attributeValue, &attrBufferLen));
         attrIndex++;
     }
@@ -606,15 +606,15 @@ STATUS ice_agent_create(PCHAR username, PCHAR password, PIceAgentCallbacks pIceA
             pIceAgent->rtcIceServerDiagnostics[i].port = (INT32) getInt16(pIceAgent->iceServers[i].ipAddress.port);
             switch (pIceAgent->iceServers[pIceAgent->iceServersCount].transport) {
                 case KVS_SOCKET_PROTOCOL_UDP:
-                    STRCPY(pIceAgent->rtcIceServerDiagnostics[i].protocol, ICE_URL_TRANSPORT_UDP);
+                    STRNCPY(pIceAgent->rtcIceServerDiagnostics[i].protocol, ICE_URL_TRANSPORT_UDP, MAX_STATS_STRING_LENGTH);
                     break;
                 case KVS_SOCKET_PROTOCOL_TCP:
-                    STRCPY(pIceAgent->rtcIceServerDiagnostics[i].protocol, ICE_URL_TRANSPORT_TCP);
+                    STRNCPY(pIceAgent->rtcIceServerDiagnostics[i].protocol, ICE_URL_TRANSPORT_TCP, MAX_STATS_STRING_LENGTH);
                     break;
                 default:
                     MEMSET(pIceAgent->rtcIceServerDiagnostics[i].protocol, 0, SIZEOF(pIceAgent->rtcIceServerDiagnostics[i].protocol));
             }
-            STRCPY(pIceAgent->rtcIceServerDiagnostics[i].url, pRtcConfiguration->iceServers[i].urls);
+            STRNCPY(pIceAgent->rtcIceServerDiagnostics[i].url, pRtcConfiguration->iceServers[i].urls, MAX_STATS_STRING_LENGTH);
             pIceAgent->iceServersCount++;
         }
     }
@@ -652,6 +652,7 @@ STATUS ice_agent_free(PIceAgent* ppIceAgent)
     pIceAgent = *ppIceAgent;
 
     hash_table_free(pIceAgent->requestTimestampDiagnostics);
+    pIceAgent->requestTimestampDiagnostics = NULL;
 
     if (pIceAgent->localCandidates != NULL) {
         CHK_STATUS(double_list_getHeadNode(pIceAgent->localCandidates, &pCurNode));
@@ -679,8 +680,8 @@ STATUS ice_agent_free(PIceAgent* ppIceAgent)
             CHK_LOG_ERR(ice_candidate_pair_free(&pIceCandidatePair));
         }
 
-        CHK_LOG_ERR(doubleListClear(pIceAgent->pIceCandidatePairs, FALSE));
-        CHK_LOG_ERR(doubleListFree(pIceAgent->pIceCandidatePairs));
+        CHK_LOG_ERR(double_list_clear(pIceAgent->pIceCandidatePairs, FALSE));
+        CHK_LOG_ERR(double_list_free(pIceAgent->pIceCandidatePairs));
     }
 
     if (pIceAgent->localCandidates != NULL) {
@@ -696,8 +697,8 @@ STATUS ice_agent_free(PIceAgent* ppIceAgent)
             }
         }
         // free all stored candidates
-        CHK_LOG_ERR(doubleListClear(pIceAgent->localCandidates, TRUE));
-        CHK_LOG_ERR(doubleListFree(pIceAgent->localCandidates));
+        CHK_LOG_ERR(double_list_clear(pIceAgent->localCandidates, TRUE));
+        CHK_LOG_ERR(double_list_free(pIceAgent->localCandidates));
     }
 
     /* In case we fail in the middle of a ICE restart */
@@ -716,8 +717,8 @@ STATUS ice_agent_free(PIceAgent* ppIceAgent)
 
     if (pIceAgent->remoteCandidates != NULL) {
         // remote candidates dont have socketConnection
-        CHK_LOG_ERR(doubleListClear(pIceAgent->remoteCandidates, TRUE));
-        CHK_LOG_ERR(doubleListFree(pIceAgent->remoteCandidates));
+        CHK_LOG_ERR(double_list_clear(pIceAgent->remoteCandidates, TRUE));
+        CHK_LOG_ERR(double_list_free(pIceAgent->remoteCandidates));
     }
 
     if (pIceAgent->pTriggeredCheckQueue != NULL) {
@@ -1469,7 +1470,7 @@ STATUS ice_agent_restart(PIceAgent pIceAgent, PCHAR localIceUfrag, PCHAR localIc
         }
         localCandidates[localCandidateCount++] = pLocalCandidate;
     }
-    CHK_STATUS(doubleListClear(pIceAgent->localCandidates, FALSE));
+    CHK_STATUS(double_list_clear(pIceAgent->localCandidates, FALSE));
 
     /* free all candidate pairs except the selected pair */
     CHK_STATUS(double_list_getHeadNode(pIceAgent->pIceCandidatePairs, &pCurNode));
@@ -1483,7 +1484,7 @@ STATUS ice_agent_restart(PIceAgent pIceAgent, PCHAR localIceUfrag, PCHAR localIc
 
         pCurNode = pNextNode;
     }
-    CHK_STATUS(doubleListClear(pIceAgent->pIceCandidatePairs, FALSE));
+    CHK_STATUS(double_list_clear(pIceAgent->pIceCandidatePairs, FALSE));
 
     MUTEX_UNLOCK(pIceAgent->lock);
     locked = FALSE;
@@ -1973,6 +1974,7 @@ STATUS ice_candidate_pair_free(PIceCandidatePair* ppIceCandidatePair)
 
     CHK_LOG_ERR(transaction_id_store_free(&pIceCandidatePair->pTransactionIdStore));
     CHK_LOG_ERR(hash_table_free(pIceCandidatePair->requestSentTime));
+    pIceCandidatePair->requestSentTime = NULL;
     SAFE_MEMFREE(pIceCandidatePair);
 
 CleanUp:

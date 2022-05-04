@@ -15,8 +15,7 @@
 /******************************************************************************
  * HEADERS
  ******************************************************************************/
-//#ifdef ENABLE_DATA_CHANNEL
-#if 1
+#ifdef ENABLE_DATA_CHANNEL
 
 #define LOG_CLASS "DataChannel"
 #include "../Include_i.h"

@@ -267,9 +267,9 @@ STATUS signaling_create(PSignalingClientInfoInternal pClientInfo, PChannelInfo p
                                                        pChannelInfo->pRegion, pChannelInfo->channelRoleType, pFileCacheEntry, &cacheFound))) {
             DLOGW("Failed to load signaling cache from file");
         } else if (cacheFound) {
-            STRCPY(pSignalingClient->channelDescription.channelArn, pFileCacheEntry->channelArn);
-            STRCPY(pSignalingClient->channelDescription.channelEndpointHttps, pFileCacheEntry->httpsEndpoint);
-            STRCPY(pSignalingClient->channelDescription.channelEndpointWss, pFileCacheEntry->wssEndpoint);
+            STRNCPY(pSignalingClient->channelDescription.channelArn, pFileCacheEntry->channelArn, MAX_ARN_LEN);
+            STRNCPY(pSignalingClient->channelDescription.channelEndpointHttps, pFileCacheEntry->httpsEndpoint, MAX_SIGNALING_ENDPOINT_URI_LEN);
+            STRNCPY(pSignalingClient->channelDescription.channelEndpointWss, pFileCacheEntry->wssEndpoint, MAX_SIGNALING_ENDPOINT_URI_LEN);
             pSignalingClient->apiCallHistory.describeTime = pFileCacheEntry->creationTsEpochSeconds * HUNDREDS_OF_NANOS_IN_A_SECOND;
             pSignalingClient->apiCallHistory.getEndpointTime = pFileCacheEntry->creationTsEpochSeconds * HUNDREDS_OF_NANOS_IN_A_SECOND;
         }
@@ -880,7 +880,7 @@ STATUS signaling_removeOutboundMessage(PSignalingClient pSignalingClient, PCHAR 
 
         if ((correlationId[0] == '\0' && pExistingMessage->correlationId[0] == '\0') || 0 == STRCMP(pExistingMessage->correlationId, correlationId)) {
             // Remove the match
-            CHK_STATUS(stackQueueRemoveItem(pSignalingClient->pOutboundMsgQ, data));
+            CHK_STATUS(stack_queue_removeItem(pSignalingClient->pOutboundMsgQ, data));
 
             // Early return
             CHK(FALSE, retStatus);
@@ -1124,13 +1124,16 @@ STATUS signaling_channel_getEndpoint(PSignalingClient pSignalingClient, UINT64 t
                         psignalingFileCacheEntry->role = pSignalingClient->pChannelInfo->channelRoleType;
                         // In case of pre-created channels, the channel name can be NULL in which case we will use ARN.
                         // The validation logic in the channel info validates that both can't be NULL at the same time.
-                        STRCPY(psignalingFileCacheEntry->channelName,
-                               pSignalingClient->pChannelInfo->pChannelName != NULL ? pSignalingClient->pChannelInfo->pChannelName
-                                                                                    : pSignalingClient->pChannelInfo->pChannelArn);
-                        STRCPY(psignalingFileCacheEntry->region, pSignalingClient->pChannelInfo->pRegion);
-                        STRCPY(psignalingFileCacheEntry->channelArn, pSignalingClient->channelDescription.channelArn);
-                        STRCPY(psignalingFileCacheEntry->httpsEndpoint, pSignalingClient->channelDescription.channelEndpointHttps);
-                        STRCPY(psignalingFileCacheEntry->wssEndpoint, pSignalingClient->channelDescription.channelEndpointWss);
+                        STRNCPY(psignalingFileCacheEntry->channelName,
+                                pSignalingClient->pChannelInfo->pChannelName != NULL ? pSignalingClient->pChannelInfo->pChannelName
+                                                                                     : pSignalingClient->pChannelInfo->pChannelArn,
+                                MAX_CHANNEL_NAME_LEN);
+                        STRNCPY(psignalingFileCacheEntry->region, pSignalingClient->pChannelInfo->pRegion, MAX_REGION_NAME_LEN);
+                        STRNCPY(psignalingFileCacheEntry->channelArn, pSignalingClient->channelDescription.channelArn, MAX_ARN_LEN);
+                        STRNCPY(psignalingFileCacheEntry->httpsEndpoint, pSignalingClient->channelDescription.channelEndpointHttps,
+                                MAX_SIGNALING_ENDPOINT_URI_LEN);
+                        STRNCPY(psignalingFileCacheEntry->wssEndpoint, pSignalingClient->channelDescription.channelEndpointWss,
+                                MAX_SIGNALING_ENDPOINT_URI_LEN);
 
                         if (STATUS_FAILED(signaling_cache_saveToFile(psignalingFileCacheEntry))) {
                             DLOGW("Failed to save signaling cache to file");

@@ -60,7 +60,7 @@ STATUS directory_traverse(PCHAR dirPath, UINT64 userData, BOOL iterate, Director
     CHK(pathLen + 2 < MAX_PATH_LEN, STATUS_PATH_TOO_LONG);
 
     // Ensure the path is appended with the separator
-    STRCPY(tempFileName, dirPath);
+    STRNCPY(tempFileName, dirPath, MAX_PATH_LEN);
 
 #if defined __WINDOWS_BUILD__
     // Open the find

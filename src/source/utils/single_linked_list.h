@@ -101,12 +101,12 @@ STATUS single_list_deleteHead(PSingleList pList);
 /**
  * Removes and deletes the specified node
  */
-STATUS singleListDeleteNode(PSingleList, PSingleListNode);
+STATUS single_list_deleteNode(PSingleList, PSingleListNode);
 
 /**
  * Removes and deletes the next node of the specified node
  */
-STATUS singleListDeleteNextNode(PSingleList, PSingleListNode);
+STATUS single_list_deleteNextNode(PSingleList, PSingleListNode);
 /**
  * @brief Gets the head node.
  *
@@ -124,7 +124,7 @@ STATUS singleListGetTailNode(PSingleList, PSingleListNode*);
 /**
  * Gets the node at the specified index
  */
-STATUS singleListGetNodeAt(PSingleList, UINT32, PSingleListNode*);
+STATUS single_list_getNodeAt(PSingleList, UINT32, PSingleListNode*);
 
 /**
  * Gets the node data at the specified index

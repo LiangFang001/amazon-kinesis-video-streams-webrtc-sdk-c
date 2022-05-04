@@ -19,8 +19,8 @@ STATUS metrics_getIceCandidatePairStats(PRtcPeerConnection pRtcPeerConnection, P
     locked = TRUE;
     CHK(pIceAgent->pDataSendingIceCandidatePair != NULL, STATUS_SUCCESS);
     PRtcIceCandidatePairDiagnostics pRtcIceCandidatePairDiagnostics = &pIceAgent->pDataSendingIceCandidatePair->rtcIceCandidatePairDiagnostics;
-    STRCPY(pRtcIceCandidatePairStats->localCandidateId, pRtcIceCandidatePairDiagnostics->localCandidateId);
-    STRCPY(pRtcIceCandidatePairStats->remoteCandidateId, pRtcIceCandidatePairDiagnostics->remoteCandidateId);
+    STRNCPY(pRtcIceCandidatePairStats->localCandidateId, pRtcIceCandidatePairDiagnostics->localCandidateId, MAX_CANDIDATE_ID_LENGTH);
+    STRNCPY(pRtcIceCandidatePairStats->remoteCandidateId, pRtcIceCandidatePairDiagnostics->remoteCandidateId, MAX_CANDIDATE_ID_LENGTH);
     pRtcIceCandidatePairStats->state = pRtcIceCandidatePairDiagnostics->state;
     pRtcIceCandidatePairStats->nominated = pRtcIceCandidatePairDiagnostics->nominated;
 
@@ -66,14 +66,14 @@ STATUS metrics_getIceCandidateStats(PRtcPeerConnection pRtcPeerConnection, BOOL 
     PRtcIceCandidateDiagnostics pRtcIceCandidateDiagnostics = &pIceAgent->rtcSelectedRemoteIceCandidateDiagnostics;
     if (!isRemote) {
         pRtcIceCandidateDiagnostics = &pIceAgent->rtcSelectedLocalIceCandidateDiagnostics;
-        STRCPY(pRtcIceCandidateStats->relayProtocol, pRtcIceCandidateDiagnostics->relayProtocol);
-        STRCPY(pRtcIceCandidateStats->url, pRtcIceCandidateDiagnostics->url);
+        STRNCPY(pRtcIceCandidateStats->relayProtocol, pRtcIceCandidateDiagnostics->relayProtocol, MAX_STATS_STRING_LENGTH);
+        STRNCPY(pRtcIceCandidateStats->url, pRtcIceCandidateDiagnostics->url, MAX_STATS_STRING_LENGTH);
     }
-    STRCPY(pRtcIceCandidateStats->address, pRtcIceCandidateDiagnostics->address);
-    STRCPY(pRtcIceCandidateStats->candidateType, pRtcIceCandidateDiagnostics->candidateType);
+    STRNCPY(pRtcIceCandidateStats->address, pRtcIceCandidateDiagnostics->address, IP_ADDR_STR_LENGTH);
+    STRNCPY(pRtcIceCandidateStats->candidateType, pRtcIceCandidateDiagnostics->candidateType, MAX_STATS_STRING_LENGTH);
     pRtcIceCandidateStats->port = pRtcIceCandidateDiagnostics->port;
     pRtcIceCandidateStats->priority = pRtcIceCandidateDiagnostics->priority;
-    STRCPY(pRtcIceCandidateStats->protocol, pRtcIceCandidateDiagnostics->protocol);
+    STRNCPY(pRtcIceCandidateStats->protocol, pRtcIceCandidateDiagnostics->protocol, MAX_STATS_STRING_LENGTH);
 CleanUp:
     if (locked) {
         MUTEX_UNLOCK(pIceAgent->lock);
@@ -92,8 +92,8 @@ STATUS metrics_getIceServerStats(PRtcPeerConnection pRtcPeerConnection, PRtcIceS
     MUTEX_LOCK(pIceAgent->lock);
     locked = TRUE;
     pRtcIceServerStats->port = pIceAgent->rtcIceServerDiagnostics[pRtcIceServerStats->iceServerIndex].port;
-    STRCPY(pRtcIceServerStats->protocol, pIceAgent->rtcIceServerDiagnostics[pRtcIceServerStats->iceServerIndex].protocol);
-    STRCPY(pRtcIceServerStats->url, pIceAgent->rtcIceServerDiagnostics[pRtcIceServerStats->iceServerIndex].url);
+    STRNCPY(pRtcIceServerStats->protocol, pIceAgent->rtcIceServerDiagnostics[pRtcIceServerStats->iceServerIndex].protocol, MAX_STATS_STRING_LENGTH);
+    STRNCPY(pRtcIceServerStats->url, pIceAgent->rtcIceServerDiagnostics[pRtcIceServerStats->iceServerIndex].url, MAX_STATS_STRING_LENGTH);
     pRtcIceServerStats->totalRequestsSent = pIceAgent->rtcIceServerDiagnostics[pRtcIceServerStats->iceServerIndex].totalRequestsSent;
     pRtcIceServerStats->totalResponsesReceived = pIceAgent->rtcIceServerDiagnostics[pRtcIceServerStats->iceServerIndex].totalResponsesReceived;
     pRtcIceServerStats->totalRoundTripTime = pIceAgent->rtcIceServerDiagnostics[pRtcIceServerStats->iceServerIndex].totalRoundTripTime;
@@ -145,8 +145,7 @@ STATUS metrics_getRtpOutboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRt
                                    PRtcOutboundRtpStreamStats pRtcOutboundRtpStreamStats)
 {
     STATUS retStatus = STATUS_SUCCESS;
-//#ifdef ENABLE_STREAMING
-#if 1 // def ENABLE_STREAMING
+#ifdef ENABLE_STREAMING
     PDoubleListNode node = NULL;
     UINT64 hashValue = 0;
     PKvsPeerConnection pKvsPeerConnection = (PKvsPeerConnection) pRtcPeerConnection;
@@ -174,8 +173,7 @@ STATUS metrics_getRtpInboundStats(PRtcPeerConnection pRtcPeerConnection, PRtcRtp
                                   PRtcInboundRtpStreamStats pRtcInboundRtpStreamStats)
 {
     STATUS retStatus = STATUS_SUCCESS;
-//#ifdef ENABLE_STREAMING
-#if 1 // def ENABLE_STREAMING
+#ifdef ENABLE_STREAMING
     PDoubleListNode node = NULL;
     UINT64 hashValue;
     PKvsPeerConnection pKvsPeerConnection = (PKvsPeerConnection) pRtcPeerConnection;
@@ -212,7 +210,7 @@ STATUS metrics_getDataChannelStats(PRtcPeerConnection pRtcPeerConnection, PRtcDa
     pKvsDataChannel = (PKvsDataChannel) hashValue;
     pRtcDataChannelStats->bytesReceived = pKvsDataChannel->rtcDataChannelDiagnostics.bytesReceived;
     pRtcDataChannelStats->bytesSent = pKvsDataChannel->rtcDataChannelDiagnostics.bytesSent;
-    STRCPY(pRtcDataChannelStats->label, pKvsDataChannel->rtcDataChannelDiagnostics.label);
+    STRNCPY(pRtcDataChannelStats->label, pKvsDataChannel->rtcDataChannelDiagnostics.label, MAX_STATS_STRING_LENGTH);
     pRtcDataChannelStats->messagesReceived = pKvsDataChannel->rtcDataChannelDiagnostics.messagesReceived;
     pRtcDataChannelStats->messagesSent = pKvsDataChannel->rtcDataChannelDiagnostics.messagesSent;
     pRtcDataChannelStats->state = pKvsDataChannel->rtcDataChannelDiagnostics.state;

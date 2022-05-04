@@ -877,7 +877,7 @@ STATUS uriEncodeString(PCHAR pSrc, UINT32 srcLen, PCHAR pDst, PUINT32 pDstLen)
 
             if (pEnc != NULL) {
                 CHK(remaining > encLen, STATUS_NOT_ENOUGH_MEMORY);
-                STRCPY(pEnc, URI_ENCODED_FORWARD_SLASH);
+                STRNCPY(pEnc, URI_ENCODED_FORWARD_SLASH, remaining);
                 pEnc += encLen;
                 remaining -= encLen;
             }

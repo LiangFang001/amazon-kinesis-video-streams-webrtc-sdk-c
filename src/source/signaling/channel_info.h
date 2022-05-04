@@ -54,12 +54,15 @@ extern "C" {
  * FUNCTIONS
  ******************************************************************************/
 /**
- * Takes in a pointer to a public version of ChannelInfo object.
+ * @brief Takes in a pointer to a public version of ChannelInfo object.
  * Validates and creates an internal object
  *
- * @return - STATUS code of the execution
+ * @param[in] pOrigChannelInfo
+ * @param[in, out] ppChannelInfo
+ *
+ * @return STATUS code of the execution. STATUS_SUCCESS on success.
  */
-STATUS channel_info_create(PChannelInfo, PChannelInfo*);
+STATUS channel_info_create(PChannelInfo pOrigChannelInfo, PChannelInfo* ppChannelInfo);
 
 /**
  * Frees the channel info object.

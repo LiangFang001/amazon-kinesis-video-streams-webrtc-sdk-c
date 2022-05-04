@@ -16,8 +16,7 @@
  * HEADERS
  ******************************************************************************/
 //#TBD
-//#ifdef ENABLE_STREAMING
-#if 1
+#ifdef ENABLE_STREAMING
 #define LOG_CLASS "RtcRtp"
 
 #include "SessionDescription.h"

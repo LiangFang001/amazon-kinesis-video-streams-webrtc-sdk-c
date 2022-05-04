@@ -41,7 +41,7 @@ CleanUp:
 /**
  * Frees a double linked list
  */
-STATUS doubleListFree(PDoubleList pList)
+STATUS double_list_free(PDoubleList pList)
 {
     STATUS retStatus = STATUS_SUCCESS;
 
@@ -49,7 +49,7 @@ STATUS doubleListFree(PDoubleList pList)
     CHK(pList != NULL, retStatus);
 
     // We shouldn't fail here even if clear fails
-    doubleListClear(pList, FALSE);
+    double_list_clear(pList, FALSE);
 
     // Free the structure itself
     MEMFREE(pList);
@@ -62,7 +62,7 @@ CleanUp:
 /**
  * Clears a double linked list
  */
-STATUS doubleListClear(PDoubleList pList, BOOL freeData)
+STATUS double_list_clear(PDoubleList pList, BOOL freeData)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PDoubleListNode pCurNode = NULL;
@@ -76,6 +76,7 @@ STATUS doubleListClear(PDoubleList pList, BOOL freeData)
         pNextNode = pCurNode->pNext;
         if (freeData && ((PVOID) pCurNode->data != NULL)) {
             MEMFREE((PVOID) pCurNode->data);
+            pCurNode->data = NULL;
         }
         MEMFREE(pCurNode);
         pCurNode = pNextNode;

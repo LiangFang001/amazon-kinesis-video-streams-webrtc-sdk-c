@@ -56,12 +56,12 @@ STATUS double_list_create(PDoubleList*);
 /**
  * Frees a double linked list and deallocates the nodes
  */
-STATUS doubleListFree(PDoubleList);
+STATUS double_list_free(PDoubleList);
 
 /**
  * Clears and deallocates all the items
  */
-STATUS doubleListClear(PDoubleList, BOOL);
+STATUS double_list_clear(PDoubleList, BOOL);
 
 /**
  * Insert a node in the head position in the list

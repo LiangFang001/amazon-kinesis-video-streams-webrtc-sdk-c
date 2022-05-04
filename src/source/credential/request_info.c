@@ -243,7 +243,7 @@ STATUS request_header_remove(PRequestInfo pRequestInfo, PCHAR headerName)
         pCurrentHeader = (PRequestHeader) item;
 
         if (STRCMPI(pCurrentHeader->pName, headerName) == 0) {
-            CHK_STATUS(singleListDeleteNode(pRequestInfo->pRequestHeaders, pCurNode));
+            CHK_STATUS(single_list_deleteNode(pRequestInfo->pRequestHeaders, pCurNode));
 
             // Early return
             CHK(FALSE, retStatus);

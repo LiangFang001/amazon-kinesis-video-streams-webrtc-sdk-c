@@ -68,7 +68,7 @@ STATUS file_credential_provider_createWithTime(PCHAR pCredentialsFilepath, GetCu
     pFileCredentialProvider->credentialProvider.getCredentialsFn = priv_file_credential_provider_get;
 
     // Store the file path in case we need to access it again
-    STRCPY((PCHAR) pFileCredentialProvider->credentialsFilepath, pCredentialsFilepath);
+    STRNCPY((PCHAR) pFileCredentialProvider->credentialsFilepath, pCredentialsFilepath, MAX_PATH_LEN);
 
     // Store the time functionality and specify default if NULL
     pFileCredentialProvider->getCurrentTimeFn = (getCurrentTimeFn == NULL) ? commonDefaultGetCurrentTimeFunc : getCurrentTimeFn;

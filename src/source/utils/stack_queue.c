@@ -122,7 +122,7 @@ CleanUp:
 /**
  * Gets the index of an item
  */
-STATUS stackQueueGetIndexOf(PStackQueue pStackQueue, UINT64 item, PUINT32 pIndex)
+STATUS stack_queue_getIndexOf(PStackQueue pStackQueue, UINT64 item, PUINT32 pIndex)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 index = 0;
@@ -175,7 +175,7 @@ STATUS stackQueueSetAt(PStackQueue pStackQueue, UINT32 index, UINT64 item)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSingleListNode pNode = NULL;
-    CHK_STATUS(singleListGetNodeAt(pStackQueue, index, &pNode));
+    CHK_STATUS(single_list_getNodeAt(pStackQueue, index, &pNode));
 
     // Sets the data.
     // NOTE: If the data is an allocation then it might be
@@ -190,13 +190,13 @@ CleanUp:
 /**
  * Removes an item from the stack/queue at the given index
  */
-STATUS stackQueueRemoveAt(PStackQueue pStackQueue, UINT32 index)
+STATUS stack_queue_removeAt(PStackQueue pStackQueue, UINT32 index)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSingleListNode pNode;
 
-    CHK_STATUS(singleListGetNodeAt(pStackQueue, index, &pNode));
-    CHK_STATUS(singleListDeleteNode(pStackQueue, pNode));
+    CHK_STATUS(single_list_getNodeAt(pStackQueue, index, &pNode));
+    CHK_STATUS(single_list_deleteNode(pStackQueue, pNode));
 
 CleanUp:
 
@@ -206,13 +206,13 @@ CleanUp:
 /**
  * Removes the item at the given item
  */
-STATUS stackQueueRemoveItem(PStackQueue pStackQueue, UINT64 item)
+STATUS stack_queue_removeItem(PStackQueue pStackQueue, UINT64 item)
 {
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 index;
 
-    CHK_STATUS(stackQueueGetIndexOf(pStackQueue, item, &index));
-    CHK_STATUS(stackQueueRemoveAt(pStackQueue, index));
+    CHK_STATUS(stack_queue_getIndexOf(pStackQueue, item, &index));
+    CHK_STATUS(stack_queue_removeAt(pStackQueue, index));
 
 CleanUp:
 

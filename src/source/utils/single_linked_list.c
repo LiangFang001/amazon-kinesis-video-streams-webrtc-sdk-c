@@ -238,7 +238,7 @@ CleanUp:
 /**
  * Removes and deletes the next node of the specified node
  */
-STATUS singleListDeleteNextNode(PSingleList pList, PSingleListNode pNode)
+STATUS single_list_deleteNextNode(PSingleList pList, PSingleListNode pNode)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSingleListNode pNextNode;
@@ -275,7 +275,7 @@ CleanUp:
 /**
  * Removes and deletes the specified node
  */
-STATUS singleListDeleteNode(PSingleList pList, PSingleListNode pNode)
+STATUS single_list_deleteNode(PSingleList pList, PSingleListNode pNode)
 {
     STATUS retStatus = STATUS_SUCCESS;
     PSingleListNode pPrevNode = NULL;
@@ -299,7 +299,7 @@ STATUS singleListDeleteNode(PSingleList pList, PSingleListNode pNode)
     }
 
     if (found) {
-        CHK_STATUS(singleListDeleteNextNode(pList, pPrevNode));
+        CHK_STATUS(single_list_deleteNextNode(pList, pPrevNode));
     }
 
 CleanUp:
@@ -340,7 +340,7 @@ CleanUp:
 /**
  * Gets the node at the specified index
  */
-STATUS singleListGetNodeAt(PSingleList pList, UINT32 index, PSingleListNode* ppNode)
+STATUS single_list_getNodeAt(PSingleList pList, UINT32 index, PSingleListNode* ppNode)
 {
     STATUS retStatus = STATUS_SUCCESS;
 

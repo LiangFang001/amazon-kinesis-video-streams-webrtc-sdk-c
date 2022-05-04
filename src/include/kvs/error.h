@@ -263,6 +263,7 @@ extern "C" {
 #define STATUS_DTLS_GEN_TIME_FAILED                        STATUS_DTLS_BASE + 0x0000000C
 #define STATUS_DTLS_X509_SET_FAILED                        STATUS_DTLS_BASE + 0x0000000D
 #define STATUS_DTLS_CREATE_SSL_FAILED                      STATUS_DTLS_BASE + 0x0000000E
+#define STATUS_DTLS_FINGERPRINT_OVERFLOW                   STATUS_DTLS_BASE + 0x0000000F
 /******************************************************************************
  * TLS error codes
  ******************************************************************************/

@@ -235,8 +235,6 @@ PUBLIC_API STATUS defaultCreateThreadExPri(PTID pThreadId, PCHAR threadName, UIN
         DLOGW("set the esp pthread cfg failed.");
     }
 
-    pthread_attr_setdetachstate(pAttr, PTHREAD_CREATE_DETACHED);
-
     if (threadSize == 0) {
         pthread_attr_setstacksize(pAttr, DEFAULT_THREAD_SIZE);
     } else {

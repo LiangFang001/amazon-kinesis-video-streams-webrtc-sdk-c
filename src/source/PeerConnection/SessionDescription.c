@@ -311,7 +311,7 @@ PCHAR sdp_fmtpForPayloadType(UINT64 payloadType, PSessionDescription pSessionDes
     CHAR payloadStr[MAX_SDP_ATTRIBUTE_VALUE_LENGTH];
 
     MEMSET(payloadStr, 0x00, MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
-    SPRINTF(payloadStr, "%" PRId64, payloadType);
+    SNPRINTF(payloadStr, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%" PRId64, payloadType);
 
     for (currentMedia = 0; currentMedia < pSessionDescription->mediaCount; currentMedia++) {
         pMediaDescription = &(pSessionDescription->mediaDescriptions[currentMedia]);
@@ -358,123 +358,124 @@ STATUS sdp_populateSingleMediaSection(PKvsPeerConnection pKvsPeerConnection, PKv
         containRtx = (retStatus == STATUS_SUCCESS);
         retStatus = STATUS_SUCCESS;
         if (containRtx) {
-            SPRINTF(pSdpMediaDescription->mediaName, "video 9 UDP/TLS/RTP/SAVPF %" PRId64 " %" PRId64, payloadType, rtxPayloadType);
+            SNPRINTF(pSdpMediaDescription->mediaName, MAX_SDP_MEDIA_NAME_LENGTH, "video 9 UDP/TLS/RTP/SAVPF %" PRId64 " %" PRId64, payloadType,
+                     rtxPayloadType);
         } else {
-            SPRINTF(pSdpMediaDescription->mediaName, "video 9 UDP/TLS/RTP/SAVPF %" PRId64, payloadType);
+            SNPRINTF(pSdpMediaDescription->mediaName, MAX_SDP_MEDIA_NAME_LENGTH, "video 9 UDP/TLS/RTP/SAVPF %" PRId64, payloadType);
         }
         // audio
     } else if (pRtcMediaStreamTrack->codec == RTC_CODEC_OPUS || pRtcMediaStreamTrack->codec == RTC_CODEC_MULAW ||
                pRtcMediaStreamTrack->codec == RTC_CODEC_ALAW) {
-        SPRINTF(pSdpMediaDescription->mediaName, "audio 9 UDP/TLS/RTP/SAVPF %" PRId64, payloadType);
+        SNPRINTF(pSdpMediaDescription->mediaName, MAX_SDP_MEDIA_NAME_LENGTH, "audio 9 UDP/TLS/RTP/SAVPF %" PRId64, payloadType);
     }
     // get the information of ice candidates.
     CHK_STATUS(ice_agent_populateSdpMediaDescriptionCandidates(pKvsPeerConnection->pIceAgent, pSdpMediaDescription, MAX_SDP_ATTRIBUTE_VALUE_LENGTH,
                                                                &attributeCount));
     // rtx
     if (containRtx) {
-        STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "msid");
-        SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%s %sRTX", pRtcMediaStreamTrack->streamId,
-                pRtcMediaStreamTrack->trackId);
+        STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "msid", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+        SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%s %sRTX",
+                 pRtcMediaStreamTrack->streamId, pRtcMediaStreamTrack->trackId);
         attributeCount++;
 
-        STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc-group");
-        SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "FID %u %u", pKvsRtpTransceiver->sender.ssrc,
-                pKvsRtpTransceiver->sender.rtxSsrc);
+        STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc-group", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+        SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "FID %u %u",
+                 pKvsRtpTransceiver->sender.ssrc, pKvsRtpTransceiver->sender.rtxSsrc);
         attributeCount++;
         // no rtx.
     } else {
-        STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "msid");
-        SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%s %s", pRtcMediaStreamTrack->streamId,
-                pRtcMediaStreamTrack->trackId);
+        STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "msid", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+        SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%s %s",
+                 pRtcMediaStreamTrack->streamId, pRtcMediaStreamTrack->trackId);
         attributeCount++;
     }
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc");
-    SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%u cname:%s", pKvsRtpTransceiver->sender.ssrc,
-            pKvsPeerConnection->localCNAME);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%u cname:%s",
+             pKvsRtpTransceiver->sender.ssrc, pKvsPeerConnection->localCNAME);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc");
-    SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%u msid:%s %s", pKvsRtpTransceiver->sender.ssrc,
-            pRtcMediaStreamTrack->streamId, pRtcMediaStreamTrack->trackId);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%u msid:%s %s",
+             pKvsRtpTransceiver->sender.ssrc, pRtcMediaStreamTrack->streamId, pRtcMediaStreamTrack->trackId);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc");
-    SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%u mslabel:%s", pKvsRtpTransceiver->sender.ssrc,
-            pRtcMediaStreamTrack->streamId);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%u mslabel:%s",
+             pKvsRtpTransceiver->sender.ssrc, pRtcMediaStreamTrack->streamId);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc");
-    SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%u label:%s", pKvsRtpTransceiver->sender.ssrc,
-            pRtcMediaStreamTrack->trackId);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%u label:%s",
+             pKvsRtpTransceiver->sender.ssrc, pRtcMediaStreamTrack->trackId);
     attributeCount++;
 
     if (containRtx) {
-        STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc");
-        SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%u cname:%s", pKvsRtpTransceiver->sender.rtxSsrc,
-                pKvsPeerConnection->localCNAME);
+        STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+        SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%u cname:%s",
+                 pKvsRtpTransceiver->sender.rtxSsrc, pKvsPeerConnection->localCNAME);
         attributeCount++;
 
-        STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc");
-        SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%u msid:%s %sRTX", pKvsRtpTransceiver->sender.rtxSsrc,
-                pRtcMediaStreamTrack->streamId, pRtcMediaStreamTrack->trackId);
+        STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+        SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%u msid:%s %sRTX",
+                 pKvsRtpTransceiver->sender.rtxSsrc, pRtcMediaStreamTrack->streamId, pRtcMediaStreamTrack->trackId);
         attributeCount++;
 
-        STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc");
-        SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%u mslabel:%sRTX", pKvsRtpTransceiver->sender.rtxSsrc,
-                pRtcMediaStreamTrack->streamId);
+        STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+        SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%u mslabel:%sRTX",
+                 pKvsRtpTransceiver->sender.rtxSsrc, pRtcMediaStreamTrack->streamId);
         attributeCount++;
 
-        STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc");
-        SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%u label:%sRTX", pKvsRtpTransceiver->sender.rtxSsrc,
-                pRtcMediaStreamTrack->trackId);
+        STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ssrc", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+        SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%u label:%sRTX",
+                 pKvsRtpTransceiver->sender.rtxSsrc, pRtcMediaStreamTrack->trackId);
         attributeCount++;
     }
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtcp");
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "9 IN IP4 0.0.0.0");
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtcp", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "9 IN IP4 0.0.0.0", MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ice-ufrag");
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, pKvsPeerConnection->localIceUfrag);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ice-ufrag", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, pKvsPeerConnection->localIceUfrag, MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ice-pwd");
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, pKvsPeerConnection->localIcePwd);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ice-pwd", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, pKvsPeerConnection->localIcePwd, MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ice-options");
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "trickle");
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ice-options", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "trickle", MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "fingerprint");
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "sha-256 ");
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue + 8, pCertificateFingerprint);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "fingerprint", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "sha-256 ", 8);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue + 8, pCertificateFingerprint, MAX_SDP_ATTRIBUTE_VALUE_LENGTH - 8);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "setup");
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, pDtlsRole);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "setup", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, pDtlsRole, MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "mid");
-    SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%d", mediaSectionId);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "mid", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%d", mediaSectionId);
     attributeCount++;
     // setup the direction of offer.
     if (pKvsPeerConnection->isOffer) {
         switch (pKvsRtpTransceiver->transceiver.direction) {
             case RTC_RTP_TRANSCEIVER_DIRECTION_SENDRECV:
-                STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "sendrecv");
+                STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "sendrecv", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
                 break;
             case RTC_RTP_TRANSCEIVER_DIRECTION_SENDONLY:
-                STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "sendonly");
+                STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "sendonly", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
                 break;
             case RTC_RTP_TRANSCEIVER_DIRECTION_RECVONLY:
-                STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "recvonly");
+                STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "recvonly", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
                 break;
             default:
                 // https://www.w3.org/TR/webrtc/#dom-rtcrtptransceiverdirection
                 DLOGW("Incorrect/no transceiver direction set...this attribute will be set to inactive");
-                STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "inactive");
+                STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "inactive", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
         }
         // setup the direction of answer.
     } else {
@@ -483,13 +484,13 @@ STATUS sdp_populateSingleMediaSection(PKvsPeerConnection pKvsPeerConnection, PKv
 
         for (i = 0; i < remoteAttributeCount && directionFound == FALSE; i++) {
             if (STRCMP(pSdpMediaDescriptionRemote->sdpAttributes[i].attributeName, "sendrecv") == 0) {
-                STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "sendrecv");
+                STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "sendrecv", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
                 directionFound = TRUE;
             } else if (STRCMP(pSdpMediaDescriptionRemote->sdpAttributes[i].attributeName, "recvonly") == 0) {
-                STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "sendonly");
+                STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "sendonly", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
                 directionFound = TRUE;
             } else if (STRCMP(pSdpMediaDescriptionRemote->sdpAttributes[i].attributeName, "sendonly") == 0) {
-                STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "recvonly");
+                STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "recvonly", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
                 directionFound = TRUE;
             }
         }
@@ -497,75 +498,86 @@ STATUS sdp_populateSingleMediaSection(PKvsPeerConnection pKvsPeerConnection, PKv
 
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtcp-mux");
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtcp-mux", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtcp-rsize");
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtcp-rsize", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
     attributeCount++;
 
     if (pRtcMediaStreamTrack->codec == RTC_CODEC_H264_PROFILE_42E01F_LEVEL_ASYMMETRY_ALLOWED_PACKETIZATION_MODE) {
         if (pKvsPeerConnection->isOffer) {
             currentFmtp = DEFAULT_H264_FMTP;
         }
-        STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap");
-        SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%" PRId64 " H264/90000", payloadType);
+        STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+        SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%" PRId64 " H264/90000",
+                 payloadType);
         attributeCount++;
 
         if (currentFmtp != NULL) {
-            STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "fmtp");
-            SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%" PRId64 " %s", payloadType, currentFmtp);
+            STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "fmtp", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+            SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%" PRId64 " %s",
+                     payloadType, currentFmtp);
             attributeCount++;
         }
 
         if (containRtx) {
-            STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap");
-            SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%" PRId64 " " RTX_VALUE, rtxPayloadType);
+            STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+            SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%" PRId64 " " RTX_VALUE,
+                     rtxPayloadType);
             attributeCount++;
 
-            STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "fmtp");
-            SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%" PRId64 " apt=%" PRId64 "", rtxPayloadType, payloadType);
+            STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "fmtp", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+            SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH,
+                     "%" PRId64 " apt=%" PRId64 "", rtxPayloadType, payloadType);
             attributeCount++;
         }
     } else if (pRtcMediaStreamTrack->codec == RTC_CODEC_OPUS) {
         if (pKvsPeerConnection->isOffer) {
             currentFmtp = DEFAULT_OPUS_FMTP;
         }
-        STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap");
-        SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%" PRId64 " opus/48000/2", payloadType);
+        STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+        SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%" PRId64 " opus/48000/2",
+                 payloadType);
         attributeCount++;
 
         if (currentFmtp != NULL) {
-            STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "fmtp");
-            SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%" PRId64 " %s", payloadType, currentFmtp);
+            STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "fmtp", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+            SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%" PRId64 " %s",
+                     payloadType, currentFmtp);
             attributeCount++;
         }
     } else if (pRtcMediaStreamTrack->codec == RTC_CODEC_VP8) {
-        STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap");
-        SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%" PRId64 " " VP8_VALUE, payloadType);
+        STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+        SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%" PRId64 " " VP8_VALUE,
+                 payloadType);
         attributeCount++;
 
         if (containRtx) {
             CHK_STATUS(hash_table_get(pKvsPeerConnection->pRtxTable, RTC_RTX_CODEC_VP8, &rtxPayloadType));
-            STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap");
-            SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%" PRId64 " " RTX_VALUE, rtxPayloadType);
+            STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+            SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%" PRId64 " " RTX_VALUE,
+                     rtxPayloadType);
             attributeCount++;
 
-            STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "fmtp");
-            SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%" PRId64 " apt=%" PRId64 "", rtxPayloadType, payloadType);
+            STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "fmtp", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+            SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH,
+                     "%" PRId64 " apt=%" PRId64 "", rtxPayloadType, payloadType);
             attributeCount++;
         }
     } else if (pRtcMediaStreamTrack->codec == RTC_CODEC_MULAW) {
-        STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap");
-        SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%" PRId64 " " MULAW_VALUE, payloadType);
+        STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+        SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%" PRId64 " " MULAW_VALUE,
+                 payloadType);
         attributeCount++;
     } else if (pRtcMediaStreamTrack->codec == RTC_CODEC_ALAW) {
-        STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap");
-        SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%" PRId64 " " ALAW_VALUE, payloadType);
+        STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtpmap", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+        SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%" PRId64 " " ALAW_VALUE,
+                 payloadType);
         attributeCount++;
     }
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtcp-fb");
-    SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%" PRId64 " nack", payloadType);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtcp-fb", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%" PRId64 " nack", payloadType);
     attributeCount++;
 
     pSdpMediaDescription->mediaAttributesCount = attributeCount;
@@ -583,38 +595,38 @@ STATUS sdp_populateSessionDescriptionDataChannel(PKvsPeerConnection pKvsPeerConn
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 attributeCount = 0;
 
-    SPRINTF(pSdpMediaDescription->mediaName, "application 9 UDP/DTLS/SCTP webrtc-datachannel");
+    SNPRINTF(pSdpMediaDescription->mediaName, MAX_SDP_MEDIA_NAME_LENGTH, "application 9 UDP/DTLS/SCTP webrtc-datachannel");
 
     CHK_STATUS(ice_agent_populateSdpMediaDescriptionCandidates(pKvsPeerConnection->pIceAgent, pSdpMediaDescription, MAX_SDP_ATTRIBUTE_VALUE_LENGTH,
                                                                &attributeCount));
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtcp");
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "9 IN IP4 0.0.0.0");
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "rtcp", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "9 IN IP4 0.0.0.0", MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ice-ufrag");
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, pKvsPeerConnection->localIceUfrag);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ice-ufrag", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, pKvsPeerConnection->localIceUfrag, MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ice-pwd");
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, pKvsPeerConnection->localIcePwd);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "ice-pwd", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, pKvsPeerConnection->localIcePwd, MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "fingerprint");
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "sha-256 ");
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue + 8, pCertificateFingerprint);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "fingerprint", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "sha-256 ", 8);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue + 8, pCertificateFingerprint, MAX_SDP_ATTRIBUTE_VALUE_LENGTH - 8);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "setup");
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, pDtlsRole);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "setup", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, pDtlsRole, MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "mid");
-    SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "%d", mediaSectionId);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "mid", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "%d", mediaSectionId);
     attributeCount++;
 
-    STRCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "sctp-port");
-    SPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "5000");
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "sctp-port", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    SNPRINTF(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, MAX_SDP_ATTRIBUTE_VALUE_LENGTH, "5000");
     attributeCount++;
 
     pSdpMediaDescription->mediaAttributesCount = attributeCount;
@@ -740,30 +752,31 @@ STATUS sdp_populateSessionDescription(PKvsPeerConnection pKvsPeerConnection, PSe
      * https://tools.ietf.org/html/rfc4566#section-5.2
      * Origin ==> o=<username> <sess-id> <sess-version> <nettype> <addrtype> <unicast-address>
      */
-    STRCPY(pLocalSessionDescription->sdpOrigin.userName, "-");
+    STRNCPY(pLocalSessionDescription->sdpOrigin.userName, "-", MAX_SDP_SESSION_USERNAME_LENGTH);
     pLocalSessionDescription->sdpOrigin.sessionId = RAND();
     pLocalSessionDescription->sdpOrigin.sessionVersion = 2;
-    STRCPY(pLocalSessionDescription->sdpOrigin.sdpConnectionInformation.networkType, "IN");
-    STRCPY(pLocalSessionDescription->sdpOrigin.sdpConnectionInformation.addressType, "IP4");
-    STRCPY(pLocalSessionDescription->sdpOrigin.sdpConnectionInformation.connectionAddress, "127.0.0.1");
+    STRNCPY(pLocalSessionDescription->sdpOrigin.sdpConnectionInformation.networkType, "IN", MAX_SDP_NETWORK_TYPE_LENGTH);
+    STRNCPY(pLocalSessionDescription->sdpOrigin.sdpConnectionInformation.addressType, "IP4", MAX_SDP_ADDRESS_TYPE_LENGTH);
+    STRNCPY(pLocalSessionDescription->sdpOrigin.sdpConnectionInformation.connectionAddress, "127.0.0.1", MAX_SDP_CONNECTION_ADDRESS_LENGTH);
     /**
      * https://tools.ietf.org/html/rfc4566#section-5.3
      * Session Name ==> s=<session name>
      */
-    STRCPY(pLocalSessionDescription->sessionName, "-");
+    STRNCPY(pLocalSessionDescription->sessionName, "-", MAX_SDP_SESSION_NAME_LENGTH);
 
     pLocalSessionDescription->timeDescriptionCount = 1;
     pLocalSessionDescription->sdpTimeDescription[0].startTime = 0;
     pLocalSessionDescription->sdpTimeDescription[0].stopTime = 0;
     // a=group:BUNDLE mid0 mid1
     // setup the information of bundle media.
-    STRCPY(pLocalSessionDescription->sdpAttributes[0].attributeName, "group");
-    STRCPY(pLocalSessionDescription->sdpAttributes[0].attributeValue, BUNDLE_KEY);
+    STRNCPY(pLocalSessionDescription->sdpAttributes[0].attributeName, "group", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    STRNCPY(pLocalSessionDescription->sdpAttributes[0].attributeValue, BUNDLE_KEY, MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
     for (curr = (pLocalSessionDescription->sdpAttributes[0].attributeValue + ARRAY_SIZE(BUNDLE_KEY) - 1), i = 0;
          i < pLocalSessionDescription->mediaCount; i++) {
-        STRCPY(pLocalSessionDescription->mediaDescriptions[i].sdpConnectionInformation.networkType, "IN");
-        STRCPY(pLocalSessionDescription->mediaDescriptions[i].sdpConnectionInformation.addressType, "IP4");
-        STRCPY(pLocalSessionDescription->mediaDescriptions[i].sdpConnectionInformation.connectionAddress, "127.0.0.1");
+        STRNCPY(pLocalSessionDescription->mediaDescriptions[i].sdpConnectionInformation.networkType, "IN", MAX_SDP_NETWORK_TYPE_LENGTH);
+        STRNCPY(pLocalSessionDescription->mediaDescriptions[i].sdpConnectionInformation.addressType, "IP4", MAX_SDP_ADDRESS_TYPE_LENGTH);
+        STRNCPY(pLocalSessionDescription->mediaDescriptions[i].sdpConnectionInformation.connectionAddress, "127.0.0.1",
+                MAX_SDP_CONNECTION_ADDRESS_LENGTH);
 
         sizeRemaining = MAX_SDP_ATTRIBUTE_VALUE_LENGTH - (curr - pLocalSessionDescription->sdpAttributes[0].attributeValue);
         curr += SNPRINTF(curr, sizeRemaining, " %d", i);
@@ -771,8 +784,10 @@ STATUS sdp_populateSessionDescription(PKvsPeerConnection pKvsPeerConnection, PSe
     pLocalSessionDescription->sessionAttributesCount++;
     // a=msid-semantic
     // This attribute MUST be present if "a=msid" is used.
-    STRCPY(pLocalSessionDescription->sdpAttributes[pLocalSessionDescription->sessionAttributesCount].attributeName, "msid-semantic");
-    STRCPY(pLocalSessionDescription->sdpAttributes[pLocalSessionDescription->sessionAttributesCount].attributeValue, " WMS myKvsVideoStream");
+    STRNCPY(pLocalSessionDescription->sdpAttributes[pLocalSessionDescription->sessionAttributesCount].attributeName, "msid-semantic",
+            MAX_SDP_ATTRIBUTE_NAME_LENGTH);
+    STRNCPY(pLocalSessionDescription->sdpAttributes[pLocalSessionDescription->sessionAttributesCount].attributeValue, " WMS myKvsVideoStream",
+            MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
     pLocalSessionDescription->sessionAttributesCount++;
 
 CleanUp:

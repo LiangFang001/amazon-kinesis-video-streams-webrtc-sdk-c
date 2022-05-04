@@ -69,17 +69,17 @@ STATUS stackQueueSetAt(PStackQueue, UINT32, UINT64);
 /**
  * Gets the index of an item
  */
-STATUS stackQueueGetIndexOf(PStackQueue, UINT64, PUINT32);
+STATUS stack_queue_getIndexOf(PStackQueue, UINT64, PUINT32);
 
 /**
  * Removes the item at the given index
  */
-STATUS stackQueueRemoveAt(PStackQueue, UINT32);
+STATUS stack_queue_removeAt(PStackQueue, UINT32);
 
 /**
  * Removes the item at the given item
  */
-STATUS stackQueueRemoveItem(PStackQueue, UINT64);
+STATUS stack_queue_removeItem(PStackQueue, UINT64);
 
 /**
  * Whether the stack queue is empty
