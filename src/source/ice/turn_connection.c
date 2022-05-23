@@ -848,7 +848,7 @@ static STATUS turn_connection_getLongTermKey(PCHAR username, PCHAR realm, PCHAR 
     SNPRINTF(stringBuffer, stringSize, "%s:%s:%s", username, realm, password);
 
     // TODO: Return back the error check
-    KVS_MD5_DIGEST((PBYTE) stringBuffer, stringSize, pBuffer);
+    KVS_MD5_DIGEST((PBYTE) stringBuffer, STRLEN(stringBuffer), pBuffer);
 
 CleanUp:
 

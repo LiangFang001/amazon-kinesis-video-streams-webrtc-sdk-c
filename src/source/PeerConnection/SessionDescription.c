@@ -449,7 +449,7 @@ STATUS sdp_populateSingleMediaSection(PKvsPeerConnection pKvsPeerConnection, PKv
     attributeCount++;
 
     STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeName, "fingerprint", MAX_SDP_ATTRIBUTE_NAME_LENGTH);
-    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "sha-256 ", 8);
+    STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue, "sha-256 ", MAX_SDP_ATTRIBUTE_VALUE_LENGTH);
     STRNCPY(pSdpMediaDescription->sdpAttributes[attributeCount].attributeValue + 8, pCertificateFingerprint, MAX_SDP_ATTRIBUTE_VALUE_LENGTH - 8);
     attributeCount++;
 
