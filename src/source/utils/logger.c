@@ -80,8 +80,8 @@ static MUTEX logLock = INVALID_MUTEX_VALUE;
 VOID defaultLogPrint(UINT32 level, PCHAR tag, PCHAR fmt, ...)
 {
     PCHAR logFmtString = MEMALLOC(MAX_LOG_FORMAT_LENGTH + 1);
-    // UINT32 logLevel = GET_LOGGER_LOG_LEVEL();
-    UINT32 logLevel = LOG_LEVEL_DEBUG;
+    UINT32 logLevel = GET_LOGGER_LOG_LEVEL();
+    // UINT32 logLevel = LOG_LEVEL_DEBUG;
 
     UNUSED_PARAM(tag);
 
