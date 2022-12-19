@@ -394,6 +394,14 @@ STATUS signaling_create(PSignalingClientInfoInternal pClientInfo, PChannelInfo p
  */
 STATUS signaling_free(PSignalingClient* ppSignalingClient);
 /**
+ * @brief bring signaling client state to READY.
+ *
+ * @param[in] pSignalingClient the context of the signaling client.
+ *
+ * @return STATUS status of execution.
+ */
+STATUS signaling_fetch(PSignalingClient pSignalingClient);
+/**
  * @brief connect signaling client with the specific signaling channel.
  *
  * @param[in] pSignalingClient the context of the signaling client.
