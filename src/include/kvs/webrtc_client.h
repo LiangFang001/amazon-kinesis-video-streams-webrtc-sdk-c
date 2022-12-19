@@ -1627,6 +1627,25 @@ PUBLIC_API STATUS signaling_client_getIceConfigInfoCount(SIGNALING_CLIENT_HANDLE
 PUBLIC_API STATUS signaling_client_getIceConfigInfo(SIGNALING_CLIENT_HANDLE, UINT32, PIceConfigInfo*);
 
 /**
+ * @brief Shutdown signaling client.
+ *
+ * @param[in] SIGNALING_CLIENT_HANDLE Signaling client handle
+ *
+ * @return STATUS code of the execution. STATUS_SUCCESS on successs
+ */
+PUBLIC_API STATUS signaling_client_shutdown(SIGNALING_CLIENT_HANDLE);
+
+/**
+ * @brief Fetches all assets needed to ready the state machine before attempting to connect.
+ *        Can also be used to reallocate missing / expired assets before reconnecting.
+ *
+ * @param[in] SIGNALING_CLIENT_HANDLE Signaling client handle
+ *
+ * @return STATUS code of the execution. STATUS_SUCCESS on successs
+ */
+PUBLIC_API STATUS signaling_client_fetch(SIGNALING_CLIENT_HANDLE);
+
+/**
  * @brief Connects the signaling client to the web socket in order to send/receive messages.
  *
  * NOTE: The call will succeed only when the signaling client is in a ready state.

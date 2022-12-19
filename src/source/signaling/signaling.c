@@ -320,7 +320,7 @@ STATUS signaling_create(PSignalingClientInfoInternal pClientInfo, PChannelInfo p
 
     // Prime the state machine
     ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_NONE);
-    CHK_STATUS(signaling_fsm_step(pSignalingClient, STATUS_SUCCESS));
+    // CHK_STATUS(signaling_fsm_step(pSignalingClient, STATUS_SUCCESS));
 
 CleanUp:
 
@@ -581,6 +581,32 @@ CleanUp:
 
     CHK_LOG_ERR(retStatus);
 
+    LEAVES();
+    return retStatus;
+}
+
+STATUS signaling_fetch(PSignalingClient pSignalingClient)
+{
+    ENTERS();
+    STATUS retStatus = STATUS_SUCCESS;
+
+    CHK(pSignalingClient != NULL, STATUS_NULL_ARG);
+
+    // Check if we are already not connected
+    if (ATOMIC_LOAD_BOOL(&pSignalingClient->connected)) {
+        wss_api_disconnect(pSignalingClient);
+        ATOMIC_STORE_BOOL(&pSignalingClient->connected, FALSE);
+        ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_OK);
+    }
+
+    CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));
+
+CleanUp:
+
+    if (STATUS_FAILED(retStatus)) {
+        signaling_fsm_resetRetryCount(pSignalingClient);
+    }
+    CHK_LOG_ERR(retStatus);
     LEAVES();
     return retStatus;
 }

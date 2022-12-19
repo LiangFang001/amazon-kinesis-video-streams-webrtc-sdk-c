@@ -94,6 +94,44 @@ CleanUp:
     return retStatus;
 }
 
+STATUS signaling_client_shutdown(SIGNALING_CLIENT_HANDLE signalingClientHandle)
+{
+    ENTERS();
+    STATUS retStatus = STATUS_SUCCESS;
+    PSignalingClient pSignalingClient = FROM_SIGNALING_CLIENT_HANDLE(signalingClientHandle);
+
+    CHK(pSignalingClient != NULL, STATUS_NULL_ARG);
+
+    DLOGI("Signaling Client shutdown");
+
+    ATOMIC_STORE_BOOL(&pSignalingClient->shutdown, TRUE);
+
+CleanUp:
+
+    SIGNALING_UPDATE_ERROR_COUNT(pSignalingClient, retStatus);
+    LEAVES();
+    return retStatus;
+}
+
+STATUS signaling_client_fetch(SIGNALING_CLIENT_HANDLE signalingClientHandle)
+{
+    ENTERS();
+    STATUS retStatus = STATUS_SUCCESS;
+    PSignalingClient pSignalingClient = FROM_SIGNALING_CLIENT_HANDLE(signalingClientHandle);
+
+    CHK(pSignalingClient != NULL, STATUS_NULL_ARG);
+
+    DLOGI("Signaling Client Fetch Sync");
+
+    CHK_STATUS(signaling_fetch(pSignalingClient));
+
+CleanUp:
+
+    SIGNALING_UPDATE_ERROR_COUNT(pSignalingClient, retStatus);
+    LEAVES();
+    return retStatus;
+}
+
 STATUS signaling_client_connect(SIGNALING_CLIENT_HANDLE signalingClientHandle)
 {
     ENTERS();
