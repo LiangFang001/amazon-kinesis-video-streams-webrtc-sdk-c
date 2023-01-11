@@ -30,6 +30,7 @@ extern "C" {
 #include <mbedtls/sha256.h>
 #include <mbedtls/md5.h>
 #include <mbedtls/error.h>
+#include <mbedtls/compat-2.x.h>
 #endif
 
 /******************************************************************************
@@ -87,8 +88,8 @@ typedef enum {
     } while (0)
 
 typedef enum {
-    KVS_SRTP_PROFILE_AES128_CM_HMAC_SHA1_80 = MBEDTLS_SRTP_AES128_CM_HMAC_SHA1_80,
-    KVS_SRTP_PROFILE_AES128_CM_HMAC_SHA1_32 = MBEDTLS_SRTP_AES128_CM_HMAC_SHA1_32,
+    KVS_SRTP_PROFILE_AES128_CM_HMAC_SHA1_80 = MBEDTLS_TLS_SRTP_AES128_CM_HMAC_SHA1_80,
+    KVS_SRTP_PROFILE_AES128_CM_HMAC_SHA1_32 = MBEDTLS_TLS_SRTP_AES128_CM_HMAC_SHA1_32,
 } KVS_SRTP_PROFILE;
 #else
 #error "A Crypto implementation is required."

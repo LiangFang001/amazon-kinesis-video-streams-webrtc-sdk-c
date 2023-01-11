@@ -6,8 +6,9 @@
 
 /**  https://tools.ietf.org/html/rfc5764#section-4.1.2 */
 mbedtls_ssl_srtp_profile DTLS_SRTP_SUPPORTED_PROFILES[] = {
-    MBEDTLS_SRTP_AES128_CM_HMAC_SHA1_80,
-    MBEDTLS_SRTP_AES128_CM_HMAC_SHA1_32,
+    MBEDTLS_TLS_SRTP_AES128_CM_HMAC_SHA1_80,
+    MBEDTLS_TLS_SRTP_AES128_CM_HMAC_SHA1_32,
+    MBEDTLS_TLS_SRTP_UNSET,
 };
 
 STATUS dtls_session_create(PDtlsSessionCallbacks pDtlsSessionCallbacks, TIMER_QUEUE_HANDLE timerQueueHandle, INT32 certificateBits,
@@ -30,6 +31,7 @@ STATUS dtls_session_create(PDtlsSessionCallbacks pDtlsSessionCallbacks, TIMER_QU
     mbedtls_ctr_drbg_init(&pDtlsSession->ctrDrbg);
     mbedtls_ssl_config_init(&pDtlsSession->sslCtxConfig);
     mbedtls_ssl_init(&pDtlsSession->sslCtx);
+    mbedtls_ctr_drbg_set_prediction_resistance(&pDtlsSession->ctrDrbg, MBEDTLS_CTR_DRBG_PR_ON);
     CHK(mbedtls_ctr_drbg_seed(&pDtlsSession->ctrDrbg, mbedtls_entropy_func, &pDtlsSession->entropy, NULL, 0) == 0, STATUS_DTLS_CREATE_SSL_FAILED);
 
     CHK_STATUS(io_buffer_create(DEFAULT_MTU_SIZE, &pDtlsSession->pReadBuffer));
@@ -281,10 +283,8 @@ STATUS dtls_session_start(PDtlsSession pDtlsSession, BOOL isServer)
         CHK(mbedtls_ssl_conf_own_cert(&pDtlsSession->sslCtxConfig, &pCertInfo->cert, &pCertInfo->privateKey) == 0, STATUS_DTLS_CREATE_SSL_FAILED);
     }
     mbedtls_ssl_conf_dtls_cookies(&pDtlsSession->sslCtxConfig, NULL, NULL, NULL);
-    CHK(mbedtls_ssl_conf_dtls_srtp_protection_profiles(&pDtlsSession->sslCtxConfig, DTLS_SRTP_SUPPORTED_PROFILES,
-                                                       ARRAY_SIZE(DTLS_SRTP_SUPPORTED_PROFILES)) == 0,
-        STATUS_DTLS_CREATE_SSL_FAILED);
-    mbedtls_ssl_conf_export_keys_ext_cb(&pDtlsSession->sslCtxConfig, (mbedtls_ssl_export_keys_ext_t*) dtls_session_deriveKeyCallback, pDtlsSession);
+    CHK(mbedtls_ssl_conf_dtls_srtp_protection_profiles(&pDtlsSession->sslCtxConfig, DTLS_SRTP_SUPPORTED_PROFILES) == 0, STATUS_DTLS_CREATE_SSL_FAILED);
+    mbedtls_ssl_set_export_keys_cb(&pDtlsSession->sslCtxConfig, (mbedtls_ssl_export_keys_t *)dtls_session_deriveKeyCallback, pDtlsSession);
 
     CHK(mbedtls_ssl_setup(&pDtlsSession->sslCtx, &pDtlsSession->sslCtxConfig) == 0, STATUS_DTLS_SSL_CTX_CREATION_FAILED);
     mbedtls_ssl_set_mtu(&pDtlsSession->sslCtx, DEFAULT_MTU_SIZE);
@@ -362,7 +362,7 @@ STATUS dtls_session_read(PDtlsSession pDtlsSession, PBYTE pData, PINT32 pDataLen
         }
     }
 
-    if (pDtlsSession->sslCtx.state == MBEDTLS_SSL_HANDSHAKE_OVER) {
+    if (pDtlsSession->sslCtx.MBEDTLS_PRIVATE(state) == MBEDTLS_SSL_HANDSHAKE_OVER) {
         CHK_STATUS(dtls_session_changeState(pDtlsSession, RTC_DTLS_TRANSPORT_STATE_CONNECTED));
     }
 
@@ -383,7 +383,7 @@ STATUS dtls_session_send(PDtlsSession pDtlsSession, PBYTE pData, INT32 dataLen)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
-    INT32 writtenBytes = 0;
+    INT32 writtenBytes = 0, writeLen = 0;
     BOOL locked = FALSE;
     INT32 sslRet;
     BOOL iterate = TRUE;
@@ -395,7 +395,9 @@ STATUS dtls_session_send(PDtlsSession pDtlsSession, PBYTE pData, INT32 dataLen)
     locked = TRUE;
 
     while (iterate && writtenBytes < dataLen) {
-        sslRet = mbedtls_ssl_write(&pDtlsSession->sslCtx, pData + writtenBytes, dataLen - writtenBytes);
+        // In Dtls, we need to make sure that the packet is smaller than the mtu or MBEDTLS_SSL_OUT_CONTENT_LEN constant
+        writeLen = MIN(dataLen - writtenBytes, mbedtls_ssl_get_max_out_record_payload(&pDtlsSession->sslCtx));
+        sslRet = mbedtls_ssl_write(&pDtlsSession->sslCtx, pData + writtenBytes, writeLen);
         if (sslRet > 0) {
             writtenBytes += sslRet;
         } else if (sslRet == MBEDTLS_ERR_SSL_WANT_READ || sslRet == MBEDTLS_ERR_SSL_WANT_WRITE) {
@@ -414,7 +416,7 @@ CleanUp:
     }
 
     LEAVES();
-    return STATUS_SUCCESS;
+    return retStatus;
 }
 
 STATUS dtls_session_getLocalCertificateFingerprint(PDtlsSession pDtlsSession, PCHAR pBuff, UINT32 buffLen)
@@ -477,7 +479,7 @@ STATUS dtls_session_populateKeyingMaterial(PDtlsSession pDtlsSession, PDtlsKeyin
     BOOL locked = FALSE;
     PTlsKeys pKeys;
     BYTE keyingMaterialBuffer[MAX_SRTP_MASTER_KEY_LEN * 2 + MAX_SRTP_SALT_KEY_LEN * 2];
-    mbedtls_ssl_srtp_profile negotiatedSRTPProfile;
+    mbedtls_dtls_srtp_info negotiatedSRTPProfile;
 
     CHK(pDtlsSession != NULL && pDtlsKeyingMaterial != NULL, STATUS_DTLS_NULL_ARG);
     pKeys = &pDtlsSession->tlsKeys;
@@ -502,12 +504,12 @@ STATUS dtls_session_populateKeyingMaterial(PDtlsSession pDtlsSession, PDtlsKeyin
 
     MEMCPY(pDtlsKeyingMaterial->serverWriteKey + MAX_SRTP_MASTER_KEY_LEN, &keyingMaterialBuffer[offset], MAX_SRTP_SALT_KEY_LEN);
 
-    negotiatedSRTPProfile = mbedtls_ssl_get_dtls_srtp_protection_profile(&pDtlsSession->sslCtx);
-    switch (negotiatedSRTPProfile) {
-        case MBEDTLS_SRTP_AES128_CM_HMAC_SHA1_80:
+    mbedtls_ssl_get_dtls_srtp_negotiation_result(&pDtlsSession->sslCtx, &negotiatedSRTPProfile);
+    switch (negotiatedSRTPProfile.MBEDTLS_PRIVATE(chosen_dtls_srtp_profile)) {
+        case MBEDTLS_TLS_SRTP_AES128_CM_HMAC_SHA1_80:
             pDtlsKeyingMaterial->srtpProfile = KVS_SRTP_PROFILE_AES128_CM_HMAC_SHA1_80;
             break;
-        case MBEDTLS_SRTP_AES128_CM_HMAC_SHA1_32:
+        case MBEDTLS_TLS_SRTP_AES128_CM_HMAC_SHA1_32:
             pDtlsKeyingMaterial->srtpProfile = KVS_SRTP_PROFILE_AES128_CM_HMAC_SHA1_32;
             break;
         default:
@@ -552,6 +554,28 @@ CleanUp:
     return retStatus;
 }
 
+static int mbedtls_test_rnd_std_rand( void *rng_state,
+                                      unsigned char *output,
+                                      size_t len )
+{
+#if !defined(__OpenBSD__) && !defined(__NetBSD__)
+    size_t i;
+
+    if( rng_state != NULL )
+        rng_state  = NULL;
+
+    for( i = 0; i < len; ++i )
+        output[i] = rand();
+#else
+    if( rng_state != NULL )
+        rng_state = NULL;
+
+    arc4random_buf( output, len );
+#endif /* !OpenBSD && !NetBSD */
+
+    return( 0 );
+}
+
 STATUS certificate_key_copy(mbedtls_x509_crt* pCert, mbedtls_pk_context* pKey, PDtlsSessionCertificateInfo pDst)
 {
     ENTERS();
@@ -560,14 +584,14 @@ STATUS certificate_key_copy(mbedtls_x509_crt* pCert, mbedtls_pk_context* pKey, P
     mbedtls_ecp_keypair *pSrcECP, *pDstECP;
 
     CHK(pCert != NULL && pKey != NULL && pDst != NULL, STATUS_DTLS_NULL_ARG);
-    CHK(mbedtls_pk_check_pair(&pCert->pk, pKey) == 0, STATUS_DTLS_CERTIFICATE_GENERATION_FAILED);
+    CHK(mbedtls_pk_check_pair(&pCert->pk, pKey, mbedtls_test_rnd_std_rand, NULL) == 0, STATUS_DTLS_CERTIFICATE_GENERATION_FAILED);
 
     mbedtls_x509_crt_init(&pDst->cert);
     mbedtls_pk_init(&pDst->privateKey);
     initialized = TRUE;
 
     CHK(mbedtls_x509_crt_parse_der(&pDst->cert, pCert->raw.p, pCert->raw.len) == 0, STATUS_DTLS_CERTIFICATE_GENERATION_FAILED);
-    CHK(mbedtls_pk_setup(&pDst->privateKey, pKey->pk_info) == 0, STATUS_DTLS_CERTIFICATE_GENERATION_FAILED);
+    CHK(mbedtls_pk_setup(&pDst->privateKey, pKey->MBEDTLS_PRIVATE(pk_info)) == 0, STATUS_DTLS_CERTIFICATE_GENERATION_FAILED);
 
     switch (mbedtls_pk_get_type(pKey)) {
         case MBEDTLS_PK_RSA:
@@ -577,8 +601,8 @@ STATUS certificate_key_copy(mbedtls_x509_crt* pCert, mbedtls_pk_context* pKey, P
         case MBEDTLS_PK_ECDSA:
             pSrcECP = mbedtls_pk_ec(*pKey);
             pDstECP = mbedtls_pk_ec(pDst->privateKey);
-            CHK(mbedtls_ecp_group_copy(&pDstECP->grp, &pSrcECP->grp) == 0 && mbedtls_ecp_copy(&pDstECP->Q, &pSrcECP->Q) == 0 &&
-                    mbedtls_mpi_copy(&pDstECP->d, &pSrcECP->d) == 0,
+            CHK(mbedtls_ecp_group_copy(&pDstECP->MBEDTLS_PRIVATE(grp), &pSrcECP->MBEDTLS_PRIVATE(grp)) == 0 && mbedtls_ecp_copy(&pDstECP->MBEDTLS_PRIVATE(Q), &pSrcECP->MBEDTLS_PRIVATE(Q)) == 0 &&
+                    mbedtls_mpi_copy(&pDstECP->MBEDTLS_PRIVATE(d), &pSrcECP->MBEDTLS_PRIVATE(d)) == 0,
                 STATUS_DTLS_CERTIFICATE_GENERATION_FAILED);
             break;
         default:
