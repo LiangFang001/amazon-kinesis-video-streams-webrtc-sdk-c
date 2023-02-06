@@ -26,7 +26,9 @@
 //#include "azure_c_shared_utility/xlogging.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/entropy.h"
+#if (MBEDTLS_VERSION_NUMBER!=0x03000000 && MBEDTLS_VERSION_NUMBER!=0x03020100)
 #include "mbedtls/net.h"
+#endif
 #include "mbedtls/net_sockets.h"
 
 /* Public headers */
@@ -78,6 +80,30 @@ static int prvCreateX509Cert(NetIo_t* pxNet)
     return xRes;
 }
 
+#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
+static int mbedtls_test_rnd_std_rand( void *rng_state,
+                                      unsigned char *output,
+                                      size_t len )
+{
+#if !defined(__OpenBSD__) && !defined(__NetBSD__)
+    size_t i;
+
+    if( rng_state != NULL )
+        rng_state  = NULL;
+
+    for( i = 0; i < len; ++i )
+        output[i] = rand();
+#else
+    if( rng_state != NULL )
+        rng_state = NULL;
+
+    arc4random_buf( output, len );
+#endif /* !OpenBSD && !NetBSD */
+
+    return( 0 );
+}
+#endif
+
 static int prvInitConfig(NetIo_t* pxNet, const char* pcRootCA, const char* pcCert, const char* pcPrivKey, bool bFilePath)
 {
     int xRes = STATUS_SUCCESS;
@@ -98,12 +124,20 @@ static int prvInitConfig(NetIo_t* pxNet, const char* pcRootCA, const char* pcCer
                 if (bFilePath == false &&
                     (mbedtls_x509_crt_parse(pxNet->pRootCA, (void*) pcRootCA, strlen(pcRootCA) + 1) != 0 ||
                      mbedtls_x509_crt_parse(pxNet->pCert, (void*) pcCert, strlen(pcCert) + 1) != 0 ||
+#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
+		     mbedtls_pk_parse_key(pxNet->pPrivKey, (void*) pcPrivKey, strlen(pcPrivKey) + 1, NULL, 0, mbedtls_test_rnd_std_rand, NULL) != 0)) {
+#else
                      mbedtls_pk_parse_key(pxNet->pPrivKey, (void*) pcPrivKey, strlen(pcPrivKey) + 1, NULL, 0) != 0)) {
+#endif
                     DLOGE("Failed to parse x509");
                     xRes = STATUS_NULL_ARG;
                 } else if (mbedtls_x509_crt_parse_file(pxNet->pRootCA, (void*) pcRootCA) != 0 ||
                            mbedtls_x509_crt_parse_file(pxNet->pCert, (void*) pcCert) != 0 ||
+#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
+			   mbedtls_pk_parse_keyfile(pxNet->pPrivKey, (void*) pcPrivKey, NULL, mbedtls_test_rnd_std_rand, NULL) != 0) {
+#else
                            mbedtls_pk_parse_keyfile(pxNet->pPrivKey, (void*) pcPrivKey, NULL) != 0) {
+#endif
                 } else {
                     mbedtls_ssl_conf_authmode(&(pxNet->xConf), MBEDTLS_SSL_VERIFY_REQUIRED);
                     mbedtls_ssl_conf_ca_chain(&(pxNet->xConf), pxNet->pRootCA, NULL);
