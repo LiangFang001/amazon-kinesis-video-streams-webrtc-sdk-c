@@ -162,7 +162,7 @@ STATUS tls_session_read(PTlsSession pTlsSession, PBYTE pData, UINT32 bufferLen, 
             // if sslRet is 0, the connection is closed already.
             // if sslRet is MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY, the client notified us that the connection is going to be closed.
             // In either case, we'll make sure that the state will change to CLOSED. If it's already closed, it'll be just a noop.
-            DLOGD("Detected TLS close_notify alert");
+            DLOGI("Detected TLS close_notify alert");
             CHK_STATUS(tls_session_shutdown(pTlsSession));
             iterate = FALSE;
         } else if (sslRet == MBEDTLS_ERR_SSL_WANT_READ || sslRet == MBEDTLS_ERR_SSL_WANT_WRITE) {

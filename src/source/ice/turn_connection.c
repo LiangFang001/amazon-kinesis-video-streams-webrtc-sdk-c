@@ -230,7 +230,7 @@ static STATUS turn_connection_handleInboundStunError(PTurnConnection pTurnConnec
     CHK(pTurnConnection != NULL, STATUS_TURN_NULL_ARG);
     CHK(pBuffer != NULL && bufferLen > 0, STATUS_TURN_INVALID_INBOUND_STUN_ERROR_BUF);
     CHK(STUN_PACKET_IS_TYPE_ERROR(pBuffer), retStatus);
-    DLOGD("stun error packet type:0x%x", STUN_PACKET_GET_TYPE(pBuffer));
+    DLOGE("stun error packet type:0x%x", STUN_PACKET_GET_TYPE(pBuffer));
 
     MUTEX_LOCK(pTurnConnection->lock);
     locked = TRUE;
@@ -259,6 +259,7 @@ static STATUS turn_connection_handleInboundStunError(PTurnConnection pTurnConnec
 
     switch (pStunAttributeErrorCode->errorCode) {
         case STUN_ERROR_UNAUTHORIZED:
+            DLOGE("Unauthorized");
             CHK_STATUS(stun_attribute_getByType(pStunPacket, STUN_ATTRIBUTE_TYPE_NONCE, &pStunAttr));
             CHK_WARN(pStunAttr != NULL, retStatus, "No Nonce attribute found in Allocate Error response. Dropping Packet");
             pStunAttributeNonce = (PStunAttributeNonce) pStunAttr;
@@ -284,7 +285,7 @@ static STATUS turn_connection_handleInboundStunError(PTurnConnection pTurnConnec
             break;
 
         case STUN_ERROR_STALE_NONCE:
-            DLOGD("Updating stale nonce");
+            DLOGE("Updating stale nonce");
             CHK_STATUS(stun_attribute_getByType(pStunPacket, STUN_ATTRIBUTE_TYPE_NONCE, &pStunAttr));
             CHK_WARN(pStunAttr != NULL, retStatus, "No Nonce attribute found in Refresh Error response. Dropping Packet");
             pStunAttributeNonce = (PStunAttributeNonce) pStunAttr;
@@ -304,7 +305,7 @@ static STATUS turn_connection_handleInboundStunError(PTurnConnection pTurnConnec
         case STUN_PACKET_TYPE_CHANNEL_BIND_ERROR_RESPONSE:
         default:
             /* Remove peer for any other error */
-            DLOGW("Received STUN error response. Error type: 0x%02x, Error Code: %u. attribute len %u, Error detail: %s.", stunPacketType,
+            DLOGE("Received STUN error response. Error type: 0x%02x, Error Code: %u. attribute len %u, Error detail: %s.", stunPacketType,
                   pStunAttributeErrorCode->errorCode, pStunAttributeErrorCode->attribute.length, pStunAttributeErrorCode->errorPhrase);
 
             /* Find TurnPeer using transaction Id, then mark it as failed */
@@ -1184,7 +1185,7 @@ STATUS turn_connection_send(PTurnConnection pTurnConnection, PBYTE pBuf, UINT32 
     // check the status of turn connection.
     if (!(pTurnConnection->turnFsmState == TURN_STATE_CREATE_PERMISSION || pTurnConnection->turnFsmState == TURN_STATE_BIND_CHANNEL ||
           pTurnConnection->turnFsmState == TURN_STATE_READY)) {
-        DLOGV("TurnConnection not ready to send data");
+        DLOGE("TurnConnection not ready to send data");
 
         // If turn is not ready yet. Drop the send since ice will retry.
         CHK(FALSE, retStatus);
@@ -1195,12 +1196,13 @@ STATUS turn_connection_send(PTurnConnection pTurnConnection, PBYTE pBuf, UINT32 
     CHK_STATUS(net_getIpAddrStr(pDestIp, ipAddrStr, ARRAY_SIZE(ipAddrStr)));
 
     if (pSendPeer == NULL) {
-        DLOGV("Unable to send data through turn because peer with address %s:%u is not found", ipAddrStr, KVS_GET_IP_ADDRESS_PORT(pDestIp));
+        DLOGE("Unable to send data through turn because peer with address %s:%u is not found", ipAddrStr, KVS_GET_IP_ADDRESS_PORT(pDestIp));
         CHK(FALSE, retStatus);
     } else if (pSendPeer->connectionState == TURN_PEER_CONN_STATE_FAILED) {
+        DLOGE("Turn peer connection state failed");
         CHK(FALSE, STATUS_TURN_PEER_NOT_USABLE);
     } else if (!pSendPeer->ready) {
-        DLOGV("Unable to send data through turn because turn channel is not established with peer with address %s:%u", ipAddrStr,
+        DLOGE("Unable to send data through turn because turn channel is not established with peer with address %s:%u", ipAddrStr,
               KVS_GET_IP_ADDRESS_PORT(pDestIp));
         CHK(FALSE, retStatus);
     }
@@ -1537,7 +1539,7 @@ CleanUp:
     }
 
     if (pTurnConnection != NULL && previousState != pTurnConnection->turnFsmState) {
-        DLOGD("TurnConnection state changed from %s to %s", turn_connection_getStateStr(previousState),
+        DLOGI("TurnConnection state changed from %s to %s", turn_connection_getStateStr(previousState),
               turn_connection_getStateStr(pTurnConnection->turnFsmState));
     }
 

@@ -81,7 +81,7 @@ STATUS ice_agent_fsm_step(PIceAgent pIceAgent)
 
     if (oldState != pIceAgent->iceAgentState) {
         if (pIceAgent->iceAgentCallbacks.onIceAgentStateChange != NULL) {
-            DLOGD("Ice agent state changed from %s to %s.", ice_agent_fsm_toString(oldState), ice_agent_fsm_toString(pIceAgent->iceAgentState));
+            DLOGI("Ice agent state changed from %s to %s.", ice_agent_fsm_toString(oldState), ice_agent_fsm_toString(pIceAgent->iceAgentState));
             pIceAgent->iceAgentCallbacks.onIceAgentStateChange(pIceAgent->iceAgentCallbacks.customData, pIceAgent->iceAgentState);
         }
     } else {
