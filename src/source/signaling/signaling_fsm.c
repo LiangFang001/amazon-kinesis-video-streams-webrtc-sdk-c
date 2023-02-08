@@ -202,23 +202,19 @@ STATUS signaling_fsm_getToken(UINT64 customData, UINT64 time)
             STATUS_SIGNALING_FSM_STATE_CHANGE_FAILED);
     }
 
+    THREAD_SLEEP_UNTIL(time);
+
     // Use the credential provider to get the token
     retStatus = pSignalingClient->pCredentialProvider->getCredentialsFn(pSignalingClient->pCredentialProvider, &pSignalingClient->pAwsCredentials);
 
     // Check the expiration
-    if (NULL == pSignalingClient->pAwsCredentials || GETTIME() >= pSignalingClient->pAwsCredentials->expiration) {
+    if (NULL == pSignalingClient->pAwsCredentials || SIGNALING_GET_CURRENT_TIME(pSignalingClient) >= pSignalingClient->pAwsCredentials->expiration) {
         serviceCallResult = HTTP_STATUS_UNAUTHORIZED;
     } else {
         serviceCallResult = HTTP_STATUS_OK;
     }
 
     ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) serviceCallResult);
-
-    // Self-prime the next state
-    CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));
-
-    // Reset the ret status
-    retStatus = STATUS_SUCCESS;
 
 CleanUp:
 
@@ -281,11 +277,6 @@ STATUS signaling_fsm_describe(UINT64 customData, UINT64 time)
     // Call the aggregate function
     retStatus = signaling_channel_describe(pSignalingClient, time);
 
-    CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));
-
-    // Reset the ret status
-    retStatus = STATUS_SUCCESS;
-
 CleanUp:
 
     SIGNALING_FSM_LEAVES();
@@ -341,11 +332,6 @@ STATUS signaling_fsm_executCreate(UINT64 customData, UINT64 time)
 
     // Call the aggregate function
     retStatus = signaling_channel_create(pSignalingClient, time);
-
-    CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));
-
-    // Reset the ret status
-    retStatus = STATUS_SUCCESS;
 
 CleanUp:
 
@@ -403,11 +389,6 @@ STATUS signaling_fsm_getEndpoint(UINT64 customData, UINT64 time)
     // Call the aggregate function
     retStatus = signaling_channel_getEndpoint(pSignalingClient, time);
 
-    CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));
-
-    // Reset the ret status
-    retStatus = STATUS_SUCCESS;
-
 CleanUp:
 
     SIGNALING_FSM_LEAVES();
@@ -463,11 +444,6 @@ STATUS signaling_fsm_getIceConfig(UINT64 customData, UINT64 time)
 
     // Call the aggregate function
     retStatus = signaling_channel_getIceConfig(pSignalingClient, time);
-
-    CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));
-
-    // Reset the ret status
-    retStatus = STATUS_SUCCESS;
 
 CleanUp:
 
@@ -531,17 +507,6 @@ STATUS signaling_fsm_ready(UINT64 customData, UINT64 time)
             STATUS_SIGNALING_FSM_STATE_CHANGE_FAILED);
     }
 
-    // Ensure we won't async the GetIceConfig as we reach the ready state
-    if (pSignalingClient->connecting) {
-        // Self-prime the connect
-        CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));
-    } else {
-        // Reset the timeout for the state machine
-        pSignalingClient->stepUntil = 0;
-    }
-
-    // Reset the ret status
-    retStatus = STATUS_SUCCESS;
 CleanUp:
 
     SIGNALING_FSM_LEAVES();
@@ -630,11 +595,6 @@ STATUS signaling_fsm_connect(UINT64 customData, UINT64 time)
 
     retStatus = signaling_channel_connect(pSignalingClient, time);
 
-    CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));
-
-    // Reset the ret status
-    retStatus = STATUS_SUCCESS;
-
 CleanUp:
 
     SIGNALING_FSM_LEAVES();
@@ -709,11 +669,6 @@ STATUS signaling_fsm_connected(UINT64 customData, UINT64 time)
             STATUS_SIGNALING_FSM_STATE_CHANGE_FAILED);
     }
 
-    // Reset the timeout for the state machine
-    MUTEX_LOCK(pSignalingClient->nestedFsmLock);
-    pSignalingClient->stepUntil = 0;
-    MUTEX_UNLOCK(pSignalingClient->nestedFsmLock);
-
 CleanUp:
 
     SIGNALING_FSM_LEAVES();
@@ -729,9 +684,6 @@ STATUS signaling_fsm_exitDisconnected(UINT64 customData, PUINT64 pState)
     SIZE_T result;
 
     CHK(pSignalingClient != NULL && pState != NULL, STATUS_SIGNALING_FSM_NULL_ARG);
-
-    // See if we need to retry first of all
-    CHK(pSignalingClient->reconnect, STATUS_SUCCESS);
 
     result = ATOMIC_LOAD(&pSignalingClient->apiCallStatus);
     switch (result) {
@@ -769,11 +721,6 @@ STATUS signaling_fsm_disconnected(UINT64 customData, UINT64 time)
         CHK(pSignalingClient->signalingClientCallbacks.stateChangeFn(pSignalingClient->signalingClientCallbacks.customData,
                                                                      SIGNALING_CLIENT_STATE_DISCONNECTED) == STATUS_SUCCESS,
             STATUS_SIGNALING_FSM_STATE_CHANGE_FAILED);
-    }
-
-    // Self-prime the next state
-    if (pSignalingClient->reconnect == TRUE) {
-        CHK_STATUS(signaling_fsm_step(pSignalingClient, retStatus));
     }
 
 CleanUp:
@@ -816,49 +763,48 @@ STATUS signaling_fsm_free(SignalingFsmHandle signalingFsmHandle)
     return retStatus;
 }
 
-STATUS signaling_fsm_step(PSignalingClient pSignalingClient, STATUS status)
+STATUS signaling_fsm_step(PSignalingClient pSignalingClient, UINT64 expiration, UINT64 finalState)
 {
     SIGNALING_FSM_ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
     UINT32 i;
     BOOL locked = FALSE;
     UINT64 currentTime;
-
-    CHK(pSignalingClient != NULL, STATUS_SIGNALING_FSM_NULL_ARG);
-
-    // Check for a shutdown
-    CHK(!ATOMIC_LOAD_BOOL(&pSignalingClient->shutdown), retStatus);
+    PStateMachineState pState = NULL;
 
     MUTEX_LOCK(pSignalingClient->nestedFsmLock);
     locked = TRUE;
 
-    // Check if an error and the retry is OK
-    if (!pSignalingClient->pChannelInfo->retry && STATUS_FAILED(status)) {
-        CHK(FALSE, status);
-    }
+    while (TRUE) {
+        CHK(pSignalingClient != NULL, STATUS_SIGNALING_FSM_NULL_ARG);
 
-    currentTime = GETTIME();
+        // Check for a shutdown
+        CHK(!ATOMIC_LOAD_BOOL(&pSignalingClient->shutdown), retStatus);
 
-    CHK(pSignalingClient->stepUntil == 0 || currentTime <= pSignalingClient->stepUntil, STATUS_SIGNALING_FSM_TIMEOUT);
-
-    // Check if the status is any of the retry/failed statuses
-    if (STATUS_FAILED(status)) {
-        for (i = 0; i < SIGNALING_STATE_MACHINE_STATE_COUNT; i++) {
-            CHK(status != SIGNALING_STATE_MACHINE_STATES[i].status, SIGNALING_STATE_MACHINE_STATES[i].status);
+        if (STATUS_FAILED(retStatus)) {
+            CHK(pSignalingClient->pChannelInfo->retry, retStatus);
+            for (i = 0; i < SIGNALING_STATE_MACHINE_STATE_COUNT; i++) {
+                CHK(retStatus != SIGNALING_STATE_MACHINE_STATES[i].status, SIGNALING_STATE_MACHINE_STATES[i].status);
+            }
         }
-    }
-    //#TBD.
-    // Fix-up the expired credentials transition
-    // NOTE: Api Gateway might not return an error that can be interpreted as unauthorized to
-    // make the correct transition to auth integration state.
 
-    if (pSignalingClient->pAwsCredentials != NULL && pSignalingClient->pAwsCredentials->expiration < currentTime) {
-        // Set the call status as auth error
-        ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_UNAUTHORIZED);
-    }
+        currentTime = SIGNALING_GET_CURRENT_TIME(pSignalingClient);
 
-    // Step the state machine
-    CHK_STATUS(state_machine_step(pSignalingClient->signalingFsmHandle));
+        CHK(expiration == 0 || currentTime <= expiration, STATUS_SIGNALING_FSM_TIMEOUT);
+
+        // Fix-up the expired credentials transition
+        // NOTE: Api Gateway might not return an error that can be interpreted as unauthorized to
+        // make the correct transition to auth integration state.
+        if (pSignalingClient->pAwsCredentials != NULL && pSignalingClient->pAwsCredentials->expiration < currentTime) {
+            // Set the call status as auth error
+            ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_UNAUTHORIZED);
+        }
+
+        retStatus = state_machine_step(pSignalingClient->signalingFsmHandle);
+
+        CHK_STATUS(state_machine_getCurrentState(pSignalingClient->signalingFsmHandle, &pState));
+        CHK(!(pState->state == finalState), STATUS_SUCCESS);
+    }
 
 CleanUp:
 

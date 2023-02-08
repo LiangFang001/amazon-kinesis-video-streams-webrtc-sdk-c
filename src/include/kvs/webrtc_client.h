@@ -260,6 +260,11 @@ extern "C" {
 #define SIGNALING_CONNECT_TIMEOUT (5 * HUNDREDS_OF_NANOS_IN_A_SECOND)
 
 /**
+ * Default disconnect sync API timeout
+ */
+#define SIGNALING_DISCONNECT_STATE_TIMEOUT (5 * HUNDREDS_OF_NANOS_IN_A_SECOND)
+
+/**
  * Default timeout for sending data
  */
 #define SIGNALING_SEND_TIMEOUT (5 * HUNDREDS_OF_NANOS_IN_A_SECOND)
@@ -1064,6 +1069,7 @@ typedef struct {
     SignalingClientMessageReceivedFunc messageReceivedFn; //!< Callback registeration for received SDP
     SignalingClientErrorReportFunc errorReportFn;         //!<  Error reporting function. This is an optional member
     SignalingClientStateChangedFunc stateChangeFn;        //!< Signaling client state change callback
+    GetCurrentTimeFunc getCurrentTimeFn;                  //!< callback to override system time, used for testing clock skew
 } SignalingClientCallbacks, *PSignalingClientCallbacks;
 
 /**
