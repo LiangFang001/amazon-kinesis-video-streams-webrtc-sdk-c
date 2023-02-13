@@ -130,6 +130,13 @@ extern "C" {
 /** #TBD, need to add the code of initialization. */
 #define WSS_INBOUND_MSGQ_LENGTH 64
 
+#define IS_CURRENT_TIME_CALLBACK_SET(pClient) ((pClient) != NULL && ((pClient)->signalingClientCallbacks.getCurrentTimeFn != NULL))
+
+#define SIGNALING_GET_CURRENT_TIME(pClient)                                                                                                          \
+    (IS_CURRENT_TIME_CALLBACK_SET((pClient))                                                                                                         \
+         ? ((pClient)->signalingClientCallbacks.getCurrentTimeFn((pClient)->signalingClientCallbacks.customData))                                    \
+         : GETTIME())
+
 /******************************************************************************
  * TYPE DEFINITION
  ******************************************************************************/
@@ -244,7 +251,6 @@ typedef struct {
     volatile ATOMIC_BOOL refreshIceConfig;
     volatile ATOMIC_BOOL shutdownWssDispatch;
 
-    BOOL connecting; //!< Indicates whether to self-prime on Ready or not
     BOOL reconnect;  //!< Flag determines if reconnection should be attempted on connection drop
 
     UINT64 iceConfigTime;       //!< Indicates when the ICE configuration has been retrieved
@@ -275,7 +281,6 @@ typedef struct {
     // #http_api_describeChannel
     // #http_api_getChannelEndpoint
     // #http_api_getIceConfig
-    UINT64 stepUntil; //!< Execute the state machine until this time
 
     PStackQueue pOutboundMsgQ; //!< List of the ongoing messages, the queue of singaling ongoing messsages.
     MUTEX outboundMsgQLock;    //!< Message queue lock, the lock of signaling ongoing message queue.

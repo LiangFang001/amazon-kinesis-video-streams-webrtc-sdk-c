@@ -1236,7 +1236,9 @@ STATUS turn_connection_send(PTurnConnection pTurnConnection, PBYTE pBuf, UINT32 
 
     if (STATUS_FAILED(retStatus)) {
         DLOGW("ice_utils_send failed with 0x%08x", retStatus);
-        retStatus = STATUS_SUCCESS;
+	if (retStatus != STATUS_SOCKET_CONN_CLOSED_ALREADY) {
+            retStatus = STATUS_SUCCESS;
+	}
     }
 
 CleanUp:

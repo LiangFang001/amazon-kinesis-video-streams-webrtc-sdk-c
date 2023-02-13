@@ -69,11 +69,12 @@ STATUS signaling_fsm_free(SignalingFsmHandle signalingFsmHandle);
  * @brief step the state machine
  *
  * @param[in] pSignalingClient the context of the signaling client.
- * @param[in] status
+ * @param[in] expiration timeout
+ * @param[in] finalState final signaling client state
  *
  * @return STATUS status of execution.
  */
-STATUS signaling_fsm_step(PSignalingClient pSignalingClient, STATUS status);
+STATUS signaling_fsm_step(PSignalingClient pSignalingClient, UINT64 expiration, UINT64 finalState);
 /**
  * @brief check the current state is the required state or not.
  *
