@@ -2693,6 +2693,7 @@ STATUS ice_agent_sendStunPacket(PStunPacket pStunPacket, PBYTE password, UINT32 
         DLOGW("ice_utils_sendStunPacket failed with 0x%08x", retStatus);
 
         if (retStatus == STATUS_SOCKET_CONN_CLOSED_ALREADY) {
+            pIceAgent->iceAgentStatus = STATUS_SOCKET_CONN_CLOSED_ALREADY;
             pLocalCandidate->state = ICE_CANDIDATE_STATE_INVALID;
             ice_agent_invalidateCandidatePair(pIceAgent);
         }
