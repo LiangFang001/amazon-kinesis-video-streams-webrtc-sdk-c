@@ -41,7 +41,7 @@ extern "C" {
 #define SIGNALING_REQUEST_ID_HEADER_NAME KVS_REQUEST_ID_HEADER_NAME ":"
 
 // Signaling client from custom data conversion
-#define SIGNALING_CLIENT_FROM_CUSTOM_DATA(h) ((PSignalingClient)(h))
+#define SIGNALING_CLIENT_FROM_CUSTOM_DATA(h) ((PSignalingClient) (h))
 
 // Grace period for refreshing the ICE configuration
 #define ICE_CONFIGURATION_REFRESH_GRACE_PERIOD (30 * HUNDREDS_OF_NANOS_IN_A_SECOND)
@@ -104,7 +104,7 @@ extern "C" {
 #define CHECK_SIGNALING_CREDENTIALS_EXPIRATION(p)                                                                                                    \
     do {                                                                                                                                             \
         if (GETTIME() >= (p)->pAwsCredentials->expiration) {                                                                                         \
-            DLOGD("Credential is expired.");                                                                                                         \
+            DLOGI("Credential is expired.");                                                                                                         \
             ATOMIC_STORE(&(p)->apiCallStatus, (SIZE_T) HTTP_STATUS_UNAUTHORIZED);                                                                    \
             CHK(FALSE, retStatus);                                                                                                                   \
         }                                                                                                                                            \
@@ -251,7 +251,7 @@ typedef struct {
     volatile ATOMIC_BOOL refreshIceConfig;
     volatile ATOMIC_BOOL shutdownWssDispatch;
 
-    BOOL reconnect;  //!< Flag determines if reconnection should be attempted on connection drop
+    BOOL reconnect; //!< Flag determines if reconnection should be attempted on connection drop
 
     UINT64 iceConfigTime;       //!< Indicates when the ICE configuration has been retrieved
     UINT64 iceConfigExpiration; //!< Indicates when the ICE configuration is considered expired
@@ -305,8 +305,8 @@ typedef struct {
 } SignalingMessageWrapper, *PSignalingMessageWrapper;
 
 // Public handle to and from object converters
-#define TO_SIGNALING_CLIENT_HANDLE(p)   ((SIGNALING_CLIENT_HANDLE)(p))
-#define FROM_SIGNALING_CLIENT_HANDLE(h) (IS_VALID_SIGNALING_CLIENT_HANDLE(h) ? (PSignalingClient)(h) : NULL)
+#define TO_SIGNALING_CLIENT_HANDLE(p)   ((SIGNALING_CLIENT_HANDLE) (p))
+#define FROM_SIGNALING_CLIENT_HANDLE(h) (IS_VALID_SIGNALING_CLIENT_HANDLE(h) ? (PSignalingClient) (h) : NULL)
 
 /******************************************************************************
  * FUNCTION PROTOTYPE
