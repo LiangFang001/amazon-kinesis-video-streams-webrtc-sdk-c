@@ -178,6 +178,9 @@ static int prvConnect(NetIo_t* pxNet, const char* pcHost, const char* pcPort, co
     } else if ((ret = mbedtls_net_connect(&(pxNet->xFd), pcHost, pcPort, MBEDTLS_NET_PROTO_TCP)) != 0) {
         DLOGE("Failed to connect to %s:%s", pcHost, pcPort);
         xRes = STATUS_NULL_ARG;
+    } else if ((ret = mbedtls_ssl_set_hostname(&(pxNet->xSsl), pcHost)) !=0) {
+        DLOGE("Failed to set hostname %s", pcHost);
+        xRes = STATUS_NULL_ARG;
     } else if (prvInitConfig(pxNet, pcRootCA, pcCert, pcPrivKey, bFilePath) != STATUS_SUCCESS) {
         DLOGE("Failed to config ssl");
         xRes = STATUS_NULL_ARG;
