@@ -27,6 +27,8 @@ PCHAR getLogLevelStr(UINT32 loglevel)
             return LOG_LEVEL_VERBOSE_STR;
         case LOG_LEVEL_DEBUG:
             return LOG_LEVEL_DEBUG_STR;
+        case LOG_LEVEL_BETA:
+            return LOG_LEVEL_BETA_STR;
         case LOG_LEVEL_INFO:
             return LOG_LEVEL_INFO_STR;
         case LOG_LEVEL_WARN:

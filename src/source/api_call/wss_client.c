@@ -185,7 +185,7 @@ static VOID wslay_msg_recv_callback(wslay_event_context_ptr ctx, const struct ws
     } else {
         pWssClientCtx->ctrlMessageHandler(pWssClientCtx->pUserData, arg->opcode, arg->msg, arg->msg_length);
         if (arg->opcode == WSLAY_PONG) {
-            pWssClientCtx->pingCounter = 0;
+            ATOMIC_INCREMENT(&pWssClientCtx->pongCounter);
         }
     }
 }
@@ -284,6 +284,7 @@ VOID wss_client_create(PWssClientContext* ppWssClientCtx, NetIoHandle xNetIoHand
     *ppWssClientCtx = NULL;
     CHK(NULL != (pWssClientCtx = (PWssClientContext) MEMCALLOC(1, SIZEOF(WssClientContext))), STATUS_NOT_ENOUGH_MEMORY);
 
+    DLOGI("Create Wss client");
     pWssClientCtx->event_callbacks = callbacks;
     pWssClientCtx->xNetIoHandle = xNetIoHandle;
     pWssClientCtx->pUserData = pUserData;
@@ -294,7 +295,8 @@ VOID wss_client_create(PWssClientContext* ppWssClientCtx, NetIoHandle xNetIoHand
     pWssClientCtx->ioLock = MUTEX_CREATE(FALSE);
     CHK(IS_VALID_MUTEX_VALUE(pWssClientCtx->ioLock), STATUS_INVALID_OPERATION);
 
-    pWssClientCtx->pingCounter = 0;
+    ATOMIC_STORE(&pWssClientCtx->pingCounter, 0);
+    ATOMIC_STORE(&pWssClientCtx->pongCounter, 0);
 
     wslay_event_context_client_init(&pWssClientCtx->event_ctx, &pWssClientCtx->event_callbacks, pWssClientCtx);
     pWssClientCtx->clientTid = INVALID_TID_VALUE;
@@ -316,7 +318,7 @@ PVOID wss_client_routine(PWssClientContext pWssClientCtx)
     // for ping-pong.
     UINT32 counter = 0;
 
-    DLOGD("Wss client is up");
+    DLOGI("Wss client is up");
     wslay_event_config_set_callbacks(pWssClientCtx->event_ctx, &pWssClientCtx->event_callbacks);
     NetIo_setRecvTimeout(pWssClientCtx->xNetIoHandle, WSS_CLIENT_POLLING_INTERVAL);
 
@@ -346,10 +348,14 @@ PVOID wss_client_routine(PWssClientContext pWssClientCtx)
         }
 
         // for ping-pong
-        pWssClientCtx->pingCounter++;
-        if (pWssClientCtx->pingCounter >= WSS_CLIENT_PING_PONG_COUNTER) {
+        ATOMIC_INCREMENT(&pWssClientCtx->pingCounter);
+        if (ATOMIC_LOAD(&pWssClientCtx->pingCounter) >= WSS_CLIENT_PING_PONG_COUNTER) {
             CHK(wss_client_sendPing(pWssClientCtx) == STATUS_SUCCESS, STATUS_WSS_CLIENT_PING_FAILED);
-            pWssClientCtx->pingCounter = 0;
+            if (ATOMIC_LOAD(&pWssClientCtx->pongCounter) == 0) {
+                DLOGI("Did not receive the pong message");
+            }
+            ATOMIC_STORE(&pWssClientCtx->pingCounter, 0);
+            ATOMIC_STORE(&pWssClientCtx->pongCounter, 0);
         }
     }
 
@@ -360,15 +366,17 @@ CleanUp:
         pWssClientCtx->ctrlMessageHandler(pWssClientCtx->pUserData, WSLAY_CONNECTION_CLOSE, "The connection may be lost",
                                           STRLEN("The connection may be lost"));
     }
-    DLOGD("Wss client is down");
+    DLOGI("Wss client is down");
     THREAD_EXIT(NULL);
     WSS_CLIENT_EXIT();
-    return (PVOID)(ULONG_PTR) retStatus;
+    return (PVOID) (ULONG_PTR) retStatus;
 }
 
 STATUS wss_client_start(PWssClientContext pWssClientCtx)
 {
     STATUS retStatus = STATUS_SUCCESS;
+
+    DLOGI("Start the wss client");
 
     if (!IS_VALID_TID_VALUE(pWssClientCtx->clientTid)) {
         CHK_STATUS(THREAD_CREATE_EX(&pWssClientCtx->clientTid, WSS_CLIENT_THREAD_NAME, WSS_CLIENT_THREAD_SIZE, TRUE, wss_client_routine,
@@ -378,7 +386,7 @@ STATUS wss_client_start(PWssClientContext pWssClientCtx)
     }
 
 CleanUp:
-
+    CHK_LOG_ERR(retStatus);
     return retStatus;
 }
 
@@ -387,6 +395,8 @@ VOID wss_client_close(PWssClientContext pWssClientCtx)
     INT32 retStatus = 0;
 
     CHK(pWssClientCtx != NULL, STATUS_WSS_CLIENT_NULL_ARG);
+
+    DLOGI("Close the wss client");
 
     if (IS_VALID_MUTEX_VALUE(pWssClientCtx->ioLock)) {
         // exit the thread of wss_client_routine.

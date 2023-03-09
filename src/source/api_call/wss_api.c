@@ -73,7 +73,7 @@ STATUS wss_api_connect(PSignalingClient pSignalingClient, PUINT32 pHttpStatusCod
 
     CHK(pSignalingClient != NULL, STATUS_WSS_API_MISSING_SIGNALING_CLIENT);
     CHK(pSignalingClient->channelDescription.channelEndpointWss[0] != '\0', STATUS_INTERNAL_ERROR);
-
+    DLOGB("Connect the wss");
     MUTEX_LOCK(pSignalingClient->wssContextLock);
     locked = TRUE;
 
@@ -322,6 +322,7 @@ STATUS wss_api_disconnect(PSignalingClient pSignalingClient)
     BOOL locked = FALSE;
 
     CHK(pSignalingClient != NULL, STATUS_WSS_API_MISSING_SIGNALING_CLIENT);
+    DLOGB("Disconnect the wss");
     MUTEX_LOCK(pSignalingClient->wssContextLock);
     locked = TRUE;
 

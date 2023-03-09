@@ -48,7 +48,7 @@ extern "C" {
  * EMA (Exponential Moving Average) alpha value and 1-alpha value - over appx 20 samples
  */
 #define EMA_ALPHA_VALUE           ((DOUBLE) 0.05)
-#define ONE_MINUS_EMA_ALPHA_VALUE ((DOUBLE)(1 - EMA_ALPHA_VALUE))
+#define ONE_MINUS_EMA_ALPHA_VALUE ((DOUBLE) (1 - EMA_ALPHA_VALUE))
 
 /**
  * Calculates the EMA (Exponential Moving Average) accumulator value
@@ -92,14 +92,16 @@ extern logPrintFunc globalCustomLogPrintFn;
 
 #define LOG_LEVEL_VERBOSE 1
 #define LOG_LEVEL_DEBUG   2
-#define LOG_LEVEL_INFO    3
-#define LOG_LEVEL_WARN    4
-#define LOG_LEVEL_ERROR   5
-#define LOG_LEVEL_FATAL   6
-#define LOG_LEVEL_SILENT  7
+#define LOG_LEVEL_BETA    3
+#define LOG_LEVEL_INFO    4
+#define LOG_LEVEL_WARN    5
+#define LOG_LEVEL_ERROR   6
+#define LOG_LEVEL_FATAL   7
+#define LOG_LEVEL_SILENT  8
 
 #define LOG_LEVEL_VERBOSE_STR (PCHAR) "VERBOSE"
 #define LOG_LEVEL_DEBUG_STR   (PCHAR) "DEBUG"
+#define LOG_LEVEL_BETA_STR    (PCHAR) "BETA"
 #define LOG_LEVEL_INFO_STR    (PCHAR) "INFO"
 #define LOG_LEVEL_WARN_STR    (PCHAR) "WARN"
 #define LOG_LEVEL_ERROR_STR   (PCHAR) "ERROR"
@@ -119,6 +121,9 @@ extern logPrintFunc globalCustomLogPrintFn;
 #endif
 #ifndef DLOGI
 #define DLOGI(fmt, ...) __LOG(LOG_LEVEL_INFO, (PCHAR) LOG_CLASS, (PCHAR) fmt, ##__VA_ARGS__)
+#endif
+#ifndef DLOGB
+#define DLOGB(fmt, ...) __LOG(LOG_LEVEL_BETA, (PCHAR) LOG_CLASS, (PCHAR) fmt, ##__VA_ARGS__)
 #endif
 #ifndef DLOGD
 #define DLOGD(fmt, ...) __LOG(LOG_LEVEL_DEBUG, (PCHAR) LOG_CLASS, (PCHAR) fmt, ##__VA_ARGS__)

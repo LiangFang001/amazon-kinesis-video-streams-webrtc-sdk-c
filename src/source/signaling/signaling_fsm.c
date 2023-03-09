@@ -811,6 +811,7 @@ CleanUp:
     if (locked) {
         MUTEX_UNLOCK(pSignalingClient->nestedFsmLock);
     }
+    CHK_LOG_ERR(retStatus);
 
     SIGNALING_FSM_LEAVES();
     return retStatus;

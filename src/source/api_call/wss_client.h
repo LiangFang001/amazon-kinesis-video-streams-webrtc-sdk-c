@@ -46,7 +46,8 @@ typedef struct {
     wslay_event_context_ptr event_ctx;            //!< the event context of wslay.
     struct wslay_event_callbacks event_callbacks; //!< the callback of event context.
     NetIoHandle xNetIoHandle;
-    UINT64 pingCounter;
+    volatile SIZE_T pingCounter;
+    volatile SIZE_T pongCounter;
     MUTEX ioLock;                              //!< the lock for the control of the wss io.
     PVOID pUserData;                           //!< the arguments of the message handler. ref: PSignalingClient
     MessageHandlerFunc messageHandler;         //!< the handler of receive the non-ctrl messages.
