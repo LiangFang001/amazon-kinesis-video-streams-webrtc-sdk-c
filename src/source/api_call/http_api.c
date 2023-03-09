@@ -259,8 +259,7 @@ CleanUp:
     }
 
     if (pHttpRspCtx != NULL) {
-        retStatus = http_parser_detroy(pHttpRspCtx);
-        if (retStatus != STATUS_SUCCESS) {
+        if (http_parser_detroy(pHttpRspCtx) != STATUS_SUCCESS) {
             DLOGE("destroying http parset failed. \n");
         }
     }
@@ -358,8 +357,7 @@ CleanUp:
     }
 
     if (pHttpRspCtx != NULL) {
-        retStatus = http_parser_detroy(pHttpRspCtx);
-        if (retStatus != STATUS_SUCCESS) {
+        if (http_parser_detroy(pHttpRspCtx) != STATUS_SUCCESS) {
             DLOGE("destroying http parset failed. \n");
         }
     }
@@ -461,8 +459,7 @@ CleanUp:
     }
 
     if (pHttpRspCtx != NULL) {
-        retStatus = http_parser_detroy(pHttpRspCtx);
-        if (retStatus != STATUS_SUCCESS) {
+        if (http_parser_detroy(pHttpRspCtx) != STATUS_SUCCESS) {
             DLOGE("destroying http parset failed. \n");
         }
     }
@@ -577,8 +574,7 @@ CleanUp:
     }
 
     if (pHttpRspCtx != NULL) {
-        retStatus = http_parser_detroy(pHttpRspCtx);
-        if (retStatus != STATUS_SUCCESS) {
+        if (http_parser_detroy(pHttpRspCtx) != STATUS_SUCCESS) {
             DLOGE("destroying http parset failed. \n");
         }
     }
@@ -669,8 +665,7 @@ CleanUp:
     }
 
     if (pHttpRspCtx != NULL) {
-        retStatus = http_parser_detroy(pHttpRspCtx);
-        if (retStatus != STATUS_SUCCESS) {
+        if (http_parser_detroy(pHttpRspCtx) != STATUS_SUCCESS) {
             DLOGE("destroying http parset failed. \n");
         }
     }
@@ -780,8 +775,7 @@ CleanUp:
     }
 
     if (pHttpRspCtx != NULL) {
-        retStatus = http_parser_detroy(pHttpRspCtx);
-        if (retStatus != STATUS_SUCCESS) {
+        if (http_parser_detroy(pHttpRspCtx) != STATUS_SUCCESS) {
             DLOGE("destroying http parset failed. \n");
         }
     }

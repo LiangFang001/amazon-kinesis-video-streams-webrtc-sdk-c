@@ -168,8 +168,7 @@ CleanUp:
     CHK_LOG_ERR(retStatus);
 
     if (pHttpRspCtx != NULL) {
-        retStatus = http_parser_detroy(pHttpRspCtx);
-        if (retStatus != STATUS_SUCCESS) {
+        if (http_parser_detroy(pHttpRspCtx) != STATUS_SUCCESS) {
             DLOGD("destroying http parset failed.");
         }
     }
