@@ -324,7 +324,8 @@ PVOID wss_client_routine(PWssClientContext pWssClientCtx)
 
     nfds = NetIo_getSocket(pWssClientCtx->xNetIoHandle);
     FD_ZERO(&rfds);
-
+    UINT64 startTime = GETTIME()-WSS_CLIENT_PING_PONG_INTERVAL;
+    UINT64 endTime = startTime;
     // check the wss client want to read or write or not.
     // When the wss lib receive the ctrl frame of close connection, this flag of read_enabled will be pull down.
     // It means we do not need to handle this loop when the connection is closed.
@@ -348,14 +349,12 @@ PVOID wss_client_routine(PWssClientContext pWssClientCtx)
         }
 
         // for ping-pong
-        ATOMIC_INCREMENT(&pWssClientCtx->pingCounter);
-        if (ATOMIC_LOAD(&pWssClientCtx->pingCounter) >= WSS_CLIENT_PING_PONG_COUNTER) {
+        endTime = GETTIME();
+        if (endTime-startTime >= WSS_CLIENT_PING_PONG_INTERVAL) {
             CHK(wss_client_sendPing(pWssClientCtx) == STATUS_SUCCESS, STATUS_WSS_CLIENT_PING_FAILED);
-            if (ATOMIC_LOAD(&pWssClientCtx->pongCounter) == 0) {
-                DLOGI("Did not receive the pong message");
-            }
-            ATOMIC_STORE(&pWssClientCtx->pingCounter, 0);
-            ATOMIC_STORE(&pWssClientCtx->pongCounter, 0);
+            startTime = endTime;
+            ATOMIC_INCREMENT(&pWssClientCtx->pingCounter);
+            DLOGB("(ping, pong): (%d, %d)", ATOMIC_LOAD(&pWssClientCtx->pingCounter), ATOMIC_LOAD(&pWssClientCtx->pongCounter));
         }
     }
 
