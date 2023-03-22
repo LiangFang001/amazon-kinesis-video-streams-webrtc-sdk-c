@@ -1046,9 +1046,6 @@ STATUS signaling_channel_describe(PSignalingClient pSignalingClient, UINT64 time
 
 CleanUp:
 
-    if (STATUS_FAILED(retStatus) && pSignalingClient != NULL) {
-        ATOMIC_STORE(&pSignalingClient->apiCallStatus, (SIZE_T) HTTP_STATUS_UNKNOWN);
-    }
     LEAVES();
     return retStatus;
 }
