@@ -121,9 +121,12 @@ static INT32 wss_client_socketSend(PWssClientContext pWssClientCtx, const UINT8*
 {
     UNUSED_PARAM(flags);
     int res = NetIo_send(pWssClientCtx->xNetIoHandle, data, len);
-    if (res == 0) {
+    if (res == STATUS_SUCCESS) {
+        DLOGB("wss_client_socketSend:%d", len);
         return len;
     } else {
+        res = -1;
+        DLOGB("wss_client_socketSend failed");
         return res;
     }
 }
@@ -143,14 +146,15 @@ static SSIZE_T wslay_send_callback(wslay_event_context_ptr ctx, const UINT8* dat
 {
     PWssClientContext pWssClientCtx = (PWssClientContext) user_data;
     SSIZE_T r = wss_client_socketSend(pWssClientCtx, data, len, flags);
-    if (r != 0) {
+    if (r < 0) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             wslay_event_set_error(ctx, WSLAY_ERR_WOULDBLOCK);
         } else {
             wslay_event_set_error(ctx, WSLAY_ERR_CALLBACK_FAILURE);
         }
+        DLOGB("wslay_send_callback failed");
     }
-    return len;
+    return r;
 }
 
 static SSIZE_T wslay_recv_callback(wslay_event_context_ptr ctx, UINT8* data, SIZE_T len, INT32 flags, VOID* user_data)
@@ -227,8 +231,15 @@ static STATUS wss_client_send(PWssClientContext pWssClientCtx, struct wslay_even
     // But this is a tradeoff. We can evaluate this design later.
     if (wslay_event_get_write_enabled(pWssClientCtx->event_ctx) == 1) {
         // send the message out immediately.
+        size_t prev = 0, mid = 0, last = 0;
+        prev = wslay_event_get_queued_msg_count(pWssClientCtx->event_ctx);
         CHK(wslay_event_queue_msg(pWssClientCtx->event_ctx, arg) == WSLAY_SUCCESS, STATUS_WSS_CLIENT_SEND_QUEUE_MSG_FAILED);
+        mid = wslay_event_get_queued_msg_count(pWssClientCtx->event_ctx);
         CHK(wslay_event_send(pWssClientCtx->event_ctx) == WSLAY_SUCCESS, STATUS_WSS_CLIENT_SEND_FAILED);
+        last = wslay_event_get_queued_msg_count(pWssClientCtx->event_ctx);
+        DLOGB("(%d, %d, %d)", prev, mid, last);
+    } else {
+        DLOGB("The send buffer of wslay is not enabled.");
     }
 
 CleanUp:
@@ -324,7 +335,7 @@ PVOID wss_client_routine(PWssClientContext pWssClientCtx)
 
     nfds = NetIo_getSocket(pWssClientCtx->xNetIoHandle);
     FD_ZERO(&rfds);
-    UINT64 startTime = GETTIME()-WSS_CLIENT_PING_PONG_INTERVAL;
+    UINT64 startTime = GETTIME() - WSS_CLIENT_PING_PONG_INTERVAL;
     UINT64 endTime = startTime;
     // check the wss client want to read or write or not.
     // When the wss lib receive the ctrl frame of close connection, this flag of read_enabled will be pull down.
@@ -350,7 +361,7 @@ PVOID wss_client_routine(PWssClientContext pWssClientCtx)
 
         // for ping-pong
         endTime = GETTIME();
-        if (endTime-startTime >= WSS_CLIENT_PING_PONG_INTERVAL) {
+        if (endTime - startTime >= WSS_CLIENT_PING_PONG_INTERVAL) {
             CHK(wss_client_sendPing(pWssClientCtx) == STATUS_SUCCESS, STATUS_WSS_CLIENT_PING_FAILED);
             startTime = endTime;
             ATOMIC_INCREMENT(&pWssClientCtx->pingCounter);

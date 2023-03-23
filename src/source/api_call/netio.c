@@ -26,7 +26,7 @@
 //#include "azure_c_shared_utility/xlogging.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/entropy.h"
-#if (MBEDTLS_VERSION_NUMBER!=0x03000000 && MBEDTLS_VERSION_NUMBER!=0x03020100)
+#if (MBEDTLS_VERSION_NUMBER != 0x03000000 && MBEDTLS_VERSION_NUMBER != 0x03020100)
 #include "mbedtls/net.h"
 #endif
 #include "mbedtls/net_sockets.h"
@@ -80,27 +80,25 @@ static int prvCreateX509Cert(NetIo_t* pxNet)
     return xRes;
 }
 
-#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
-static int mbedtls_test_rnd_std_rand( void *rng_state,
-                                      unsigned char *output,
-                                      size_t len )
+#if (MBEDTLS_VERSION_NUMBER == 0x03000000 || MBEDTLS_VERSION_NUMBER == 0x03020100)
+static int mbedtls_test_rnd_std_rand(void* rng_state, unsigned char* output, size_t len)
 {
 #if !defined(__OpenBSD__) && !defined(__NetBSD__)
     size_t i;
 
-    if( rng_state != NULL )
-        rng_state  = NULL;
-
-    for( i = 0; i < len; ++i )
-        output[i] = rand();
-#else
-    if( rng_state != NULL )
+    if (rng_state != NULL)
         rng_state = NULL;
 
-    arc4random_buf( output, len );
+    for (i = 0; i < len; ++i)
+        output[i] = rand();
+#else
+    if (rng_state != NULL)
+        rng_state = NULL;
+
+    arc4random_buf(output, len);
 #endif /* !OpenBSD && !NetBSD */
 
-    return( 0 );
+    return (0);
 }
 #endif
 
@@ -124,8 +122,9 @@ static int prvInitConfig(NetIo_t* pxNet, const char* pcRootCA, const char* pcCer
                 if (bFilePath == false &&
                     (mbedtls_x509_crt_parse(pxNet->pRootCA, (void*) pcRootCA, strlen(pcRootCA) + 1) != 0 ||
                      mbedtls_x509_crt_parse(pxNet->pCert, (void*) pcCert, strlen(pcCert) + 1) != 0 ||
-#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
-		     mbedtls_pk_parse_key(pxNet->pPrivKey, (void*) pcPrivKey, strlen(pcPrivKey) + 1, NULL, 0, mbedtls_test_rnd_std_rand, NULL) != 0)) {
+#if (MBEDTLS_VERSION_NUMBER == 0x03000000 || MBEDTLS_VERSION_NUMBER == 0x03020100)
+                     mbedtls_pk_parse_key(pxNet->pPrivKey, (void*) pcPrivKey, strlen(pcPrivKey) + 1, NULL, 0, mbedtls_test_rnd_std_rand, NULL) !=
+                         0)) {
 #else
                      mbedtls_pk_parse_key(pxNet->pPrivKey, (void*) pcPrivKey, strlen(pcPrivKey) + 1, NULL, 0) != 0)) {
 #endif
@@ -133,8 +132,8 @@ static int prvInitConfig(NetIo_t* pxNet, const char* pcRootCA, const char* pcCer
                     xRes = STATUS_NULL_ARG;
                 } else if (mbedtls_x509_crt_parse_file(pxNet->pRootCA, (void*) pcRootCA) != 0 ||
                            mbedtls_x509_crt_parse_file(pxNet->pCert, (void*) pcCert) != 0 ||
-#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
-			   mbedtls_pk_parse_keyfile(pxNet->pPrivKey, (void*) pcPrivKey, NULL, mbedtls_test_rnd_std_rand, NULL) != 0) {
+#if (MBEDTLS_VERSION_NUMBER == 0x03000000 || MBEDTLS_VERSION_NUMBER == 0x03020100)
+                           mbedtls_pk_parse_keyfile(pxNet->pPrivKey, (void*) pcPrivKey, NULL, mbedtls_test_rnd_std_rand, NULL) != 0) {
 #else
                            mbedtls_pk_parse_keyfile(pxNet->pPrivKey, (void*) pcPrivKey, NULL) != 0) {
 #endif
@@ -178,7 +177,7 @@ static int prvConnect(NetIo_t* pxNet, const char* pcHost, const char* pcPort, co
     } else if ((ret = mbedtls_net_connect(&(pxNet->xFd), pcHost, pcPort, MBEDTLS_NET_PROTO_TCP)) != 0) {
         DLOGE("Failed to connect to %s:%s", pcHost, pcPort);
         xRes = STATUS_NULL_ARG;
-    } else if ((ret = mbedtls_ssl_set_hostname(&(pxNet->xSsl), pcHost)) !=0) {
+    } else if ((ret = mbedtls_ssl_set_hostname(&(pxNet->xSsl), pcHost)) != 0) {
         DLOGE("Failed to set hostname %s", pcHost);
         xRes = STATUS_NULL_ARG;
     } else if (prvInitConfig(pxNet, pcRootCA, pcCert, pcPrivKey, bFilePath) != STATUS_SUCCESS) {
@@ -285,7 +284,8 @@ int NetIo_send(NetIoHandle xNetIoHandle, const unsigned char* pBuffer, size_t uB
     char* pIndex = (char*) pBuffer;
 
     if (pxNet == NULL || pBuffer == NULL) {
-        xRes = STATUS_NULL_ARG;
+        xRes = -1;
+        DLOGB("NetIo_send null arg");
     } else {
         do {
             n = mbedtls_ssl_write(&(pxNet->xSsl), (const unsigned char*) pIndex, uBytesRemaining);
