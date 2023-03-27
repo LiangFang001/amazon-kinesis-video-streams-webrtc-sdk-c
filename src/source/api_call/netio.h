@@ -28,6 +28,10 @@ extern "C" {
 /******************************************************************************
  * DEFINITIONS
  ******************************************************************************/
+#define NETIO_TCP_KEEPALIVE_IN_SECONDS                3
+#define NETIO_TCP_KEEPALIVE_PROBE_COUNT               3
+#define NETIO_TCP_KEEPALIVE_PROBE_INTERVAL_IN_SECONDS 1
+
 typedef struct NetIo* NetIoHandle;
 
 /******************************************************************************

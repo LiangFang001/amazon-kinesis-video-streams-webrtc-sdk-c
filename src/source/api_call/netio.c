@@ -188,6 +188,33 @@ static int prvConnect(NetIo_t* pxNet, const char* pcHost, const char* pcPort, co
         xRes = STATUS_NULL_ARG;
     } else {
         /* nop */
+        int optval = 1;
+        socklen_t optlen = sizeof(optval);
+        int socketFd = pxNet->xFd.fd;
+
+        optval = 1;
+        if ((ret = setsockopt(socketFd, IPPROTO_TCP, TCP_NODELAY, &optval, optlen)) < 0) {
+            DLOGW("netio TCP_NODELAY failed with errno(%d)", ret);
+        }
+        optval = 1;
+        if ((ret = setsockopt(socketFd, SOL_SOCKET, SO_KEEPALIVE, (const void*) &optval, optlen)) < 0) {
+            DLOGW("netio keepalive failed with errno(%d)", ret);
+        }
+
+        optval = NETIO_TCP_KEEPALIVE_IN_SECONDS;
+        if ((ret = setsockopt(socketFd, IPPROTO_TCP, TCP_KEEPIDLE, (const void*) &optval, optlen)) < 0) {
+            DLOGW("netio keepalive in sec failed with errno(%d)", ret);
+        }
+
+        optval = NETIO_TCP_KEEPALIVE_PROBE_INTERVAL_IN_SECONDS;
+        if ((ret = setsockopt(socketFd, IPPROTO_TCP, TCP_KEEPINTVL, (const void*) &optval, optlen)) < 0) {
+            DLOGW("netio keepalive probe interval (%d)", ret);
+        }
+
+        optval = NETIO_TCP_KEEPALIVE_PROBE_COUNT;
+        if ((ret = setsockopt(socketFd, IPPROTO_TCP, TCP_KEEPCNT, (const void*) &optval, optlen)) < 0) {
+            DLOGW("netio keepalive probe count (%d)", ret);
+        }
     }
     return xRes;
 }
