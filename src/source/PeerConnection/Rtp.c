@@ -253,7 +253,7 @@ STATUS rtp_writeFrame(PRtcRtpTransceiver pRtcRtpTransceiver, PFrame pFrame)
         } else if (now - pRtcRtpSender->lastKnownFrameCountTime > HUNDREDS_OF_NANOS_IN_A_SECOND) {
             tmpFrames = (pKvsRtpTransceiver->outboundStats.framesEncoded + frames) - pRtcRtpSender->lastKnownFrameCount;
             tmpTime = now - pRtcRtpSender->lastKnownFrameCountTime;
-            fps = (DOUBLE)(tmpFrames * HUNDREDS_OF_NANOS_IN_A_SECOND) / (DOUBLE) tmpTime;
+            fps = (DOUBLE) (tmpFrames * HUNDREDS_OF_NANOS_IN_A_SECOND) / (DOUBLE) tmpTime;
         }
     }
 
@@ -429,7 +429,7 @@ CleanUp:
         MUTEX_UNLOCK(pKvsPeerConnection->pSrtpSessionLock);
     }
     SAFE_MEMFREE(pRawPacket);
-
+    CHK_LOG_ERR(retStatus);
     return retStatus;
 }
 

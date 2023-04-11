@@ -688,6 +688,7 @@ static STATUS pc_onDtlsOutboundPacket(UINT64 customData, PBYTE pBuffer, UINT32 b
     CHK_STATUS(ice_agent_send(pKvsPeerConnection->pIceAgent, pBuffer, bufferLen));
 
 CleanUp:
+    CHK_LOG_ERR(retStatus);
     PC_LEAVE();
     return retStatus;
 }

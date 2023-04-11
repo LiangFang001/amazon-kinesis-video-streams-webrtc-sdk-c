@@ -33,9 +33,9 @@ STATUS retransmitter_create(UINT32 seqNumListLen, UINT32 validIndexListLen, PRet
     STATUS retStatus = STATUS_SUCCESS;
     PRetransmitter pRetransmitter = MEMALLOC(SIZEOF(Retransmitter) + SIZEOF(UINT16) * seqNumListLen + SIZEOF(UINT64) * validIndexListLen);
     CHK(pRetransmitter != NULL, STATUS_NOT_ENOUGH_MEMORY);
-    pRetransmitter->sequenceNumberList = (PUINT16)(pRetransmitter + 1);
+    pRetransmitter->sequenceNumberList = (PUINT16) (pRetransmitter + 1);
     pRetransmitter->seqNumListLen = seqNumListLen;
-    pRetransmitter->validIndexList = (PUINT64)(pRetransmitter->sequenceNumberList + seqNumListLen);
+    pRetransmitter->validIndexList = (PUINT64) (pRetransmitter->sequenceNumberList + seqNumListLen);
     pRetransmitter->validIndexListLen = validIndexListLen;
 
 CleanUp:
@@ -111,6 +111,7 @@ STATUS retransmitter_resendPacketOnNack(PRtcpPacket pRtcpPacket, PKvsPeerConnect
         if (pRtpPacket != NULL) {
             if (pSenderTranceiver->sender.payloadType == pSenderTranceiver->sender.rtxPayloadType) {
                 retStatus = ice_agent_send(pKvsPeerConnection->pIceAgent, pRtpPacket->pRawPacket, pRtpPacket->rawPacketLength);
+                CHK_LOG_ERR(retStatus);
             } else {
                 CHK_STATUS(rtp_packet_constructRetransmitPacketFromBytes(
                     pRtpPacket->pRawPacket, pRtpPacket->rawPacketLength, pSenderTranceiver->sender.rtxSequenceNumber,
