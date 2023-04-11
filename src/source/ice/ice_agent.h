@@ -75,8 +75,8 @@ extern "C" {
 #define ICE_PRIORITY_RELAYED_CANDIDATE_TYPE_PREFERENCE          0
 #define ICE_PRIORITY_LOCAL_PREFERENCE                           65535
 
-#define IS_STUN_PACKET(pBuf)       (getInt32(*(PUINT32)((pBuf) + STUN_HEADER_MAGIC_BYTE_OFFSET)) == STUN_HEADER_MAGIC_COOKIE)
-#define GET_STUN_PACKET_SIZE(pBuf) ((UINT32) getInt16(*(PINT16)((pBuf) + SIZEOF(UINT16))))
+#define IS_STUN_PACKET(pBuf)       (getInt32(*(PUINT32) ((pBuf) + STUN_HEADER_MAGIC_BYTE_OFFSET)) == STUN_HEADER_MAGIC_COOKIE)
+#define GET_STUN_PACKET_SIZE(pBuf) ((UINT32) getInt16(*(PINT16) ((pBuf) + SIZEOF(UINT16))))
 
 #define IS_CANN_PAIR_SENDING_FROM_RELAYED(p) ((p)->local->iceCandidateType == ICE_CANDIDATE_TYPE_RELAYED)
 
@@ -365,15 +365,15 @@ STATUS ice_agent_gather(PIceAgent pIceAgent);
 STATUS ice_candidate_serialize(PIceCandidate, PCHAR, PUINT32);
 
 /**
- * @brief Send data through selected connection. PIceAgent has to be in ICE_AGENT_CONNECTION_STATE_CONNECTED state.
+ * @brief   Send data through selected connection. PIceAgent has to be in ICE_AGENT_CONNECTION_STATE_CONNECTED state.
  *
- * @param[in] PIceAgent IceAgent object
- * @param[in] PBYTE buffer storing the data to be sent
- * @param[in] UINT32 length of data
+ * @param[in] pIceAgent IceAgent object
+ * @param[in] pBuffer buffer storing the data to be sent
+ * @param[in] bufferLen length of data
  *
  * @return STATUS status of execution
  */
-STATUS ice_agent_send(PIceAgent, PBYTE, UINT32);
+STATUS ice_agent_send(PIceAgent pIceAgent, PBYTE pBuffer, UINT32 bufferLen);
 
 /**
  * @brief Starting from given index, fillout PSdpMediaDescription->sdpAttributes with serialize local candidate strings.

@@ -6,10 +6,10 @@
 
 /**  https://tools.ietf.org/html/rfc5764#section-4.1.2 */
 mbedtls_ssl_srtp_profile DTLS_SRTP_SUPPORTED_PROFILES[] = {
-#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
+#if (MBEDTLS_VERSION_NUMBER == 0x03000000 || MBEDTLS_VERSION_NUMBER == 0x03020100)
     MBEDTLS_TLS_SRTP_AES128_CM_HMAC_SHA1_80,
     MBEDTLS_TLS_SRTP_AES128_CM_HMAC_SHA1_32,
-     MBEDTLS_TLS_SRTP_UNSET,
+    MBEDTLS_TLS_SRTP_UNSET,
 #else
     MBEDTLS_SRTP_AES128_CM_HMAC_SHA1_80,
     MBEDTLS_SRTP_AES128_CM_HMAC_SHA1_32,
@@ -124,7 +124,8 @@ INT32 dtls_session_sendCallback(PVOID customData, const unsigned char* pBuf, ULO
 
     CHK(pDtlsSession != NULL, STATUS_DTLS_NULL_ARG);
 
-    pDtlsSession->dtlsSessionCallbacks.outboundPacketFn(pDtlsSession->dtlsSessionCallbacks.outBoundPacketFnCustomData, (PBYTE) pBuf, len);
+    CHK_STATUS(pDtlsSession->dtlsSessionCallbacks.dtlsOutboundPacketFn(pDtlsSession->dtlsSessionCallbacks.dtlsOutBoundPacketFnCustomData,
+                                                                       (PBYTE) pBuf, len));
 
 CleanUp:
     return STATUS_FAILED(retStatus) ? -retStatus : len;
@@ -236,10 +237,9 @@ CleanUp:
     return retStatus;
 }
 
-#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
-INT32 dtls_session_deriveKeyCallback(PVOID customData, mbedtls_ssl_key_export_type type,
-		                     const unsigned char* pMasterSecret,  size_t secret_len,
-				     const unsigned char clientRandom[MAX_DTLS_RANDOM_BYTES_LEN],
+#if (MBEDTLS_VERSION_NUMBER == 0x03000000 || MBEDTLS_VERSION_NUMBER == 0x03020100)
+INT32 dtls_session_deriveKeyCallback(PVOID customData, mbedtls_ssl_key_export_type type, const unsigned char* pMasterSecret, size_t secret_len,
+                                     const unsigned char clientRandom[MAX_DTLS_RANDOM_BYTES_LEN],
                                      const unsigned char serverRandom[MAX_DTLS_RANDOM_BYTES_LEN], mbedtls_tls_prf_types tlsProfile)
 {
     ENTERS();
@@ -306,9 +306,10 @@ STATUS dtls_session_start(PDtlsSession pDtlsSession, BOOL isServer)
         CHK(mbedtls_ssl_conf_own_cert(&pDtlsSession->sslCtxConfig, &pCertInfo->cert, &pCertInfo->privateKey) == 0, STATUS_DTLS_CREATE_SSL_FAILED);
     }
     mbedtls_ssl_conf_dtls_cookies(&pDtlsSession->sslCtxConfig, NULL, NULL, NULL);
-#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
-    CHK(mbedtls_ssl_conf_dtls_srtp_protection_profiles(&pDtlsSession->sslCtxConfig, DTLS_SRTP_SUPPORTED_PROFILES) == 0, STATUS_DTLS_CREATE_SSL_FAILED);
-    mbedtls_ssl_set_export_keys_cb(&pDtlsSession->sslCtx, (mbedtls_ssl_export_keys_t *)dtls_session_deriveKeyCallback, pDtlsSession);
+#if (MBEDTLS_VERSION_NUMBER == 0x03000000 || MBEDTLS_VERSION_NUMBER == 0x03020100)
+    CHK(mbedtls_ssl_conf_dtls_srtp_protection_profiles(&pDtlsSession->sslCtxConfig, DTLS_SRTP_SUPPORTED_PROFILES) == 0,
+        STATUS_DTLS_CREATE_SSL_FAILED);
+    mbedtls_ssl_set_export_keys_cb(&pDtlsSession->sslCtx, (mbedtls_ssl_export_keys_t*) dtls_session_deriveKeyCallback, pDtlsSession);
 #else
     CHK(mbedtls_ssl_conf_dtls_srtp_protection_profiles(&pDtlsSession->sslCtxConfig, DTLS_SRTP_SUPPORTED_PROFILES,
                                                        ARRAY_SIZE(DTLS_SRTP_SUPPORTED_PROFILES)) == 0,
@@ -507,7 +508,7 @@ STATUS dtls_session_populateKeyingMaterial(PDtlsSession pDtlsSession, PDtlsKeyin
     BOOL locked = FALSE;
     PTlsKeys pKeys;
     BYTE keyingMaterialBuffer[MAX_SRTP_MASTER_KEY_LEN * 2 + MAX_SRTP_SALT_KEY_LEN * 2];
-#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
+#if (MBEDTLS_VERSION_NUMBER == 0x03000000 || MBEDTLS_VERSION_NUMBER == 0x03020100)
     mbedtls_dtls_srtp_info negotiatedSRTPProfile;
 #else
     mbedtls_ssl_srtp_profile negotiatedSRTPProfile;
@@ -536,7 +537,7 @@ STATUS dtls_session_populateKeyingMaterial(PDtlsSession pDtlsSession, PDtlsKeyin
 
     MEMCPY(pDtlsKeyingMaterial->serverWriteKey + MAX_SRTP_MASTER_KEY_LEN, &keyingMaterialBuffer[offset], MAX_SRTP_SALT_KEY_LEN);
 
-#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
+#if (MBEDTLS_VERSION_NUMBER == 0x03000000 || MBEDTLS_VERSION_NUMBER == 0x03020100)
     mbedtls_ssl_get_dtls_srtp_negotiation_result(&pDtlsSession->sslCtx, &negotiatedSRTPProfile);
     switch (negotiatedSRTPProfile.chosen_dtls_srtp_profile) {
         case MBEDTLS_TLS_SRTP_AES128_CM_HMAC_SHA1_80:
@@ -547,7 +548,7 @@ STATUS dtls_session_populateKeyingMaterial(PDtlsSession pDtlsSession, PDtlsKeyin
 #endif
             pDtlsKeyingMaterial->srtpProfile = KVS_SRTP_PROFILE_AES128_CM_HMAC_SHA1_80;
             break;
-#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
+#if (MBEDTLS_VERSION_NUMBER == 0x03000000 || MBEDTLS_VERSION_NUMBER == 0x03020100)
         case MBEDTLS_TLS_SRTP_AES128_CM_HMAC_SHA1_32:
 #else
         case MBEDTLS_SRTP_AES128_CM_HMAC_SHA1_32:
@@ -596,27 +597,25 @@ CleanUp:
     return retStatus;
 }
 
-#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
-static int mbedtls_test_rnd_std_rand( void *rng_state,
-                                      unsigned char *output,
-                                      size_t len )
+#if (MBEDTLS_VERSION_NUMBER == 0x03000000 || MBEDTLS_VERSION_NUMBER == 0x03020100)
+static int mbedtls_test_rnd_std_rand(void* rng_state, unsigned char* output, size_t len)
 {
 #if !defined(__OpenBSD__) && !defined(__NetBSD__)
     size_t i;
 
-    if( rng_state != NULL )
-        rng_state  = NULL;
-
-    for( i = 0; i < len; ++i )
-        output[i] = rand();
-#else
-    if( rng_state != NULL )
+    if (rng_state != NULL)
         rng_state = NULL;
 
-    arc4random_buf( output, len );
+    for (i = 0; i < len; ++i)
+        output[i] = rand();
+#else
+    if (rng_state != NULL)
+        rng_state = NULL;
+
+    arc4random_buf(output, len);
 #endif /* !OpenBSD && !NetBSD */
 
-    return( 0 );
+    return (0);
 }
 #endif
 
@@ -628,7 +627,7 @@ STATUS certificate_key_copy(mbedtls_x509_crt* pCert, mbedtls_pk_context* pKey, P
     mbedtls_ecp_keypair *pSrcECP, *pDstECP;
 
     CHK(pCert != NULL && pKey != NULL && pDst != NULL, STATUS_DTLS_NULL_ARG);
-#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
+#if (MBEDTLS_VERSION_NUMBER == 0x03000000 || MBEDTLS_VERSION_NUMBER == 0x03020100)
     CHK(mbedtls_pk_check_pair(&pCert->pk, pKey, mbedtls_test_rnd_std_rand, NULL) == 0, STATUS_DTLS_CERTIFICATE_GENERATION_FAILED);
 #else
     CHK(mbedtls_pk_check_pair(&pCert->pk, pKey) == 0, STATUS_DTLS_CERTIFICATE_GENERATION_FAILED);
@@ -747,7 +746,7 @@ STATUS certificate_key_create(INT32 certificateBits, BOOL generateRSACertificate
     //         -----------------------------------------
     //         ^               ^
     //       pCertBuf   pCertBuf + (SIZEOF(pCertBuf) - len)
-    CHK(mbedtls_x509_crt_parse_der(pCert, (PVOID)(pCertBuf + GENERATED_CERTIFICATE_MAX_SIZE - len), len) == 0,
+    CHK(mbedtls_x509_crt_parse_der(pCert, (PVOID) (pCertBuf + GENERATED_CERTIFICATE_MAX_SIZE - len), len) == 0,
         STATUS_DTLS_CERTIFICATE_GENERATION_FAILED);
 
 CleanUp:

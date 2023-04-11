@@ -179,9 +179,9 @@ STATUS socket_connection_initSecureConnection(PSocketConnection pSocketConnectio
     CHK(pSocketConnection != NULL, STATUS_SOCKET_CONN_NULL_ARG);
     CHK(pSocketConnection->pTlsSession == NULL, STATUS_SOCKET_CONN_INVALID_ARG);
 
-    callbacks.outBoundPacketFnCustomData = callbacks.stateChangeFnCustomData = (UINT64) pSocketConnection;
-    callbacks.outboundPacketFn = socket_connection_tlsSessionOutboundPacket;
-    callbacks.stateChangeFn = socket_connection_tlsSessionOnStateChange;
+    callbacks.tlsOutBoundPacketFnCustomData = callbacks.tlsStateChangeFnCustomData = (UINT64) pSocketConnection;
+    callbacks.tlsOutboundPacketFn = socket_connection_tlsSessionOutboundPacket;
+    callbacks.tlsStateChangeFn = socket_connection_tlsSessionOnStateChange;
 
     CHK_STATUS(tls_session_create(&callbacks, &pSocketConnection->pTlsSession));
     CHK_STATUS(tls_session_start(pSocketConnection->pTlsSession, isServer));

@@ -515,7 +515,8 @@ STATUS dtls_session_send(PDtlsSession pDtlsSession, PBYTE pData, INT32 dataLen)
     wbio = SSL_get_wbio(pDtlsSession->pSsl);
     if ((pending = BIO_ctrl_pending(wbio)) > 0) {
         pending = BIO_read(wbio, buf, pending);
-        pDtlsSession->dtlsSessionCallbacks.outboundPacketFn(pDtlsSession->dtlsSessionCallbacks.outBoundPacketFnCustomData, buf, (UINT32) pending);
+        pDtlsSession->dtlsSessionCallbacks.dtlsOutboundPacketFn(pDtlsSession->dtlsSessionCallbacks.dtlsOutBoundPacketFnCustomData, buf,
+                                                                (UINT32) pending);
     }
 
 CleanUp:
@@ -569,8 +570,8 @@ STATUS dtlsCheckOutgoingDataBuffer(PDtlsSession pDtlsSession)
     dataLenWritten = BIO_read(pWriteBIO, pDtlsSession->outgoingDataBuffer, ARRAY_SIZE(pDtlsSession->outgoingDataBuffer));
     if (dataLenWritten > 0) {
         pDtlsSession->outgoingDataLen = (UINT32) dataLenWritten;
-        pDtlsSession->dtlsSessionCallbacks.outboundPacketFn(pDtlsSession->dtlsSessionCallbacks.outBoundPacketFnCustomData,
-                                                            pDtlsSession->outgoingDataBuffer, pDtlsSession->outgoingDataLen);
+        pDtlsSession->dtlsSessionCallbacks.dtlsOutboundPacketFn(pDtlsSession->dtlsSessionCallbacks.dtlsOutBoundPacketFnCustomData,
+                                                                pDtlsSession->outgoingDataBuffer, pDtlsSession->outgoingDataLen);
     } else {
         LOG_OPENSSL_ERROR("BIO_read");
     }

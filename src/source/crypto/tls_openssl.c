@@ -10,7 +10,7 @@ STATUS tls_session_create(PTlsSessionCallbacks pCallbacks, PTlsSession* ppTlsSes
     PTlsSession pTlsSession = NULL;
 
     CHK(ppTlsSession != NULL && pCallbacks != NULL, STATUS_TLS_NULL_ARG);
-    CHK(pCallbacks->outboundPacketFn != NULL, STATUS_INVALID_ARG);
+    CHK(pCallbacks->tlsOutboundPacketFn != NULL, STATUS_INVALID_ARG);
 
     pTlsSession = MEMCALLOC(1, SIZEOF(TlsSession));
     CHK(pTlsSession != NULL, STATUS_NOT_ENOUGH_MEMORY);
@@ -215,8 +215,8 @@ STATUS tls_session_send(PTlsSession pTlsSession, PBYTE pData, UINT32 dataLen)
     CHK_ERR(wBioDataLen >= 0, STATUS_NET_SEND_DATA_FAILED, "BIO_get_mem_data failed");
 
     if (wBioDataLen > 0) {
-        retStatus =
-            pTlsSession->callbacks.outboundPacketFn(pTlsSession->callbacks.outBoundPacketFnCustomData, (PBYTE) wBioBuffer, (UINT32) wBioDataLen);
+        retStatus = pTlsSession->callbacks.tlsOutboundPacketFn(pTlsSession->callbacks.tlsOutBoundPacketFnCustomData, (PBYTE) wBioBuffer,
+                                                               (UINT32) wBioDataLen);
 
         /* reset bio to clear its content since it's already sent if possible */
         BIO_reset(SSL_get_wbio(pTlsSession->pSsl));

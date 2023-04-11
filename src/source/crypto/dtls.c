@@ -9,8 +9,8 @@ STATUS dtls_session_onOutBoundData(PDtlsSession pDtlsSession, UINT64 customData,
     CHK(pDtlsSession != NULL && callbackFn != NULL, STATUS_DTLS_NULL_ARG);
 
     MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
-    pDtlsSession->dtlsSessionCallbacks.outboundPacketFn = callbackFn;
-    pDtlsSession->dtlsSessionCallbacks.outBoundPacketFnCustomData = customData;
+    pDtlsSession->dtlsSessionCallbacks.dtlsOutboundPacketFn = callbackFn;
+    pDtlsSession->dtlsSessionCallbacks.dtlsOutBoundPacketFnCustomData = customData;
     MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
 
 CleanUp:
@@ -25,8 +25,8 @@ STATUS dtls_session_onStateChange(PDtlsSession pDtlsSession, UINT64 customData, 
     CHK(pDtlsSession != NULL && callbackFn != NULL, STATUS_DTLS_NULL_ARG);
 
     MUTEX_LOCK(pDtlsSession->nestedDtlsLock);
-    pDtlsSession->dtlsSessionCallbacks.stateChangeFn = callbackFn;
-    pDtlsSession->dtlsSessionCallbacks.stateChangeFnCustomData = customData;
+    pDtlsSession->dtlsSessionCallbacks.dtlsStateChangeFn = callbackFn;
+    pDtlsSession->dtlsSessionCallbacks.dtlsStateChangeFnCustomData = customData;
     MUTEX_UNLOCK(pDtlsSession->nestedDtlsLock);
 
 CleanUp:
@@ -67,8 +67,8 @@ STATUS dtls_session_changeState(PDtlsSession pDtlsSession, RTC_DTLS_TRANSPORT_ST
               (GETTIME() - pDtlsSession->dtlsSessionStartTime) / HUNDREDS_OF_NANOS_IN_A_MILLISECOND);
     }
     pDtlsSession->state = newState;
-    if (pDtlsSession->dtlsSessionCallbacks.stateChangeFn != NULL) {
-        pDtlsSession->dtlsSessionCallbacks.stateChangeFn(pDtlsSession->dtlsSessionCallbacks.stateChangeFnCustomData, newState);
+    if (pDtlsSession->dtlsSessionCallbacks.dtlsStateChangeFn != NULL) {
+        pDtlsSession->dtlsSessionCallbacks.dtlsStateChangeFn(pDtlsSession->dtlsSessionCallbacks.dtlsStateChangeFnCustomData, newState);
     }
 
 CleanUp:

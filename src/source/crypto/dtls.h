@@ -54,16 +54,16 @@ typedef enum {
 } RTC_DTLS_TRANSPORT_STATE;
 
 /* Callback that is fired when Dtls Server wishes to send packet */
-typedef VOID (*DtlsSessionOutboundPacketFunc)(UINT64, PBYTE, UINT32);
+typedef STATUS (*DtlsSessionOutboundPacketFunc)(UINT64, PBYTE, UINT32);
 
 /*  Callback that is fired when Dtls state has changed */
 typedef VOID (*DtlsSessionOnStateChange)(UINT64, RTC_DTLS_TRANSPORT_STATE);
 
 typedef struct {
-    UINT64 outBoundPacketFnCustomData;
-    DtlsSessionOutboundPacketFunc outboundPacketFn; //!< outBoundPacketFn is a required callback to tell DtlsSession how to send outbound packets
-    UINT64 stateChangeFnCustomData;
-    DtlsSessionOnStateChange stateChangeFn;
+    UINT64 dtlsOutBoundPacketFnCustomData;
+    DtlsSessionOutboundPacketFunc dtlsOutboundPacketFn; //!< outBoundPacketFn is a required callback to tell DtlsSession how to send outbound packets
+    UINT64 dtlsStateChangeFnCustomData;
+    DtlsSessionOnStateChange dtlsStateChangeFn;
 } DtlsSessionCallbacks, *PDtlsSessionCallbacks;
 
 // DtlsKeyingMaterial is information extracted via https://tools.ietf.org/html/rfc5705
@@ -202,8 +202,16 @@ STATUS dtls_session_verifyRemoteCertificateFingerprint(PDtlsSession, PCHAR);
  */
 STATUS dtls_session_send(PDtlsSession, PBYTE, INT32);
 STATUS dtls_session_shutdown(PDtlsSession);
-
-STATUS dtls_session_onOutBoundData(PDtlsSession, UINT64, DtlsSessionOutboundPacketFunc);
+/**
+ * @brief   set up the outbound callback.
+ *
+ * @param[in] pDtlsSession the context of the dtls session.
+ * @param[in] customData the custom data of the callback
+ * @param[in] callbackFn the callback function
+ *
+ * @return STATUS_SUCCESS
+ */
+STATUS dtls_session_onOutBoundData(PDtlsSession pDtlsSession, UINT64 customData, DtlsSessionOutboundPacketFunc callbackFn);
 STATUS dtls_session_onStateChange(PDtlsSession, UINT64, DtlsSessionOnStateChange);
 
 /******** Internal Functions **********/
@@ -240,10 +248,9 @@ INT32 dtls_session_sendCallback(PVOID, const unsigned char*, ULONG);
 INT32 dtls_session_receiveCallback(PVOID, unsigned char*, ULONG);
 VOID dtls_session_setTimerCallback(PVOID, UINT32, UINT32);
 INT32 dtls_session_getTimerCallback(PVOID);
-#if (MBEDTLS_VERSION_NUMBER==0x03000000 || MBEDTLS_VERSION_NUMBER==0x03020100)
-INT32 dtls_session_deriveKeyCallback(PVOID, mbedtls_ssl_key_export_type, const unsigned char*, size_t,
-		                     const unsigned char[MAX_DTLS_RANDOM_BYTES_LEN],
-				     const unsigned char[MAX_DTLS_RANDOM_BYTES_LEN], mbedtls_tls_prf_types);
+#if (MBEDTLS_VERSION_NUMBER == 0x03000000 || MBEDTLS_VERSION_NUMBER == 0x03020100)
+INT32 dtls_session_deriveKeyCallback(PVOID, mbedtls_ssl_key_export_type, const unsigned char*, size_t, const unsigned char[MAX_DTLS_RANDOM_BYTES_LEN],
+                                     const unsigned char[MAX_DTLS_RANDOM_BYTES_LEN], mbedtls_tls_prf_types);
 #else
 INT32 dtls_session_deriveKeyCallback(PVOID, const unsigned char*, const unsigned char*, ULONG, ULONG, ULONG,
                                      const unsigned char[MAX_DTLS_RANDOM_BYTES_LEN], const unsigned char[MAX_DTLS_RANDOM_BYTES_LEN],

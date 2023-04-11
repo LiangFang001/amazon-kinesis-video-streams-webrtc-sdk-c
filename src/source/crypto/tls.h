@@ -49,12 +49,12 @@ typedef STATUS (*TlsSessionOutboundPacketFunc)(UINT64, PBYTE, UINT32);
 typedef VOID (*TlsSessionOnStateChange)(UINT64, TLS_SESSION_STATE);
 
 typedef struct {
-    UINT64 outBoundPacketFnCustomData;
+    UINT64 tlsOutBoundPacketFnCustomData;
     // outBoundPacketFn is a required callback to tell TlsSession how to send outbound packets
-    TlsSessionOutboundPacketFunc outboundPacketFn;
-    // stateChangeFn is an optional callback to listen to TlsSession state changes
-    UINT64 stateChangeFnCustomData;
-    TlsSessionOnStateChange stateChangeFn;
+    TlsSessionOutboundPacketFunc tlsOutboundPacketFn;
+    // tlsStateChangeFn is an optional callback to listen to TlsSession state changes
+    UINT64 tlsStateChangeFnCustomData;
+    TlsSessionOnStateChange tlsStateChangeFn;
 } TlsSessionCallbacks, *PTlsSessionCallbacks;
 
 typedef struct __TlsSession TlsSession, *PTlsSession;

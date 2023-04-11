@@ -12,7 +12,7 @@ STATUS tls_session_create(PTlsSessionCallbacks pCallbacks, PTlsSession* ppTlsSes
     STATUS retStatus = STATUS_SUCCESS;
     PTlsSession pTlsSession = NULL;
 
-    CHK(ppTlsSession != NULL && pCallbacks != NULL && pCallbacks->outboundPacketFn != NULL, STATUS_TLS_NULL_ARG);
+    CHK(ppTlsSession != NULL && pCallbacks != NULL && pCallbacks->tlsOutboundPacketFn != NULL, STATUS_TLS_NULL_ARG);
 
     pTlsSession = (PTlsSession) MEMCALLOC(1, SIZEOF(TlsSession));
     CHK(pTlsSession != NULL, STATUS_TLS_NOT_ENOUGH_MEMORY);
@@ -75,7 +75,7 @@ INT32 tls_session_sendCallback(PVOID customData, const unsigned char* buf, ULONG
 
     CHK(pTlsSession != NULL, STATUS_TLS_NULL_ARG);
 
-    pTlsSession->callbacks.outboundPacketFn(pTlsSession->callbacks.outBoundPacketFnCustomData, (PBYTE) buf, len);
+    pTlsSession->callbacks.tlsOutboundPacketFn(pTlsSession->callbacks.tlsOutBoundPacketFnCustomData, (PBYTE) buf, len);
 
 CleanUp:
 
