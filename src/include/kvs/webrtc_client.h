@@ -1488,6 +1488,16 @@ PUBLIC_API STATUS rtp_transceiver_updateEncoderStats(PRtcRtpTransceiver, PRtcEnc
 PUBLIC_API STATUS pc_addIceCandidate(PRtcPeerConnection, PCHAR);
 
 /**
+ * @brief Throw an error.
+ *
+ * @param[in] PRtcPeerConnection Initialized RtcPeerConnection
+ * @param[in] STATUS Error code.
+ *
+ * @return STATUS code of the execution. STATUS_SUCCESS on success
+ */
+PUBLIC_API STATUS pc_throwFatalError(PRtcPeerConnection, STATUS);
+
+/**
  * @brief data_channel_create creates a new RtcDataChannel object with the given label.
  *
  * NOTE: The RtcDataChannelInit dictionary can be used to configure properties of the underlying

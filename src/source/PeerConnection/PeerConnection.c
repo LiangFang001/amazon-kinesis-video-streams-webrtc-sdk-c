@@ -1104,6 +1104,18 @@ CleanUp:
     return retStatus;
 }
 
+STATUS pc_throwFatalError(PRtcPeerConnection pPeerConnection, STATUS errorStatus)
+{
+    STATUS retStatus = STATUS_SUCCESS;
+
+    CHK(pPeerConnection != NULL, STATUS_PEER_CONN_NULL_ARG);
+    PKvsPeerConnection pKvsPeerConnection = (PKvsPeerConnection) pPeerConnection;
+    CHK_STATUS(ice_agent_throwFatalError(pKvsPeerConnection->pIceAgent, errorStatus));
+
+CleanUp:
+    return retStatus;
+}
+
 STATUS pc_setRemoteDescription(PRtcPeerConnection pPeerConnection, PRtcSessionDescriptionInit pSessionDescriptionInit)
 {
     ENTERS();
